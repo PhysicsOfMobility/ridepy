@@ -4,17 +4,28 @@ from numpy import inf
 
 from thesimulator.utils import Request, Stop, RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent
 
-FleetState = Dict[Any, List[Stop]]  # vehicle_id -> StopList
+FleetState = Dict[int, List[Stop]]  # vehicle_id -> StopList
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
 Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent]
-SingleVehicleSolution = Tuple[Any, float, List[Stop]]  # vehicle_id, cost, new_stop_list
+SingleVehicleSolution = Tuple[int, float, List[Stop]]  # vehicle_id, cost, new_stop_list
 
 
 def handle_request_single_vehicle(req: Request, stoplist: List[Stop]) -> SingleVehicleSolution:
+    """
+    The computational bottleneck. An efficient simulator could do the following:
+    1. Parallelize this over all vehicle. This function being without any side effects, it should be easy to do.
+    2. Implement as a c extension. The args and the return value are all basic c data types, so this should also be easy.
+
+    :param req:
+    :param stoplist:
+    :return:
+    """
     pass
 
 
 def handle_request(req: Request, fleet_state: FleetState) -> RequestResponse:
+    # This is where all sorts of paralleization can be done, by replacing the map with
+    # dask.map, multiprocessing.map, ...
     all_solutions = map(partial(handle_request_single_vehicle, req=req), fleet_state)
     best_vehicle, min_cost,  new_stoplist = min(all_solutions, key=lambda x:x[1])
 
@@ -25,8 +36,7 @@ def handle_request(req: Request, fleet_state: FleetState) -> RequestResponse:
 
 
 
-def simulate(initial_fleet_state: FleetState, requests: Iterator[Request],
-             request_handler: Callable[[Request, FleetState], RequestResponse]) -> List[Event]:
+def simulate(initial_fleet_state: FleetState, requests: Iterator[Request]) -> List[Event]:
     # set internal clock to 0
     t = 0
     fleet_state = initial_fleet_state
