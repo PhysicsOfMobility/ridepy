@@ -9,7 +9,7 @@ class Request:
     A request for the system to perform a task
     """
 
-    req_id: str
+    request_id: str
     creation_timestamp: float
 
 
