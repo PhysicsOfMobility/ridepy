@@ -1,20 +1,34 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Union
 
 
 @dataclass
 class Request:
     req_id: str
+    creation_timestamp: float
+
+
+@dataclass
+class TransportationRequest(Request):
     origin: Any
     destination: Any
-    creation_timestamp: float
-    pickup_offset: float = 0
+    # pickup_offset: float = 0
+    pickup_timewindow_min: Union[float, None]
+    pickup_timewindow_max: Union[float, None]
+    delivery_timewindow_min: Union[float, None]
+    delivery_timewindow_max: Union[float, None]
+
+
+@dataclass
+class InternalRequest(Request):
+    location: Any
 
 
 class StopAction(Enum):
-    PickUP = 1
-    DropOff = 2
+    pick_up = 1
+    drop_off = 2
+    internal = 3
 
 
 @dataclass
@@ -43,13 +57,22 @@ class RequestRejectionEvent:
     timestamp: float
 
 
+@dataclass
 class PickupEvent:
     request_id: Any
     timestamp: float
     vehicle_id: Any
 
 
+@dataclass
 class DeliveryEvent:
+    request_id: Any
+    timestamp: float
+    vehicle_id: Any
+
+
+@dataclass
+class InternalStopEvent:
     request_id: Any
     timestamp: float
     vehicle_id: Any
