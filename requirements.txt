@@ -1,4 +1,0 @@
-numpy
-black==19.10b0
-pytest
-mpi4py
