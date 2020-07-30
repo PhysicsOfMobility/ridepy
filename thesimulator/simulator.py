@@ -29,12 +29,13 @@ class VehicleState:
     Single vehicle insertion logic is implemented here. Can optionally  be implemented in Cython
     or other compiled language.
     """
+
     def __init__(self, initial_stoplist: Optional[List[Stop]] = None):
         self._stoplist = initial_stoplist
 
     def fast_forward_time(self, t: SupportsFloat):
         for stop_idx, stop in enumerate(
-                stop for stop in self._stoplist if stop.estimated_arrival_time <= t
+            stop for stop in self._stoplist if stop.estimated_arrival_time <= t
         ):
             # TODO emit either a PickupEvent or a DeliveryEvent
             ...
@@ -66,6 +67,7 @@ class VehicleState:
 # TODO: Decision: Do we need UserRequest vs InternalRequest. Only the latter has more time windows etc.
 # TODo: Decision: Who/where is CPE added?
 
+
 class FleetState:
     """
     Provides the interface for running the whole simulation.
@@ -76,6 +78,7 @@ class FleetState:
     * Subclass VehicleState and implement the main methods in Cython.
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
+
     def __init__(self, initial_stoplists: Dict[int, List[Stop]]):
         self._fleet = {
             vehicle_id: VehicleState(stoplist)
@@ -151,7 +154,8 @@ class SlowSimpleFleetState(FleetState):
 
         """
         all_solutions = map(
-            ft.partial(VehicleState.handle_request_single_vehicle, req=req), self._fleet.values()
+            ft.partial(VehicleState.handle_request_single_vehicle, req=req),
+            self._fleet.values(),
         )
         best_vehicle, min_cost, new_stoplist = min(all_solutions, key=lambda x: x[1])
 
@@ -187,4 +191,3 @@ class MPIFuturesFleetState(FleetState):
             # TODO: modify the best vehicle's stoplist
             self._fleet[best_vehicle] = new_stoplist
             return RequestAcceptanceEvent(...)
-
