@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Union
+from dataclasses import dataclass
+from typing import Any, Union, MutableSequence, Tuple
 
 
 @dataclass
@@ -122,3 +122,10 @@ class InternalStopEvent:
     request_id: Any
     timestamp: float
     vehicle_id: Any
+
+
+RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
+Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent]
+Stoplist = MutableSequence[Stop]
+SingleVehicleSolution = Tuple[int, float, Stoplist]
+"""vehicle_id, cost, new_stop_list"""
