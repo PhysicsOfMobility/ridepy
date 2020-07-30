@@ -1,7 +1,17 @@
 import functools as ft
-from abc import abstractmethod
+import operator as op
+from abc import ABC, abstractmethod
 from time import time
-from typing import Tuple, List, Dict, Union, Iterator, Optional, SupportsFloat
+from typing import (
+    Tuple,
+    List,
+    Dict,
+    Union,
+    Iterator,
+    Optional,
+    SupportsFloat,
+    MutableSequence,
+)
 
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
@@ -20,7 +30,8 @@ from thesimulator.utils import (
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
 
 Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent]
-SingleVehicleSolution = Tuple[int, float, List[Stop]]
+Stoplist = MutableSequence[Stop]
+SingleVehicleSolution = Tuple[int, float, Stoplist]
 """vehicle_id, cost, new_stop_list"""
 
 
@@ -30,22 +41,38 @@ class VehicleState:
     or other compiled language.
     """
 
-    def __init__(self, initial_stoplist: Optional[List[Stop]] = None):
-        self._stoplist = initial_stoplist
+    def __init__(self, initial_stoplist: Optional[Stoplist] = None):
+        self.stoplist = initial_stoplist
+
+    @property
+    def stoplist(self) -> Stoplist:
+        return self._stoplist
+
+    @stoplist.setter
+    def stoplist(self, stoplist: Stoplist):
+        if stoplist is None:
+            self._stoplist = []
+        else:
+            # TODO possibly updated the cpats here (i.e. travel time computation, or using the sub/superdiagonal
+            #  [depending of the definition] of the [updated] distance matrix)
+            # for i, stop in enumerate(stoplist):
+            #     stop.cpat = D[i, i + 1]
+            stoplist = sorted(stoplist, key=op.attrgetter("estimated_arrival_time"))
+            self._stoplist = stoplist
 
     def fast_forward_time(self, t: SupportsFloat):
         for stop_idx, stop in enumerate(
-            stop for stop in self._stoplist if stop.estimated_arrival_time <= t
+            stop for stop in self.stoplist if stop.estimated_arrival_time <= t
         ):
             # TODO emit either a PickupEvent or a DeliveryEvent
             ...
-            # TODO optionally validate the traveltime velocity constraints
+            # TODO optionally validate the travel time velocity constraints
 
-            # todo assert that the cpats are updated and the stops sorted accordingly
+            # TODO assert that the cpats are updated and the stops sorted accordingly
 
             # drop the visited stops
-        stop_list = stop_list[: stop_idx + 1]
-        # TODO: add the current position stop
+        self.stoplist = self.stoplist[: stop_idx + 1]
+        # TODO: re-add the current position stop (which has been dropped in the last step)
         ...
 
     def handle_request_single_vehicle(self, req: Request) -> SingleVehicleSolution:
@@ -60,15 +87,18 @@ class VehicleState:
         req
         stoplist
         """
-
+        # TODO should this call fast_forward_time?
         ...
 
 
 # TODO: Decision: Do we need UserRequest vs InternalRequest. Only the latter has more time windows etc.
-# TODo: Decision: Who/where is CPE added?
+#         F: My main intention was separating the concept of a "transportation" of something (i.e. lifetime > 0) and
+#            the a single action (vanishing lifetime)
+# TODO: Decision: Who/where is CPE added?
+#         F: At the end of fast_forward_time?
 
 
-class FleetState:
+class FleetState(ABC):
     """
     Provides the interface for running the whole simulation.
     The fleet state is stored as a dictionary of (vehicle_id, VehicleState) pairs.
@@ -79,8 +109,9 @@ class FleetState:
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
 
-    def __init__(self, initial_stoplists: Dict[int, List[Stop]]):
-        self._fleet = {
+    def __init__(self, initial_stoplists: Dict[int, Stoplist]):
+        # note here that in the current design the vehicle ID is unknown to the vehicle
+        self.fleet: Dict[int, VehicleState] = {
             vehicle_id: VehicleState(stoplist)
             for vehicle_id, stoplist in initial_stoplists.items()
         }
@@ -136,7 +167,7 @@ class FleetState:
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: SupportsFloat):
-        for vehicle_id, vehicle_state in self._fleet.items():
+        for vehicle_id, vehicle_state in self.fleet.items():
             vehicle_state.fast_forward_time(t)
 
     def handle_request(self, req: Request):
@@ -155,15 +186,15 @@ class SlowSimpleFleetState(FleetState):
         """
         all_solutions = map(
             ft.partial(VehicleState.handle_request_single_vehicle, req=req),
-            self._fleet.values(),
+            self.fleet.values(),
         )
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=lambda x: x[1])
+        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
 
         if min_cost == inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
         else:
             # TODO: modify the best vehicle's stoplist
-            self._fleet[best_vehicle] = new_stoplist
+            self.fleet[best_vehicle].stoplist = new_stoplist
             return RequestAcceptanceEvent(...)
 
 
@@ -173,7 +204,7 @@ class MPIFuturesFleetState(FleetState):
             if executor is not None:
                 res = executor.map(
                     ft.partial(VehicleState.fast_forward_time, t=t),
-                    self._fleet.values(),
+                    self.fleet.values(),
                 )
 
     def handle_request(self, req: Request):
@@ -181,13 +212,13 @@ class MPIFuturesFleetState(FleetState):
             if executor is not None:
                 all_solutions = executor.map(
                     ft.partial(VehicleState.handle_request_single_vehicle, req=req),
-                    self._fleet.values(),
+                    self.fleet.values(),
                 )
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=lambda x: x[1])
+        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
 
         if min_cost == inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
         else:
             # TODO: modify the best vehicle's stoplist
-            self._fleet[best_vehicle] = new_stoplist
+            self.fleet[best_vehicle].stoplist = new_stoplist
             return RequestAcceptanceEvent(...)
