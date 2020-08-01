@@ -6,7 +6,7 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from time import time
-from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple
+from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
@@ -66,6 +66,39 @@ class FleetState(ABC):
         """
         ...
 
+    def _apply_request_solution(self, req, all_solutions: Iterable) -> RequestEvent:
+        """
+        Given a request and a bunch of solutions, pick the one with the minimum cost and apply it,
+        thereby changing the stoplist of the chosen vehicle and emitting an RequestAcceptanceEvent.
+        If the minimum cost is infinite, RequestRejectionEvent is returned.
+
+        Parameters
+        ----------
+        req
+        all_solutions
+
+        Returns
+        -------
+
+        """
+        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
+
+        if min_cost == np.inf:  # no solution was found
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
+        else:
+            # modify the best vehicle's stoplist
+            self.fleet[best_vehicle].stoplist = new_stoplist
+            return RequestAcceptanceEvent(
+                request_id=req,
+                timestamp=time(),
+                origin=req.origin,
+                destination=req.destination,
+                pickup_timewindow_min=...,
+                pickup_timewindow_max=...,
+                delivery_timewindow_min=...,
+                delivery_timewindow_max=...,
+            )
+
     def simulate(self, requests: Iterator[Request]) -> Iterator[Tuple[float, Event]]:
         """
         Parameters
@@ -95,32 +128,14 @@ class SlowSimpleFleetState(FleetState):
             vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
         )
 
-    def handle_transportation_request(self, req: Request):
-        """
-        Handle a request by mapping the request and the fleet state onto a request response,
-        modifying the fleet state in-place.
-
-        Parameters
-        ----------
-        req
-        fleet_state
-
-        Returns
-        -------
-
-        """
-        all_solutions = map(
-            ft.partial(VehicleState.handle_request_single_vehicle, req=req),
-            self.fleet.values(),
+    def handle_transportation_request(self, req: TransportationRequest):
+        return self._apply_request_solution(
+            req,
+            map(
+                ft.partial(VehicleState.handle_request_single_vehicle, req=req),
+                self.fleet.values(),
+            ),
         )
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
-
-        if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
-        else:
-            # modify the best vehicle's stoplist
-            self.fleet[best_vehicle].stoplist = new_stoplist
-            return RequestAcceptanceEvent(...)
 
 
 class MPIFuturesFleetState(FleetState):
@@ -138,25 +153,10 @@ class MPIFuturesFleetState(FleetState):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             # TODO: what happens if executor is not there?
             if executor is not None:
-                all_solutions = executor.map(
-                    ft.partial(VehicleState.handle_request_single_vehicle, req=req),
-                    self.fleet.values(),
+                return self._apply_request_solution(
+                    req,
+                    executor.map(
+                        ft.partial(VehicleState.handle_request_single_vehicle, req=req),
+                        self.fleet.values(),
+                    ),
                 )
-
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
-
-        if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
-        else:
-            # modify the best vehicle's stoplist
-            self.fleet[best_vehicle].stoplist = new_stoplist
-            return RequestAcceptanceEvent(
-                request_id=req,
-                timestamp=time(),
-                origin=req.origin,
-                destination=req.destination,
-                pickup_timewindow_min=...,
-                pickup_timewindow_max=...,
-                delivery_timewindow_min=...,
-                delivery_timewindow_max=...,
-            )
