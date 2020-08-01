@@ -1,8 +1,18 @@
 import operator as op
 
-from typing import Optional, SupportsFloat
+from typing import Optional, SupportsFloat, List
 
-from .utils import Request, Stoplist, SingleVehicleSolution
+from .utils import (
+    Request,
+    Stoplist,
+    SingleVehicleSolution,
+    StopEvent,
+    StopAction,
+    PickupEvent,
+    DeliveryEvent,
+    InternalStopEvent,
+    Stop,
+)
 
 
 class VehicleState:
@@ -23,27 +33,39 @@ class VehicleState:
         if stoplist is None:
             self._stoplist = []
         else:
-            # TODO possibly updated the cpats here (i.e. travel time computation, or using the sub/superdiagonal
+            # TODO possibly updated the CPATs here (i.e. travel time computation, or using the sub/superdiagonal
             #  [depending of the definition] of the [updated] distance matrix)
             # for i, stop in enumerate(stoplist):
             #     stop.cpat = D[i, i + 1]
             stoplist = sorted(stoplist, key=op.attrgetter("estimated_arrival_time"))
             self._stoplist = stoplist
 
-    def fast_forward_time(self, t: SupportsFloat):
+    def fast_forward_time(self, t: SupportsFloat) -> List[StopEvent]:
+        # TODO update CPE
+        # TODO assert that the CPATs  are updated and the stops sorted accordingly
+        # TODO optionally validate the travel time velocity constraints
+
+        event_cache = []
         for stop_idx, stop in enumerate(
             stop for stop in self.stoplist if stop.estimated_arrival_time <= t
         ):
-            # TODO emit either a PickupEvent or a DeliveryEvent
-            ...
-            # TODO optionally validate the travel time velocity constraints
+            # service the stop at its estimated arrival time
+            event_cache.append(
+                {
+                    StopAction.pick_up: PickupEvent,
+                    StopAction.drop_off: DeliveryEvent,
+                    StopAction.internal: InternalStopEvent,
+                }[stop.action](
+                    request_id=stop.request,
+                    vehicle_id=stop.vehicle_id,
+                    timestamp=stop.estimated_arrival_time,
+                )
+            )
 
-            # TODO assert that the cpats are updated and the stops sorted accordingly
-
-            # drop the visited stops
-        self.stoplist = self.stoplist[: stop_idx + 1]
-        # TODO: re-add the current position stop (which has been dropped in the last step)
-        ...
+        # drop the visited stops, except for CPE
+        self.stoplist = self.stoplist[1 : stop_idx + 1]
+        # TODO should update CPE
+        return event_cache
 
     def handle_request_single_vehicle(self, req: Request) -> SingleVehicleSolution:
         """

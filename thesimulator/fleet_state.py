@@ -1,10 +1,12 @@
 import functools as ft
+import itertools as it
 import operator as op
 import numpy as np
 
+
 from abc import ABC, abstractmethod
 from time import time
-from typing import Dict, SupportsFloat, Iterator, List
+from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
@@ -14,6 +16,9 @@ from .utils import (
     Event,
     RequestRejectionEvent,
     RequestAcceptanceEvent,
+    RequestEvent,
+    StopEvent,
+    TransportationRequest,
 )
 from .vehicle_state import VehicleState
 
@@ -37,11 +42,11 @@ class FleetState(ABC):
         }
 
     @abstractmethod
-    def fast_forward(self, t: SupportsFloat):
+    def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
         ...
 
     @abstractmethod
-    def handle_request(self, req: Request):
+    def handle_transportation_request(self, req: Request) -> RequestEvent:
         """
         Handle a request by mapping the request and the fleet state onto a request response,
         modifying the fleet state in-place.
@@ -52,18 +57,17 @@ class FleetState(ABC):
         Parameters
         ----------
         req
-        fleet_state
+            request to handle
 
         Returns
         -------
+        event
 
         """
         ...
 
-    def simulate(self, requests: Iterator[Request]) -> List[Event]:
+    def simulate(self, requests: Iterator[Request]) -> Iterator[Tuple[float, Event]]:
         """
-        TODO this should probably modify something in-place, instead of returning a list of events
-
         Parameters
         ----------
         initial_fleet_state
@@ -73,24 +77,25 @@ class FleetState(ABC):
         -------
 
         """
-        t = 0  # set internal clock to 0
+        t = 0.0  # set internal clock to 0
 
         for request in requests:
             req_epoch = request.creation_timestamp
             # advance clock to req_epoch
             t = req_epoch
             # Visit all the stops upto req_epoch
-            self.fast_forward(t)
+            yield from self.fast_forward(t)
             # handle the current request
-            yield self.handle_request(request)
+            yield self.handle_transportation_request(request)
 
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: SupportsFloat):
-        for vehicle_id, vehicle_state in self.fleet.items():
-            vehicle_state.fast_forward_time(t)
+        return it.chain.from_iterable(
+            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        )
 
-    def handle_request(self, req: Request):
+    def handle_transportation_request(self, req: Request):
         """
         Handle a request by mapping the request and the fleet state onto a request response,
         modifying the fleet state in-place.
@@ -113,7 +118,7 @@ class SlowSimpleFleetState(FleetState):
         if min_cost == np.inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
         else:
-            # TODO: modify the best vehicle's stoplist
+            # modify the best vehicle's stoplist
             self.fleet[best_vehicle].stoplist = new_stoplist
             return RequestAcceptanceEvent(...)
 
@@ -122,23 +127,36 @@ class MPIFuturesFleetState(FleetState):
     def fast_forward(self, t: SupportsFloat):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
-                res = executor.map(
-                    ft.partial(VehicleState.fast_forward_time, t=t),
-                    self.fleet.values(),
+                return it.chain.from_iterable(
+                    executor.map(
+                        ft.partial(VehicleState.fast_forward_time, t=t),
+                        self.fleet.values(),
+                    )
                 )
 
-    def handle_request(self, req: Request):
+    def handle_transportation_request(self, req: TransportationRequest):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
+            # TODO: what happens if executor is not there?
             if executor is not None:
                 all_solutions = executor.map(
                     ft.partial(VehicleState.handle_request_single_vehicle, req=req),
                     self.fleet.values(),
                 )
+
         best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
 
         if min_cost == np.inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
         else:
-            # TODO: modify the best vehicle's stoplist
+            # modify the best vehicle's stoplist
             self.fleet[best_vehicle].stoplist = new_stoplist
-            return RequestAcceptanceEvent(...)
+            return RequestAcceptanceEvent(
+                request_id=req,
+                timestamp=time(),
+                origin=req.origin,
+                destination=req.destination,
+                pickup_timewindow_min=...,
+                pickup_timewindow_max=...,
+                delivery_timewindow_min=...,
+                delivery_timewindow_max=...,
+            )

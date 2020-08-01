@@ -54,9 +54,15 @@ class Stop:
     """
     The notion of an action to be performed in fulfilling a request.
     Attached are spatio-temporal constraints.
+
+    Parameters
+    ----------
+    location:
+        location at which the stop is supposed to be serviced
     """
 
     location: Any
+    vehicle_id: Any
     request: Request
     action: StopAction
     estimated_arrival_time: float
@@ -129,3 +135,5 @@ Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, Delive
 Stoplist = MutableSequence[Stop]
 SingleVehicleSolution = Tuple[int, float, Stoplist]
 """vehicle_id, cost, new_stop_list"""
+RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
+StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
