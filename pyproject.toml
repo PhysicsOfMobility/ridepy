@@ -6,7 +6,8 @@ authors = ["Debsankha Manik <dmanik@gwdg.de>", "Felix Jung <jung@posteo.de>"]
 packages = [
     {include = "thesimulator"},
 ]
-
+license = "MIT"
+readme="README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
