@@ -59,10 +59,3 @@ class VehicleState:
         """
         # TODO should this call fast_forward_time?
         ...
-
-
-# TODO: Decision: Do we need UserRequest vs InternalRequest. Only the latter has more time windows etc.
-#         F: My main intention was separating the concept of a "transportation" of something (i.e. lifetime > 0) and
-#            the a single action (vanishing lifetime)
-# TODO: Decision: Who/where is CPE added?
-#         F: At the end of fast_forward_time?
