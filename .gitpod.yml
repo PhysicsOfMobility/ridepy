@@ -1,3 +1,6 @@
+image:
+  file: .gitpod.Dockerfile
+
 tasks:
   - init: pip install --upgrade poetry pip wheel
     command: poetry install
