@@ -1,5 +1,3 @@
-image: python-3.8.5:buster
-
 tasks:
-  - init: apt install -y libopenmpi-dev && pip install --upgrade poetry pip wheel
+  - init: pip install --upgrade poetry pip wheel
     command: poetry install
