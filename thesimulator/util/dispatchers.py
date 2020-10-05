@@ -1,6 +1,8 @@
-from typing import Tuple
+import copy
+from typing import Tuple, Iterable, Sequence
 
 import numpy as np
+import itertools as it
 
 from thesimulator.data_structures import (
     ID,
@@ -9,10 +11,15 @@ from thesimulator.data_structures import (
     Stop,
     StopAction,
     TransportSpace,
+    InternalAssignRequest,
+    RequestAssignEvent,
 )
+
+from thesimulator.util.spaces import Graph
 
 
 def taxicab_dispatcher_drive_first(
+    *,
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
@@ -74,3 +81,59 @@ def taxicab_dispatcher_drive_first(
         ),
     ]
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+
+
+def taxicab_dispatcher_drive_first_location_trigger_bulk(
+    *,
+    requests: Sequence[TransportationRequest],
+    stoplist: Stoplist,
+    space: Graph,
+    vehicle_id: ID,
+) -> Tuple[Stoplist, Sequence[RequestAssignEvent]]:
+
+    # 1. Insert the first request in the list
+    cost, stoplist, time_windows = taxicab_dispatcher_drive_first(
+        request=requests[0], stoplist=stoplist, space=space
+    )
+    i_pu, i_do = (i for i, s in enumerate(stoplist) if s.request == requests[0])
+
+    # 2. add additional stops for the rest of the requests, being served simultaneously
+    pu_template = stoplist[i_pu]
+    do_template = stoplist[i_do]
+    for i, request in enumerate(requests[1:], 1):
+        pu = copy.copy(pu_template)
+        do = copy.copy(do_template)
+        pu.request, do.request = it.repeat(request, 2)
+        stoplist.insert(i_pu + i, pu)
+        stoplist.insert(i_do + i + 1, do)
+
+    # 3. append next internal assign stop
+    stoplist.append(
+        Stop(
+            location=pu_template.location,
+            request=InternalAssignRequest(
+                creation_timestamp=None,
+                vehicle_id=vehicle_id,
+            ),
+            action=StopAction.internal_assign,
+            estimated_arrival_time=do_template.estimated_arrival_time,
+        )
+    )
+
+    return stoplist, [
+        RequestAssignEvent(
+            request.request_id,
+            timestamp=None,
+            origin=request.origin,
+            destination=request.destination,
+            pickup_timewindow_min=time_windows[0],
+            pickup_timewindow_max=time_windows[1],
+            delivery_timewindow_min=time_windows[1],
+            delivery_timewindow_max=time_windows[3],
+        )
+        for request in requests
+    ]
+
+    # for stop_a, stop_b in zip(stoplist[i_pu:i_do], stoplist[i_pu + 1 : i_do + 1]):
+    #     space.shortest_path_vertex_sequence(stop_a, stop_b)
+    #     breakpoint()

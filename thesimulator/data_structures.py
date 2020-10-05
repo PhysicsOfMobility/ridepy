@@ -1,7 +1,10 @@
+from numpy import inf
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 from dataclasses import dataclass
 from typing import Any, Optional, Union, Tuple, List
+
+ID = Union[str, int]
 
 ID = Union[str, int]
 
@@ -12,7 +15,6 @@ class Request:
     A request for the system to perform a task
     """
 
-    request_id: ID
     creation_timestamp: float
 
 
@@ -23,6 +25,7 @@ class TransportationRequest(Request):
     through creating a route through the system given spatio-temporal constraints.
     """
 
+    request_id: ID
     origin: Any
     destination: Any
     # pickup_offset: float = 0
@@ -39,7 +42,17 @@ class InternalRequest(Request):
     that is not directly requested by a customer
     """
 
-    location: Any
+    ...
+
+
+@dataclass
+class InternalCPERequest(InternalRequest):
+    ...
+
+
+@dataclass
+class InternalAssignRequest(InternalRequest):
+    vehicle_id: ID
 
 
 class StopAction(Enum):
@@ -47,9 +60,10 @@ class StopAction(Enum):
     Representing actions that the system may perform at a specific location
     """
 
-    pickup = 1
-    dropoff = 2
-    internal = 3
+    pickup = auto()
+    dropoff = auto()
+    cpe = auto()
+    internal_assign = auto()
 
 
 @dataclass
@@ -68,12 +82,29 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
-    time_window_min: Optional[float]
-    time_window_max: Optional[float]
+    time_window_min: Optional[float] = 0
+    time_window_max: Optional[float] = inf
 
 
 @dataclass
 class RequestAcceptanceEvent:
+    """
+    Commitment of the system to fulfil a request given
+    the returned spatio-temporal constraints.
+    """
+
+    request_id: ID
+    timestamp: float
+    origin: Any
+    destination: Any
+    pickup_timewindow_min: float
+    pickup_timewindow_max: float
+    delivery_timewindow_min: float
+    delivery_timewindow_max: float
+
+
+@dataclass
+class RequestAssignEvent:
     """
     Commitment of the system to fulfil a request given
     the returned spatio-temporal constraints.
@@ -122,23 +153,29 @@ class DeliveryEvent:
 
 
 @dataclass
-class InternalStopEvent:
+class InternalAssignStopEvent:
     """
     Successful internal action
     """
 
-    request_id: ID
     timestamp: float
     vehicle_id: ID
 
 
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent]
+Event = Union[
+    RequestAcceptanceEvent,
+    RequestRejectionEvent,
+    PickupEvent,
+    DeliveryEvent,
+    InternalAssignStopEvent,
+    RequestAssignEvent,
+]
 Stoplist = List[Stop]
 SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
 """vehicle_id, cost, new_stop_list"""
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+StopEvent = Union[InternalAssignStopEvent, PickupEvent, DeliveryEvent]
 
 
 class TransportSpace(ABC):
@@ -193,7 +230,7 @@ class TransportSpace(ABC):
         ...
 
     @abstractmethod
-    def interp_time(self, u, v, time_to_dest):
+    def interp_time(self, u, v, time_to_dest) -> Tuple[Any, Union[int, float]]:
         """
         Interpolate a location `x` between the origin `u` and the destination `v`
         as a function of the travel time between the unknown
@@ -213,11 +250,15 @@ class TransportSpace(ABC):
         -------
         x
             interpolated coordinate of the unknown location `x`
+        jump_dist
+            remaining distance until the returned interpolated coordinate will be reached
         """
         ...
 
     @abstractmethod
-    def interp_dist(self, origin, destination, dist_to_dest):
+    def interp_dist(
+        self, origin, destination, dist_to_dest
+    ) -> Tuple[Any, Union[int, float]]:
         """
         Interpolate a location `x` between the origin `u` and the destination `v`
         as a function of the distance between the unknown
@@ -237,5 +278,7 @@ class TransportSpace(ABC):
         -------
         x
             interpolated coordinate of the unknown location `x`
+        jump_time
+            remaining time until the returned interpolated coordinate will be reached
         """
         ...

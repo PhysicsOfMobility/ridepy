@@ -4,6 +4,8 @@
 *.osm
 core
 .idea
+prof
+scratch
 
 
 # source: https://github.com/github/gitignore/blob/master/Python.gitignore
@@ -83,6 +85,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.ipynb
 
 # IPython
 profile_default/
