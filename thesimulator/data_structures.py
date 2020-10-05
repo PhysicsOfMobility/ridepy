@@ -9,7 +9,7 @@ class Request:
     A request for the system to perform a task
     """
 
-    request_id: str
+    request_id: Union[str, int]
     creation_timestamp: float
 
 
