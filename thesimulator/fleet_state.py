@@ -10,7 +10,7 @@ from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
-from .utils import (
+from .data_structures import (
     Stoplist,
     Request,
     Event,
@@ -19,6 +19,7 @@ from .utils import (
     RequestEvent,
     StopEvent,
     TransportationRequest,
+    InternalRequest,
 )
 from .vehicle_state import VehicleState
 
@@ -46,7 +47,7 @@ class FleetState(ABC):
         ...
 
     @abstractmethod
-    def handle_transportation_request(self, req: Request) -> RequestEvent:
+    def handle_transportation_request(self, req: TransportationRequest) -> RequestEvent:
         """
         Handle a request by mapping the request and the fleet state onto a request response,
         modifying the fleet state in-place.
@@ -62,6 +63,20 @@ class FleetState(ABC):
         Returns
         -------
         event
+
+        """
+        ...
+
+    @abstractmethod
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        """
+
+        Parameters
+        ----------
+        req
+
+        Returns
+        -------
 
         """
         ...
@@ -114,10 +129,13 @@ class FleetState(ABC):
 
         for request in requests:
             req_epoch = request.creation_timestamp
+
             # advance clock to req_epoch
             t = req_epoch
+
             # Visit all the stops upto req_epoch
             yield from self.fast_forward(t)
+
             # handle the current request
             yield self.handle_transportation_request(request)
 
@@ -136,6 +154,9 @@ class SlowSimpleFleetState(FleetState):
                 self.fleet.values(),
             ),
         )
+
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        ...
 
 
 class MPIFuturesFleetState(FleetState):
@@ -160,3 +181,6 @@ class MPIFuturesFleetState(FleetState):
                         self.fleet.values(),
                     ),
                 )
+
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        ...

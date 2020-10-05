@@ -2,7 +2,7 @@ import operator as op
 
 from typing import Optional, SupportsFloat, List
 
-from .utils import (
+from .data_structures import (
     Request,
     Stoplist,
     SingleVehicleSolution,
@@ -78,6 +78,10 @@ class VehicleState:
         ----------
         req
         stoplist
+
+        Returns
+        -------
+        This returns the single best solution for the respective vehicle.
         """
         # TODO should this call fast_forward_time?
         ...
