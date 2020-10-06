@@ -1,4 +1,4 @@
-from thesimulator.fleet_state import FleetState
+from thesimulator.fleet_state import SlowSimpleFleetState
 from thesimulator.data_structures import TransportationRequest
 from thesimulator.utils import RandomRequestGenerator
 import itertools as it
@@ -22,8 +22,8 @@ def test_random_request_generator():
         assert 0 <= r.destination[1] <= 1
 
 
-def test_fleetstate_simulate():
-
-    # FleetState.simulate()
-
-    ...
+def test_slow_simple_fleet_state_simulate():
+    rg = RandomRequestGenerator()
+    reqs = list(it.islice(rg, 10))
+    fs = SlowSimpleFleetState()
+    fs.simulate(reqs)
