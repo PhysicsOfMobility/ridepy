@@ -30,15 +30,12 @@ class VehicleState:
 
     @stoplist.setter
     def stoplist(self, stoplist: Stoplist):
-        if stoplist is None:
-            self._stoplist = []
-        else:
-            # TODO possibly updated the CPATs here (i.e. travel time computation, or using the sub/superdiagonal
-            #  [depending of the definition] of the [updated] distance matrix)
-            # for i, stop in enumerate(stoplist):
-            #     stop.cpat = D[i, i + 1]
-            stoplist = sorted(stoplist, key=op.attrgetter("estimated_arrival_time"))
-            self._stoplist = stoplist
+        # TODO possibly updated the CPATs here (i.e. travel time computation, or using the sub/superdiagonal
+        #  [depending of the definition] of the [updated] distance matrix)
+        # for i, stop in enumerate(stoplist):
+        #     stop.cpat = D[i, i + 1]
+        stoplist = sorted(stoplist, key=op.attrgetter("estimated_arrival_time"))
+        self._stoplist = stoplist
 
     def fast_forward_time(self, t: SupportsFloat) -> List[StopEvent]:
         # TODO update CPE

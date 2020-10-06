@@ -1,8 +1,14 @@
-from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.data_structures import TransportationRequest
+from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from thesimulator.data_structures import (
+    Stop,
+    InternalRequest,
+    StopAction,
+)
 from thesimulator.utils import RandomRequestGenerator
 import itertools as it
 import operator as op
+import collections as cl
+import pytest
 
 
 def test_random_request_generator():
@@ -22,8 +28,35 @@ def test_random_request_generator():
         assert 0 <= r.destination[1] <= 1
 
 
-def test_slow_simple_fleet_state_simulate():
+@pytest.fixture
+def initial_stoplists():
+    return {
+        vehicle_id: [
+            Stop(
+                location=0,
+                vehicle_id=vehicle_id,
+                request=InternalRequest(
+                    request_id="CPE", creation_timestamp=0, location=None
+                ),
+                action=StopAction.internal,
+                estimated_arrival_time=0,
+                time_window_min=None,
+                time_window_max=None,
+            )
+        ]
+        for vehicle_id in range(10)
+    }
+
+
+def test_slow_simple_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator()
     reqs = list(it.islice(rg, 10))
-    fs = SlowSimpleFleetState()
-    fs.simulate(reqs)
+    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists)
+    cl.deque(fs.simulate(reqs), maxlen=0)
+
+
+def test_mpi_futures_fleet_state_simulate(initial_stoplists):
+    rg = RandomRequestGenerator()
+    reqs = list(it.islice(rg, 10))
+    fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists)
+    cl.deque(fs.simulate(reqs), maxlen=0)

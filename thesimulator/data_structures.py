@@ -66,8 +66,8 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
-    time_window_min: float
-    time_window_max: float
+    time_window_min: Union[None, float]
+    time_window_max: Union[None, float]
 
 
 @dataclass

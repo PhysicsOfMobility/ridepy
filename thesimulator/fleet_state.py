@@ -36,7 +36,17 @@ class FleetState(ABC):
     """
 
     def __init__(self, initial_stoplists: Dict[int, Stoplist]):
-        # note here that in the current design the vehicle ID is unknown to the vehicle
+        """
+        Parameters
+        ----------
+        initial_stoplists:
+            Dictionary with vehicle ids as keys and initial stoplists as values.
+            The initial stoplists *must* contain current position element (CPE) stops as their first entry.
+        """
+
+        # TODO check for CPE existence
+
+        # NOTE here that in the current design the vehicle ID is unknown to the vehicle
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: VehicleState(stoplist)
             for vehicle_id, stoplist in initial_stoplists.items()
