@@ -40,6 +40,9 @@ python-versions = "*"
 version = "0.2.0"
 
 [[package]]
+name = "black"
+version = "19.10b0"
+description = "The uncompromising code formatter."
 category = "dev"
 description = "The uncompromising code formatter."
 name = "black"
@@ -76,6 +79,9 @@ version = "7.1.2"
 
 [[package]]
 name = "colorama"
+version = "0.4.3"
+description = "Cross-platform colored terminal text."
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -107,9 +113,10 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-category = "main"
-description = "Decorators for Humans"
 name = "decorator"
+version = "4.4.2"
+description = "Decorators for Humans"
+category = "dev"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "4.4.2"
@@ -153,6 +160,9 @@ license = ["editdistance"]
 
 [[package]]
 name = "iniconfig"
+version = "1.0.1"
+description = "iniconfig: brain-dead simple config-ini parsing"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -378,6 +388,9 @@ virtualenv = ">=20.0.8"
 
 [[package]]
 name = "prompt-toolkit"
+version = "3.0.7"
+description = "Library for building powerful interactive command lines in Python"
+category = "dev"
 optional = false
 python-versions = ">=3.6.1"
 
@@ -473,6 +486,9 @@ test = ["pytest", "pytest-pycodestyle", "pytest-cov", "coveralls"]
 
 [[package]]
 name = "regex"
+version = "2020.9.27"
+description = "Alternative regular expression module, to replace re."
+category = "dev"
 optional = false
 python-versions = "*"
 version = "2020.10.23"
@@ -489,6 +505,20 @@ version = "1.5.3"
 numpy = ">=1.14.5"
 
 [[package]]
+name = "scipy"
+version = "1.5.2"
+description = "SciPy: Scientific Library for Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = ">=1.14.5"
+
+[[package]]
+name = "six"
+version = "1.15.0"
+description = "Python 2 and 3 compatibility utilities"
 category = "dev"
 description = "Python 2 and 3 compatibility utilities"
 name = "six"
@@ -531,6 +561,9 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "traitlets"
+version = "5.0.4"
+description = "Traitlets Python configuration system"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -593,6 +626,7 @@ version = "0.3"
 content-hash = "e66b2f80f1168bec31bbd864dddf957785390fa0f742bacfef0fae3ebf834af8"
 lock-version = "1.1"
 python-versions = "^3.8"
+content-hash = "7a659816f99f11700ae8dc34a33e0bc64f6b229f69c03f09b3f9e9f5178777e0"
 
 [metadata.files]
 appdirs = [
