@@ -43,24 +43,25 @@ class VehicleState:
         # TODO optionally validate the travel time velocity constraints
 
         event_cache = []
-        for stop_idx, stop in enumerate(
-            stop for stop in self.stoplist if stop.estimated_arrival_time <= t
-        ):
+        for i in range(len(self.stoplist) - 1, 0, -1):
+            stop = self.stoplist[i]
             # service the stop at its estimated arrival time
-            event_cache.append(
-                {
-                    StopAction.pick_up: PickupEvent,
-                    StopAction.drop_off: DeliveryEvent,
-                    StopAction.internal: InternalStopEvent,
-                }[stop.action](
-                    request_id=stop.request,
-                    vehicle_id=stop.vehicle_id,
-                    timestamp=stop.estimated_arrival_time,
+            if stop.estimated_arrival_time <= t:
+                event_cache.append(
+                    {
+                        StopAction.pick_up: PickupEvent,
+                        StopAction.drop_off: DeliveryEvent,
+                        StopAction.internal: InternalStopEvent,
+                    }[stop.action](
+                        request_id=stop.request,
+                        vehicle_id=stop.vehicle_id,
+                        timestamp=stop.estimated_arrival_time,
+                    )
                 )
-            )
+            # TODO I stand confused. Why does `del stop` not work?
+            del self.stoplist[i]
 
-        # drop the visited stops, except for CPE
-        self.stoplist = self.stoplist[1 : stop_idx + 1]
+        breakpoint()
         # TODO should update CPE
         return event_cache
 
@@ -81,4 +82,3 @@ class VehicleState:
         This returns the single best solution for the respective vehicle.
         """
         # TODO should this call fast_forward_time?
-        ...
