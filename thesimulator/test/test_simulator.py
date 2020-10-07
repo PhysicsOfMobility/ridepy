@@ -50,13 +50,14 @@ def initial_stoplists():
 
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator()
-    reqs = list(it.islice(rg, 10))
+    reqs = list(it.islice(rg, 100))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
-    cl.deque(fs.simulate(reqs), maxlen=0)
+    events = list(fs.simulate(reqs))
+    print("\n".join(map(str, events)))
 
 
 def test_mpi_futures_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator()
-    reqs = list(it.islice(rg, 10))
+    reqs = list(it.islice(rg, 100))
     fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     cl.deque(fs.simulate(reqs), maxlen=0)
