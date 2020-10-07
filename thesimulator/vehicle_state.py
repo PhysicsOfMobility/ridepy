@@ -1,4 +1,5 @@
 import operator as op
+import numpy as np
 
 from typing import Optional, SupportsFloat, List
 
@@ -12,7 +13,9 @@ from .data_structures import (
     DeliveryEvent,
     InternalStopEvent,
     Stop,
+    TransportationRequest,
 )
+from .utils import TransportSpace
 
 
 class VehicleState:
@@ -21,8 +24,15 @@ class VehicleState:
     or other compiled language.
     """
 
-    def __init__(self, initial_stoplist: Optional[Stoplist] = None):
-        self.stoplist = initial_stoplist
+    @property
+    def vehicle_id(self):
+        return self._vehicle_id
+
+    @vehicle_id.setter
+    def vehicle_id(self, vehicle_id):
+        # TODO change both the stoplist's vehicle ids and the actual vehicle id
+        # assert all(stop.vehicle_id == vehicle_id for stop in self.stoplist)
+        self._vehicle_id = vehicle_id
 
     @property
     def stoplist(self) -> Stoplist:
@@ -37,7 +47,27 @@ class VehicleState:
         stoplist = sorted(stoplist, key=op.attrgetter("estimated_arrival_time"))
         self._stoplist = stoplist
 
-    def fast_forward_time(self, t: SupportsFloat) -> List[StopEvent]:
+    def __init__(
+        self, *, vehicle_id, initial_stoplist: Stoplist, space: TransportSpace
+    ):
+        """
+        Create a vehicle.
+
+        Parameters
+        ----------
+        vehicle_id:
+            id of the vehicle to be created
+        initial_stoplist
+            stoplist to start out with, MUST contain CPE as first element
+        space
+            transport space the vehicle is operating on
+        """
+        self.vehicle_id = vehicle_id
+        # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
+        self.stoplist = initial_stoplist
+        self.space = space
+
+    def fast_forward_time(self, t: float) -> List[StopEvent]:
         # TODO update CPE
         # TODO assert that the CPATs  are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
@@ -49,8 +79,8 @@ class VehicleState:
             if stop.estimated_arrival_time <= t:
                 event_cache.append(
                     {
-                        StopAction.pick_up: PickupEvent,
-                        StopAction.drop_off: DeliveryEvent,
+                        StopAction.pickup: PickupEvent,
+                        StopAction.dropoff: DeliveryEvent,
                         StopAction.internal: InternalStopEvent,
                     }[stop.action](
                         request_id=stop.request,
@@ -61,11 +91,12 @@ class VehicleState:
             # TODO I stand confused. Why does `del stop` not work?
             del self.stoplist[i]
 
-        breakpoint()
         # TODO should update CPE
         return event_cache
 
-    def handle_request_single_vehicle(self, req: Request) -> SingleVehicleSolution:
+    def handle_transportation_request_single_vehicle(
+        self, req: TransportationRequest
+    ) -> SingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could do the following:
         1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
@@ -75,10 +106,57 @@ class VehicleState:
         Parameters
         ----------
         req
-        stoplist
 
         Returns
         -------
         This returns the single best solution for the respective vehicle.
         """
-        # TODO should this call fast_forward_time?
+        # TODO should this call fast_forward_time? (<---??)
+
+        ##############################
+        # TODO this be outsourced(!)
+
+        # -- SIMPLE TAXICAB-STYLE INSERTION --
+        CPAT_pu = (
+            max(
+                self.stoplist[-1].estimated_arrival_time,
+                self.stoplist[-1].time_window_min
+                if self.stoplist[-1].time_window_min is not None
+                else 0,
+            )
+            + self.space.d(self.stoplist[-1].location, req.origin)
+        )
+        CPAT_do = CPAT_pu + self.space.d(req.origin, req.destination)
+        EAST_pu = req.pickup_timewindow_min
+        LAST_pu = (
+            CPAT_pu + req.delivery_timewindow_max
+            if req.delivery_timewindow_max is not None
+            else np.inf
+        )
+        EAST_do = EAST_pu
+        LAST_do = None
+
+        cost = CPAT_do
+
+        stoplist = self.stoplist + [
+            Stop(
+                location=req.origin,
+                vehicle_id=self.vehicle_id,
+                request=req,
+                action=StopAction.pickup,
+                estimated_arrival_time=CPAT_pu,
+                time_window_min=EAST_pu,
+                time_window_max=LAST_pu,
+            ),
+            Stop(
+                location=req.destination,
+                vehicle_id=self.vehicle_id,
+                request=req,
+                action=StopAction.dropoff,
+                estimated_arrival_time=CPAT_do,
+                time_window_min=EAST_do,
+                time_window_max=LAST_do,
+            ),
+        ]
+        ##############################
+        return self.vehicle_id, cost, stoplist

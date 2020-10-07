@@ -21,6 +21,7 @@ from .data_structures import (
     TransportationRequest,
     InternalRequest,
 )
+from .utils import TransportSpace
 from .vehicle_state import VehicleState
 
 
@@ -35,7 +36,7 @@ class FleetState(ABC):
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
 
-    def __init__(self, initial_stoplists: Dict[int, Stoplist]):
+    def __init__(self, initial_stoplists: Dict[int, Stoplist], space: TransportSpace):
         """
         Parameters
         ----------
@@ -44,11 +45,11 @@ class FleetState(ABC):
             The initial stoplists *must* contain current position element (CPE) stops as their first entry.
         """
 
-        # TODO check for CPE existence
-
-        # NOTE here that in the current design the vehicle ID is unknown to the vehicle
+        self.space = space
         self.fleet: Dict[int, VehicleState] = {
-            vehicle_id: VehicleState(stoplist)
+            vehicle_id: VehicleState(
+                vehicle_id=vehicle_id, initial_stoplist=stoplist, space=self.space
+            )
             for vehicle_id, stoplist in initial_stoplists.items()
         }
 
@@ -160,7 +161,9 @@ class SlowSimpleFleetState(FleetState):
         return self._apply_request_solution(
             req,
             map(
-                ft.partial(VehicleState.handle_request_single_vehicle, req=req),
+                ft.partial(
+                    VehicleState.handle_transportation_request_single_vehicle, req=req
+                ),
                 self.fleet.values(),
             ),
         )
@@ -187,7 +190,10 @@ class MPIFuturesFleetState(FleetState):
                 return self._apply_request_solution(
                     req,
                     executor.map(
-                        ft.partial(VehicleState.handle_request_single_vehicle, req=req),
+                        ft.partial(
+                            VehicleState.handle_transportation_request_single_vehicle,
+                            req=req,
+                        ),
                         self.fleet.values(),
                     ),
                 )

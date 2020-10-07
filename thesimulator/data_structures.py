@@ -44,8 +44,8 @@ class StopAction(Enum):
     Representing actions that the system may perform at a specific location
     """
 
-    pick_up = 1
-    drop_off = 2
+    pickup = 1
+    dropoff = 2
     internal = 3
 
 
@@ -133,7 +133,7 @@ class InternalStopEvent:
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
 Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent]
 Stoplist = MutableSequence[Stop]
-SingleVehicleSolution = Tuple[int, float, Stoplist]
+SingleVehicleSolution = Tuple[Any, float, Stoplist]
 """vehicle_id, cost, new_stop_list"""
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
 StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
