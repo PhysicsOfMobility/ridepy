@@ -72,6 +72,14 @@ class VehicleState:
         # TODO assert that the CPATs  are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
 
+        # TODO update CPE location
+        self.stoplist[0].estimated_arrival_time = t
+        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
+            stop_j.estimated_arrival_time = (
+                stop_i.estimated_arrival_time
+                + self.space.d(stop_i.location, stop_j.location)
+            )
+
         event_cache = []
         for i in range(len(self.stoplist) - 1, 0, -1):
             stop = self.stoplist[i]
@@ -88,10 +96,9 @@ class VehicleState:
                         timestamp=stop.estimated_arrival_time,
                     )
                 )
-            # TODO I stand confused. Why does `del stop` not work?
-            del self.stoplist[i]
+                # TODO I stand confused. Why does `del stop` not work?
+                del self.stoplist[i]
 
-        # TODO should update CPE
         return event_cache
 
     def handle_transportation_request_single_vehicle(
@@ -126,6 +133,7 @@ class VehicleState:
             )
             + self.space.d(self.stoplist[-1].location, req.origin)
         )
+        # print(self.vehicle_id, CPAT_pu)
         CPAT_do = CPAT_pu + self.space.d(req.origin, req.destination)
         EAST_pu = req.pickup_timewindow_min
         LAST_pu = (
@@ -137,7 +145,6 @@ class VehicleState:
         LAST_do = np.inf
 
         cost = CPAT_do
-
         stoplist = self.stoplist + [
             Stop(
                 location=req.origin,

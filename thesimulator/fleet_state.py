@@ -106,7 +106,7 @@ class FleetState(ABC):
         -------
 
         """
-        breakpoint()
+        # breakpoint()
         (
             best_vehicle,
             min_cost,
@@ -118,12 +118,16 @@ class FleetState(ABC):
                 dropoff_timewindow_max,
             ),
         ) = min(all_solutions, key=op.itemgetter(1))
-
+        # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
         if min_cost == np.inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
         else:
             # modify the best vehicle's stoplist
+            # print(f"len of new stoplist={len(new_stoplist)}")
             self.fleet[best_vehicle].stoplist = new_stoplist
+            print(
+                f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
+            )
             return RequestAcceptanceEvent(
                 request_id=req,
                 timestamp=time(),
@@ -166,7 +170,7 @@ class FleetState(ABC):
 
 
 class SlowSimpleFleetState(FleetState):
-    def fast_forward(self, t: SupportsFloat):
+    def fast_forward(self, t: float):
         return it.chain.from_iterable(
             vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
         )
@@ -187,7 +191,7 @@ class SlowSimpleFleetState(FleetState):
 
 
 class MPIFuturesFleetState(FleetState):
-    def fast_forward(self, t: SupportsFloat):
+    def fast_forward(self, t: float):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
                 return it.chain.from_iterable(

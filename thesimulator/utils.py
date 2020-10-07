@@ -1,13 +1,14 @@
-from enum import Enum, auto
-import numpy as np
 import string
 import random
 
-from .data_structures import TransportationRequest
+import numpy as np
 import scipy.spatial.distance as spd
 
+from enum import Enum, auto
 from typing import Union, Iterable, Tuple
 from abc import ABC, abstractmethod
+
+from .data_structures import TransportationRequest
 
 
 class TransportSpace(ABC):
