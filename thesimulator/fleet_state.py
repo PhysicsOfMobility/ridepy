@@ -57,7 +57,6 @@ class FleetState(ABC):
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
         ...
 
-    @abstractmethod
     def handle_transportation_request(self, req: TransportationRequest) -> RequestEvent:
         """
         Handle a request by mapping the request and the fleet state onto a request response,
@@ -107,7 +106,18 @@ class FleetState(ABC):
         -------
 
         """
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
+        breakpoint()
+        (
+            best_vehicle,
+            min_cost,
+            new_stoplist,
+            (
+                pickup_timewindow_min,
+                pickup_timewindow_max,
+                dropoff_timewindow_min,
+                dropoff_timewindow_max,
+            ),
+        ) = min(all_solutions, key=op.itemgetter(1))
 
         if min_cost == np.inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
@@ -119,17 +129,16 @@ class FleetState(ABC):
                 timestamp=time(),
                 origin=req.origin,
                 destination=req.destination,
-                pickup_timewindow_min=...,
-                pickup_timewindow_max=...,
-                delivery_timewindow_min=...,
-                delivery_timewindow_max=...,
+                pickup_timewindow_min=pickup_timewindow_min,
+                pickup_timewindow_max=pickup_timewindow_max,
+                delivery_timewindow_min=dropoff_timewindow_min,
+                delivery_timewindow_max=dropoff_timewindow_max,
             )
 
     def simulate(self, requests: Iterator[Request]) -> Iterator[Tuple[float, Event]]:
         """
         Parameters
         ----------
-        initial_fleet_state
         requests
 
         Returns
@@ -148,7 +157,12 @@ class FleetState(ABC):
             yield from self.fast_forward(t)
 
             # handle the current request
-            yield self.handle_transportation_request(request)
+            if isinstance(request, TransportationRequest):
+                yield self.handle_transportation_request(request)
+            elif isinstance(request, InternalRequest):
+                yield self.handle_internal_request(request)
+            else:
+                raise NotImplementedError(f"Unknown request type: {type(request)}")
 
 
 class SlowSimpleFleetState(FleetState):

@@ -84,14 +84,14 @@ class RandomRequestGenerator:
             destination=self.transport_space.random_point(),
             pickup_timewindow_min=self.now + self.pickup_timewindow_start
             if self.pickup_timewindow_start is not None
-            else None,
+            else 0,
             pickup_timewindow_max=self.now + self.pickup_timewindow_size
             if self.pickup_timewindow_size is not None
-            else None,
+            else np.inf,
             delivery_timewindow_min=self.now + self.dropoff_timewindow_start
             if self.dropoff_timewindow_start is not None
-            else None,
+            else 0,
             delivery_timewindow_max=self.now + self.dropoff_timewindow_size
             if self.dropoff_timewindow_size is not None
-            else None,
+            else np.inf,
         )

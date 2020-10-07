@@ -134,7 +134,7 @@ class VehicleState:
             else np.inf
         )
         EAST_do = EAST_pu
-        LAST_do = None
+        LAST_do = np.inf
 
         cost = CPAT_do
 
@@ -159,4 +159,4 @@ class VehicleState:
             ),
         ]
         ##############################
-        return self.vehicle_id, cost, stoplist
+        return self.vehicle_id, cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
