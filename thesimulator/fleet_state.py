@@ -23,6 +23,7 @@ from .data_structures import (
     TransportSpace,
     SingleVehicleSolution,
 )
+from .utils import TransportSpace
 from .vehicle_state import VehicleState
 
 
