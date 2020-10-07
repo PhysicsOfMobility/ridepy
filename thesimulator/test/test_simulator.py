@@ -1,14 +1,18 @@
+import pytest
+
+import itertools as it
+import collections as cl
+import operator as op
+import numpy as np
+
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
+    PickupEvent,
 )
 from thesimulator.utils import RandomRequestGenerator, Euclidean
-import itertools as it
-import operator as op
-import collections as cl
-import pytest
 
 
 def test_random_request_generator():
@@ -33,15 +37,15 @@ def initial_stoplists():
     return {
         vehicle_id: [
             Stop(
-                location=0,
+                location=(0, 0),
                 vehicle_id=vehicle_id,
                 request=InternalRequest(
-                    request_id="CPE", creation_timestamp=0, location=None
+                    request_id="CPE", creation_timestamp=0, location=(0, 0)
                 ),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
-                time_window_min=None,
-                time_window_max=None,
+                time_window_min=0,
+                time_window_max=np.inf,
             )
         ]
         for vehicle_id in range(10)
@@ -49,11 +53,12 @@ def initial_stoplists():
 
 
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator()
+    rg = RandomRequestGenerator(rate=1)
     reqs = list(it.islice(rg, 100))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs))
-    print("\n".join(map(str, events)))
+    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
+    # print("\n".join(map(str, events)))
 
 
 def test_mpi_futures_fleet_state_simulate(initial_stoplists):
