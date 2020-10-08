@@ -54,7 +54,7 @@ def initial_stoplists():
 
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator(rate=1)
-    reqs = list(it.islice(rg, 100))
+    reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
@@ -63,6 +63,6 @@ def test_slow_simple_fleet_state_simulate(initial_stoplists):
 
 def test_mpi_futures_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator()
-    reqs = list(it.islice(rg, 100))
+    reqs = list(it.islice(rg, 1000))
     fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     cl.deque(fs.simulate(reqs), maxlen=0)
