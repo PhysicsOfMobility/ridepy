@@ -35,7 +35,12 @@ def test_random_request_generator():
 
 @pytest.fixture
 def initial_stoplists(request):
-    n_buses = request.node.get_closest_marker("n_buses").args[0]
+    n_buses = (
+        request.node.get_closest_marker("n_buses").args[0]
+        if request.node.get_closest_marker("n_buses") is not None
+        else 10
+    )
+
     return {
         vehicle_id: [
             Stop(
@@ -65,7 +70,9 @@ def test_slow_simple_fleet_state_simulate(initial_stoplists):
 
 
 def test_mpi_futures_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator()
+    rg = RandomRequestGenerator(rate=10)
     reqs = list(it.islice(rg, 1000))
     fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
-    cl.deque(fs.simulate(reqs), maxlen=0)
+    events = list(fs.simulate(reqs, t_cutoff=20))
+    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
+    # print("\n".join(map(str, events)))
