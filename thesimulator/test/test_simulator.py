@@ -12,7 +12,8 @@ from thesimulator.data_structures import (
     StopAction,
     PickupEvent,
 )
-from thesimulator.utils import RandomRequestGenerator, Euclidean
+from thesimulator.util.request_generators import RandomRequestGenerator
+from thesimulator.util.spaces import Euclidean
 
 
 def test_random_request_generator():
