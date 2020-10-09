@@ -40,11 +40,13 @@ class VehicleState:
 
     @stoplist.setter
     def stoplist(self, stoplist: Stoplist):
-        # TODO possibly updated the CPATs here (i.e. travel time computation, or using the sub/superdiagonal
-        #  [depending of the definition] of the [updated] distance matrix)
-        # for i, stop in enumerate(stoplist):
-        #     stop.cpat = D[i, i + 1]
-        stoplist = sorted(stoplist, key=op.attrgetter("estimated_arrival_time"))
+        # update CPATs
+        for stop_i, stop_j in zip(stoplist, stoplist[1:]):
+            stop_j.estimated_arrival_time = (
+                stop_i.estimated_arrival_time
+                + self.space.t(stop_i.location, stop_j.location)
+            )
+
         self._stoplist = stoplist
 
     def __init__(
@@ -68,23 +70,22 @@ class VehicleState:
         self.space = space
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
-        # TODO update CPE
-        # TODO assert that the CPATs  are updated and the stops sorted accordingly
+        # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
 
-        # TODO update CPE location
-        self.stoplist[0].estimated_arrival_time = t
-        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
-            stop_j.estimated_arrival_time = (
-                stop_i.estimated_arrival_time
-                + self.space.d(stop_i.location, stop_j.location)
-            )
-
         event_cache = []
+
+        last_stop = None
+
+        # drop all non-future stops from the stoplist, except for the (outdated) CPE
         for i in range(len(self.stoplist) - 1, 0, -1):
             stop = self.stoplist[i]
             # service the stop at its estimated arrival time
             if stop.estimated_arrival_time <= t:
+                # as we are iterating backwards, the first stop iterated over is the last one serviced
+                if last_stop is None:
+                    last_stop = stop
+
                 event_cache.append(
                     {
                         StopAction.pickup: PickupEvent,
@@ -96,8 +97,28 @@ class VehicleState:
                         timestamp=stop.estimated_arrival_time,
                     )
                 )
+
                 # TODO I stand confused. Why does `del stop` not work?
                 del self.stoplist[i]
+
+        # fix event cache order
+        event_cache = event_cache[::-1]
+
+        # if no stop was serviced, the last stop is the outdated CPE
+        if last_stop is None:
+            last_stop = self.stoplist[0]
+
+        last_location = last_stop.location
+        next_location = self.stoplist[1].location
+        time_to_dest = self.stoplist[1].estimated_arrival_time - t
+
+        # set CPE time to current time
+        self.stoplist[0].estimated_arrival_time = t
+
+        # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
+        self.stoplist[0].location = self.space.interp_time(
+            last_location, next_location, time_to_dest
+        )
 
         return event_cache
 
@@ -118,7 +139,6 @@ class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        # TODO should this call fast_forward_time? (<---??)
 
         ##############################
         # TODO this be outsourced(!)
