@@ -225,7 +225,7 @@ def taxicab_dispatcher(
 ) -> Tuple[ID, float, Stoplist, Tuple[float, float, float, float]]:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
-    by simply appending the necessary stops to the existing stoplist
+    by simply appending the necessary stops to the existing stoplist.
 
     Parameters
     ----------
@@ -243,7 +243,6 @@ def taxicab_dispatcher(
 
 
     """
-    # -- SIMPLE TAXICAB-STYLE INSERTION --
     CPAT_pu = (
         max(
             stoplist[-1].estimated_arrival_time,
