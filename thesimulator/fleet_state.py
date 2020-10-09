@@ -125,9 +125,9 @@ class FleetState(ABC):
             # modify the best vehicle's stoplist
             # print(f"len of new stoplist={len(new_stoplist)}")
             self.fleet[best_vehicle].stoplist = new_stoplist
-            # print(
-            #     f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
-            # )
+            print(
+                f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
+            )
             return RequestAcceptanceEvent(
                 request_id=req,
                 timestamp=time(),
@@ -139,17 +139,27 @@ class FleetState(ABC):
                 delivery_timewindow_max=dropoff_timewindow_max,
             )
 
-    def simulate(self, requests: Iterator[Request]) -> Iterator[Tuple[float, Event]]:
+    def simulate(
+        self, requests: Iterator[Request], t_cutoff: float = np.inf
+    ) -> Iterator[Event]:
         """
+        Perform a simulation.
+
         Parameters
         ----------
         requests
+            iterator that supplies incoming requests
+        t_cutoff
+            optional cutoff time after which the simulation is forcefully ended,
+            disregarding any remaining stops or requests.
 
         Returns
         -------
-
+        events
+            Iterator of events that have been emitted during the simulation.
+            Because of lazy evaluation the returned iterator *must* be exhausted
+            for the simulation to be actually be performed.
         """
-        t = 0.0  # set internal clock to 0
 
         for request in requests:
             req_epoch = request.creation_timestamp
@@ -167,6 +177,20 @@ class FleetState(ABC):
                 yield self.handle_internal_request(request)
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
+
+            if t >= t_cutoff:
+                return
+
+        # service all remaining stops
+        yield from self.fast_forward(
+            min(
+                t_cutoff,
+                max(
+                    vehicle.stoplist[-1].estimated_arrival_time
+                    for vehicle in self.fleet.values()
+                ),
+            )
+        )
 
 
 class SlowSimpleFleetState(FleetState):
