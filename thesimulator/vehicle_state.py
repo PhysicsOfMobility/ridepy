@@ -14,8 +14,9 @@ from .data_structures import (
     InternalStopEvent,
     Stop,
     TransportationRequest,
+    TransportSpace,
 )
-from .utils import TransportSpace, taxicab_dispatcher
+from .util.dispatchers import taxicab_dispatcher
 
 
 class VehicleState:

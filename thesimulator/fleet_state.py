@@ -20,8 +20,8 @@ from .data_structures import (
     StopEvent,
     TransportationRequest,
     InternalRequest,
+    TransportSpace,
 )
-from .utils import TransportSpace
 from .vehicle_state import VehicleState
 
 

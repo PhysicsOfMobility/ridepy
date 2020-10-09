@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
 from typing import Any, Union, Tuple, List
@@ -139,3 +140,103 @@ SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, f
 """vehicle_id, cost, new_stop_list"""
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
 StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+
+
+class TransportSpace(ABC):
+    @abstractmethod
+    def d(self, u, v) -> Union[int, float]:
+        """
+        Return distance between points `u` and `v`.
+
+        Parameters
+        ----------
+        u
+            origin coordinate
+        v
+            destination coordinate
+
+        Returns
+        -------
+        d
+            distance
+        """
+        ...
+
+    @abstractmethod
+    def t(self, u, v) -> Union[int, float]:
+        """
+        Return travel time between points `u` and `v`.
+
+        Parameters
+        ----------
+        u
+            origin coordinate
+        v
+            destination coordinate
+
+        Returns
+        -------
+        d
+            travel time
+        """
+
+        ...
+
+    @abstractmethod
+    def random_point(self):
+        """
+        Return a random point on the space.
+
+        Returns
+        -------
+            random point
+        """
+        ...
+
+    @abstractmethod
+    def interp_time(self, u, v, time_to_dest):
+        """
+        Interpolate a location `x` between the origin `u` and the destination `v`
+        as a function of the travel time between the unknown
+        location and the destination `t(x, v) == time_to_dest`.
+
+        Parameters
+        ----------
+        u
+            origin coordinate
+        v
+            destination coordinate
+
+        time_to_dest
+            travel time from the unknown location `x` to the destination `v`
+
+        Returns
+        -------
+        x
+            interpolated coordinate of the unknown location `x`
+        """
+        ...
+
+    @abstractmethod
+    def interp_dist(self, origin, destination, dist_to_dest):
+        """
+        Interpolate a location `x` between the origin `u` and the destination `v`
+        as a function of the distance between the unknown
+        location and the destination `d(x, v) == dist_to_dest`.
+
+        Parameters
+        ----------
+        u
+            origin coordinate
+        v
+            destination coordinate
+
+        dist_to_dest
+            distance from the unknown location `x` to the destination `v`
+
+        Returns
+        -------
+        x
+            interpolated coordinate of the unknown location `x`
+        """
+        ...
