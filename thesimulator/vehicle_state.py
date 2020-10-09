@@ -15,7 +15,7 @@ from .data_structures import (
     Stop,
     TransportationRequest,
 )
-from .utils import TransportSpace
+from .utils import TransportSpace, taxicab_dispatcher
 
 
 class VehicleState:
@@ -70,6 +70,20 @@ class VehicleState:
         self.space = space
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
+        """
+        Update the vehicle_state to the simulator time `t`.
+
+        Parameters
+        ----------
+        t
+            time to be updated to
+
+        Returns
+        -------
+        events
+            List of stop events emitted through servicing stops
+        """
+
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
 
@@ -108,22 +122,20 @@ class VehicleState:
         if last_stop is None:
             last_stop = self.stoplist[0]
 
-        last_location = last_stop.location
-        next_location = self.stoplist[1].location
-        time_to_dest = self.stoplist[1].estimated_arrival_time - t
-
         # set CPE time to current time
         self.stoplist[0].estimated_arrival_time = t
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         self.stoplist[0].location = self.space.interp_time(
-            last_location, next_location, time_to_dest
+            u=last_stop.location,
+            v=self.stoplist[1].location,
+            time_to_dest=self.stoplist[1].estimated_arrival_time - t,
         )
 
         return event_cache
 
     def handle_transportation_request_single_vehicle(
-        self, req: TransportationRequest
+        self, request: TransportationRequest
     ) -> SingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could do the following:
@@ -133,57 +145,16 @@ class VehicleState:
 
         Parameters
         ----------
-        req
+        request
 
         Returns
         -------
         This returns the single best solution for the respective vehicle.
         """
 
-        ##############################
-        # TODO this be outsourced(!)
-
-        # -- SIMPLE TAXICAB-STYLE INSERTION --
-        CPAT_pu = (
-            max(
-                self.stoplist[-1].estimated_arrival_time,
-                self.stoplist[-1].time_window_min
-                if self.stoplist[-1].time_window_min is not None
-                else 0,
-            )
-            + self.space.d(self.stoplist[-1].location, req.origin)
+        return taxicab_dispatcher(
+            vehicle_id=self.vehicle_id,
+            request=request,
+            stoplist=self.stoplist,
+            space=self.space,
         )
-        # print(self.vehicle_id, CPAT_pu)
-        CPAT_do = CPAT_pu + self.space.d(req.origin, req.destination)
-        EAST_pu = req.pickup_timewindow_min
-        LAST_pu = (
-            CPAT_pu + req.delivery_timewindow_max
-            if req.delivery_timewindow_max is not None
-            else np.inf
-        )
-        EAST_do = EAST_pu
-        LAST_do = np.inf
-
-        cost = CPAT_do
-        stoplist = self.stoplist + [
-            Stop(
-                location=req.origin,
-                vehicle_id=self.vehicle_id,
-                request=req,
-                action=StopAction.pickup,
-                estimated_arrival_time=CPAT_pu,
-                time_window_min=EAST_pu,
-                time_window_max=LAST_pu,
-            ),
-            Stop(
-                location=req.destination,
-                vehicle_id=self.vehicle_id,
-                request=req,
-                action=StopAction.dropoff,
-                estimated_arrival_time=CPAT_do,
-                time_window_min=EAST_do,
-                time_window_max=LAST_do,
-            ),
-        ]
-        ##############################
-        return self.vehicle_id, cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)

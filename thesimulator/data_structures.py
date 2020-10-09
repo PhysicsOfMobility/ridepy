@@ -2,6 +2,8 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Any, Union, Tuple, List
 
+ID = Union[str, int]
+
 
 @dataclass
 class Request:
@@ -9,7 +11,7 @@ class Request:
     A request for the system to perform a task
     """
 
-    request_id: Union[str, int]
+    request_id: ID
     creation_timestamp: float
 
 
@@ -62,7 +64,7 @@ class Stop:
     """
 
     location: Any
-    vehicle_id: Any
+    vehicle_id: ID
     request: Request
     action: StopAction
     estimated_arrival_time: float
@@ -77,7 +79,7 @@ class RequestAcceptanceEvent:
     the returned spatio-temporal constraints.
     """
 
-    request_id: Any
+    request_id: ID
     timestamp: float
     origin: Any
     destination: Any
@@ -93,7 +95,7 @@ class RequestRejectionEvent:
     Inability of the system to fulfil a request.
     """
 
-    request_id: Any
+    request_id: ID
     timestamp: float
 
 
@@ -103,9 +105,9 @@ class PickupEvent:
     Successful pick-up action
     """
 
-    request_id: Any
+    request_id: ID
     timestamp: float
-    vehicle_id: Any
+    vehicle_id: ID
 
 
 @dataclass
@@ -114,9 +116,9 @@ class DeliveryEvent:
     Successful drop-off action
     """
 
-    request_id: Any
+    request_id: ID
     timestamp: float
-    vehicle_id: Any
+    vehicle_id: ID
 
 
 @dataclass
@@ -125,9 +127,9 @@ class InternalStopEvent:
     Successful internal action
     """
 
-    request_id: Any
+    request_id: ID
     timestamp: float
-    vehicle_id: Any
+    vehicle_id: ID
 
 
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
