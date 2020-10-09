@@ -34,7 +34,8 @@ def test_random_request_generator():
 
 
 @pytest.fixture
-def initial_stoplists():
+def initial_stoplists(request):
+    n_buses = request.node.get_closest_marker("n_buses").args[0]
     return {
         vehicle_id: [
             Stop(
@@ -49,10 +50,11 @@ def initial_stoplists():
                 time_window_max=np.inf,
             )
         ]
-        for vehicle_id in range(3)
+        for vehicle_id in range(n_buses)
     }
 
 
+@pytest.mark.n_buses(10)
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator(rate=10)
     reqs = list(it.islice(rg, 1000))
