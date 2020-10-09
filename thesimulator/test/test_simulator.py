@@ -48,15 +48,15 @@ def initial_stoplists():
                 time_window_max=np.inf,
             )
         ]
-        for vehicle_id in range(10)
+        for vehicle_id in range(3)
     }
 
 
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator(rate=1)
+    rg = RandomRequestGenerator(rate=10)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
-    events = list(fs.simulate(reqs))
+    events = list(fs.simulate(reqs, t_cutoff=20))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
 
