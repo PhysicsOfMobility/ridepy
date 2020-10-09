@@ -5,7 +5,7 @@ import numpy as np
 import scipy.spatial.distance as spd
 
 from enum import Enum, auto
-from typing import Union, Iterable, Tuple, Sized
+from typing import Union, Iterable, Tuple, List
 from abc import ABC, abstractmethod
 
 from .data_structures import TransportationRequest, Stop, StopAction, ID, Stoplist
@@ -119,7 +119,7 @@ class Euclidean(TransportSpace):
     def __init__(
         self,
         n_dimensions: int = 1,
-        coord_range: Sized[Tuple[Union[int, float], Union[int, float]]] = None,
+        coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
         velocity: float = 1,
     ):
         """

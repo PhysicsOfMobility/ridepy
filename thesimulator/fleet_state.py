@@ -180,7 +180,8 @@ class SlowSimpleFleetState(FleetState):
             req,
             map(
                 ft.partial(
-                    VehicleState.handle_transportation_request_single_vehicle, req=req
+                    VehicleState.handle_transportation_request_single_vehicle,
+                    request=req,
                 ),
                 self.fleet.values(),
             ),
@@ -210,7 +211,7 @@ class MPIFuturesFleetState(FleetState):
                     executor.map(
                         ft.partial(
                             VehicleState.handle_transportation_request_single_vehicle,
-                            req=req,
+                            request=req,
                         ),
                         self.fleet.values(),
                     ),
