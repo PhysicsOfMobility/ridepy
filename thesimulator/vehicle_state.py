@@ -70,14 +70,6 @@ class VehicleState:
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
 
-        # TODO update CPE location
-        self.stoplist[0].estimated_arrival_time = t
-        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
-            stop_j.estimated_arrival_time = (
-                stop_i.estimated_arrival_time
-                + self.space.d(stop_i.location, stop_j.location)
-            )
-
         event_cache = []
 
         last_stop = None
