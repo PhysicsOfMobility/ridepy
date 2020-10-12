@@ -15,6 +15,7 @@ from thesimulator.data_structures import (
     PickupEvent,
     StopEvent,
     DeliveryEvent,
+    TransportationRequest,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean
@@ -85,13 +86,35 @@ def test_mpi_futures_fleet_state_simulate(initial_stoplists):
 
 @pytest.mark.n_buses(10)
 def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
-    rg = RandomRequestGenerator(rate=1)
-    reqs = list(it.islice(rg, 10))
+    # rg = RandomRequestGenerator(rate=1)
+    reqs = [
+        TransportationRequest(
+            request_id=0,
+            creation_timestamp=0,
+            origin=0,
+            destination=1,
+            pickup_timewindow_min=0,
+            pickup_timewindow_max=np.inf,
+            delivery_timewindow_min=0,
+            delivery_timewindow_max=np.inf,
+        ),
+        TransportationRequest(
+            request_id=1,
+            creation_timestamp=0.1,
+            origin=0,
+            destination=1,
+            pickup_timewindow_min=0,
+            pickup_timewindow_max=np.inf,
+            delivery_timewindow_min=0,
+            delivery_timewindow_max=np.inf,
+        ),
+    ]
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs))
 
-    stop_events = list(
-        filter(lambda x: isinstance(x, (PickupEvent, DeliveryEvent)), events)
+    stop_events = sorted(
+        filter(lambda x: isinstance(x, (PickupEvent, DeliveryEvent)), events),
+        key=op.attrgetter("timestamp"),
     )
     vehicle_id_idxs = dict(
         zip(sorted(set(map(op.attrgetter("vehicle_id"), stop_events))), it.count(1))
