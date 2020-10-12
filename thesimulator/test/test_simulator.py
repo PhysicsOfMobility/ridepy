@@ -86,7 +86,7 @@ def test_mpi_futures_fleet_state_simulate(initial_stoplists):
 @pytest.mark.n_buses(10)
 def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
     rg = RandomRequestGenerator(rate=1)
-    reqs = list(it.islice(rg, 180))
+    reqs = list(it.islice(rg, 10))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs))
 
@@ -94,7 +94,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
         filter(lambda x: isinstance(x, (PickupEvent, DeliveryEvent)), events)
     )
     vehicle_id_idxs = dict(
-        zip(set(map(op.attrgetter("vehicle_id"), stop_events)), it.count(1))
+        zip(sorted(set(map(op.attrgetter("vehicle_id"), stop_events))), it.count(1))
     )
 
     output_list = [
@@ -106,27 +106,15 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
         row[0] = f"{event.timestamp:.2f}"
         row[
             vehicle_id_idxs[event.vehicle_id]
-        ] = f"{'pu' if isinstance(event, PickupEvent) else 'do'} {event.request_id}"  # f" {} {' '*int(max_r_c-event.request_id//10)}{event.request_id}"
+        ] = f"{'pu' if isinstance(event, PickupEvent) else 'do'} {event.request_id}"
 
-    print(tabulate(output_list, headers=["Name", "Age"], tablefmt="orgtbl"))
+    print(
+        tabulate(
+            output_list,
+            headers=["time", *map(lambda x: f"v {x}", vehicle_id_idxs)],
+            tablefmt="orgtbl",
+        )
+    )
 
-    #
-    # max_r_c = int(max(x.request_id for x in stop_events) // 10)
-    # max_t_c = int(max(x.timestamp for x in stop_events) // 10)
-    #
-    # print(
-    #     "|"
-    #     + " " * (max_t_c + 1)
-    #     + "t    "
-    #     + "|"
-    #     + "|".join(" v " + " "*(n_vehicles//10)+f"{n}" for n in range(n_vehicles))
-    #     + "|"
-    # )
-    # for event in stop_events:
-    #     ostring = (
-    #         f"| {' '*int(max_t_c-event.timestamp//10)}{event.timestamp:.2f} |"
-    #         + (" " * (max_r_c + 6) + "|") * event.vehicle_id
-    #         + f" {'pu' if isinstance(event, PickupEvent) else 'do'} {' '*int(max_r_c-event.request_id//10)}{event.request_id} |"
-    #         + (" " * (max_r_c + 6) + "|") * (n_vehicles - event.vehicle_id - 1)
-    #     )
-    #     print(ostring)
+
+#
