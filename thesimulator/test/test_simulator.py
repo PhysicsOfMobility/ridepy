@@ -107,6 +107,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
             vehicle_id_idxs[event.vehicle_id]
         ] = f"{'pu' if isinstance(event, PickupEvent) else 'do'} {event.request_id}"
 
+    print()
     print(
         tabulate(
             output_list,
