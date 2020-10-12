@@ -21,6 +21,7 @@ black = "19.10b0"
 ipython = "^7.16.1"
 pdbpp = "^0.10.2"
 pre-commit = "^2.7.1"
+tabulate = "^0.8.7"
 
 [build-system]
 requires = ["poetry==1.0.10"]

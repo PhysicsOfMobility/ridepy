@@ -107,7 +107,7 @@ class VehicleState:
                         StopAction.dropoff: DeliveryEvent,
                         StopAction.internal: InternalStopEvent,
                     }[stop.action](
-                        request_id=stop.request,
+                        request_id=stop.request.request_id,
                         vehicle_id=stop.vehicle_id,
                         timestamp=stop.estimated_arrival_time,
                     )
