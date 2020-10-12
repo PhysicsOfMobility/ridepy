@@ -21,6 +21,7 @@ from .data_structures import (
     TransportationRequest,
     InternalRequest,
     TransportSpace,
+    SingleVehicleSolution,
 )
 from .vehicle_state import VehicleState
 
@@ -55,6 +56,21 @@ class FleetState(ABC):
 
     @abstractmethod
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
+        """
+        Advance the simulator's state in time from the previous time `$t'$` to the new time `$t$`, with `$t >= t'$`.
+        E.g. vehicle locations may change and vehicle stops may be serviced.
+        The latter will emit `StopEvents` which are returned.
+
+        Parameters
+        ----------
+        t
+            Time to advance to.
+
+        Returns
+        -------
+        stop events
+            Iterator of stop events. May be empty if no stop is serviced.
+        """
         ...
 
     def handle_transportation_request(self, req: TransportationRequest) -> RequestEvent:
@@ -91,7 +107,9 @@ class FleetState(ABC):
         """
         ...
 
-    def _apply_request_solution(self, req, all_solutions: Iterable) -> RequestEvent:
+    def _apply_request_solution(
+        self, req, all_solutions: Iterable[SingleVehicleSolution]
+    ) -> RequestEvent:
         """
         Given a request and a bunch of solutions, pick the one with the minimum cost and apply it,
         thereby changing the stoplist of the chosen vehicle and emitting an RequestAcceptanceEvent.
