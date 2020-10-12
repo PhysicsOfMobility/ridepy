@@ -100,7 +100,6 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
     output_list = [
         [None for _ in range(len(vehicle_id_idxs) + 1)] for _ in range(len(stop_events))
     ]
-    max_r_c = int(max(x.request_id for x in stop_events) // 10)
 
     for row, event in zip(output_list, stop_events):
         row[0] = f"{event.timestamp:.2f}"
