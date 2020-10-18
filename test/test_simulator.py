@@ -80,6 +80,7 @@ def test_mpi_futures_fleet_state_simulate(initial_stoplists):
     reqs = list(it.islice(rg, 1000))
     fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs, t_cutoff=20))
+    breakpoint()
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
 
