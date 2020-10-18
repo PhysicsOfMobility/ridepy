@@ -44,7 +44,7 @@ class VehicleState:
         # update CPATs
         for stop_i, stop_j in zip(stoplist, stoplist[1:]):
             stop_j.estimated_arrival_time = (
-                stop_i.estimated_arrival_time
+                max(stop_i.estimated_arrival_time, stop_i.time_window_min)
                 + self.space.t(stop_i.location, stop_j.location)
             )
 
@@ -109,7 +109,7 @@ class VehicleState:
                     }[stop.action](
                         request_id=stop.request.request_id,
                         vehicle_id=stop.vehicle_id,
-                        timestamp=stop.estimated_arrival_time,
+                        timestamp=max(stop.estimated_arrival_time, stop.time_window_min),
                     )
                 )
 
