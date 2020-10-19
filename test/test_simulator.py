@@ -45,13 +45,17 @@ def initial_stoplists(request):
         if request.node.get_closest_marker("n_buses") is not None
         else 10
     )
-
+    initial_location = (
+        request.node.get_closest_marker("initial_location").args[0]
+        if request.node.get_closest_marker("initial_location") is not None
+        else 0
+    )
     return {
         vehicle_id: [
             Stop(
-                location=(0, 0),
+                location=initial_location,
                 request=InternalRequest(
-                    request_id="CPE", creation_timestamp=0, location=(0, 0)
+                    request_id="CPE", creation_timestamp=0, location=initial_location
                 ),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
@@ -150,6 +154,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
 
 
 @pytest.mark.n_buses(10)
+@pytest.mark.initial_location(0)
 def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
     """
     Tests that in a low request frequency regime, all requests are picked up
@@ -192,6 +197,7 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
 
 
 @pytest.mark.n_buses(1)
+@pytest.mark.initial_location(0)
 def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
     """
     Tests that in a high request frequency regime, all requests arrive simultaneously,
