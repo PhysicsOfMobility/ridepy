@@ -1,19 +1,27 @@
 import functools as ft
+import itertools as it
 import operator as op
 import numpy as np
 
+
 from abc import ABC, abstractmethod
 from time import time
-from typing import Dict, SupportsFloat, Iterator, List
+from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
-from .utils import (
+from .data_structures import (
     Stoplist,
     Request,
     Event,
     RequestRejectionEvent,
     RequestAcceptanceEvent,
+    RequestEvent,
+    StopEvent,
+    TransportationRequest,
+    InternalRequest,
+    TransportSpace,
+    SingleVehicleSolution,
 )
 from .vehicle_state import VehicleState
 
@@ -29,19 +37,43 @@ class FleetState(ABC):
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
 
-    def __init__(self, initial_stoplists: Dict[int, Stoplist]):
-        # note here that in the current design the vehicle ID is unknown to the vehicle
+    def __init__(self, initial_stoplists: Dict[int, Stoplist], space: TransportSpace):
+        """
+        Parameters
+        ----------
+        initial_stoplists:
+            Dictionary with vehicle ids as keys and initial stoplists as values.
+            The initial stoplists *must* contain current position element (CPE) stops as their first entry.
+        """
+
+        self.space = space
         self.fleet: Dict[int, VehicleState] = {
-            vehicle_id: VehicleState(stoplist)
+            vehicle_id: VehicleState(
+                vehicle_id=vehicle_id, initial_stoplist=stoplist, space=self.space
+            )
             for vehicle_id, stoplist in initial_stoplists.items()
         }
 
     @abstractmethod
-    def fast_forward(self, t: SupportsFloat):
+    def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
+        """
+        Advance the simulator's state in time from the previous time `$t'$` to the new time `$t$`, with `$t >= t'$`.
+        E.g. vehicle locations may change and vehicle stops may be serviced.
+        The latter will emit `StopEvents` which are returned.
+
+        Parameters
+        ----------
+        t
+            Time to advance to.
+
+        Returns
+        -------
+        stop events
+            Iterator of stop events. May be empty if no stop is serviced.
+        """
         ...
 
-    @abstractmethod
-    def handle_request(self, req: Request):
+    def handle_transportation_request(self, req: TransportationRequest) -> RequestEvent:
         """
         Handle a request by mapping the request and the fleet state onto a request response,
         modifying the fleet state in-place.
@@ -52,7 +84,22 @@ class FleetState(ABC):
         Parameters
         ----------
         req
-        fleet_state
+            request to handle
+
+        Returns
+        -------
+        event
+
+        """
+        ...
+
+    @abstractmethod
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        """
+
+        Parameters
+        ----------
+        req
 
         Returns
         -------
@@ -60,85 +107,157 @@ class FleetState(ABC):
         """
         ...
 
-    def simulate(self, requests: Iterator[Request]) -> List[Event]:
+    def _apply_request_solution(
+        self, req, all_solutions: Iterable[SingleVehicleSolution]
+    ) -> RequestEvent:
         """
-        TODO this should probably modify something in-place, instead of returning a list of events
-
-        Parameters
-        ----------
-        initial_fleet_state
-        requests
-
-        Returns
-        -------
-
-        """
-        t = 0  # set internal clock to 0
-
-        for request in requests:
-            req_epoch = request.creation_timestamp
-            # advance clock to req_epoch
-            t = req_epoch
-            # Visit all the stops upto req_epoch
-            self.fast_forward(t)
-            # handle the current request
-            yield self.handle_request(request)
-
-
-class SlowSimpleFleetState(FleetState):
-    def fast_forward(self, t: SupportsFloat):
-        for vehicle_id, vehicle_state in self.fleet.items():
-            vehicle_state.fast_forward_time(t)
-
-    def handle_request(self, req: Request):
-        """
-        Handle a request by mapping the request and the fleet state onto a request response,
-        modifying the fleet state in-place.
+        Given a request and a bunch of solutions, pick the one with the minimum cost and apply it,
+        thereby changing the stoplist of the chosen vehicle and emitting an RequestAcceptanceEvent.
+        If the minimum cost is infinite, RequestRejectionEvent is returned.
 
         Parameters
         ----------
         req
-        fleet_state
+        all_solutions
 
         Returns
         -------
 
         """
-        all_solutions = map(
-            ft.partial(VehicleState.handle_request_single_vehicle, req=req),
-            self.fleet.values(),
-        )
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
-
+        # breakpoint()
+        (
+            best_vehicle,
+            min_cost,
+            new_stoplist,
+            (
+                pickup_timewindow_min,
+                pickup_timewindow_max,
+                dropoff_timewindow_min,
+                dropoff_timewindow_max,
+            ),
+        ) = min(all_solutions, key=op.itemgetter(1))
+        # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
         if min_cost == np.inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
         else:
-            # TODO: modify the best vehicle's stoplist
+            # modify the best vehicle's stoplist
+            # print(f"len of new stoplist={len(new_stoplist)}")
             self.fleet[best_vehicle].stoplist = new_stoplist
-            return RequestAcceptanceEvent(...)
+            # print(
+            #     f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
+            # )
+            return RequestAcceptanceEvent(
+                request_id=req,
+                timestamp=time(),
+                origin=req.origin,
+                destination=req.destination,
+                pickup_timewindow_min=pickup_timewindow_min,
+                pickup_timewindow_max=pickup_timewindow_max,
+                delivery_timewindow_min=dropoff_timewindow_min,
+                delivery_timewindow_max=dropoff_timewindow_max,
+            )
+
+    def simulate(
+        self, requests: Iterator[Request], t_cutoff: float = np.inf
+    ) -> Iterator[Event]:
+        """
+        Perform a simulation.
+
+        Parameters
+        ----------
+        requests
+            iterator that supplies incoming requests
+        t_cutoff
+            optional cutoff time after which the simulation is forcefully ended,
+            disregarding any remaining stops or requests.
+
+        Returns
+        -------
+        events
+            Iterator of events that have been emitted during the simulation.
+            Because of lazy evaluation the returned iterator *must* be exhausted
+            for the simulation to be actually be performed.
+        """
+
+        for request in requests:
+            req_epoch = request.creation_timestamp
+
+            # advance clock to req_epoch
+            t = req_epoch
+
+            # Visit all the stops upto req_epoch
+            yield from self.fast_forward(t)
+
+            # handle the current request
+            if isinstance(request, TransportationRequest):
+                yield self.handle_transportation_request(request)
+            elif isinstance(request, InternalRequest):
+                yield self.handle_internal_request(request)
+            else:
+                raise NotImplementedError(f"Unknown request type: {type(request)}")
+
+            if t >= t_cutoff:
+                return
+
+        # service all remaining stops
+        yield from self.fast_forward(
+            min(
+                t_cutoff,
+                max(
+                    vehicle.stoplist[-1].estimated_arrival_time
+                    for vehicle in self.fleet.values()
+                ),
+            )
+        )
+
+
+class SlowSimpleFleetState(FleetState):
+    def fast_forward(self, t: float):
+        return it.chain.from_iterable(
+            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        )
+
+    def handle_transportation_request(self, req: TransportationRequest):
+        return self._apply_request_solution(
+            req,
+            map(
+                ft.partial(
+                    VehicleState.handle_transportation_request_single_vehicle,
+                    request=req,
+                ),
+                self.fleet.values(),
+            ),
+        )
+
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        ...
 
 
 class MPIFuturesFleetState(FleetState):
-    def fast_forward(self, t: SupportsFloat):
+    def fast_forward(self, t: float):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
-                res = executor.map(
-                    ft.partial(VehicleState.fast_forward_time, t=t),
-                    self.fleet.values(),
+                return it.chain.from_iterable(
+                    executor.map(
+                        ft.partial(VehicleState.fast_forward_time, t=t),
+                        self.fleet.values(),
+                    )
                 )
 
-    def handle_request(self, req: Request):
+    def handle_transportation_request(self, req: TransportationRequest):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
+            # TODO: what happens if executor is not there?
             if executor is not None:
-                all_solutions = executor.map(
-                    ft.partial(VehicleState.handle_request_single_vehicle, req=req),
-                    self.fleet.values(),
+                return self._apply_request_solution(
+                    req,
+                    executor.map(
+                        ft.partial(
+                            VehicleState.handle_transportation_request_single_vehicle,
+                            request=req,
+                        ),
+                        self.fleet.values(),
+                    ),
                 )
-        best_vehicle, min_cost, new_stoplist = min(all_solutions, key=op.itemgetter(1))
 
-        if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
-        else:
-            # TODO: modify the best vehicle's stoplist
-            self.fleet[best_vehicle].stoplist = new_stoplist
-            return RequestAcceptanceEvent(...)
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        ...

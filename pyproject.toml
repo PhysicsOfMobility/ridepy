@@ -13,21 +13,18 @@ readme="README.md"
 python = "^3.8"
 numpy = "^1.19.1"
 mpi4py = "^3.0.3"
+scipy = "^1.5.2"
+wheel = "^0.35.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
-black = "19.10b0"
+black = ">= 19.10b0"
 ipython = "^7.16.1"
 pdbpp = "^0.10.2"
+pre-commit = "^2.7.1"
+tabulate = "^0.8.7"
+commitizen = "^2.4.1"
 
-[build-system]
-requires = ["poetry==1.0.10"]
-build-backend = "poetry.masonry.api"
-
-# NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
-# character.
 [tool.black]
 line-length = 88
 target-version = ['py38']
@@ -46,3 +43,11 @@ exclude = '''
   | dist
 )/
 '''
+[build-system]
+requires = ["poetry==1.0.10"]
+build-backend = "poetry.masonry.api"
+
+# NOTE: you have to use single-quoted strings in TOML for regular expressions.
+# It's the equivalent of r-strings in Python.  Multiline strings are treated as
+# verbose regular expressions by Black.  Use [ ] to denote a significant space
+# character.
