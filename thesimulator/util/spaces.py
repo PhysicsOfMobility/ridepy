@@ -127,18 +127,16 @@ class Graph(TransportSpace):
         return self.d(u, v) / self.velocity
 
     def interp_dist(self, u, v, dist_to_dest):
-        # remaining time: go backward from destination vertex
-        # breakpoint()
-        parent_distance = self.d(u, v)
-
+        dist_w_to_dest = self.d(u, v)
         w = v
+
         while w is not u:
             w = self._predecessors[u][w]
-            parent_distance = self.d(w, v)
-            if parent_distance >= dist_to_dest:
+            dist_w_to_dest = self.d(w, v)
+            if dist_w_to_dest >= dist_to_dest:
                 break
 
-        if parent_distance > dist_to_dest:
+        if dist_w_to_dest > dist_to_dest:
             # we are between parent vertex and v vertex
             return w
         else:
