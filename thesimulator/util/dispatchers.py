@@ -44,8 +44,8 @@ def taxicab_dispatcher(
         )
         + space.d(stoplist[-1].location, request.origin)
     )
-    CPAT_do = CPAT_pu + space.d(request.origin, request.destination)
     EAST_pu = request.pickup_timewindow_min
+    CPAT_do = max(EAST_pu, CPAT_pu) + space.d(request.origin, request.destination)
     LAST_pu = (
         CPAT_pu + request.delivery_timewindow_max
         if request.delivery_timewindow_max is not None
@@ -73,5 +73,4 @@ def taxicab_dispatcher(
             time_window_max=LAST_do,
         ),
     ]
-
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
