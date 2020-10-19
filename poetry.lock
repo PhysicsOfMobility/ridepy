@@ -116,7 +116,7 @@ python-versions = ">=3.6"
 name = "decorator"
 version = "4.4.2"
 description = "Decorators for Humans"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "4.4.2"
@@ -626,7 +626,7 @@ version = "0.3"
 content-hash = "e66b2f80f1168bec31bbd864dddf957785390fa0f742bacfef0fae3ebf834af8"
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5b62957be56824340f16b9d8b4d583a3343210e3fe4ac75169dda204216544fd"
+content-hash = "1a88e6f3d855d22ddbb419922afe4f25f366ad488c2d6ccb81a5d1ad8b62add8"
 
 [metadata.files]
 appdirs = [
