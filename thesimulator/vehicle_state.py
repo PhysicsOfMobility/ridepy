@@ -140,9 +140,6 @@ class VehicleState:
         This returns the single best solution for the respective vehicle.
         """
 
-        return (
-            self.vehicle_id,
-            *taxicab_dispatcher(
-                request=request, stoplist=self.stoplist, space=self.space
-            ),
+        return self.vehicle_id, *taxicab_dispatcher(
+            request=request, stoplist=self.stoplist, space=self.space
         )
