@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
-from typing import Any, Union, Tuple, List
+from typing import Any, Optional, Union, Tuple, List
 
 ID = Union[str, int]
 
@@ -26,10 +26,10 @@ class TransportationRequest(Request):
     origin: Any
     destination: Any
     # pickup_offset: float = 0
-    pickup_timewindow_min: Union[float, None]
-    pickup_timewindow_max: Union[float, None]
-    delivery_timewindow_min: Union[float, None]
-    delivery_timewindow_max: Union[float, None]
+    pickup_timewindow_min: Optional[float]
+    pickup_timewindow_max: Optional[float]
+    delivery_timewindow_min: Optional[float]
+    delivery_timewindow_max: Optional[float]
 
 
 @dataclass
@@ -69,8 +69,8 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
-    time_window_min: Union[None, float]
-    time_window_max: Union[None, float]
+    time_window_min: Optional[float]
+    time_window_max: Optional[float]
 
 
 @dataclass

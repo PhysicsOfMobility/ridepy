@@ -38,15 +38,10 @@ def taxicab_dispatcher(
 
 
     """
-    CPAT_pu = (
-        max(
-            stoplist[-1].estimated_arrival_time,
-            stoplist[-1].time_window_min
-            if stoplist[-1].time_window_min is not None
-            else 0,
-        )
-        + space.d(stoplist[-1].location, request.origin)
-    )
+    CPAT_pu = max(
+        stoplist[-1].estimated_arrival_time,
+        stoplist[-1].time_window_min if stoplist[-1].time_window_min is not None else 0,
+    ) + space.d(stoplist[-1].location, request.origin)
     # print(vehicle_id, CPAT_pu)
     CPAT_do = CPAT_pu + space.d(request.origin, request.destination)
     EAST_pu = request.pickup_timewindow_min
