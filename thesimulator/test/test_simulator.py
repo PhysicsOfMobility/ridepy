@@ -18,7 +18,7 @@ from thesimulator.data_structures import (
     TransportationRequest,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean
+from thesimulator.util.spaces import Euclidean, Euclidean1D, Euclidean2D, Graph
 
 
 def test_random_request_generator():
@@ -49,7 +49,7 @@ def initial_stoplists(request):
     return {
         vehicle_id: [
             Stop(
-                location=(0, 0),
+                location=0,
                 vehicle_id=vehicle_id,
                 request=InternalRequest(
                     request_id="CPE", creation_timestamp=0, location=(0, 0)
@@ -65,23 +65,39 @@ def initial_stoplists(request):
 
 
 @pytest.mark.n_buses(10)
-def test_slow_simple_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator(rate=10)
+def test_slow_simple_fleet_state_simulate_euclidean(initial_stoplists):
+    space = Euclidean1D()
+    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=space)
+    rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
-    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs, t_cutoff=20))
-    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
-    # print("\n".join(map(str, events)))
 
 
 @pytest.mark.n_buses(10)
-def test_mpi_futures_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator(rate=10)
+def test_mpi_futures_fleet_state_simulate_euclidean(initial_stoplists):
+    space = Euclidean1D()
+    fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean1D())
+    rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
-    fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs, t_cutoff=20))
-    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
-    # print("\n".join(map(str, events)))
+
+
+@pytest.mark.n_buses(10)
+def test_slow_simple_fleet_state_simulate_graph(initial_stoplists):
+    space = Graph()
+    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=space)
+    rg = RandomRequestGenerator(rate=10, transport_space=space)
+    reqs = list(it.islice(rg, 1000))
+    events = list(fs.simulate(reqs, t_cutoff=20))
+
+
+@pytest.mark.n_buses(10)
+def test_mpi_futures_fleet_state_simulate_graph(initial_stoplists):
+    space = Graph()
+    fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean1D())
+    rg = RandomRequestGenerator(rate=10, transport_space=space)
+    reqs = list(it.islice(rg, 1000))
+    events = list(fs.simulate(reqs, t_cutoff=20))
 
 
 @pytest.mark.n_buses(10)
@@ -119,7 +135,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
             delivery_timewindow_max=np.inf,
         ),
     ]
-    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
+    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean1D())
     events = list(fs.simulate(reqs))
 
     stop_events = sorted(
@@ -139,15 +155,3 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
         row[
             vehicle_id_idxs[event.vehicle_id]
         ] = f"{'pu' if isinstance(event, PickupEvent) else 'do'} {event.request_id}"
-
-    print()
-    print(
-        tabulate(
-            output_list,
-            headers=["time", *map(lambda x: f"v {x}", vehicle_id_idxs)],
-            tablefmt="orgtbl",
-        )
-    )
-
-
-#
