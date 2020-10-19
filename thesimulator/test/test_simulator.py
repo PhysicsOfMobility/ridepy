@@ -45,14 +45,18 @@ def initial_stoplists(request):
         if request.node.get_closest_marker("n_buses") is not None
         else 10
     )
-
+    initial_location = (
+        request.node.get_closest_marker("initial_location").args[0]
+        if request.node.get_closest_marker("initial_location") is not None
+        else 0
+    )
     return {
         vehicle_id: [
             Stop(
-                location=0,
+                location=initial_location,
                 vehicle_id=vehicle_id,
                 request=InternalRequest(
-                    request_id="CPE", creation_timestamp=0, location=(0, 0)
+                    request_id="CPE", creation_timestamp=0, location=initial_location
                 ),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
@@ -83,8 +87,9 @@ def test_mpi_futures_fleet_state_simulate_euclidean(initial_stoplists):
 
 
 @pytest.mark.n_buses(10)
+@pytest.mark.initial_location((0, 0))
 def test_slow_simple_fleet_state_simulate_graph(initial_stoplists):
-    space = Graph()
+    space = Graph.create_grid()
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=space)
     rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
@@ -92,9 +97,10 @@ def test_slow_simple_fleet_state_simulate_graph(initial_stoplists):
 
 
 @pytest.mark.n_buses(10)
+@pytest.mark.initial_location((0, 0))
 def test_mpi_futures_fleet_state_simulate_graph(initial_stoplists):
-    space = Graph()
-    fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=Euclidean1D())
+    space = Graph.create_grid()
+    fs = MPIFuturesFleetState(initial_stoplists=initial_stoplists, space=space)
     rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
     events = list(fs.simulate(reqs, t_cutoff=20))
