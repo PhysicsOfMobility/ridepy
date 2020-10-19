@@ -12,7 +12,7 @@ from thesimulator.data_structures import (
 )
 
 
-def taxicab_dispatcher(
+def taxicab_dispatcher_drive_first(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,

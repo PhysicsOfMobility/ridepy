@@ -215,16 +215,11 @@ def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
         for i in range(n_reqs)
     ]
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
-    events = list(fs.simulate(reqs))
+    events = sorted(fs.simulate(reqs), key=op.attrgetter("timestamp"))
 
-    pickup_events = sorted(
-        filter(lambda x: isinstance(x, PickupEvent), events),
-        key=op.attrgetter("timestamp"),
-    )
-    delivery_events = sorted(
-        filter(lambda x: isinstance(x, DeliveryEvent), events),
-        key=op.attrgetter("timestamp"),
-    )
+    pickup_events = [event for event in events if isinstance(event, PickupEvent)]
+    delivery_events = [event for event in events if isinstance(event, DeliveryEvent)]
+
     actual_req_pickup_times = {pu.request_id: pu.timestamp for pu in pickup_events}
     actual_req_delivery_times = {pu.request_id: pu.timestamp for pu in delivery_events}
 
