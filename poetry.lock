@@ -8,11 +8,21 @@ version = "1.4.4"
 
 [[package]]
 name = "appnope"
+version = "0.1.0"
+description = "Disable App Nap on OS X 10.9"
+category = "dev"
+description = "Disable App Nap on OS X 10.9"
+name = "appnope"
 optional = false
 python-versions = "*"
 version = "0.1.0"
 
 [[package]]
+name = "atomicwrites"
+version = "1.4.0"
+description = "Atomic file writes."
+category = "dev"
+description = "Atomic file writes."
 name = "atomicwrites"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -40,9 +50,6 @@ python-versions = "*"
 version = "0.2.0"
 
 [[package]]
-name = "black"
-version = "19.10b0"
-description = "The uncompromising code formatter."
 category = "dev"
 description = "The uncompromising code formatter."
 name = "black"
@@ -73,6 +80,11 @@ python-versions = ">=3.6.1"
 
 [[package]]
 name = "click"
+version = "7.1.2"
+description = "Composable command line interface toolkit"
+category = "dev"
+description = "Composable command line interface toolkit"
+name = "click"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "7.1.2"
@@ -82,6 +94,8 @@ name = "colorama"
 version = "0.4.3"
 description = "Cross-platform colored terminal text."
 category = "dev"
+description = "Cross-platform colored terminal text."
+name = "colorama"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -113,10 +127,9 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "decorator"
-version = "4.4.2"
-description = "Decorators for Humans"
 category = "main"
+description = "Decorators for Humans"
+name = "decorator"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "4.4.2"
@@ -130,6 +143,11 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "fancycompleter"
+version = "0.9.1"
+description = "colorful TAB completion for Python prompt"
+category = "dev"
+description = "colorful TAB completion for Python prompt"
 name = "fancycompleter"
 optional = false
 python-versions = "*"
@@ -163,6 +181,8 @@ name = "iniconfig"
 version = "1.0.1"
 description = "iniconfig: brain-dead simple config-ini parsing"
 category = "dev"
+description = "iniconfig: brain-dead simple config-ini parsing"
+name = "iniconfig"
 optional = false
 python-versions = "*"
 
@@ -243,6 +263,11 @@ python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 
 [[package]]
 name = "mpi4py"
+version = "3.0.3"
+description = "Python bindings for MPI"
+category = "main"
+description = "Python bindings for MPI"
+name = "mpi4py"
 optional = false
 python-versions = "*"
 version = "3.0.3"
@@ -290,6 +315,11 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "numpy"
+version = "1.19.2"
+description = "NumPy is the fundamental package for array computing with Python."
+category = "main"
+description = "NumPy is the fundamental package for array computing with Python."
 name = "numpy"
 optional = false
 python-versions = ">=3.6"
@@ -344,6 +374,11 @@ testing = ["funcsigs", "pytest"]
 
 [[package]]
 name = "pexpect"
+version = "4.8.0"
+description = "Pexpect allows easy control of interactive console applications."
+category = "dev"
+description = "Pexpect allows easy control of interactive console applications."
+name = "pexpect"
 optional = false
 python-versions = "*"
 version = "4.8.0"
@@ -391,6 +426,8 @@ name = "prompt-toolkit"
 version = "3.0.7"
 description = "Library for building powerful interactive command lines in Python"
 category = "dev"
+description = "Library for building powerful interactive command lines in Python"
+name = "prompt-toolkit"
 optional = false
 python-versions = ">=3.6.1"
 
@@ -398,6 +435,11 @@ python-versions = ">=3.6.1"
 wcwidth = "*"
 
 [[package]]
+name = "ptyprocess"
+version = "0.6.0"
+description = "Run a subprocess in a pseudo terminal"
+category = "dev"
+description = "Run a subprocess in a pseudo terminal"
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -428,6 +470,11 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "2.4.7"
 
 [[package]]
+name = "pyreadline"
+version = "2.1"
+description = "A python implmementation of GNU readline."
+category = "dev"
+description = "A python implmementation of GNU readline."
 name = "pyreadline"
 optional = false
 python-versions = "*"
@@ -489,6 +536,8 @@ name = "regex"
 version = "2020.9.27"
 description = "Alternative regular expression module, to replace re."
 category = "dev"
+description = "Alternative regular expression module, to replace re."
+name = "regex"
 optional = false
 python-versions = "*"
 version = "2020.10.23"
@@ -505,20 +554,17 @@ version = "1.5.3"
 numpy = ">=1.14.5"
 
 [[package]]
-name = "scipy"
-version = "1.5.2"
-description = "SciPy: Scientific Library for Python"
 category = "main"
+description = "SciPy: Scientific Library for Python"
+name = "scipy"
 optional = false
 python-versions = ">=3.6"
+version = "1.5.3"
 
 [package.dependencies]
 numpy = ">=1.14.5"
 
 [[package]]
-name = "six"
-version = "1.15.0"
-description = "Python 2 and 3 compatibility utilities"
 category = "dev"
 description = "Python 2 and 3 compatibility utilities"
 name = "six"
@@ -547,6 +593,11 @@ python-versions = "*"
 
 [[package]]
 name = "toml"
+version = "0.10.1"
+description = "Python Library for Tom's Obvious, Minimal Language"
+category = "dev"
+description = "Python Library for Tom's Obvious, Minimal Language"
+name = "toml"
 optional = false
 python-versions = "*"
 version = "0.10.1"
@@ -564,6 +615,8 @@ name = "traitlets"
 version = "5.0.4"
 description = "Traitlets Python configuration system"
 category = "dev"
+description = "Traitlets Python configuration system"
+name = "traitlets"
 optional = false
 python-versions = ">=3.7"
 
@@ -610,6 +663,11 @@ testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", 
 
 [[package]]
 name = "wcwidth"
+version = "0.2.5"
+description = "Measures the displayed width of unicode strings in a terminal"
+category = "dev"
+description = "Measures the displayed width of unicode strings in a terminal"
+name = "wcwidth"
 optional = false
 python-versions = "*"
 version = "0.2.5"
@@ -626,7 +684,6 @@ version = "0.3"
 content-hash = "e66b2f80f1168bec31bbd864dddf957785390fa0f742bacfef0fae3ebf834af8"
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "1a88e6f3d855d22ddbb419922afe4f25f366ad488c2d6ccb81a5d1ad8b62add8"
 
 [metadata.files]
 appdirs = [
