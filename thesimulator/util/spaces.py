@@ -1,6 +1,8 @@
 from typing import List, Tuple, Union
 
 import numpy as np
+import math as m
+import networkx as nx
 from scipy.spatial import distance as spd
 
 from thesimulator.data_structures import TransportSpace
@@ -43,6 +45,7 @@ class Euclidean(TransportSpace):
             self.coord_range = [(0, 1)] * n_dimensions
 
     def d(self, u, v):
+        assert len(u) == len(v) == self.n_dimensions, "Dimensions of vectors must match"
         return spd.euclidean(u, v)
 
     def t(self, u, v):
@@ -56,3 +59,82 @@ class Euclidean(TransportSpace):
 
     def random_point(self):
         return np.random.uniform(*zip(*self.coord_range))
+
+
+class Euclidean1D(Euclidean):
+    def __init__(
+        self,
+        coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
+        velocity: float = 1,
+    ):
+        super().__init__(n_dimensions=1, coord_range=coord_range, velocity=velocity)
+
+    def d(self, u, v):
+        return abs(v - u)
+
+
+class Euclidean2D(Euclidean):
+    def __init__(
+        self,
+        coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
+        velocity: float = 1,
+    ):
+        super().__init__(n_dimensions=2, coord_range=coord_range, velocity=velocity)
+
+    def d(self, u, v):
+        return m.sqrt(m.pow(v[0] - u[0], 2) + m.pow(v[1] - u[1], 2))
+
+
+class Graph(TransportSpace):
+    def __init__(self, G, distance_attribute, backend="networkx"):
+        self.G = G
+        self.distance_attribute = distance_attribute
+        (
+            self._predecessors,
+            self._distances,
+        ) = nx.floyd_warshall_predecessor_and_distance(self.G, self.distance_attribute)
+
+    @classmethod
+    def create_random(cls, G):
+        ...
+
+    @classmethod
+    def create_grid(cls, G):
+        ...
+
+    def d(self, u, v):
+        return self._distances[u][v]
+
+    def interp_dist(self, u, v, dist_to_dest):
+        # remaining time: go backward from destination vertex
+
+        parent_distance = self.d(u, v)
+
+        w = v
+        while w is not u:
+            w = self._predecessors[u][w]
+            parent_distance = self.d(w, v)
+            if parent_distance >= dist_to_dest:
+                break
+
+        if parent_distance > dist_to_dest:
+            # we are between parent vertex and v vertex
+            return w, dist_to_dest - self.d(w, v)
+        else:
+            # we are at parent vertex
+            return w, 0.0
+
+
+class ContinuousGraph(TransportSpace):
+    def d(self, u, v):
+        """coordinates shall consist of triples (u, v, dist_to_dest)"""
+        ...
+
+    def t(self, u, v):
+        ...
+
+    def interp_time(self, u, v, time_to_dest):
+        ...
+
+    def random_point(self):
+        ...
