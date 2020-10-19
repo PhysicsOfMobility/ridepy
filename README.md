@@ -26,6 +26,6 @@ pytest
 ## Contributing
 Generally branch from `master`, implement stuff® and file a pull request back to
 `master`. Feel free to do the latter at an early stage, prefixing the pull request with
-WIP.
+"WIP:".
 - `production` should always be usable and, if possible, not break things.
 - `master` should always improve. Uncomplete functionality is welcome.
