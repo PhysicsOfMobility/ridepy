@@ -50,7 +50,6 @@ def initial_stoplists(request):
         vehicle_id: [
             Stop(
                 location=(0, 0),
-                vehicle_id=vehicle_id,
                 request=InternalRequest(
                     request_id="CPE", creation_timestamp=0, location=(0, 0)
                 ),

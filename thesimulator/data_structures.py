@@ -65,7 +65,6 @@ class Stop:
     """
 
     location: Any
-    vehicle_id: ID
     request: Request
     action: StopAction
     estimated_arrival_time: float

@@ -25,29 +25,12 @@ class VehicleState:
     or other compiled language.
     """
 
-    @property
-    def vehicle_id(self):
-        return self._vehicle_id
-
-    @vehicle_id.setter
-    def vehicle_id(self, vehicle_id):
-        # TODO change both the stoplist's vehicle ids and the actual vehicle id
-        # assert all(stop.vehicle_id == vehicle_id for stop in self.stoplist)
-        self._vehicle_id = vehicle_id
-
-    @property
-    def stoplist(self) -> Stoplist:
-        return self._stoplist
-
-    @stoplist.setter
-    def stoplist(self, stoplist: Stoplist):
+    def recompute_arrival_times_drive_first(self):
         # update CPATs
-        for stop_i, stop_j in zip(stoplist, stoplist[1:]):
+        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
             stop_j.estimated_arrival_time = max(
                 stop_i.estimated_arrival_time, stop_i.time_window_min
             ) + self.space.t(stop_i.location, stop_j.location)
-
-        self._stoplist = stoplist
 
     def __init__(
         self, *, vehicle_id, initial_stoplist: Stoplist, space: TransportSpace
@@ -107,14 +90,13 @@ class VehicleState:
                         StopAction.internal: InternalStopEvent,
                     }[stop.action](
                         request_id=stop.request.request_id,
-                        vehicle_id=stop.vehicle_id,
+                        vehicle_id=self.vehicle_id,
                         timestamp=max(
                             stop.estimated_arrival_time, stop.time_window_min
                         ),
                     )
                 )
 
-                # TODO I stand confused. Why does `del stop` not work?
                 del self.stoplist[i]
 
         # fix event cache order
@@ -158,9 +140,9 @@ class VehicleState:
         This returns the single best solution for the respective vehicle.
         """
 
-        return taxicab_dispatcher(
-            vehicle_id=self.vehicle_id,
-            request=request,
-            stoplist=self.stoplist,
-            space=self.space,
+        return (
+            self.vehicle_id,
+            *taxicab_dispatcher(
+                request=request, stoplist=self.stoplist, space=self.space
+            ),
         )
