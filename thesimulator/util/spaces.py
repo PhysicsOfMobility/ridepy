@@ -1,3 +1,5 @@
+import random
+
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -86,28 +88,47 @@ class Euclidean2D(Euclidean):
 
 
 class Graph(TransportSpace):
-    def __init__(self, G, distance_attribute, backend="networkx"):
-        self.G = G
+    def __init__(
+        self, graph: nx.Graph, distance_attribute="distance", velocity: float = 1
+    ):
+        self.G = graph
         self.distance_attribute = distance_attribute
         (
             self._predecessors,
             self._distances,
         ) = nx.floyd_warshall_predecessor_and_distance(self.G, self.distance_attribute)
+        self.velocity = velocity
 
     @classmethod
-    def create_random(cls, G):
+    def create_random(cls):
         ...
 
     @classmethod
-    def create_grid(cls, G):
-        ...
+    def create_grid(
+        cls,
+        dim=(3, 3),
+        periodic=False,
+        velocity: float = 1,
+        edge_distance=1,
+        distance_attribute="distance",
+    ):
+        graph = nx.grid_graph(dim=dim, periodic=periodic)
+        nx.set_edge_attributes(graph, edge_distance, distance_attribute)
+        return Graph(
+            graph=graph,
+            velocity=velocity,
+            distance_attribute=distance_attribute,
+        )
 
     def d(self, u, v):
         return self._distances[u][v]
 
+    def t(self, u, v) -> Union[int, float]:
+        return self.d(u, v) / self.velocity
+
     def interp_dist(self, u, v, dist_to_dest):
         # remaining time: go backward from destination vertex
-
+        # breakpoint()
         parent_distance = self.d(u, v)
 
         w = v
@@ -119,18 +140,28 @@ class Graph(TransportSpace):
 
         if parent_distance > dist_to_dest:
             # we are between parent vertex and v vertex
-            return w, dist_to_dest - self.d(w, v)
+            return w
         else:
             # we are at parent vertex
-            return w, 0.0
+            return w
+
+    def interp_time(self, u, v, time_to_dest):
+        node = self.interp_dist(u, v, dist_to_dest=time_to_dest * self.velocity)
+        return node
+
+    def random_point(self):
+        return random.choice(list(self.G.nodes))
 
 
-class ContinuousGraph(TransportSpace):
+class ContinuousGraph(Graph):
     def d(self, u, v):
         """coordinates shall consist of triples (u, v, dist_to_dest)"""
         ...
 
     def t(self, u, v):
+        ...
+
+    def interp_dist(self, u, v, time_to_dest):
         ...
 
     def interp_time(self, u, v, time_to_dest):
