@@ -3,7 +3,10 @@ Simulates a dispatching algorithm serving exogeneous transportation requests wit
 
 ## Installation
 ```sh
+git clone git@github.com:PhysicsOfMobility/theSimulator.git
+cd theSimulator
 pip install poetry
 poetry install
 pre-commit install
+pytest
 ```
