@@ -5,4 +5,5 @@ Simulates a dispatching algorithm serving exogeneous transportation requests wit
 ```sh
 pip install poetry
 poetry install
+pre-commit install
 ```

@@ -171,15 +171,16 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
         for i in range(n_reqs)
     ]
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
-    events = list(fs.simulate(reqs))
-
-    pickup_events = sorted(
-        filter(lambda x: isinstance(x, PickupEvent), events),
+    events = sorted(
+        fs.simulate(reqs),
         key=op.attrgetter("timestamp"),
     )
-    delivery_events = sorted(
+
+    pickup_events = list(
+        filter(lambda x: isinstance(x, PickupEvent), events),
+    )
+    delivery_events = list(
         filter(lambda x: isinstance(x, DeliveryEvent), events),
-        key=op.attrgetter("timestamp"),
     )
     actual_req_pickup_times = {pu.request_id: pu.timestamp for pu in pickup_events}
     actual_req_delivery_times = {pu.request_id: pu.timestamp for pu in delivery_events}
