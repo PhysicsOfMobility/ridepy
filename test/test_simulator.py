@@ -149,6 +149,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
         )
     )
 
+
 @pytest.mark.n_buses(10)
 def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
     """
@@ -163,11 +164,12 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
             creation_timestamp=0,
             origin=0,
             destination=1,
-            pickup_timewindow_min=10*i,
+            pickup_timewindow_min=10 * i,
             pickup_timewindow_max=np.inf,
             delivery_timewindow_min=0,
             delivery_timewindow_max=np.inf,
-        ) for i in  range(n_reqs)
+        )
+        for i in range(n_reqs)
     ]
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs))
@@ -180,15 +182,20 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
         filter(lambda x: isinstance(x, DeliveryEvent), events),
         key=op.attrgetter("timestamp"),
     )
-    actual_req_pickup_times = {pu.request_id:pu.timestamp for pu in pickup_events}
-    actual_req_delivery_times = {pu.request_id:pu.timestamp for pu in delivery_events}
+    actual_req_pickup_times = {pu.request_id: pu.timestamp for pu in pickup_events}
+    actual_req_delivery_times = {pu.request_id: pu.timestamp for pu in delivery_events}
 
-    desired_req_pickup_times = {req.request_id:req.pickup_timewindow_min for req in reqs}
+    desired_req_pickup_times = {
+        req.request_id: req.pickup_timewindow_min for req in reqs
+    }
     # all the requests are from 0 to 1 -> direct travel time is 1
-    desired_req_delivery_times = {req.request_id:req.pickup_timewindow_min+1 for req in reqs}
+    desired_req_delivery_times = {
+        req.request_id: req.pickup_timewindow_min + 1 for req in reqs
+    }
 
     assert actual_req_pickup_times == desired_req_pickup_times
     assert actual_req_delivery_times == desired_req_delivery_times
+
 
 @pytest.mark.n_buses(1)
 def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
@@ -210,7 +217,8 @@ def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
             pickup_timewindow_max=np.inf,
             delivery_timewindow_min=0,
             delivery_timewindow_max=np.inf,
-        ) for i in  range(n_reqs)
+        )
+        for i in range(n_reqs)
     ]
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=Euclidean())
     events = list(fs.simulate(reqs))
@@ -223,19 +231,19 @@ def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
         filter(lambda x: isinstance(x, DeliveryEvent), events),
         key=op.attrgetter("timestamp"),
     )
-    actual_req_pickup_times = {pu.request_id:pu.timestamp for pu in pickup_events}
-    actual_req_delivery_times = {pu.request_id:pu.timestamp for pu in delivery_events}
+    actual_req_pickup_times = {pu.request_id: pu.timestamp for pu in pickup_events}
+    actual_req_delivery_times = {pu.request_id: pu.timestamp for pu in delivery_events}
 
-    correct_req_pickup_times = {req.request_id:req.request_id*2 for req in reqs}
+    correct_req_pickup_times = {req.request_id: req.request_id * 2 for req in reqs}
     # all the requests are from 0 to 1 -> direct travel time is 1
-    correct_req_delivery_times = {req.request_id:req.request_id*2+1 for req in reqs}
+    correct_req_delivery_times = {
+        req.request_id: req.request_id * 2 + 1 for req in reqs
+    }
 
     assert actual_req_pickup_times == correct_req_pickup_times
     assert actual_req_delivery_times == correct_req_delivery_times
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main(args=[__file__])
 #
