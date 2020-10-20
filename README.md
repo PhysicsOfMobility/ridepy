@@ -27,5 +27,22 @@ pytest
 Generally branch from `master`, implement stuff® and file a pull request back to
 `master`. Feel free to do the latter at an early stage, prefixing the pull request with
 "WIP:".
-- `master` should always improve. Uncomplete functionality is welcome.
+- `master` should always improve. Incomplete functionality is welcome.
 - `production` should always be usable and, if possible, not break things.
+
+## Principles
+### Jargon
+- **estimated arrival time**, also Cached Predicted Arrival Time CPAT
+- **time window min**, also Earliest Allowed Service Time EAST
+- **time window max**, also Latest Allowed Service Time LAST
+- **stoplist**, a sequence of scheduled stops that a transporter must *service*, 
+  i.e. perform the action defined in the respective stop's `Stop.action`
+- dummy stop **current position element CPE** always must be the first entry of each stoplist,
+  denoting the current location of the transporter.
+- transporter, vehicle, bus, car
+
+### General Things
+- The dispatcher is responsible for keeping the state of the stoplists valid.
+ This means e.g. recomputing the estimated arrival times and making sure that
+  the order of the stops in the stoplist follows the order of the estimated 
+  arrival times. It also includes managing the CPE.
