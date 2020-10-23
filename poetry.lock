@@ -107,7 +107,7 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Decorators for Humans"
 name = "decorator"
 optional = false
