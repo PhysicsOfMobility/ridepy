@@ -106,7 +106,7 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Decorators for Humans"
 name = "decorator"
 optional = false
@@ -245,12 +245,12 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "networkx"
-version = "2.5"
-description = "Python package for creating and manipulating graphs and networks"
 category = "main"
+description = "Python package for creating and manipulating graphs and networks"
+name = "networkx"
 optional = false
 python-versions = ">=3.6"
+version = "2.5"
 
 [package.dependencies]
 decorator = ">=4.3.0"
@@ -269,6 +269,8 @@ pyyaml = ["pyyaml"]
 scipy = ["scipy"]
 
 [[package]]
+category = "dev"
+description = "Node.js virtual environment builder"
 name = "nodeenv"
 version = "1.5.0"
 description = "Node.js virtual environment builder"
@@ -585,6 +587,7 @@ python-versions = "*"
 version = "0.3"
 
 [metadata]
+content-hash = "e66b2f80f1168bec31bbd864dddf957785390fa0f742bacfef0fae3ebf834af8"
 lock-version = "1.1"
 python-versions = "^3.8"
 
