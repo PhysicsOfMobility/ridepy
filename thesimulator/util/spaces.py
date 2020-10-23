@@ -47,7 +47,11 @@ class Euclidean(TransportSpace):
             self.coord_range = [(0, 1)] * n_dimensions
 
     def d(self, u, v):
-        assert len(u) == len(v) == self.n_dimensions, "Dimensions of vectors must match"
+        assert (
+            isinstance(u, (int, float))
+            and isinstance(v, (int, float))
+            or len(u) == len(v) == self.n_dimensions
+        ), "Dimensions of vectors must match"
         return spd.euclidean(u, v)
 
     def t(self, u, v):
