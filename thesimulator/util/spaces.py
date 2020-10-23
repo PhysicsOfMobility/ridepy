@@ -146,8 +146,8 @@ class Graph(TransportSpace):
 
         Returns
         -------
-        node_id of the next node at which the point is interpolated to be
-        jump_distance, the distance from the actual current position to the interpolated node
+        next_node
+        jump_distance
 
         """
 
@@ -168,8 +168,24 @@ class Graph(TransportSpace):
             return predecessor, 0.0
 
     def interp_time(self, u, v, time_to_dest):
-        node = self.interp_dist(u, v, dist_to_dest=time_to_dest * self.velocity)
-        return node
+        """
+
+        Parameters
+        ----------
+        u
+        v
+        time_to_dest
+
+        Returns
+        -------
+        next_node
+        jump_time
+
+        """
+        next_node, jump_dist = self.interp_dist(
+            u, v, dist_to_dest=time_to_dest * self.velocity
+        )
+        return next_node, jump_dist / self.velocity
 
     def random_point(self):
         return random.choice(list(self.G.nodes))
