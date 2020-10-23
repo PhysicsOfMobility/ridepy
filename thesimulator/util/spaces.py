@@ -1,6 +1,6 @@
 import random
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Any
 
 import numpy as np
 import math as m
@@ -92,6 +92,10 @@ class Euclidean2D(Euclidean):
 
 
 class Graph(TransportSpace):
+    """
+    A location is identified with a one-dimensional coordinate, namely the node index.
+    """
+
     def __init__(
         self, graph: nx.Graph, distance_attribute="distance", velocity: float = 1
     ):
@@ -118,6 +122,7 @@ class Graph(TransportSpace):
     ):
         graph = nx.grid_graph(dim=dim, periodic=periodic)
         nx.set_edge_attributes(graph, edge_distance, distance_attribute)
+
         return Graph(
             graph=graph,
             velocity=velocity,
@@ -130,22 +135,37 @@ class Graph(TransportSpace):
     def t(self, u, v) -> Union[int, float]:
         return self.d(u, v) / self.velocity
 
-    def interp_dist(self, u, v, dist_to_dest):
-        dist_w_to_dest = self.d(u, v)
-        w = v
+    def interp_dist(self, u, v, dist_to_dest) -> Tuple[Any, Union[int, float]]:
+        """
 
-        while w is not u:
-            w = self._predecessors[u][w]
-            dist_w_to_dest = self.d(w, v)
-            if dist_w_to_dest >= dist_to_dest:
+        Parameters
+        ----------
+        u
+        v
+        dist_to_dest
+
+        Returns
+        -------
+        node_id of the next node at which the point is interpolated to be
+        jump_distance, the distance from the actual current position to the interpolated node
+
+        """
+
+        if u == v:
+            return v, 0.0
+
+        next_node = v
+        while next_node is not u:
+            predecessor = self._predecessors[u][next_node]
+            predecessor_dist = self.d(predecessor, v)
+            if predecessor_dist >= dist_to_dest:
                 break
+            next_node = predecessor
 
-        if dist_w_to_dest > dist_to_dest:
-            # we are between parent vertex and v vertex
-            return w
+        if predecessor_dist > dist_to_dest:
+            return next_node, dist_to_dest - self.d(next_node, v)
         else:
-            # we are at parent vertex
-            return w
+            return predecessor, 0.0
 
     def interp_time(self, u, v, time_to_dest):
         node = self.interp_dist(u, v, dist_to_dest=time_to_dest * self.velocity)
@@ -163,7 +183,7 @@ class ContinuousGraph(Graph):
     def t(self, u, v):
         ...
 
-    def interp_dist(self, u, v, time_to_dest):
+    def interp_dist(self, u, w, time_to_dest):
         ...
 
     def interp_time(self, u, v, time_to_dest):
