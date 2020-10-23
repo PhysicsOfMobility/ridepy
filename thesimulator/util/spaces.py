@@ -58,10 +58,10 @@ class Euclidean(TransportSpace):
         return self.d(u, v) / self.velocity
 
     def interp_dist(self, u, v, dist_to_dest):
-        return v - (v - u) * dist_to_dest / self.d(u, v)
+        return v - (v - u) * dist_to_dest / self.d(u, v), 0
 
     def interp_time(self, u, v, time_to_dest):
-        return v - (v - u) * time_to_dest / self.t(u, v)
+        return v - (v - u) * time_to_dest / self.t(u, v), 0
 
     def random_point(self):
         return np.random.uniform(*zip(*self.coord_range))
@@ -135,7 +135,7 @@ class Graph(TransportSpace):
     def t(self, u, v) -> Union[int, float]:
         return self.d(u, v) / self.velocity
 
-    def interp_dist(self, u, v, dist_to_dest) -> Tuple[Any, Union[int, float]]:
+    def interp_dist(self, u, v, dist_to_dest):
         """
 
         Parameters
@@ -152,7 +152,7 @@ class Graph(TransportSpace):
         """
 
         if u == v:
-            return v, 0.0
+            return v, 0
 
         next_node = v
         while next_node is not u:
@@ -165,7 +165,7 @@ class Graph(TransportSpace):
         if predecessor_dist > dist_to_dest:
             return next_node, dist_to_dest - self.d(next_node, v)
         else:
-            return predecessor, 0.0
+            return predecessor, 0
 
     def interp_time(self, u, v, time_to_dest):
         """
