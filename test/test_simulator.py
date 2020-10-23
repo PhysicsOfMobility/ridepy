@@ -18,7 +18,7 @@ from thesimulator.data_structures import (
     TransportationRequest,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
+from thesimulator.util.spaces import Euclidean1D, Euclidean2D
 
 
 def test_random_request_generator():
@@ -71,18 +71,6 @@ def initial_stoplists(request):
 @pytest.mark.initial_location((0, 0))
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
     space = Euclidean2D()
-    rg = RandomRequestGenerator(rate=10, transport_space=space)
-    reqs = list(it.islice(rg, 1000))
-    fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=space)
-    events = list(fs.simulate(reqs, t_cutoff=20))
-    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
-    # print("\n".join(map(str, events)))
-
-
-@pytest.mark.n_buses(10)
-@pytest.mark.initial_location((0, 0))
-def test_slow_simple_fleet_state_simulate_grid(initial_stoplists):
-    space = Graph.create_grid()
     rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=space)
