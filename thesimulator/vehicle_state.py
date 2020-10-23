@@ -106,16 +106,18 @@ class VehicleState:
         if last_stop is None:
             last_stop = self.stoplist[0]
 
-        # set CPE time to current time
-        self.stoplist[0].estimated_arrival_time = t
-
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         if len(self.stoplist) > 1:
-            self.stoplist[0].location = self.space.interp_time(
+            (
+                self.stoplist[0].location,
+                self.stoplist[0].estimated_arrival_time,
+            ) = self.space.interp_time(
                 u=last_stop.location,
                 v=self.stoplist[1].location,
                 time_to_dest=self.stoplist[1].estimated_arrival_time - t,
             )
+            # add the current time to the jumptime which was temporarily stored as CPE ETA
+            self.stoplist[0].estimated_arrival_time += t
         else:
             # stoplist is empty, only CPE is there. Therefore we just stick around...
             pass

@@ -195,7 +195,7 @@ class TransportSpace(ABC):
         ...
 
     @abstractmethod
-    def interp_time(self, u, v, time_to_dest):
+    def interp_time(self, u, v, time_to_dest) -> Tuple[Any, Union[int, float]]:
         """
         Interpolate a location `x` between the origin `u` and the destination `v`
         as a function of the travel time between the unknown
@@ -215,11 +215,15 @@ class TransportSpace(ABC):
         -------
         x
             interpolated coordinate of the unknown location `x`
+        jump_dist
+            remaining distance until the returned interpolated coordinate will be reached
         """
         ...
 
     @abstractmethod
-    def interp_dist(self, origin, destination, dist_to_dest):
+    def interp_dist(
+        self, origin, destination, dist_to_dest
+    ) -> Tuple[Any, Union[int, float]]:
         """
         Interpolate a location `x` between the origin `u` and the destination `v`
         as a function of the distance between the unknown
@@ -239,5 +243,7 @@ class TransportSpace(ABC):
         -------
         x
             interpolated coordinate of the unknown location `x`
+        jump_time
+            remaining time until the returned interpolated coordinate will be reached
         """
         ...
