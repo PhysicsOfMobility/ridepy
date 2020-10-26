@@ -143,7 +143,7 @@ class DeliveryEvent:
 
 
 @dataclass
-class InternalStopEvent:
+class InternalAssignStopEvent:
     """
     Successful internal action
     """
@@ -165,7 +165,7 @@ Stoplist = List[Stop]
 SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
 """vehicle_id, cost, new_stop_list"""
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+StopEvent = Union[InternalAssignStopEvent, PickupEvent, DeliveryEvent]
 
 
 class TransportSpace(ABC):
