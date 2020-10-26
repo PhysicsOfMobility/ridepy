@@ -74,6 +74,13 @@ class VehicleState:
 
         last_stop = None
 
+        # arrtimes = np.array([s.estimated_arrival_time for s in self.stoplist])
+        # idx_last_stop_to_service = arrtimes[arrtimes <= t][0]
+        # stops_to_service, new_stoplist = (
+        #     self.stoplist[0:idx_last_stop_to_service],
+        #     self.stoplist[idx_last_stop_to_service:],
+        # )
+
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
         for i in range(len(self.stoplist) - 1, 0, -1):
             stop = self.stoplist[i]
@@ -83,19 +90,30 @@ class VehicleState:
                 if last_stop is None:
                     last_stop = stop
 
-                event_cache.append(
-                    {
-                        StopAction.pickup: PickupEvent,
-                        StopAction.dropoff: DeliveryEvent,
-                        StopAction.internal: InternalStopEvent,
-                    }[stop.action](
-                        request_id=stop.request.request_id,
-                        vehicle_id=self.vehicle_id,
-                        timestamp=max(
-                            stop.estimated_arrival_time, stop.time_window_min
-                        ),
+                if stop.action == StopAction.pickup:
+                    event_cache.append(
+                        PickupEvent(
+                            request_id=stop.request.request_id,
+                            vehicle_id=self.vehicle_id,
+                            timestamp=max(
+                                stop.estimated_arrival_time, stop.time_window_min
+                            ),
+                        )
                     )
-                )
+                elif stop.action == StopAction.dropoff:
+                    event_cache.append(
+                        DeliveryEvent(
+                            request_id=stop.request.request_id,
+                            vehicle_id=self.vehicle_id,
+                            timestamp=max(
+                                stop.estimated_arrival_time, stop.time_window_min
+                            ),
+                        )
+                    )
+                elif stop.action == StopAction.internal_assign:
+                    ...
+                else:
+                    raise ValueError(f"Unknown stop action {stop.action}")
 
                 del self.stoplist[i]
 

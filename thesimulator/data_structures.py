@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 from dataclasses import dataclass
 from typing import Any, Optional, Union, Tuple, List
 
@@ -49,9 +49,10 @@ class StopAction(Enum):
     Representing actions that the system may perform at a specific location
     """
 
-    pickup = 1
-    dropoff = 2
-    internal = 3
+    pickup = auto()
+    dropoff = auto()
+    cpe = auto()
+    internal_assign = auto()
 
 
 @dataclass
