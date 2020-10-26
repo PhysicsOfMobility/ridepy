@@ -124,7 +124,6 @@ class FleetState(ABC):
         -------
 
         """
-        # breakpoint()
         (
             best_vehicle,
             min_cost,
@@ -227,6 +226,34 @@ class SlowSimpleFleetState(FleetState):
                 ),
                 self.fleet.values(),
             ),
+        )
+
+    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+        ...
+
+
+class LocationTriggeredFleetState(FleetState):
+    def __init__(self, *args, **kwargs):
+        self.request_queue = []
+        super().__init__(*args, **kwargs)
+
+    def fast_forward(self, t: float):
+        it.chain.from_iterable(
+            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        )
+
+    def handle_transportation_request(self, req: TransportationRequest):
+        self.request_queue += req
+
+        return RequestAcceptanceEvent(
+            request_id=req.request_id,
+            timestamp=time(),
+            origin=req.origin,
+            destination=req.destination,
+            pickup_timewindow_min=np.nan,
+            pickup_timewindow_max=np.nan,
+            delivery_timewindow_min=np.nan,
+            delivery_timewindow_max=np.nan,
         )
 
     def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
