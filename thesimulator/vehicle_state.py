@@ -11,7 +11,7 @@ from .data_structures import (
     StopAction,
     PickupEvent,
     DeliveryEvent,
-    InternalStopEvent,
+    InternalAssignStopEvent,
     Stop,
     TransportationRequest,
     TransportSpace,
@@ -72,73 +72,58 @@ class VehicleState:
 
         event_cache = []
 
-        last_stop = None
-
-        # arrtimes = np.array([s.estimated_arrival_time for s in self.stoplist])
-        # idx_last_stop_to_service = arrtimes[arrtimes <= t][0]
-        # stops_to_service, new_stoplist = (
-        #     self.stoplist[0:idx_last_stop_to_service],
-        #     self.stoplist[idx_last_stop_to_service:],
-        # )
-
-        # drop all non-future stops from the stoplist, except for the (outdated) CPE
-        for i in range(len(self.stoplist) - 1, 0, -1):
-            stop = self.stoplist[i]
-            # service the stop at its estimated arrival time
-            if stop.estimated_arrival_time <= t:
-                # as we are iterating backwards, the first stop iterated over is the last one serviced
-                if last_stop is None:
-                    last_stop = stop
-
-                if stop.action == StopAction.pickup:
-                    event_cache.append(
-                        PickupEvent(
-                            request_id=stop.request.request_id,
-                            vehicle_id=self.vehicle_id,
-                            timestamp=max(
-                                stop.estimated_arrival_time, stop.time_window_min
-                            ),
-                        )
-                    )
-                elif stop.action == StopAction.dropoff:
-                    event_cache.append(
-                        DeliveryEvent(
-                            request_id=stop.request.request_id,
-                            vehicle_id=self.vehicle_id,
-                            timestamp=max(
-                                stop.estimated_arrival_time, stop.time_window_min
-                            ),
-                        )
-                    )
-                elif stop.action == StopAction.internal_assign:
-                    ...
-                else:
-                    raise ValueError(f"Unknown stop action {stop.action}")
-
-                del self.stoplist[i]
-
-        # fix event cache order
-        event_cache = event_cache[::-1]
-
-        # if no stop was serviced, the last stop is the outdated CPE
-        if last_stop is None:
-            last_stop = self.stoplist[0]
-
-        # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-        if len(self.stoplist) > 1:
+        # first determine the first stop which is not to be serviced just yet. this can either be
+        # the next pickup/dropoff or an internal assign stop.
+        i_first_future_stop = next(
             (
-                self.stoplist[0].location,
-                self.stoplist[0].estimated_arrival_time,
-            ) = self.space.interp_time(
-                u=last_stop.location,
-                v=self.stoplist[1].location,
-                time_to_dest=self.stoplist[1].estimated_arrival_time - t,
+                i
+                for i, s in enumerate(self.stoplist)
+                if s.estimated_arrival_time > t
+                or s.action == StopAction.internal_assign
+            ),
+            len(self.stoplist),
+        )
+
+        # now emit serviced events for all the stops up to the previously determined one, except CPE
+        for i, stop in enumerate(self.stoplist[1:i_first_future_stop]):
+            {StopAction.pickup: PickupEvent, StopAction.dropoff: DeliveryEvent}[
+                stop.action
+            ](
+                request_id=stop.request.request_id,
+                vehicle_id=self.vehicle_id,
+                timestamp=max(stop.estimated_arrival_time, stop.time_window_min),
             )
-            # add the current time to the jumptime which was temporarily stored as CPE ETA
-            self.stoplist[0].estimated_arrival_time += t
-        else:
-            # stoplist is empty, only CPE is there. Therefore we just stick around...
-            pass
+
+        # now update CPE
+        # update eta if we have passed the its location already
+        if self.stoplist[0].estimated_arrival_time < t:
+            # if a next stop exists, update the CPEs location by interpolating from the location of either the
+            # CPE or any other last serviced upcoming stop to the next location.
+            # If they are identical nothing will happen.
+            if len(self.stoplist) > 1:
+                (
+                    self.stoplist[0].location,
+                    self.stoplist[0].estimated_arrival_time,
+                ) = self.space.interp_time(
+                    u=self.stoplist[i_first_future_stop - 1].location,
+                    v=self.stoplist[i_first_future_stop].location,
+                    time_to_dest=self.stoplist[
+                        i_first_future_stop
+                    ].estimated_arrival_time
+                    - t,
+                )
+            else:
+                self.stoplist[0].estimated_arrival_time = t
+
+        if (
+            i_first_future_stop != len(self.stoplist)
+            and self.stoplist[i_first_future_stop].action == StopAction.internal_assign
+        ):
+            event_cache.append(
+                InternalAssignStopEvent(timestamp=t, vehicle_id=self.vehicle_id)
+            )
+
+        self.stoplist = [self.stoplist[0]] + self.stoplist[i_first_future_stop:]
 
         return event_cache
 
