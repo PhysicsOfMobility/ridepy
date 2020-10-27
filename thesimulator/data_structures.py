@@ -15,7 +15,6 @@ class Request:
     A request for the system to perform a task
     """
 
-    request_id: ID
     creation_timestamp: float
 
 
@@ -26,6 +25,7 @@ class TransportationRequest(Request):
     through creating a route through the system given spatio-temporal constraints.
     """
 
+    request_id: ID
     origin: Any
     destination: Any
     # pickup_offset: float = 0
@@ -42,6 +42,11 @@ class InternalRequest(Request):
     that is not directly requested by a customer
     """
 
+    ...
+
+
+@dataclass
+class InternalCPERequest(InternalRequest):
     ...
 
 
