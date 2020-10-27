@@ -54,9 +54,7 @@ def initial_stoplists(request):
         vehicle_id: [
             Stop(
                 location=initial_location,
-                request=InternalRequest(
-                    request_id="CPE", creation_timestamp=0, location=initial_location
-                ),
+                request=InternalRequest(request_id="CPE", creation_timestamp=0),
                 action=StopAction.cpe,
                 estimated_arrival_time=0,
                 time_window_min=0,

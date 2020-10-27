@@ -86,12 +86,14 @@ class VehicleState:
 
         # now emit serviced events for all the stops up to the previously determined one, except CPE
         for i, stop in enumerate(self.stoplist[1:i_first_future_stop]):
-            {StopAction.pickup: PickupEvent, StopAction.dropoff: DeliveryEvent}[
-                stop.action
-            ](
-                request_id=stop.request.request_id,
-                vehicle_id=self.vehicle_id,
-                timestamp=max(stop.estimated_arrival_time, stop.time_window_min),
+            event_cache.append(
+                {StopAction.pickup: PickupEvent, StopAction.dropoff: DeliveryEvent}[
+                    stop.action
+                ](
+                    request_id=stop.request.request_id,
+                    vehicle_id=self.vehicle_id,
+                    timestamp=max(stop.estimated_arrival_time, stop.time_window_min),
+                )
             )
 
         # now update CPE
@@ -101,17 +103,24 @@ class VehicleState:
             # CPE or any other last serviced upcoming stop to the next location.
             # If they are identical nothing will happen.
             if len(self.stoplist) > 1:
-                (
-                    self.stoplist[0].location,
-                    self.stoplist[0].estimated_arrival_time,
-                ) = self.space.interp_time(
-                    u=self.stoplist[i_first_future_stop - 1].location,
-                    v=self.stoplist[i_first_future_stop].location,
-                    time_to_dest=self.stoplist[
-                        i_first_future_stop
-                    ].estimated_arrival_time
-                    - t,
-                )
+                if i_first_future_stop != len(self.stoplist):
+                    (
+                        self.stoplist[0].location,
+                        self.stoplist[0].estimated_arrival_time,
+                    ) = self.space.interp_time(
+                        u=self.stoplist[i_first_future_stop - 1].location,
+                        v=self.stoplist[i_first_future_stop].location,
+                        time_to_dest=self.stoplist[
+                            i_first_future_stop
+                        ].estimated_arrival_time
+                        - t,
+                    )
+                else:
+                    self.stoplist[0].location = self.stoplist[
+                        i_first_future_stop - 1
+                    ].location
+                    self.stoplist[0].estimated_arrival_time = t
+
             else:
                 self.stoplist[0].estimated_arrival_time = t
 
@@ -123,7 +132,8 @@ class VehicleState:
                 InternalAssignStopEvent(timestamp=t, vehicle_id=self.vehicle_id)
             )
 
-        self.stoplist = [self.stoplist[0]] + self.stoplist[i_first_future_stop:]
+        if i_first_future_stop > 0:
+            self.stoplist = [self.stoplist[0]] + self.stoplist[i_first_future_stop:]
 
         return event_cache
 

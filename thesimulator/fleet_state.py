@@ -6,7 +6,7 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from time import time
-from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
+from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable, Sequence
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
@@ -22,6 +22,8 @@ from .data_structures import (
     InternalRequest,
     TransportSpace,
     SingleVehicleSolution,
+    InternalAssignStopEvent,
+    InternalAssignRequest,
 )
 from .vehicle_state import VehicleState
 
@@ -179,21 +181,33 @@ class FleetState(ABC):
         """
 
         for request in requests:
+            request_cache = [request]
+
             req_epoch = request.creation_timestamp
 
             # advance clock to req_epoch
             t = req_epoch
 
             # Visit all the stops upto req_epoch
-            yield from self.fast_forward(t)
+            event_cache = self.fast_forward(t)
+            for event in event_cache:
+                if isinstance(event, InternalAssignStopEvent):
+                    request_cache.append(
+                        InternalAssignRequest(
+                            creation_timestamp=t,
+                            request_id=None,
+                            vehicle_id=event.vehicle_id,
+                        )
+                    )
+                yield event
 
-            # handle the current request
-            if isinstance(request, TransportationRequest):
-                yield self.handle_transportation_request(request)
-            elif isinstance(request, InternalRequest):
-                yield self.handle_internal_request(request)
-            else:
-                raise NotImplementedError(f"Unknown request type: {type(request)}")
+            for request in request_cache:
+                if isinstance(request, InternalRequest):
+                    yield self.handle_internal_request(request)
+                elif isinstance(request, TransportationRequest):
+                    yield self.handle_transportation_request(request)
+                else:
+                    raise NotImplementedError(f"Unknown request type: {type(request)}")
 
             if t >= t_cutoff:
                 return

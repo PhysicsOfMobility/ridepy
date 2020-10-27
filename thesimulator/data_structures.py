@@ -42,7 +42,12 @@ class InternalRequest(Request):
     that is not directly requested by a customer
     """
 
-    location: Any
+    ...
+
+
+@dataclass
+class InternalAssignRequest(InternalRequest):
+    vehicle_id: ID
 
 
 class StopAction(Enum):
