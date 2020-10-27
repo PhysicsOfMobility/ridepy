@@ -25,13 +25,6 @@ class VehicleState:
     or other compiled language.
     """
 
-    def recompute_arrival_times_drive_first(self):
-        # update CPATs
-        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
-            stop_j.estimated_arrival_time = max(
-                stop_i.estimated_arrival_time, stop_i.time_window_min
-            ) + self.space.t(stop_i.location, stop_j.location)
-
     def __init__(
         self, *, vehicle_id, initial_stoplist: Stoplist, space: TransportSpace
     ):
@@ -51,6 +44,7 @@ class VehicleState:
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         self.stoplist = initial_stoplist
         self.space = space
+        self.max_capacity = None
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -158,3 +152,19 @@ class VehicleState:
         return self.vehicle_id, *taxicab_dispatcher_drive_first(
             request=request, stoplist=self.stoplist, space=self.space
         )
+
+    def recompute_arrival_times_drive_first(self):
+        # update CPATs
+        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
+            stop_j.estimated_arrival_time = max(
+                stop_i.estimated_arrival_time, stop_i.time_window_min
+            ) + self.space.t(stop_i.location, stop_j.location)
+
+    @property
+    def location(self):
+        return self.stoplist[0].location
+
+    @property
+    def capacity(self):
+        # TODO calculate actual current capacity to enable capacity constraints
+        return None

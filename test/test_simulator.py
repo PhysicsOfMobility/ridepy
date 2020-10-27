@@ -16,6 +16,7 @@ from thesimulator.data_structures import (
     StopEvent,
     DeliveryEvent,
     TransportationRequest,
+    InternalCPERequest,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
@@ -54,7 +55,7 @@ def initial_stoplists(request):
         vehicle_id: [
             Stop(
                 location=initial_location,
-                request=InternalRequest(request_id="CPE", creation_timestamp=0),
+                request=InternalCPERequest(creation_timestamp=0),
                 action=StopAction.cpe,
                 estimated_arrival_time=0,
                 time_window_min=0,
