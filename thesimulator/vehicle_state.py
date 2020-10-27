@@ -67,9 +67,6 @@ class VehicleState:
             List of stop events emitted through servicing stops
         """
 
-        # TODO assert that the CPATs are updated and the stops sorted accordingly
-        # TODO optionally validate the travel time velocity constraints
-
         event_cache = []
 
         # first determine the first stop which is not to be serviced just yet. this can either be
@@ -96,42 +93,45 @@ class VehicleState:
                 )
             )
 
-        # now update CPE
-        # update eta if we have passed the its location already
-        if self.stoplist[0].estimated_arrival_time < t:
-            # if a next stop exists, update the CPEs location by interpolating from the location of either the
-            # CPE or any other last serviced upcoming stop to the next location.
-            # If they are identical nothing will happen.
-            if len(self.stoplist) > 1:
-                if i_first_future_stop != len(self.stoplist):
-                    (
-                        self.stoplist[0].location,
-                        self.stoplist[0].estimated_arrival_time,
-                    ) = self.space.interp_time(
-                        u=self.stoplist[i_first_future_stop - 1].location,
-                        v=self.stoplist[i_first_future_stop].location,
-                        time_to_dest=self.stoplist[
-                            i_first_future_stop
-                        ].estimated_arrival_time
-                        - t,
-                    )
-                else:
-                    self.stoplist[0].location = self.stoplist[
-                        i_first_future_stop - 1
-                    ].location
-                    self.stoplist[0].estimated_arrival_time = t
+        # now update CPE and deal with other internal stops
 
-            else:
-                self.stoplist[0].estimated_arrival_time = t
+        # if we have not passed CPE yet, there is nothing to do.
+        # in this case i_first_future_stop == 0.
+        # if we have passed CPE b/c either jump time was zero or we are on a continuous space we have
+        # to update CPE's eta and possibly its location, in case we have serviced a stop and are now empty or
+        # are on the way to another stop. otherwise we remain at the CPE's old location.
+        if len(self.stoplist) == 1:
+            # case I:
+            # we have an empty stoplist, just idle around
+            self.stoplist[0].estimated_arrival_time = t
 
-        if (
-            i_first_future_stop != len(self.stoplist)
-            and self.stoplist[i_first_future_stop].action == StopAction.internal_assign
-        ):
-            event_cache.append(
-                InternalAssignStopEvent(timestamp=t, vehicle_id=self.vehicle_id)
+        elif i_first_future_stop == len(self.stoplist):
+            # case II:
+            # all stops currently in the stop list have to be serviced. as we are
+            # then-idle we move the CPE to the last-served stop.
+            self.stoplist[0].location = self.stoplist[i_first_future_stop - 1].location
+            self.stoplist[0].estimated_arrival_time = t
+        else:
+            # case III:
+            # only stops up to some stop have to be served.
+            # then we are on the way between the last-served stop and the first future one.
+            (
+                self.stoplist[0].location,
+                self.stoplist[0].estimated_arrival_time,
+            ) = self.space.interp_time(
+                u=self.stoplist[i_first_future_stop - 1].location,
+                v=self.stoplist[i_first_future_stop].location,
+                time_to_dest=self.stoplist[i_first_future_stop].estimated_arrival_time
+                - t,
             )
 
+            # if the next upcoming stop is an internal_assign stop, emit an event
+            if self.stoplist[i_first_future_stop].action == StopAction.internal_assign:
+                event_cache.append(
+                    InternalAssignStopEvent(timestamp=t, vehicle_id=self.vehicle_id)
+                )
+
+        # if we have serviced any stops, remove them from the stoplist
         if i_first_future_stop > 0:
             self.stoplist = [self.stoplist[0]] + self.stoplist[i_first_future_stop:]
 
