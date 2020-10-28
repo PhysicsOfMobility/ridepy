@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 from dataclasses import dataclass
 from typing import Any, Optional, Union, Tuple, List
 
@@ -14,7 +14,6 @@ class Request:
     A request for the system to perform a task
     """
 
-    request_id: ID
     creation_timestamp: float
 
 
@@ -25,6 +24,7 @@ class TransportationRequest(Request):
     through creating a route through the system given spatio-temporal constraints.
     """
 
+    request_id: ID
     origin: Any
     destination: Any
     # pickup_offset: float = 0
@@ -41,7 +41,17 @@ class InternalRequest(Request):
     that is not directly requested by a customer
     """
 
-    location: Any
+    ...
+
+
+@dataclass
+class InternalCPERequest(InternalRequest):
+    ...
+
+
+@dataclass
+class InternalAssignRequest(InternalRequest):
+    vehicle_id: ID
 
 
 class StopAction(Enum):
@@ -49,9 +59,10 @@ class StopAction(Enum):
     Representing actions that the system may perform at a specific location
     """
 
-    pickup = 1
-    dropoff = 2
-    internal = 3
+    pickup = auto()
+    dropoff = auto()
+    cpe = auto()
+    internal_assign = auto()
 
 
 @dataclass
@@ -124,12 +135,11 @@ class DeliveryEvent:
 
 
 @dataclass
-class InternalStopEvent:
+class InternalAssignStopEvent:
     """
     Successful internal action
     """
 
-    request_id: ID
     timestamp: float
     vehicle_id: ID
 
@@ -140,7 +150,7 @@ Stoplist = List[Stop]
 SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
 """vehicle_id, cost, new_stop_list"""
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+StopEvent = Union[InternalAssignStopEvent, PickupEvent, DeliveryEvent]
 
 
 class TransportSpace(ABC):
