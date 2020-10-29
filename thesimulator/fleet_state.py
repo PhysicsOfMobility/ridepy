@@ -1,12 +1,15 @@
 import functools as ft
 import itertools as it
 import operator as op
+from collections import defaultdict, Counter
+from queue import SimpleQueue
+
 import numpy as np
 
 
 from abc import ABC, abstractmethod
 from time import time
-from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
+from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable, Sequence
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
@@ -22,6 +25,8 @@ from .data_structures import (
     InternalRequest,
     TransportSpace,
     SingleVehicleSolution,
+    InternalAssignStopEvent,
+    InternalAssignRequest,
 )
 from .vehicle_state import VehicleState
 
@@ -94,7 +99,7 @@ class FleetState(ABC):
         ...
 
     @abstractmethod
-    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_requests(self, req: InternalRequest) -> Iterator[RequestEvent]:
         """
 
         Parameters
@@ -124,7 +129,6 @@ class FleetState(ABC):
         -------
 
         """
-        # breakpoint()
         (
             best_vehicle,
             min_cost,
@@ -180,21 +184,32 @@ class FleetState(ABC):
         """
 
         for request in requests:
+            request_cache = [request]
+
             req_epoch = request.creation_timestamp
 
             # advance clock to req_epoch
             t = req_epoch
 
             # Visit all the stops upto req_epoch
-            yield from self.fast_forward(t)
+            event_cache = self.fast_forward(t)
+            for event in event_cache:
+                if isinstance(event, InternalAssignStopEvent):
+                    request_cache.append(
+                        InternalAssignRequest(
+                            creation_timestamp=t,
+                            vehicle_id=event.vehicle_id,
+                        )
+                    )
+                yield event
 
-            # handle the current request
-            if isinstance(request, TransportationRequest):
-                yield self.handle_transportation_request(request)
-            elif isinstance(request, InternalRequest):
-                yield self.handle_internal_request(request)
-            else:
-                raise NotImplementedError(f"Unknown request type: {type(request)}")
+            for request in request_cache:
+                if isinstance(request, InternalRequest):
+                    yield from self.handle_internal_requests(request)
+                elif isinstance(request, TransportationRequest):
+                    yield self.handle_transportation_request(request)
+                else:
+                    raise NotImplementedError(f"Unknown request type: {type(request)}")
 
             if t >= t_cutoff:
                 return
@@ -229,8 +244,62 @@ class SlowSimpleFleetState(FleetState):
             ),
         )
 
-    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_requests(self, req: InternalRequest) -> RequestEvent:
         ...
+
+
+class LocationTriggeredFleetState(FleetState):
+    def __init__(self, *args, **kwargs):
+        self.registry = defaultdict(lambda _: defaultdict(list))
+        super().__init__(*args, **kwargs)
+
+    def fast_forward(self, t: float):
+        it.chain.from_iterable(
+            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        )
+
+    def handle_transportation_request(self, req: TransportationRequest):
+        self.registry[req.origin][req.destination] += req
+
+        return RequestAcceptanceEvent(
+            request_id=req.request_id,
+            timestamp=time(),
+            origin=req.origin,
+            destination=req.destination,
+            pickup_timewindow_min=np.nan,
+            pickup_timewindow_max=np.nan,
+            delivery_timewindow_min=np.nan,
+            delivery_timewindow_max=np.nan,
+        )
+
+    def _assign_queued_at_location(self, vehicle_id) -> Sequence[Event]:
+        vehicle = self.fleet[vehicle_id]
+        destination, _ = max(
+            (
+                (destination, len(reqs))
+                for destination, reqs in self.registry[vehicle.location].items()
+            ),
+            key=op.itemgetter(1),
+        )
+        event_cache = []
+        for req in self.registry[vehicle.location][destination]:
+            event_cache.append(
+                self._apply_request_solution(
+                    req,
+                    map(
+                        ft.partial(
+                            VehicleState.handle_transportation_request_single_vehicle,
+                            request=req,
+                        ),
+                        self.fleet.values(),
+                    ),
+                )
+            )
+        return event_cache
+
+    def handle_internal_requests(self, req: InternalRequest):
+        if isinstance(req, InternalAssignRequest):
+            yield from self._assign_queued_at_location(vehicle_id=req.vehicle_id)
 
 
 class MPIFuturesFleetState(FleetState):
@@ -259,5 +328,5 @@ class MPIFuturesFleetState(FleetState):
                     ),
                 )
 
-    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_requests(self, req: InternalRequest) -> RequestEvent:
         ...

@@ -222,7 +222,7 @@ version = "0.17.2"
 parso = ">=0.7.0,<0.8.0"
 
 [package.extras]
-qa = ["flake8 (3.7.9)"]
+qa = ["flake8 (==3.7.9)"]
 testing = ["Django (<3.1)", "colorama", "docopt", "pytest (>=3.9.0,<5.0.0)"]
 
 [[package]]
@@ -475,7 +475,7 @@ py = ">=1.8.2"
 toml = "*"
 
 [package.extras]
-checkqa_mypy = ["mypy (0.780)"]
+checkqa_mypy = ["mypy (==0.780)"]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
@@ -528,7 +528,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "1.15.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Pretty-print tabular data"
 name = "tabulate"
 optional = false
@@ -627,7 +627,7 @@ python-versions = "*"
 version = "0.3"
 
 [metadata]
-content-hash = "e66b2f80f1168bec31bbd864dddf957785390fa0f742bacfef0fae3ebf834af8"
+content-hash = "6a1869914ac1838150beb5fdf1d207b298706133e66e209e1cc97f402e6e4be3"
 lock-version = "1.1"
 python-versions = "^3.8"
 
@@ -763,8 +763,6 @@ mpi4py = [
     {file = "mpi4py-3.0.3-cp36-cp36m-win_amd64.whl", hash = "sha256:d0f2caea8906de62239f34f275306693093d600b23070709713d97a1849edb66"},
     {file = "mpi4py-3.0.3-cp37-cp37m-win32.whl", hash = "sha256:f46f06eb2230e958bfc24d6509f1679b4843f9f35ef79c89aecede91f3b21842"},
     {file = "mpi4py-3.0.3-cp37-cp37m-win_amd64.whl", hash = "sha256:3c6b2bfc3eae756142158439d6108d53e208976e3882377afe921e6c60df3034"},
-    {file = "mpi4py-3.0.3-cp38-cp38-win32.whl", hash = "sha256:e9453a5d93df3c687fc1ed214a3981a6721d7fb1f86afd918a72b27556b6f5e1"},
-    {file = "mpi4py-3.0.3-cp38-cp38-win_amd64.whl", hash = "sha256:4faa759cf363752d6a1460922431530d4c40ccf8780e332fb7d3b3990ceda8f5"},
     {file = "mpi4py-3.0.3.tar.gz", hash = "sha256:012d716c8b9ed1e513fcc4b18e5af16a8791f51e6d1716baccf988ad355c5a1f"},
 ]
 mypy-extensions = [
