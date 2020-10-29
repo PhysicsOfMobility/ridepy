@@ -7,7 +7,11 @@ import numpy as np
 
 from tabulate import tabulate
 
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from thesimulator.fleet_state import (
+    SlowSimpleFleetState,
+    MPIFuturesFleetState,
+    LocationTriggeredFleetState,
+)
 from thesimulator.data_structures import (
     Stop,
     InternalRequest,
@@ -88,6 +92,18 @@ def test_slow_simple_fleet_state_simulate_grid(initial_stoplists):
     events = list(fs.simulate(reqs, t_cutoff=20))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
+
+
+@pytest.mark.n_buses(10)
+@pytest.mark.initial_location((0, 0))
+def test_location_triggered_fleet_state_simulate_grid(initial_stoplists):
+    space = Graph.create_grid()
+    rg = RandomRequestGenerator(rate=10, transport_space=space)
+    reqs = list(it.islice(rg, 1000))
+    fs = LocationTriggeredFleetState(initial_stoplists=initial_stoplists, space=space)
+    events = list(fs.simulate(reqs, t_cutoff=20))
+    print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
+    print("\n".join(map(str, events)))
 
 
 @pytest.mark.n_buses(10)

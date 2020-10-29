@@ -250,16 +250,17 @@ class SlowSimpleFleetState(FleetState):
 
 class LocationTriggeredFleetState(FleetState):
     def __init__(self, *args, **kwargs):
-        self.registry = defaultdict(lambda _: defaultdict(list))
+        self.registry = defaultdict(lambda: defaultdict(lambda: []))
+
         super().__init__(*args, **kwargs)
 
     def fast_forward(self, t: float):
-        it.chain.from_iterable(
+        return it.chain.from_iterable(
             vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
         )
 
     def handle_transportation_request(self, req: TransportationRequest):
-        self.registry[req.origin][req.destination] += req
+        self.registry[req.origin][req.destination].append(req)
 
         return RequestAcceptanceEvent(
             request_id=req.request_id,
