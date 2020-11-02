@@ -16,6 +16,7 @@ from .data_structures import (
     TransportationRequest,
     TransportSpace,
     Event,
+    RequestAssignEvent,
 )
 from .util.dispatchers import (
     taxicab_dispatcher_drive_first,
@@ -159,10 +160,14 @@ class VehicleState:
             space=self.space,
         )
 
-    def assign_bulk_requests(self, reqs) -> Sequence[Event]:
-        return self.vehicle_id, *taxicab_dispatcher_drive_first_location_trigger_bulk(
-            requests=reqs, stoplist=self.stoplist, space=self.space
+    def assign_bulk_requests(self, reqs) -> Sequence[RequestAssignEvent]:
+        self.stoplist, events = taxicab_dispatcher_drive_first_location_trigger_bulk(
+            requests=reqs,
+            stoplist=self.stoplist,
+            space=self.space,
+            vehicle_id=self.vehicle_id,
         )
+        return events
 
     def recompute_arrival_times_drive_first(self):
         # update CPATs

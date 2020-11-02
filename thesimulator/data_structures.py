@@ -104,6 +104,23 @@ class RequestAcceptanceEvent:
 
 
 @dataclass
+class RequestAssignEvent:
+    """
+    Commitment of the system to fulfil a request given
+    the returned spatio-temporal constraints.
+    """
+
+    request_id: ID
+    timestamp: float
+    origin: Any
+    destination: Any
+    pickup_timewindow_min: float
+    pickup_timewindow_max: float
+    delivery_timewindow_min: float
+    delivery_timewindow_max: float
+
+
+@dataclass
 class RequestRejectionEvent:
     """
     Inability of the system to fulfil a request.
@@ -146,7 +163,14 @@ class InternalAssignStopEvent:
 
 
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent]
+Event = Union[
+    RequestAcceptanceEvent,
+    RequestRejectionEvent,
+    PickupEvent,
+    DeliveryEvent,
+    InternalAssignStopEvent,
+    RequestAssignEvent,
+]
 Stoplist = List[Stop]
 SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
 """vehicle_id, cost, new_stop_list"""
