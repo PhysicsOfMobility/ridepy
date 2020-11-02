@@ -16,7 +16,10 @@ from .data_structures import (
     TransportationRequest,
     TransportSpace,
 )
-from .util.dispatchers import taxicab_dispatcher_drive_first
+from .util.dispatchers import (
+    taxicab_dispatcher_drive_first,
+    taxicab_dispatcher_drive_first_with_trigger_locations,
+)
 
 
 class VehicleState:
@@ -150,7 +153,9 @@ class VehicleState:
         """
 
         return self.vehicle_id, *taxicab_dispatcher_drive_first(
-            request=request, stoplist=self.stoplist, space=self.space
+            request=request,
+            stoplist=self.stoplist,
+            space=self.space,
         )
 
     def recompute_arrival_times_drive_first(self):

@@ -284,19 +284,44 @@ class LocationTriggeredFleetState(FleetState):
         )
         event_cache = []
         for req in self.registry[vehicle.location][destination]:
-            event_cache.append(
-                self._apply_request_solution(
-                    req,
-                    map(
-                        ft.partial(
-                            VehicleState.handle_transportation_request_single_vehicle,
-                            request=req,
-                        ),
-                        self.fleet.values(),
-                    ),
-                )
-            )
+            vehicle.handle_transportation_request_single_vehicle(request=req)
+
         return event_cache
+
+    def _apply_request_solution(
+        self, req, all_solutions: Iterable[SingleVehicleSolution]
+    ) -> RequestEvent:
+        (
+            best_vehicle,
+            min_cost,
+            new_stoplist,
+            (
+                pickup_timewindow_min,
+                pickup_timewindow_max,
+                dropoff_timewindow_min,
+                dropoff_timewindow_max,
+            ),
+        ) = min(all_solutions, key=op.itemgetter(1))
+        # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
+        if min_cost == np.inf:  # no solution was found
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
+        else:
+            # modify the best vehicle's stoplist
+            # print(f"len of new stoplist={len(new_stoplist)}")
+            self.fleet[best_vehicle].stoplist = new_stoplist
+            # print(
+            #     f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
+            # )
+            return RequestAcceptanceEvent(
+                request_id=req,
+                timestamp=time(),
+                origin=req.origin,
+                destination=req.destination,
+                pickup_timewindow_min=pickup_timewindow_min,
+                pickup_timewindow_max=pickup_timewindow_max,
+                delivery_timewindow_min=dropoff_timewindow_min,
+                delivery_timewindow_max=dropoff_timewindow_max,
+            )
 
     def handle_internal_requests(self, req: InternalRequest):
         if isinstance(req, InternalAssignRequest):
