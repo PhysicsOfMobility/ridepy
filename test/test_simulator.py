@@ -117,7 +117,6 @@ def test_location_triggered_fleet_state_simulate_grid(initial_stoplists):
                 ),
             )
         )
-    breakpoint()
     events = list(fs.simulate(reqs))
 
     accepted_requests = []

@@ -168,7 +168,7 @@ Event = Union[
     RequestRejectionEvent,
     PickupEvent,
     DeliveryEvent,
-    InternalStopEvent,
+    InternalAssignStopEvent,
     RequestAssignEvent,
 ]
 Stoplist = List[Stop]

@@ -289,9 +289,11 @@ class LocationTriggeredFleetState(FleetState):
                     ),
                     key=op.itemgetter(1),
                 )
-                event_cache += vehicle.assign_bulk_requests(
-                    reqs=self.registry[vehicle.location][destination]
-                )
+                if len(self.registry[vehicle.location][destination]):
+                    event_cache += vehicle.assign_bulk_requests(
+                        reqs=self.registry[vehicle.location][destination]
+                    )
+                    self.registry[vehicle.location][destination] = []
         else:
             raise NotImplementedError(f"Method {method} not implemented.")
 
