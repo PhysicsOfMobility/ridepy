@@ -1,3 +1,4 @@
+from numpy import inf
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from dataclasses import dataclass
@@ -81,8 +82,8 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
-    time_window_min: Optional[float]
-    time_window_max: Optional[float]
+    time_window_min: Optional[float] = 0
+    time_window_max: Optional[float] = inf
 
 
 @dataclass

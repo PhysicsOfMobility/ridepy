@@ -273,55 +273,29 @@ class LocationTriggeredFleetState(FleetState):
             delivery_timewindow_max=np.nan,
         )
 
-    def _assign_queued_at_location(self, vehicle_id) -> Sequence[Event]:
+    def _assign_queued_at_location(
+        self, vehicle_id, method="max_dest"
+    ) -> Sequence[Event]:
+
         vehicle = self.fleet[vehicle_id]
-        destination, _ = max(
-            (
-                (destination, len(reqs))
-                for destination, reqs in self.registry[vehicle.location].items()
-            ),
-            key=op.itemgetter(1),
-        )
         event_cache = []
-        for req in self.registry[vehicle.location][destination]:
-            vehicle.handle_transportation_request_single_vehicle(request=req)
+
+        if method == "max_dest":
+            if len(self.registry[vehicle.location]):
+                destination, _ = max(
+                    (
+                        (destination, len(reqs))
+                        for destination, reqs in self.registry[vehicle.location].items()
+                    ),
+                    key=op.itemgetter(1),
+                )
+                event_cache += vehicle.assign_bulk_requests(
+                    reqs=self.registry[vehicle.location][destination]
+                )
+        else:
+            raise NotImplementedError(f"Method {method} not implemented.")
 
         return event_cache
-
-    def _apply_request_solution(
-        self, req, all_solutions: Iterable[SingleVehicleSolution]
-    ) -> RequestEvent:
-        (
-            best_vehicle,
-            min_cost,
-            new_stoplist,
-            (
-                pickup_timewindow_min,
-                pickup_timewindow_max,
-                dropoff_timewindow_min,
-                dropoff_timewindow_max,
-            ),
-        ) = min(all_solutions, key=op.itemgetter(1))
-        # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
-        if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
-        else:
-            # modify the best vehicle's stoplist
-            # print(f"len of new stoplist={len(new_stoplist)}")
-            self.fleet[best_vehicle].stoplist = new_stoplist
-            # print(
-            #     f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
-            # )
-            return RequestAcceptanceEvent(
-                request_id=req,
-                timestamp=time(),
-                origin=req.origin,
-                destination=req.destination,
-                pickup_timewindow_min=pickup_timewindow_min,
-                pickup_timewindow_max=pickup_timewindow_max,
-                delivery_timewindow_min=dropoff_timewindow_min,
-                delivery_timewindow_max=dropoff_timewindow_max,
-            )
 
     def handle_internal_requests(self, req: InternalRequest):
         if isinstance(req, InternalAssignRequest):

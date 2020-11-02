@@ -1,4 +1,5 @@
-from typing import Tuple
+import copy
+from typing import Tuple, Iterable, Sequence
 
 import numpy as np
 import itertools as it
@@ -10,6 +11,7 @@ from thesimulator.data_structures import (
     Stop,
     StopAction,
     TransportSpace,
+    InternalAssignRequest,
 )
 
 from thesimulator.util.spaces import Graph
@@ -80,22 +82,43 @@ def taxicab_dispatcher_drive_first(
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
 
 
-# TODO make this a decorator
-def taxicab_dispatcher_drive_first_with_trigger_locations(
+def taxicab_dispatcher_drive_first_location_trigger_bulk(
     *,
-    request: TransportationRequest,
+    requests: Sequence[TransportationRequest],
     stoplist: Stoplist,
     space: Graph,
 ) -> Tuple[float, Stoplist, Tuple[float, float, float, float]]:
 
+    # 1. Insert the first request in the list
     cost, stoplist, time_windows = taxicab_dispatcher_drive_first(
-        request=request, stoplist=stoplist, space=space
+        request=requests[0], stoplist=stoplist, space=space
     )
-    i_pu, i_do = it.islice(
-        (i for i, s in enumerate(stoplist) if s.request == request), 2
+    i_pu, i_do = (i for i, s in enumerate(stoplist) if s.request == requests[0])
+
+    # 2. add additional stops for the rest of the requests, being served simultaneously
+    cost *= len(requests)
+    pu_template = stoplist[i_pu]
+    do_template = stoplist[i_do]
+    for i, request in enumerate(requests[1:], 1):
+        pu = copy.copy(pu_template)
+        do = copy.copy(do_template)
+        pu.request, do.request = it.repeat(request, 2)
+        stoplist.insert(i_pu + i, pu)
+        stoplist.insert(i_do + i, do)
+
+    stoplist.append(
+        Stop(
+            location=pu_template.location,
+            request=InternalAssignRequest(
+                creation_timestamp=None,
+                vehicle_id=None,
+            ),
+            action=StopAction.internal_assign,
+            estimated_arrival_time=do_template.estimated_arrival_time,
+        )
     )
 
-    for stop_a, stop_b in zip(stoplist[i_pu:i_do], stoplist[i_pu + 1 : i_do + 1]):
-        space.shortest_path_vertex_sequence(stop_a, stop_b)
-        breakpoint()
+    # for stop_a, stop_b in zip(stoplist[i_pu:i_do], stoplist[i_pu + 1 : i_do + 1]):
+    #     space.shortest_path_vertex_sequence(stop_a, stop_b)
+    #     breakpoint()
     return cost, stoplist, time_windows
