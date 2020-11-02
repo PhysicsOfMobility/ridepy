@@ -1,6 +1,6 @@
 import random
 
-from typing import List, Tuple, Union, Any
+from typing import List, Tuple, Union, Any, Iterator
 
 import numpy as np
 import math as m
@@ -186,6 +186,16 @@ class Graph(TransportSpace):
             u, v, dist_to_dest=time_to_dest * self.velocity
         )
         return next_node, jump_dist / self.velocity
+
+    def shortest_path_vertex_sequence(self, u, v) -> List[ID]:
+        seq = [v]
+        if u != v:
+            next_node = v
+            while next_node is not u:
+                next_node = self._predecessors[u][next_node]
+                seq.append(next_node)
+            seq.append(u)
+        return seq[::-1]
 
     def random_point(self):
         return random.choice(list(self.G.nodes))

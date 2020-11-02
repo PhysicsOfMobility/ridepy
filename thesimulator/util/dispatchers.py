@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+import itertools as it
 
 from thesimulator.data_structures import (
     ID,
@@ -11,8 +12,11 @@ from thesimulator.data_structures import (
     TransportSpace,
 )
 
+from thesimulator.util.spaces import Graph
+
 
 def taxicab_dispatcher_drive_first(
+    *,
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
@@ -74,3 +78,24 @@ def taxicab_dispatcher_drive_first(
         ),
     ]
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+
+
+# TODO make this a decorator
+def taxicab_dispatcher_drive_first_with_trigger_locations(
+    *,
+    request: TransportationRequest,
+    stoplist: Stoplist,
+    space: Graph,
+) -> Tuple[float, Stoplist, Tuple[float, float, float, float]]:
+
+    cost, stoplist, time_windows = taxicab_dispatcher_drive_first(
+        request=request, stoplist=stoplist, space=space
+    )
+    i_pu, i_do = it.islice(
+        (i for i, s in enumerate(stoplist) if s.request == request), 2
+    )
+
+    for stop_a, stop_b in zip(stoplist[i_pu:i_do], stoplist[i_pu + 1 : i_do + 1]):
+        space.shortest_path_vertex_sequence(stop_a, stop_b)
+        breakpoint()
+    return cost, stoplist, time_windows
