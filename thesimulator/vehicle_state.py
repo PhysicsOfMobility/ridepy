@@ -1,7 +1,7 @@
 import operator as op
 import numpy as np
 
-from typing import Optional, SupportsFloat, List
+from typing import Optional, SupportsFloat, List, Sequence
 
 from .data_structures import (
     Request,
@@ -15,10 +15,11 @@ from .data_structures import (
     Stop,
     TransportationRequest,
     TransportSpace,
+    Event,
 )
 from .util.dispatchers import (
     taxicab_dispatcher_drive_first,
-    taxicab_dispatcher_drive_first_with_trigger_locations,
+    taxicab_dispatcher_drive_first_location_trigger_bulk,
 )
 
 
@@ -156,6 +157,11 @@ class VehicleState:
             request=request,
             stoplist=self.stoplist,
             space=self.space,
+        )
+
+    def assign_bulk_requests(self, reqs) -> Sequence[Event]:
+        return self.vehicle_id, *taxicab_dispatcher_drive_first_location_trigger_bulk(
+            requests=reqs, stoplist=self.stoplist, space=self.space
         )
 
     def recompute_arrival_times_drive_first(self):

@@ -21,6 +21,8 @@ from thesimulator.data_structures import (
     DeliveryEvent,
     TransportationRequest,
     InternalCPERequest,
+    RequestAcceptanceEvent,
+    InternalAssignRequest,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
@@ -101,7 +103,41 @@ def test_location_triggered_fleet_state_simulate_grid(initial_stoplists):
     rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
     fs = LocationTriggeredFleetState(initial_stoplists=initial_stoplists, space=space)
-    events = list(fs.simulate(reqs, t_cutoff=20))
+    for vehicle_id, vehicle in fs.fleet.items():
+        random_point = space.random_point()
+        vehicle.stoplist.append(
+            Stop(
+                location=random_point,
+                action=StopAction.internal_assign,
+                estimated_arrival_time=space.t(
+                    vehicle.stoplist[0].location, random_point
+                ),
+                request=InternalAssignRequest(
+                    creation_timestamp=0, vehicle_id=vehicle_id
+                ),
+            )
+        )
+    breakpoint()
+    events = list(fs.simulate(reqs))
+
+    accepted_requests = []
+    picked_up_requests = []
+    dropped_off_requests = []
+
+    for event in events:
+        if isinstance(event, RequestAcceptanceEvent):
+            accepted_requests.append(event.request_id)
+        elif isinstance(event, PickupEvent):
+            picked_up_requests.append(event.request_id)
+        elif isinstance(event, DeliveryEvent):
+            dropped_off_requests.append(event.request_id)
+
+    for req in reqs:
+        print(req.request_id)
+        assert req.request_id in accepted_requests
+        assert req.request_id in picked_up_requests
+        assert req.request_id in dropped_off_requests
+
     print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     print("\n".join(map(str, events)))
 
