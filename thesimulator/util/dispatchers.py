@@ -105,7 +105,7 @@ def taxicab_dispatcher_drive_first_location_trigger_bulk(
         do = copy.copy(do_template)
         pu.request, do.request = it.repeat(request, 2)
         stoplist.insert(i_pu + i, pu)
-        stoplist.insert(i_do + i, do)
+        stoplist.insert(i_do + i + 1, do)
 
     # 3. append next internal assign stop
     stoplist.append(
@@ -119,6 +119,7 @@ def taxicab_dispatcher_drive_first_location_trigger_bulk(
             estimated_arrival_time=do_template.estimated_arrival_time,
         )
     )
+
     return stoplist, [
         RequestAssignEvent(
             request.request_id,

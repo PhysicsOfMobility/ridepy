@@ -129,6 +129,7 @@ class VehicleState:
                 event_cache.append(
                     InternalAssignStopEvent(timestamp=t, vehicle_id=self.vehicle_id)
                 )
+                i_first_future_stop += 1
 
         # if we have serviced any stops, remove them from the stoplist
         if i_first_future_stop > 0:
