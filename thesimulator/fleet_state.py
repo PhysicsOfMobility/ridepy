@@ -27,6 +27,7 @@ from .data_structures import (
     SingleVehicleSolution,
     InternalAssignStopEvent,
     InternalAssignRequest,
+    PickupEvent,
 )
 from .vehicle_state import VehicleState
 

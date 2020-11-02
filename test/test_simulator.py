@@ -100,7 +100,7 @@ def test_slow_simple_fleet_state_simulate_grid(initial_stoplists):
 @pytest.mark.initial_location((0, 0))
 def test_location_triggered_fleet_state_simulate_grid(initial_stoplists):
     space = Graph.create_grid()
-    rg = RandomRequestGenerator(rate=10, transport_space=space)
+    rg = RandomRequestGenerator(rate=100, transport_space=space)
     reqs = list(it.islice(rg, 1000))
     fs = LocationTriggeredFleetState(initial_stoplists=initial_stoplists, space=space)
     for vehicle_id, vehicle in fs.fleet.items():
@@ -134,8 +134,8 @@ def test_location_triggered_fleet_state_simulate_grid(initial_stoplists):
     for req in reqs:
         print(req.request_id)
         assert req.request_id in accepted_requests
-        assert req.request_id in picked_up_requests
-        assert req.request_id in dropped_off_requests
+        if req.request_id in picked_up_requests:
+            assert req.request_id in dropped_off_requests
 
     print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     print("\n".join(map(str, events)))
