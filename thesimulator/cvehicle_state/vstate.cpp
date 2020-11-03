@@ -2,14 +2,17 @@
 #include <iostream>
 #include <tuple>
 
-namespace cstate{
+using namespace std::literals::string_literals;
+
+namespace cstates{
     class CRequest{
     public:
-        const std::string request_id;
-        const float creation_timestamp;
+        std::string request_id;
+        float creation_timestamp;
         CRequest(std::string request_id, float creation_timestamp):
-            request_id(request_id),
-            creation_timestamp(creation_timestamp){};
+            request_id{request_id},
+            creation_timestamp{creation_timestamp}{};
+        CRequest(): request_id{""s}, creation_timestamp{0}{};
     };
 
     enum CStopAction{
@@ -35,20 +38,13 @@ namespace cstate{
             float time_window_max,
             CStopAction stop_action
             ):
-                location(location),
-                crequest(crequest),
-                estimated_arrival_time(estimated_arrival_time),
-                time_window_min(time_window_min),
-                time_window_max(time_window_max){};
+                location{location},
+                crequest{crequest},
+                estimated_arrival_time{estimated_arrival_time},
+                time_window_min{time_window_min},
+                time_window_max{time_window_max}{};
     };
 } // end ns cstate
-
-int main(){
-    cstate::CRequest req("foo", 0.12);
-    std::cout<<"Request: "<<req.request_id<<std::endl;
-    cstate::CStop stop(std::make_tuple(0,0), req, 0,0,0, cstate::CStopAction::pickup);
-    std::cout<<"Stop: "<<std::get<0>(stop.location)<<std::endl;
-}
 
 
 //namespace main{

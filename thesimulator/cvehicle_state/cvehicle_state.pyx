@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = vstate.cpp
+# distutils: sources = thesimulator/cvehicle_state/vstate.cpp
 
 from vstate cimport CRequest
 from libcpp.string cimport string
