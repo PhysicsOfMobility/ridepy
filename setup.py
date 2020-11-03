@@ -8,12 +8,12 @@ setup(
     version="0.1",
     zip_safe=False,
     ext_modules=cythonize(Extension(
-        name="cvehicle_state",
+        name="thesimulator.cvehicle_state",
         sources=[
             "thesimulator/cvehicle_state/cvehicle_state.pyx",
             "thesimulator/cvehicle_state/vstate.cpp"],
         language="c++"),
-        language_level=2
+        language_level=3
     ),
 
     packages=find_packages(),
