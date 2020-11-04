@@ -5,6 +5,12 @@ from vstate cimport CRequest
 from libcpp.string cimport string
 
 
+# TODO: Can we cdef enum class CRequest, and use CRequest from c++ code?
+
+cdef public struct FooBar:
+    string name
+    float size
+
 cdef class Request:
     cdef CRequest crequest
 

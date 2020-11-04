@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <tuple>
+#include "cvehicle_state.h"
 
 using namespace std::literals::string_literals;
 
@@ -11,7 +12,10 @@ namespace cstates{
         float creation_timestamp;
         CRequest(std::string request_id, float creation_timestamp):
             request_id{request_id},
-            creation_timestamp{creation_timestamp}{};
+            creation_timestamp{creation_timestamp}
+            {
+                FooBar test {"hello"s, 42};
+            };
         CRequest(): request_id{""s}, creation_timestamp{0}{};
     };
 
