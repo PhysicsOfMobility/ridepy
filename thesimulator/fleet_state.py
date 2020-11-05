@@ -381,5 +381,5 @@ class MPIFuturesFleetState(FleetState):
                     ),
                 )
 
-    def handle_internal_requests(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_requests(self, req: InternalRequest):
         ...
