@@ -46,6 +46,7 @@ class VehicleState:
         space
             transport space the vehicle is operating on
         """
+
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         self.stoplist = initial_stoplist
