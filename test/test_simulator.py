@@ -79,7 +79,7 @@ def test_slow_simple_fleet_state_simulate(initial_stoplists):
     rg = RandomRequestGenerator(rate=10, transport_space=space)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(initial_stoplists=initial_stoplists, space=space)
-    events = list(fs.simulate(reqs, t_cutoff=20))
+    events = list(fs.simulate(reqs))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
 
