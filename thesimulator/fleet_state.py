@@ -188,6 +188,21 @@ class FleetState(ABC):
             if t >= t_cutoff:
                 return
 
+        # service all remaining stops
+        event_cache = []
+        while new_events := self.fast_forward_time(
+            min(
+                t_cutoff,
+                max(
+                    vehicle.stoplist[-1].estimated_arrival_time
+                    for vehicle in self.fleet.values()
+                ),
+            )
+        ):
+            event_cache += new_events
+
+        yield from event_cache
+
     def _apply_request_solution(
         self, req, all_solutions: Iterable[SingleVehicleSolution]
     ) -> RequestEvent:
@@ -244,8 +259,11 @@ class SlowSimpleFleetState(FleetState):
 
     def fast_forward_time(self, t: float):
         # return an iterator over the StopEvents emitted by the fleets fast_forward_time methods
-        return it.chain.from_iterable(
-            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        return list(
+            it.chain.from_iterable(
+                vehicle_state.fast_forward_time(t)
+                for vehicle_state in self.fleet.values()
+            )
         )
 
     def handle_transportation_request(self, req: TransportationRequest):
@@ -278,8 +296,11 @@ class LocationTriggeredFleetState(FleetState):
 
     def fast_forward_time(self, t: float):
         # return an iterator over the StopEvents emitted by the fleets fast_forward_time methods
-        return it.chain.from_iterable(
-            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        return list(
+            it.chain.from_iterable(
+                vehicle_state.fast_forward_time(t)
+                for vehicle_state in self.fleet.values()
+            )
         )
 
     def handle_transportation_request(self, req: TransportationRequest):
@@ -359,10 +380,12 @@ class MPIFuturesFleetState(FleetState):
     def fast_forward_time(self, t: float):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
-                return it.chain.from_iterable(
-                    executor.map(
-                        ft.partial(VehicleState.fast_forward_time, t=t),
-                        self.fleet.values(),
+                return list(
+                    it.chain.from_iterable(
+                        executor.map(
+                            ft.partial(VehicleState.fast_forward_time, t=t),
+                            self.fleet.values(),
+                        )
                     )
                 )
 
