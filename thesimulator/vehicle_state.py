@@ -1,5 +1,6 @@
-import operator as op
 import numpy as np
+import operator as op
+import itertools as it
 
 from typing import Optional, SupportsFloat, List, Sequence
 
@@ -53,16 +54,20 @@ class VehicleState:
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
-        Update the vehicle_state to the simulator time `t`.
+        Advance the vehicle_state to the simulator time `t`, if possible.
+        However, if the simulator must take action as time is evolved, an appropriate internal
+        stop event is emitted and fast_forward_time interrupted. In this case, the time is
+        not evolved to the supplied `t` but rather to the estimated arrival time of the
+        last stop before the internal stop that requires the action to be taken.
 
         Parameters
         ----------
         t
-            time to be updated to
+            time to advance to, if possible
 
         Returns
         -------
-        events
+        stop_events
             List of stop events emitted through servicing stops
         """
 
