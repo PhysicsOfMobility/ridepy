@@ -147,6 +147,8 @@ class VehicleState:
         self, request: TransportationRequest
     ) -> SingleVehicleSolution:
         """
+        Assign a single transportation request to the current vehicle.
+
         The computational bottleneck. An efficient simulator could do the following:
         1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
         2. Implement as a c extension. The args and the return value are all basic c data types,
@@ -158,7 +160,8 @@ class VehicleState:
 
         Returns
         -------
-        This returns the single best solution for the respective vehicle.
+        single_vehicle_solution
+            the best solution for the current vehicle
         """
 
         return self.vehicle_id, *taxicab_dispatcher_drive_first(
@@ -168,6 +171,20 @@ class VehicleState:
         )
 
     def assign_bulk_requests(self, reqs) -> Sequence[RequestAssignEvent]:
+        """
+        Assign multiple requests at a time. This is primarily needed for being able to
+        insert stops cached at a location.
+
+        Parameters
+        ----------
+        reqs
+
+        Returns
+        -------
+        events
+            Multiple request assign events
+
+        """
         self.stoplist, events = taxicab_dispatcher_drive_first_location_trigger_bulk(
             requests=reqs,
             stoplist=self.stoplist,
@@ -177,6 +194,17 @@ class VehicleState:
         return events
 
     def recompute_arrival_times_drive_first(self):
+        """
+        Update the estimated arrival times of the stops in the vehicle's stoplist
+        by using the CPE's estimated arrival time and location as the start point.
+
+        This assumes drive-first as we are using the previous stop's eta plus the
+        direct travel time to the next stop as the eta of the next stop.
+
+        Returns
+        -------
+
+        """
         # update CPATs
         for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
             stop_j.estimated_arrival_time = max(
@@ -185,9 +213,24 @@ class VehicleState:
 
     @property
     def location(self):
+        """
+        Current location of the vehicle is given by the CPE location
+
+        Returns
+        -------
+        location
+        """
         return self.stoplist[0].location
 
     @property
-    def capacity(self):
+    def capacity(self) -> int:
+        """
+        Current capacity of the vehicle, i.e. the number of free seats,
+        given the current number of people aboard.
+
+        Returns
+        -------
+
+        """
         # TODO calculate actual current capacity to enable capacity constraints
         return None
