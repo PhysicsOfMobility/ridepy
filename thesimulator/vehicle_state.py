@@ -111,7 +111,7 @@ class VehicleState:
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         if len(self.stoplist) > 1:
-            self.stoplist[0].location = self.space.interp_time(
+            self.stoplist[0].location, _ = self.space.interp_time(
                 u=last_stop.location,
                 v=self.stoplist[1].location,
                 time_to_dest=self.stoplist[1].estimated_arrival_time - t,
