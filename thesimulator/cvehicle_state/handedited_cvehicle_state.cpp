@@ -3,9 +3,11 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
+        "depends": [],
         "language": "c++",
         "name": "thesimulator.cvehicle_state",
         "sources": [
+            "thesimulator/cvehicle_state/data_structures.pyx",
             "thesimulator/cvehicle_state/cvehicle_state.pyx",
             "thesimulator/cvehicle_state/vstate.cpp"
         ]
@@ -630,8 +632,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__thesimulator__cvehicle_state
-#define __PYX_HAVE_API__thesimulator__cvehicle_state
+#define __PYX_HAVE__cvehicle_state
+#define __PYX_HAVE_API__cvehicle_state
 /* Early includes */
 #include <string.h>
 #include "ios"
@@ -641,7 +643,7 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include <string>
 #ifndef VSTATE_INCL
 #define VSTATE_INCL
-#include "vstate.cpp"
+#include "vstate.h"
 #endif
 #ifdef _OPENMP
 #include <omp.h>
@@ -859,7 +861,7 @@ static const char *__pyx_f[] = {
 #ifndef VSTATE_INCL
 struct CyRequest;
 
-/* "data_structures.pxd":3
+/* "data_structures.pxd":5
  * from libcpp.string cimport string
  * 
  * cdef public struct CyRequest:             # <<<<<<<<<<<<<<
@@ -1071,34 +1073,59 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from 'vstate' */
 
-/* Module declarations from 'thesimulator.cvehicle_state' */
+/* Module declarations from 'cvehicle_state' */
 static std::string __pyx_convert_string_from_py_std__in_string(PyObject *); /*proto*/
-#define __Pyx_MODULE_NAME "thesimulator.cvehicle_state"
-extern int __pyx_module_is_main_thesimulator__cvehicle_state;
-int __pyx_module_is_main_thesimulator__cvehicle_state = 0;
+#define __Pyx_MODULE_NAME "cvehicle_state"
+extern int __pyx_module_is_main_cvehicle_state;
+int __pyx_module_is_main_cvehicle_state = 0;
 
-/* Implementation of 'thesimulator.cvehicle_state' */
+/* Implementation of 'cvehicle_state' */
+static const char __pyx_k_req[] = "req";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_name[] = "__name__";
 static const char __pyx_k_req1[] = "req1";
 static const char __pyx_k_test[] = "__test__";
+static const char __pyx_k_cvehicle_state[] = "cvehicle_state";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
+static const char __pyx_k_create_and_handle_test_request[] = "create_and_handle_test_request";
+static const char __pyx_k_thesimulator_cvehicle_state_cveh[] = "thesimulator/cvehicle_state/cvehicle_state.pyx";
 static PyObject *__pyx_n_s_cline_in_traceback;
+static PyObject *__pyx_n_s_create_and_handle_test_request;
+static PyObject *__pyx_n_s_cvehicle_state;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_name;
+static PyObject *__pyx_n_s_req;
 static PyObject *__pyx_n_b_req1;
 static PyObject *__pyx_n_s_test;
+static PyObject *__pyx_kp_s_thesimulator_cvehicle_state_cveh;
+static PyObject *__pyx_pf_14cvehicle_state_create_and_handle_test_request(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_tuple_;
+static PyObject *__pyx_codeobj__2;
 /* Late includes */
 
-/* "thesimulator/cvehicle_state/cvehicle_state.pyx":10
+/* "cvehicle_state.pyx":10
  * # TODO: Can we cdef enum class CRequest, and use CRequest from c++ code?
  * 
- * cdef create_and_handle_test_request():             # <<<<<<<<<<<<<<
+ * def create_and_handle_test_request():             # <<<<<<<<<<<<<<
  *     cdef CyRequest req
  *     req.request_id = "req1".encode('ascii')
  */
 
-static PyObject *__pyx_f_12thesimulator_14cvehicle_state_create_and_handle_test_request(void) {
+/* Python wrapper */
+static PyObject *__pyx_pw_14cvehicle_state_1create_and_handle_test_request(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyMethodDef __pyx_mdef_14cvehicle_state_1create_and_handle_test_request = {"create_and_handle_test_request", (PyCFunction)__pyx_pw_14cvehicle_state_1create_and_handle_test_request, METH_NOARGS, 0};
+static PyObject *__pyx_pw_14cvehicle_state_1create_and_handle_test_request(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("create_and_handle_test_request (wrapper)", 0);
+  __pyx_r = __pyx_pf_14cvehicle_state_create_and_handle_test_request(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14cvehicle_state_create_and_handle_test_request(CYTHON_UNUSED PyObject *__pyx_self) {
   struct CyRequest __pyx_v_req;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -1109,8 +1136,8 @@ static PyObject *__pyx_f_12thesimulator_14cvehicle_state_create_and_handle_test_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("create_and_handle_test_request", 0);
 
-  /* "thesimulator/cvehicle_state/cvehicle_state.pyx":12
- * cdef create_and_handle_test_request():
+  /* "cvehicle_state.pyx":12
+ * def create_and_handle_test_request():
  *     cdef CyRequest req
  *     req.request_id = "req1".encode('ascii')             # <<<<<<<<<<<<<<
  *     req.creation_timestamp = 123
@@ -1119,7 +1146,7 @@ static PyObject *__pyx_f_12thesimulator_14cvehicle_state_create_and_handle_test_
   __pyx_t_1 = __pyx_convert_string_from_py_std__in_string(__pyx_n_b_req1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 12, __pyx_L1_error)
   __pyx_v_req.request_id = __pyx_t_1;
 
-  /* "thesimulator/cvehicle_state/cvehicle_state.pyx":13
+  /* "cvehicle_state.pyx":13
  *     cdef CyRequest req
  *     req.request_id = "req1".encode('ascii')
  *     req.creation_timestamp = 123             # <<<<<<<<<<<<<<
@@ -1128,23 +1155,23 @@ static PyObject *__pyx_f_12thesimulator_14cvehicle_state_create_and_handle_test_
  */
   __pyx_v_req.creation_timestamp = 123.0;
 
-  /* "thesimulator/cvehicle_state/cvehicle_state.pyx":15
+  /* "cvehicle_state.pyx":15
  *     req.creation_timestamp = 123
  * 
  *     return handle_request(req)             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_PyInt_From_int(cstates::handle_request(__pyx_v_req)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(handle_request(__pyx_v_req)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "thesimulator/cvehicle_state/cvehicle_state.pyx":10
+  /* "cvehicle_state.pyx":10
  * # TODO: Can we cdef enum class CRequest, and use CRequest from c++ code?
  * 
- * cdef create_and_handle_test_request():             # <<<<<<<<<<<<<<
+ * def create_and_handle_test_request():             # <<<<<<<<<<<<<<
  *     cdef CyRequest req
  *     req.request_id = "req1".encode('ascii')
  */
@@ -1152,8 +1179,8 @@ static PyObject *__pyx_f_12thesimulator_14cvehicle_state_create_and_handle_test_
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("thesimulator.cvehicle_state.create_and_handle_test_request", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __Pyx_AddTraceback("cvehicle_state.create_and_handle_test_request", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -1272,10 +1299,14 @@ static struct PyModuleDef __pyx_moduledef = {
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
+  {&__pyx_n_s_create_and_handle_test_request, __pyx_k_create_and_handle_test_request, sizeof(__pyx_k_create_and_handle_test_request), 0, 0, 1, 1},
+  {&__pyx_n_s_cvehicle_state, __pyx_k_cvehicle_state, sizeof(__pyx_k_cvehicle_state), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_n_s_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 0, 1, 1},
+  {&__pyx_n_s_req, __pyx_k_req, sizeof(__pyx_k_req), 0, 0, 1, 1},
   {&__pyx_n_b_req1, __pyx_k_req1, sizeof(__pyx_k_req1), 0, 0, 0, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
+  {&__pyx_kp_s_thesimulator_cvehicle_state_cveh, __pyx_k_thesimulator_cvehicle_state_cveh, sizeof(__pyx_k_thesimulator_cvehicle_state_cveh), 0, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
@@ -1285,8 +1316,23 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
 static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
+
+  /* "cvehicle_state.pyx":10
+ * # TODO: Can we cdef enum class CRequest, and use CRequest from c++ code?
+ * 
+ * def create_and_handle_test_request():             # <<<<<<<<<<<<<<
+ *     cdef CyRequest req
+ *     req.request_id = "req1".encode('ascii')
+ */
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_n_s_req); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple_);
+  __Pyx_GIVEREF(__pyx_tuple_);
+  __pyx_codeobj__2 = (PyObject*)__Pyx_PyCode_New(0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple_, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_thesimulator_cvehicle_state_cveh, __pyx_n_s_create_and_handle_test_request, 10, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__2)) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
+  __pyx_L1_error:;
+  __Pyx_RefNannyFinishContext();
+  return -1;
 }
 
 static CYTHON_SMALL_CODE int __Pyx_InitGlobals(void) {
@@ -1534,14 +1580,14 @@ if (!__Pyx_RefNanny) {
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_thesimulator__cvehicle_state) {
+  if (__pyx_module_is_main_cvehicle_state) {
     if (PyObject_SetAttr(__pyx_m, __pyx_n_s_name, __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "thesimulator.cvehicle_state")) {
-      if (unlikely(PyDict_SetItemString(modules, "thesimulator.cvehicle_state", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "cvehicle_state")) {
+      if (unlikely(PyDict_SetItemString(modules, "cvehicle_state", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -1562,7 +1608,19 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "thesimulator/cvehicle_state/cvehicle_state.pyx":1
+  /* "cvehicle_state.pyx":10
+ * # TODO: Can we cdef enum class CRequest, and use CRequest from c++ code?
+ * 
+ * def create_and_handle_test_request():             # <<<<<<<<<<<<<<
+ *     cdef CyRequest req
+ *     req.request_id = "req1".encode('ascii')
+ */
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14cvehicle_state_1create_and_handle_test_request, NULL, __pyx_n_s_cvehicle_state); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_create_and_handle_test_request, __pyx_t_1) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "cvehicle_state.pyx":1
  * # distutils: language = c++             # <<<<<<<<<<<<<<
  * # distutils: sources = thesimulator/cvehicle_state/vstate.cpp
  * 
@@ -1587,11 +1645,11 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_1);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init thesimulator.cvehicle_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init cvehicle_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_CLEAR(__pyx_m);
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init thesimulator.cvehicle_state");
+    PyErr_SetString(PyExc_ImportError, "init cvehicle_state");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
