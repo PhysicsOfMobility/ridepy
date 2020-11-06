@@ -10,8 +10,10 @@ setup(
     ext_modules=cythonize(Extension(
         name="thesimulator.cvehicle_state",
         sources=[
+            "thesimulator/cvehicle_state/data_structures.pyx",
             "thesimulator/cvehicle_state/cvehicle_state.pyx",
-            "thesimulator/cvehicle_state/vstate.cpp"],
+            "thesimulator/cvehicle_state/vstate.cpp"
+        ],
         language="c++"),
         language_level=3
     ),

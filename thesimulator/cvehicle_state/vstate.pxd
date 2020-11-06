@@ -1,9 +1,8 @@
-from libcpp.string cimport string
+# distutils: language = c++
 
-cdef extern from "vstate.cpp" namespace "cstates":
-    cdef cppclass CRequest:
-        CRequest(string request_id, float creation_timestamp)
-        CRequest()
-        string request_id
-        float creation_timestamp
+from libcpp.string cimport string
+from data_structures cimport CyRequest
+
+cdef extern from "vstate.h":
+    int handle_request(CyRequest req)
 

@@ -1,17 +1,16 @@
 # distutils: language = c++
 # distutils: sources = thesimulator/cvehicle_state/vstate.cpp
 
-from vstate cimport CRequest
-from data_structures cimport  FooBar
+from data_structures cimport CyRequest
+from vstate cimport handle_request
 
 
 # TODO: Can we cdef enum class CRequest, and use CRequest from c++ code?
 
+def create_and_handle_test_request():
+    cdef CyRequest req
+    req.request_id = "req1".encode('ascii')
+    req.creation_timestamp = 123
 
+    return handle_request(req)
 
-cdef class Request:
-    cdef CRequest crequest
-    cdef FooBar test
-    def __cinit__(self, request_id, creation_timestamp):
-        self.crequest = CRequest(request_id.encode('ascii'), float(creation_timestamp))
-        print(self.test.name)
