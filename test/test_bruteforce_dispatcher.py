@@ -82,6 +82,44 @@ def test_append_dueto_timewindow():
     assert new_stoplist[-1].location == request.destination
 
 
+def test_inserted_at_the_middle():
+    space = Euclidean2D()
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 3), 3, 0, 6]
+    ]
+    # fmt: on
+    stoplist = [
+        Stop(
+            location=loc,
+            request=None,
+            action=StopAction.internal,
+            estimated_arrival_time=cpat,
+            time_window_min=tw_min,
+            time_window_max=tw_max,
+        )
+        for loc, cpat, tw_min, tw_max in stoplist_properties
+    ]
+    eps = 1e-4
+    request = TransportationRequest(
+        request_id="a",
+        creation_timestamp=1,
+        origin=(eps, 1),
+        destination=(eps, 3),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=inf,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
+        request, stoplist, space
+    )
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[2].location == request.destination
+
+
 if __name__ == "__main__":
     pytest.main(args=[__file__])
 #
