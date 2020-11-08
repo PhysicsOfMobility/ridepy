@@ -44,16 +44,8 @@ def test_append_to_empty_stoplist():
     assert new_stoplist[-1].location == request.destination
 
 
-def test_append_dueto_timewindow():
-    space = Euclidean2D()
-    # fmt: off
-    # location, cpat, tw_min, tw_max,
-    stoplist_properties = [
-        [(0, 1), 1, 0, inf],
-        [(0, 3), 3, 3, 3]
-    ]
-    # fmt: on
-    stoplist = [
+def stoplist_from_properties(stoplist_properties):
+    return [
         Stop(
             location=loc,
             request=None,
@@ -64,6 +56,18 @@ def test_append_dueto_timewindow():
         )
         for loc, cpat, tw_min, tw_max in stoplist_properties
     ]
+
+
+def test_append_dueto_timewindow():
+    space = Euclidean2D()
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 3), 3, 3, 3]
+    ]
+    # fmt: on
+    stoplist = stoplist_from_properties(stoplist_properties)
     eps = 1e-4
     request = TransportationRequest(
         request_id="a",
@@ -88,20 +92,10 @@ def test_inserted_at_the_middle():
     # location, cpat, tw_min, tw_max,
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
-        [(0, 3), 3, 0, 6]
+        [(0, 3), 3, 0, 6],
     ]
     # fmt: on
-    stoplist = [
-        Stop(
-            location=loc,
-            request=None,
-            action=StopAction.internal,
-            estimated_arrival_time=cpat,
-            time_window_min=tw_min,
-            time_window_max=tw_max,
-        )
-        for loc, cpat, tw_min, tw_max in stoplist_properties
-    ]
+    stoplist = stoplist_from_properties(stoplist_properties)
     eps = 1e-4
     request = TransportationRequest(
         request_id="a",
@@ -118,6 +112,36 @@ def test_inserted_at_the_middle():
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
+
+
+def test_inserted_separately():
+    space = Euclidean2D()
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 3), 3, 0, inf],
+        [(0, 5), 5, 0, inf],
+        [(0, 7), 7, 0, inf],
+    ]
+    # fmt: on
+    stoplist = stoplist_from_properties(stoplist_properties)
+    eps = 1e-4
+    request = TransportationRequest(
+        request_id="a",
+        creation_timestamp=1,
+        origin=(eps, 2),
+        destination=(eps, 4),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=inf,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
+        request, stoplist, space
+    )
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[3].location == request.destination
 
 
 if __name__ == "__main__":
