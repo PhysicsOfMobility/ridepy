@@ -4,14 +4,12 @@ from thesimulator.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
-    PickupEvent,
-    StopEvent,
-    DeliveryEvent,
     TransportationRequest,
 )
 from thesimulator.util.spaces import Euclidean2D
 
 from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
+from thesimulator.util.testing_utils import stoplist_from_properties
 
 
 def test_append_to_empty_stoplist():
@@ -42,20 +40,6 @@ def test_append_to_empty_stoplist():
     )
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
-
-
-def stoplist_from_properties(stoplist_properties):
-    return [
-        Stop(
-            location=loc,
-            request=None,
-            action=StopAction.internal,
-            estimated_arrival_time=cpat,
-            time_window_min=tw_min,
-            time_window_max=tw_max,
-        )
-        for loc, cpat, tw_min, tw_max in stoplist_properties
-    ]
 
 
 def test_append_dueto_timewindow():
