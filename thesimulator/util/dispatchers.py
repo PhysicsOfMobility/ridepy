@@ -90,7 +90,7 @@ def insert_request_to_stoplist_drive_first(
     # We don't want to modify stoplist in place. Make a copy.
     new_stoplist = stoplist[:]
     # Handle the pickup
-    stop_before_pickup = stoplist[pickup_idx]
+    stop_before_pickup = new_stoplist[pickup_idx]
     cpat_at_pu = stop_before_pickup.estimated_departure_time + space.d(
         stop_before_pickup.location, request.origin
     )
@@ -100,21 +100,23 @@ def insert_request_to_stoplist_drive_first(
         estimated_arrival_time=cpat_at_pu,
         time_window_min=request.pickup_timewindow_min,
         time_window_max=request.pickup_timewindow_max,
+        request=request,
     )
 
     insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space)
     # Handle the dropoff
     dropoff_idx += 1
-    stop_before_dropoff = stoplist[dropoff_idx]
+    stop_before_dropoff = new_stoplist[dropoff_idx]
     cpat_at_do = stop_before_dropoff.estimated_departure_time + space.d(
         stop_before_dropoff.location, request.destination
     )
     dropoff_stop = Stop(
-        location=request.origin,
+        location=request.destination,
         action=StopAction.dropoff,
         estimated_arrival_time=cpat_at_do,
         time_window_min=request.delivery_timewindow_min,
         time_window_max=request.delivery_timewindow_max,
+        request=request,
     )
     insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx, space)
     return new_stoplist
@@ -139,10 +141,11 @@ def insert_stop_to_stoplist_drive_first(
     stop_before_insertion = stoplist[idx]
     distance_to_new_stop = space.d(stop_before_insertion.location, stop.location)
     cpat_new_stop = cpat_of_inserted_stop(
-        stop_before_insertion, distance_from_stop_before
+        stop_before=stop_before_insertion,
+        distance_from_stop_before=distance_to_new_stop,
     )
     stop.estimated_arrival_time = cpat_new_stop
-    if idx < len(stoplist):
+    if idx < len(stoplist) - 1:
         # update cpats of later stops
         departure_previous_stop = stop.estimated_departure_time
         cpat_next_stop = departure_previous_stop + space.d(
@@ -157,6 +160,7 @@ def insert_stop_to_stoplist_drive_first(
             delta_cpat_next_stop = new_departure - old_departure
             if delta_cpat_next_stop == 0:
                 break
+    stoplist.insert(idx + 1, stop)
 
 
 def cpat_of_inserted_stop(stop_before: Stop, distance_from_stop_before: float) -> float:
@@ -176,7 +180,9 @@ def distance_to_stop_after_insertion(
     stoplist: Stoplist, location, index: int, space: TransportSpace
 ) -> float:
     return (
-        space.d(location, stoplist[index + 1].location) if index < len(stoplist) else 0
+        space.d(location, stoplist[index + 1].location)
+        if index < len(stoplist) - 1
+        else 0
     )
 
 
@@ -185,7 +191,7 @@ def distance_from_current_stop_to_next(
 ) -> float:
     return (
         space.d(stoplist[i].location, stoplist[i + 1].location)
-        if i < len(stoplist)
+        if i < len(stoplist) - 1
         else 0
     )
 
@@ -203,7 +209,7 @@ def is_timewindow_violated_dueto_insertion(
     Returns:
 
     """
-    if not idx < len(stoplist):
+    if not idx < len(stoplist) - 1:
         return False
     delta_cpat = (
         est_arrival_first_stop_after_insertion
@@ -292,8 +298,10 @@ def brute_force_distance_minimizing_dispatcher(
             ):
                 best_insertion = i, i
                 min_cost = total_cost
-        # dropoff not immediately after pickup
-        distance_from_pickup = space.d(request.origin, stoplist[i + 1].location)
+        # Try dropoff not immediately after pickup
+        distance_from_pickup = distance_to_stop_after_insertion(
+            stoplist, request.origin, i, space
+        )
         cpat_at_next_stop = (
             max(CPAT_pu, request.pickup_timewindow_min) + distance_from_pickup
         )
