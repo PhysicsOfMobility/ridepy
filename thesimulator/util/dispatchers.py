@@ -219,7 +219,7 @@ def is_timewindow_violated_dueto_insertion(
         old_leeway = stop.time_window_max - stop.estimated_arrival_time
         new_leeway = old_leeway - delta_cpat
 
-        if new_leeway < 0 < old_leeway:
+        if new_leeway < 0 <= old_leeway:
             return True
         else:
             old_departure = max(stop.time_window_min, stop.estimated_arrival_time)
