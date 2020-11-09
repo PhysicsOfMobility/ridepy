@@ -165,6 +165,23 @@ class Graph(TransportSpace):
             distance_attribute=distance_attribute,
         )
 
+    @classmethod
+    def create_cycle_graph(
+        cls,
+        n_nodes=10,
+        velocity: float = 1,
+        edge_distance=1,
+        distance_attribute="distance",
+    ):
+        graph = nx.generators.classic.cycle_graph(n=n_nodes)
+        nx.set_edge_attributes(graph, edge_distance, distance_attribute)
+
+        return Graph(
+            graph=graph,
+            velocity=velocity,
+            distance_attribute=distance_attribute,
+        )
+
     def d(self, u, v):
         return self._distances[u][v]
 

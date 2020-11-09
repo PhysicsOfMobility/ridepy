@@ -35,9 +35,9 @@ def test_Euclidean2D():
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
 
 
-def test_Grid():
+def test_grid():
     space = Graph.create_grid()
-    # breakpoint()
+
     assert space.d((0, 0), (0, 0)) == 0
     assert space.d((0, 0), (0, 1)) == 1
     assert space.d((0, 1), (0, 2)) == 1
@@ -58,3 +58,13 @@ def test_Grid():
         assert np.isclose(jump_time_interp, jump_time)
 
     assert space.interp_dist((0, 0), (0, 0), 0) == ((0, 0), 0)
+
+
+def test_cyclic_graph():
+    space = Graph.create_cycle_graph(n_nodes=4)
+
+    assert space.d(0, 0) == 0
+    assert space.d(0, 1) == 1
+    assert space.d(0, 2) == 2
+    assert space.d(0, 3) == 1
+    assert space.d(0, 4) == np.inf
