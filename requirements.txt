@@ -1,0 +1,6 @@
+decorator==4.4.2; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.2.0" and python_version >= "3.6"
+mpi4py==3.0.3
+networkx==2.5; python_version >= "3.6"
+numpy==1.19.2; python_version >= "3.6"
+scipy==1.5.3; python_version >= "3.6"
+tabulate==0.8.7
