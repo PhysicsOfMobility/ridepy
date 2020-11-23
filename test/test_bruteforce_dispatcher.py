@@ -42,7 +42,7 @@ def test_append_to_empty_stoplist():
     assert new_stoplist[-1].location == request.destination
 
 
-def test_append_dueto_timewindow():
+def test_append_due_to_timewindow():
     space = Euclidean2D()
     # fmt: off
     # location, cpat, tw_min, tw_max,

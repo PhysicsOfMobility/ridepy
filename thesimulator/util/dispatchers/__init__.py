@@ -13,7 +13,7 @@ from thesimulator.util.dispatchers.helper_functions import (
     cpat_of_inserted_stop,
     distance_to_stop_after_insertion,
     distance_from_current_stop_to_next,
-    is_timewindow_violated_dueto_insertion,
+    is_timewindow_violated_due_to_insertion,
     insert_request_to_stoplist_drive_first,
 )
 
@@ -115,12 +115,14 @@ def brute_force_distance_minimizing_dispatcher(
             continue
         EAST_pu = request.pickup_timewindow_min
 
-        # dropoff immediately
+        ######################
+        # ADJACENT INSERTION #
+        ######################
         CPAT_do = max(EAST_pu, CPAT_pu) + space.d(request.origin, request.destination)
-        EAST_do = request.delivery_timewindow_min
         # check for request's dropoff timewindow violation
         if CPAT_do > request.delivery_timewindow_max:
             continue
+
         # compute the cost function
         distance_to_dropoff = space.d(request.origin, request.destination)
         distance_from_dropoff = distance_to_stop_after_insertion(
@@ -141,19 +143,22 @@ def brute_force_distance_minimizing_dispatcher(
             cpat_at_next_stop = (
                 max(CPAT_do, request.delivery_timewindow_min) + distance_from_dropoff
             )
-            if not is_timewindow_violated_dueto_insertion(
+            if not is_timewindow_violated_due_to_insertion(
                 stoplist, i, cpat_at_next_stop
             ):
                 best_insertion = i, i
                 min_cost = total_cost
-        # Try dropoff not immediately after pickup
+
+        ##########################
+        # NON-ADJACENT INSERTION #
+        ##########################
         distance_from_pickup = distance_to_stop_after_insertion(
             stoplist, request.origin, i, space
         )
         cpat_at_next_stop = (
             max(CPAT_pu, request.pickup_timewindow_min) + distance_from_pickup
         )
-        if is_timewindow_violated_dueto_insertion(stoplist, i, cpat_at_next_stop):
+        if is_timewindow_violated_due_to_insertion(stoplist, i, cpat_at_next_stop):
             continue
         pickup_cost = (
             distance_to_pickup + distance_from_pickup - original_pickup_edge_length
@@ -189,7 +194,7 @@ def brute_force_distance_minimizing_dispatcher(
                     max(CPAT_do, request.delivery_timewindow_min)
                     + distance_from_dropoff
                 )
-                if not is_timewindow_violated_dueto_insertion(
+                if not is_timewindow_violated_due_to_insertion(
                     stoplist, j, cpat_at_next_stop
                 ):
                     best_insertion = i, j

@@ -127,7 +127,7 @@ def distance_from_current_stop_to_next(
     )
 
 
-def is_timewindow_violated_dueto_insertion(
+def is_timewindow_violated_due_to_insertion(
     stoplist: Stoplist, idx: int, est_arrival_first_stop_after_insertion: float
 ) -> bool:
     """
@@ -140,12 +140,17 @@ def is_timewindow_violated_dueto_insertion(
     Returns:
 
     """
-    if not idx < len(stoplist) - 1:
+    if idx > len(stoplist) - 2:
         return False
+
     delta_cpat = (
         est_arrival_first_stop_after_insertion
         - stoplist[idx + 1].estimated_arrival_time
     )
+
+    if delta_cpat == 0:
+        return False
+
     for stop in stoplist[idx + 1 :]:
         old_leeway = stop.time_window_max - stop.estimated_arrival_time
         new_leeway = old_leeway - delta_cpat
