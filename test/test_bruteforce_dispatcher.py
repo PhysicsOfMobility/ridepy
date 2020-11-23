@@ -154,7 +154,7 @@ def test_stoplist_not_modified_inplace():
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
-    assert new_stoplist[3].estimated_arrival_time == 3 + 2e-4
+    assert new_stoplist[3].estimated_arrival_time == 3 + 2 * eps
     assert stoplist[1].estimated_arrival_time == 3
 
 
