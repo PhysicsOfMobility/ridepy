@@ -24,10 +24,10 @@ def benchmark_insertion_into_long_stoplist():
         np.linalg.norm(x - y) for x, y in zip(stop_locations[:-1], stop_locations[1:])
     ]
     arrival_times = np.insert(arrival_times, 0, 0)
-    # location, cpat, tw_min, tw_max,
+    # location, CPAT, tw_min, tw_max,
     stoplist_properties = [
-        [stop_loc, arrtime, 0, inf]
-        for stop_loc, arrtime in zip(stop_locations, arrival_times)
+        [stop_loc, CPAT, 0, inf]
+        for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
     request = TransportationRequest(
