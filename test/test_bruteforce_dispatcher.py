@@ -128,6 +128,36 @@ def test_inserted_separately():
     assert new_stoplist[3].location == request.destination
 
 
+def test_stoplist_not_modified_inplace():
+    space = Euclidean2D()
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 3), 3, 0, 6],
+    ]
+    # fmt: on
+    stoplist = stoplist_from_properties(stoplist_properties)
+    eps = 1e-4
+    request = TransportationRequest(
+        request_id="a",
+        creation_timestamp=1,
+        origin=(eps, 1),
+        destination=(eps, 3),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=inf,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
+        request, stoplist, space
+    )
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[2].location == request.destination
+    assert new_stoplist[3].estimated_arrival_time == 3 + 2e-4
+    assert stoplist[1].estimated_arrival_time == 3
+
+
 if __name__ == "__main__":
     pytest.main(args=[__file__])
 #
