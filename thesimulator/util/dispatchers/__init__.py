@@ -160,19 +160,22 @@ def brute_force_distance_minimizing_dispatcher(
         )
         if is_timewindow_violated_due_to_insertion(stoplist, i, cpat_at_next_stop):
             continue
+
         pickup_cost = (
             distance_to_pickup + distance_from_pickup - original_pickup_edge_length
         )
+
         for j, stop_before_dropoff in enumerate(stoplist[i + 1 :], start=i + 1):
             distance_to_dropoff = space.d(
                 stop_before_dropoff.location, request.destination
             )
             CPAT_do = cpat_of_inserted_stop(
                 stop_before_dropoff,
-                +distance_to_dropoff,
+                distance_to_dropoff,
             )
             if CPAT_do > request.delivery_timewindow_max:
                 continue
+
             distance_from_dropoff = distance_to_stop_after_insertion(
                 stoplist, request.destination, j, space
             )
@@ -184,8 +187,8 @@ def brute_force_distance_minimizing_dispatcher(
                 + distance_from_dropoff
                 - original_dropoff_edge_length
             )
-
             total_cost = pickup_cost + dropoff_cost
+
             if total_cost > min_cost:
                 continue
             else:
@@ -199,7 +202,9 @@ def brute_force_distance_minimizing_dispatcher(
                 ):
                     best_insertion = i, j
                     min_cost = total_cost
+
     best_pickup_idx, best_dropoff_idx = best_insertion
+
     new_stoplist = insert_request_to_stoplist_drive_first(
         stoplist=stoplist,
         request=request,

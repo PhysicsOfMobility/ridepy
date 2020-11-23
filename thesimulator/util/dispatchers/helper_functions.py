@@ -15,7 +15,7 @@ def insert_request_to_stoplist_drive_first(
     space: TransportSpace,
 ) -> Stoplist:
     """
-    Inserts a request into  a stoplist. The pickup(dropoff) is inserted after pickup(dropoff)_idx.
+    Inserts a request into  a stoplist. The pickup (dropoff) is inserted after pickup_idx (dropoff_idx).
     The estimated arrival times at all the stops are updated assuming a drive-first strategy.
     """
     # We don't want to modify stoplist in place. Make a copy.
