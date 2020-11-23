@@ -72,12 +72,12 @@ def insert_stop_to_stoplist_drive_first(
     Returns:
     """
     stop_before_insertion = stoplist[idx]
-    distance_to_new_stop = space.d(stop_before_insertion.location, stop.location)
-    cpat_new_stop = cpat_of_inserted_stop(
+    stop.estimated_arrival_time = cpat_of_inserted_stop(
         stop_before=stop_before_insertion,
-        distance_from_stop_before=distance_to_new_stop,
+        distance_from_stop_before=space.d(
+            stop_before_insertion.location, stop.location
+        ),
     )
-    stop.estimated_arrival_time = cpat_new_stop
 
     if idx < len(stoplist) - 1:
         # update CPATs of later stops
