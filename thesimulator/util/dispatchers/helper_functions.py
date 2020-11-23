@@ -20,6 +20,7 @@ def insert_request_to_stoplist_drive_first(
     """
     # We don't want to modify stoplist in place. Make a copy.
     new_stoplist = stoplist[:]
+
     # Handle the pickup
     stop_before_pickup = new_stoplist[pickup_idx]
     cpat_at_pu = stop_before_pickup.estimated_departure_time + space.d(
@@ -35,6 +36,7 @@ def insert_request_to_stoplist_drive_first(
     )
 
     insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space)
+
     # Handle the dropoff
     dropoff_idx += 1
     stop_before_dropoff = new_stoplist[dropoff_idx]
@@ -76,21 +78,25 @@ def insert_stop_to_stoplist_drive_first(
         distance_from_stop_before=distance_to_new_stop,
     )
     stop.estimated_arrival_time = cpat_new_stop
+
     if idx < len(stoplist) - 1:
-        # update cpats of later stops
-        departure_previous_stop = stop.estimated_departure_time
-        cpat_next_stop = departure_previous_stop + space.d(
-            stop.location, stoplist[idx + 1].location
+        # update CPATs of later stops
+        delta_CPAT_next_stop = (
+            stop.estimated_departure_time
+            + space.d(stop.location, stoplist[idx + 1].location)
+            - stoplist[idx + 1].estimated_arrival_time
         )
-        delta_cpat_next_stop = cpat_next_stop - stoplist[idx + 1].estimated_arrival_time
+
         for later_stop in stoplist[idx + 1 :]:
             old_departure = later_stop.estimated_departure_time
-            later_stop.estimated_arrival_time += delta_cpat_next_stop
+            later_stop.estimated_arrival_time += delta_CPAT_next_stop
             new_departure = later_stop.estimated_departure_time
 
-            delta_cpat_next_stop = new_departure - old_departure
-            if delta_cpat_next_stop == 0:
+            delta_CPAT_next_stop = new_departure - old_departure
+
+            if delta_CPAT_next_stop == 0:
                 break
+
     stoplist.insert(idx + 1, stop)
 
 
