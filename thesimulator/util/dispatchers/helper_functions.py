@@ -90,9 +90,8 @@ def insert_stop_to_stoplist_drive_first(
         for later_stop in stoplist[idx + 1 :]:
             old_departure = later_stop.estimated_departure_time
             later_stop.estimated_arrival_time += delta_CPAT_next_stop
-            new_departure = later_stop.estimated_departure_time
 
-            delta_CPAT_next_stop = new_departure - old_departure
+            delta_CPAT_next_stop = later_stop.estimated_departure_time - old_departure
 
             if delta_CPAT_next_stop == 0:
                 break
