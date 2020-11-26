@@ -108,41 +108,45 @@ def check_timeframe_constraints(
     *,
     request: TransportationRequest,
     pickup_idx: int,
-    dropoff_rel_idx: Union[None, int],
+    dropoff_rel_idx: int,
     stoplist: Stoplist,
     space: TransportSpace,
 ):
     estimated_pickup_time = stoplist[pickup_idx].estimated_arrival_time + space.d(
         stoplist[pickup_idx].location, request.origin
     )
+
     satisfied = True
+
     if request.pickup_timewindow_min is not None:
-        satisfied *= request.pickup_timewindow_min <= estimated_pickup_time
+        satisfied &= request.pickup_timewindow_min <= estimated_pickup_time
+
     if request.pickup_timewindow_max is not None:
-        satisfied *= request.pickup_timewindow_max >= estimated_pickup_time
-    if dropoff_rel_idx is not None:
-        if dropoff_rel_idx == 0:
-            estimated_dropoff_time = estimated_pickup_time + space.d(
-                request.origin, request.destination
+        satisfied &= estimated_pickup_time <= request.pickup_timewindow_max
+
+    estimated_dropoff_time = (
+        estimated_pickup_time + space.d(request.origin, request.destination)
+        if dropoff_rel_idx == 0
+        else (
+            stoplist[dropoff_rel_idx].estimated_arrival_time
+            + space.d(stoplist[pickup_idx].location, request.origin)
+            + space.d(request.origin, stoplist[pickup_idx + 1].location)
+            - space.d(
+                stoplist[pickup_idx].location,
+                stoplist[pickup_idx + 1].location,
             )
-        else:
-            estimated_dropoff_time = (
-                stoplist[dropoff_rel_idx].estimated_arrival_time
-                + space.d(stoplist[pickup_idx].location, request.origin)
-                + space.d(request.origin, stoplist[pickup_idx + 1].location)
-                - space.d(
-                    stoplist[pickup_idx].location,
-                    stoplist[pickup_idx + 1].location,
-                )
-                + space.d(
-                    stoplist[pickup_idx + dropoff_rel_idx].location,
-                    request.destination,
-                )
+            + space.d(
+                stoplist[pickup_idx + dropoff_rel_idx].location,
+                request.destination,
             )
-        if request.delivery_timewindow_min is not None:
-            satisfied *= request.delivery_timewindow_min <= estimated_dropoff_time
-        if request.delivery_timewindow_max is not None:
-            satisfied *= request.delivery_timewindow_max >= estimated_dropoff_time
+        )
+    )
+    if request.delivery_timewindow_min is not None:
+        satisfied &= request.delivery_timewindow_min <= estimated_dropoff_time
+
+    if request.delivery_timewindow_max is not None:
+        satisfied &= estimated_dropoff_time <= request.delivery_timewindow_max
+
     return satisfied
 
 
@@ -244,7 +248,7 @@ def ridepooling_dispatcher_min_route_length(
         if append_both_objective < objective and check_timeframe_constraints(
             request=request,
             pickup_idx=pickup_idx,
-            dropoff_rel_idx=None,
+            dropoff_rel_idx=0,
             stoplist=stoplist,
             space=space,
         ):
