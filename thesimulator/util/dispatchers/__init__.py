@@ -143,7 +143,7 @@ def brute_force_distance_minimizing_dispatcher(
             cpat_at_next_stop = (
                 max(CPAT_do, request.delivery_timewindow_min) + distance_from_dropoff
             )
-            if not is_timewindow_violated_due_to_insertion(
+            if not is_timewindow_violated_or_violation_worsened_due_to_insertion(
                 stoplist, i, cpat_at_next_stop
             ):
                 best_insertion = i, i
@@ -158,7 +158,9 @@ def brute_force_distance_minimizing_dispatcher(
         cpat_at_next_stop = (
             max(CPAT_pu, request.pickup_timewindow_min) + distance_from_pickup
         )
-        if is_timewindow_violated_due_to_insertion(stoplist, i, cpat_at_next_stop):
+        if is_timewindow_violated_or_violation_worsened_due_to_insertion(
+            stoplist, i, cpat_at_next_stop
+        ):
             continue
 
         pickup_cost = (
@@ -197,7 +199,7 @@ def brute_force_distance_minimizing_dispatcher(
                     max(CPAT_do, request.delivery_timewindow_min)
                     + distance_from_dropoff
                 )
-                if not is_timewindow_violated_due_to_insertion(
+                if not is_timewindow_violated_or_violation_worsened_due_to_insertion(
                     stoplist, j, cpat_at_next_stop
                 ):
                     best_insertion = i, j
