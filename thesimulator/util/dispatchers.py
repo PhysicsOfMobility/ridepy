@@ -287,48 +287,58 @@ def ridepooling_dispatcher_min_route_length(
         time_window_max=LAST_do,
     )
 
-    new_stoplist = []
-    if best_pickup_idx != len(stoplist) - 1 and best_dropoff_rel_idx != 0:
-        pre_pickup_stoplist = stoplist[: best_pickup_idx + 1]
-        post_pickup_stoplist = stoplist[
-            best_pickup_idx + 1 : best_pickup_idx + best_dropoff_rel_idx + 1
-        ]
-        for i, x in enumerate(post_pickup_stoplist):
-            post_pickup_stoplist[i].estimated_arrival_time += pickup_detours[
-                best_pickup_idx
+    if best_pickup_idx < len(stoplist) - 1:
+        # not appending
+        if best_dropoff_rel_idx == 0:
+            # adjacent insertion
+            pre_pickup_stoplist = stoplist[: best_pickup_idx + 1]
+            detour = (
+                space.d(stoplist[best_pickup_idx].location, request.origin)
+                + space.d(request.origin, request.destination)
+                + space.d(request.destination, stoplist[best_pickup_idx + 1].location)
+                - space.d(
+                    stoplist[best_pickup_idx].location,
+                    stoplist[best_pickup_idx + 1].location,
+                )
+            )
+
+            post_pickup_stoplist = stoplist[best_pickup_idx + 1 :]
+
+            for stop in post_pickup_stoplist:
+                stop.estimated_arrival_time += detour
+
+            new_stoplist = (
+                pre_pickup_stoplist + [pickup_stop, dropoff_stop] + post_pickup_stoplist
+            )
+        else:
+            # non-adjacent insertion
+            pre_pickup_stoplist = stoplist[: best_pickup_idx + 1]
+
+            post_pickup_stoplist = stoplist[
+                best_pickup_idx + 1 : best_pickup_idx + best_dropoff_rel_idx + 1
             ]
-        post_dropoff_stoplist = stoplist[best_pickup_idx + best_dropoff_rel_idx + 1 :]
-        for i, x in enumerate(post_dropoff_stoplist):
-            post_dropoff_stoplist[i].estimated_arrival_time += (
-                pickup_detours[best_pickup_idx]
-                + dropoff_detours[best_pickup_idx + best_dropoff_rel_idx]
+            for stop in post_pickup_stoplist:
+                stop.estimated_arrival_time += pickup_detours[best_pickup_idx]
+
+            post_dropoff_stoplist = stoplist[
+                best_pickup_idx + best_dropoff_rel_idx + 1 :
+            ]
+            for stop in post_dropoff_stoplist:
+                stop.estimated_arrival_time += (
+                    pickup_detours[best_pickup_idx]
+                    + dropoff_detours[best_pickup_idx + best_dropoff_rel_idx]
+                )
+
+            new_stoplist = (
+                pre_pickup_stoplist
+                + [pickup_stop]
+                + post_pickup_stoplist
+                + [dropoff_stop]
+                + post_dropoff_stoplist
             )
-        new_stoplist = (
-            pre_pickup_stoplist
-            + [pickup_stop]
-            + post_pickup_stoplist
-            + [dropoff_stop]
-            + post_dropoff_stoplist
-        )
-    elif best_pickup_idx == len(stoplist) - 1:
+    else:
+        # appending
         new_stoplist = stoplist + [pickup_stop] + [dropoff_stop]
-    elif best_dropoff_rel_idx == 0:
-        pre_pickup_stoplist = stoplist[: best_pickup_idx + 1]
-        detour = (
-            space.d(stoplist[best_pickup_idx].location, request.origin)
-            + space.d(request.origin, request.destination)
-            + space.d(request.destination, stoplist[best_pickup_idx + 1].location)
-            - space.d(
-                stoplist[best_pickup_idx].location,
-                stoplist[best_pickup_idx + 1].location,
-            )
-        )
-        post_pickup_stoplist = stoplist[best_pickup_idx + 1 :]
-        for i, x in enumerate(post_pickup_stoplist):
-            post_pickup_stoplist[i].estimated_arrival_time += detour
-        new_stoplist = (
-            pre_pickup_stoplist + [pickup_stop, dropoff_stop] + post_pickup_stoplist
-        )
 
     return (
         objective + stoplist[-1].estimated_arrival_time,
