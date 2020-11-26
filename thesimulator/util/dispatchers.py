@@ -112,11 +112,11 @@ def check_timeframe_constraints(
     stoplist: Stoplist,
     space: TransportSpace,
 ):
+    satisfied = True
+
     estimated_pickup_time = stoplist[pickup_idx].estimated_arrival_time + space.d(
         stoplist[pickup_idx].location, request.origin
     )
-
-    satisfied = True
 
     if request.pickup_timewindow_min is not None:
         satisfied &= request.pickup_timewindow_min <= estimated_pickup_time
@@ -141,6 +141,7 @@ def check_timeframe_constraints(
             )
         )
     )
+
     if request.delivery_timewindow_min is not None:
         satisfied &= request.delivery_timewindow_min <= estimated_dropoff_time
 
