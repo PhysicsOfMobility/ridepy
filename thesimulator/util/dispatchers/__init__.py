@@ -13,7 +13,7 @@ from thesimulator.util.dispatchers.helper_functions import (
     cpat_of_inserted_stop,
     distance_to_stop_after_insertion,
     distance_from_current_stop_to_next,
-    is_timewindow_violated_due_to_insertion,
+    is_timewindow_violated_or_violation_worsened_due_to_insertion,
     insert_request_to_stoplist_drive_first,
 )
 
