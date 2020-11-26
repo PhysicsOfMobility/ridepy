@@ -20,9 +20,9 @@ def benchmark_insertion_into_long_stoplist():
     n = 1000
     rnd = np.random.RandomState(0)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))
-    arrival_times = [
+    arrival_times = np.cumsum([
         np.linalg.norm(x - y) for x, y in zip(stop_locations[:-1], stop_locations[1:])
-    ]
+    ])
     arrival_times = np.insert(arrival_times, 0, 0)
     # location, CPAT, tw_min, tw_max,
     stoplist_properties = [
