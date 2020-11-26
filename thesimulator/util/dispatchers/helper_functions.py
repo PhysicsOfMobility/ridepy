@@ -139,7 +139,7 @@ def distance_from_current_stop_to_next(
     )
 
 
-def is_timewindow_violated_due_to_insertion(
+def is_timewindow_violated_or_violation_worsened_due_to_insertion(
     stoplist: Stoplist, idx: int, est_arrival_first_stop_after_insertion: float
 ) -> bool:
     """
@@ -163,7 +163,7 @@ def is_timewindow_violated_due_to_insertion(
         old_leeway = stop.time_window_max - stop.estimated_arrival_time
         new_leeway = old_leeway - delta_cpat
 
-        if new_leeway < 0 <= old_leeway:
+        if (new_leeway < 0) and (new_leeway < old_leeway):
             return True
         else:
             old_departure = stop.estimated_departure_time
