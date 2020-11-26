@@ -2,9 +2,7 @@ from numpy import inf
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Any, Optional, Union, Tuple, List
-
-ID = Union[str, int]
+from typing import Any, Optional, Union, Tuple, List, Callable
 
 ID = Union[str, int]
 
@@ -151,22 +149,6 @@ class InternalStopEvent:
     vehicle_id: ID
 
 
-RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[
-    RequestAcceptanceEvent,
-    RequestRejectionEvent,
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
-    RequestAssignEvent,
-]
-Stoplist = List[Stop]
-SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
-"""vehicle_id, cost, new_stop_list"""
-RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
-
-
 class TransportSpace(ABC):
     @abstractmethod
     def d(self, u, v) -> Union[int, float]:
@@ -271,3 +253,27 @@ class TransportSpace(ABC):
             remaining time until the returned interpolated coordinate will be reached
         """
         ...
+
+
+RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
+Event = Union[
+    RequestAcceptanceEvent,
+    RequestRejectionEvent,
+    PickupEvent,
+    DeliveryEvent,
+    InternalStopEvent,
+    RequestAssignEvent,
+]
+Stoplist = List[Stop]
+SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
+"""vehicle_id, cost, new_stop_list"""
+RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
+StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+Dispatcher = Callable[
+    [
+        TransportationRequest,
+        Stoplist,
+        TransportSpace,
+    ],
+    Tuple[float, Stoplist, Tuple[float, float, float, float]],
+]
