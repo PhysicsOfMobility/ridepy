@@ -69,8 +69,8 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
-    time_window_min: Optional[float] = 0
-    time_window_max: Optional[float] = inf
+    time_window_min: float = 0
+    time_window_max: float = inf
 
 
 @dataclass
