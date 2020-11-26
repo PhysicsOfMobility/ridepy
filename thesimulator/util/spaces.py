@@ -3,8 +3,10 @@ import random
 from typing import List, Tuple, Union, Any, Iterator
 
 import numpy as np
+import operator as op
 import math as m
 import networkx as nx
+import itertools as it
 from scipy.spatial import distance as spd
 
 from thesimulator.data_structures import TransportSpace, ID
@@ -57,11 +59,33 @@ class Euclidean(TransportSpace):
     def t(self, u, v):
         return self.d(u, v) / self.velocity
 
+    def _coord_sub(self, u, v):
+        if self.n_dimensions == 1:
+            return u - v
+        else:
+            return map(op.sub, u, v)
+
+    def _coord_mul(self, u, k):
+        if self.n_dimensions == 1:
+            return u * k
+        else:
+            return map(op.mul, u, it.repeat(k))
+
     def interp_dist(self, u, v, dist_to_dest):
-        return v - (v - u) * dist_to_dest / self.d(u, v), 0
+        return (
+            self._coord_sub(
+                v, self._coord_mul(self._coord_sub(v, u), dist_to_dest / self.d(u, v))
+            ),
+            0,
+        )
 
     def interp_time(self, u, v, time_to_dest):
-        return v - (v - u) * time_to_dest / self.t(u, v), 0
+        return (
+            self._coord_sub(
+                v, self._coord_mul(self._coord_sub(v, u), time_to_dest / self.t(u, v))
+            ),
+            0,
+        )
 
     def random_point(self):
         return np.random.uniform(*zip(*self.coord_range))
@@ -75,6 +99,12 @@ class Euclidean1D(Euclidean):
     ):
         super().__init__(n_dimensions=1, coord_range=coord_range, velocity=velocity)
 
+    def interp_dist(self, u, v, dist_to_dest):
+        return v - (v - u) * dist_to_dest / self.d(u, v), 0
+
+    def interp_time(self, u, v, time_to_dest):
+        return v - (v - u) * time_to_dest / self.t(u, v), 0
+
     def d(self, u, v):
         return abs(v - u)
 
@@ -86,6 +116,12 @@ class Euclidean2D(Euclidean):
         velocity: float = 1,
     ):
         super().__init__(n_dimensions=2, coord_range=coord_range, velocity=velocity)
+
+    def _coord_sub(self, u, v):
+        return u[0] - v[0], u[1] - v[1]
+
+    def _coord_mul(self, u, k):
+        return u[0] * k, u[1] * k
 
     def d(self, u, v):
         return m.sqrt(m.pow(v[0] - u[0], 2) + m.pow(v[1] - u[1], 2))
