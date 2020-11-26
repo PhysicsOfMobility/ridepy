@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from thesimulator.data_structures import (
     Stoplist,
     TransportationRequest,
@@ -19,7 +21,7 @@ def insert_request_to_stoplist_drive_first(
     The estimated arrival times at all the stops are updated assuming a drive-first strategy.
     """
     # We don't want to modify stoplist in place. Make a copy.
-    new_stoplist = stoplist[:]
+    new_stoplist = deepcopy(stoplist)
 
     # Handle the pickup
     stop_before_pickup = new_stoplist[pickup_idx]
@@ -100,13 +102,7 @@ def insert_stop_to_stoplist_drive_first(
 
 def cpat_of_inserted_stop(stop_before: Stop, distance_from_stop_before: float) -> float:
     """
-    Note: Assumes drive first strategy.
-    Args:
-        stop_before:
-        distance_from_stop_before:
-
-    Returns:
-
+    Computes the cpat of the inserted stop, assuming drive first strategy.
     """
     return stop_before.estimated_departure_time + distance_from_stop_before
 
@@ -114,6 +110,13 @@ def cpat_of_inserted_stop(stop_before: Stop, distance_from_stop_before: float) -
 def distance_to_stop_after_insertion(
     stoplist: Stoplist, location, index: int, space: TransportSpace
 ) -> float:
+    """
+    If a stop with `location` will have been inserted at `index`, computes the distance
+    from `location` to the stop after the insertion.
+
+    Note: If the insertion is at the end of the stoplist, returns 0. Insertion at idx means after the idx'th stop.
+    """
+
     return (
         space.d(location, stoplist[index + 1].location)
         if index < len(stoplist) - 1
@@ -124,6 +127,11 @@ def distance_to_stop_after_insertion(
 def distance_from_current_stop_to_next(
     stoplist: Stoplist, i: int, space: TransportSpace
 ) -> float:
+    """
+    Returns the distance from the i'th stop in `stoplist` to the next stop.
+
+    Note: If the insertion is at the end of the stoplist, returns 0
+    """
     return (
         space.d(stoplist[i].location, stoplist[i + 1].location)
         if i < len(stoplist) - 1
@@ -135,14 +143,10 @@ def is_timewindow_violated_due_to_insertion(
     stoplist: Stoplist, idx: int, est_arrival_first_stop_after_insertion: float
 ) -> bool:
     """
-    Assumes drive first strategy.
-    Args:
-        stoplist:
-        idx:
-        est_arrival_first_stop_after_insertion:
+    If a stop is inserted at idx, so that the estimated_arrival_time at the stop afterthe inserted stop is
+    est_arrival_first_stop_after_insertion, then checks for time window violations in the stoplist.
 
-    Returns:
-
+    Note: Assumes drive first strategy. Insertion at idx means after the idx'th stop.
     """
     if idx > len(stoplist) - 2:
         return False
