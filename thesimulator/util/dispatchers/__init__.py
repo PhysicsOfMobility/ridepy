@@ -189,7 +189,7 @@ def brute_force_distance_minimizing_dispatcher(
             )
             total_cost = pickup_cost + dropoff_cost
 
-            if total_cost > min_cost:
+            if total_cost >= min_cost:
                 continue
             else:
                 # cost has decreased. check for constraint violations at later stops
