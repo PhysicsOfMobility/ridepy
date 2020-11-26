@@ -18,8 +18,6 @@ conda activate the_simulator
 ```sh
 git clone git@github.com:PhysicsOfMobility/theSimulator.git
 cd theSimulator
-pip install poetry
-poetry install
 pre-commit install
 pytest
 ```
@@ -35,7 +33,7 @@ Generally branch from `master`, implement stuff® and file a pull request back t
 - **estimated arrival time**, also Cached Predicted Arrival Time CPAT
 - **time window min**, also Earliest Allowed Service Time EAST
 - **time window max**, also Latest Allowed Service Time LAST
-- **stoplist**, a sequence of scheduled stops that a transporter must *service*, 
+- **stoplist**, a sequence of scheduled stops that a transporter must *service*,
   i.e. perform the action defined in the respective stop's `Stop.action`
 - dummy stop **current position element CPE** always must be the first entry of each stoplist,
   denoting the current location of the transporter.
@@ -44,5 +42,5 @@ Generally branch from `master`, implement stuff® and file a pull request back t
 ### General Things
 - The dispatcher is responsible for keeping the state of the stoplists valid.
  This means e.g. recomputing the estimated arrival times and making sure that
-  the order of the stops in the stoplist follows the order of the estimated 
+  the order of the stops in the stoplist follows the order of the estimated
   arrival times. It also includes managing the CPE.
