@@ -180,54 +180,23 @@ def ridepooling_dispatcher_min_route_length(
     exit_stops = stoplist[:-1]
     reentry_stops = stoplist[1:]
 
-    pickup_detours = (
+    pickup_detours, dropoff_detours = (
         list(
             map(
-                ft.partial(calculate_detour, location=request.origin, space=space),
+                ft.partial(calculate_detour, location=location, space=space),
                 exit_stops,
                 reentry_stops,
             )
         )
         + [space.d(stoplist[-1].location, request.origin)]
-    )
-
-    dropoff_detours = (
-        list(
-            map(
-                ft.partial(calculate_detour, location=request.destination, space=space),
-                exit_stops,
-                reentry_stops,
-            )
-        )
-        + [space.d(stoplist[-1].location, request.destination)]
+        for location in (request.origin, request.destination)
     )
 
     scheduled_end_epoch = stoplist[-1].estimated_arrival_time
-
-    best_pickup_index = None
-    best_dropoff_rel_index = None
     objective = np.inf
 
     for pickup_idx, pickup_detour in enumerate(pickup_detours):
-        if pickup_detour + scheduled_end_epoch > objective:
-            continue
-        elif pickup_idx == len(stoplist) - 1:
-            append_both_objective = (
-                scheduled_end_epoch
-                + pickup_detour
-                + space.d(request.origin, request.destination)
-            )
-            if append_both_objective < objective and check_timeframe_constraints(
-                request=request,
-                pickup_index=pickup_idx,
-                dropoff_rel_index=None,
-                stoplist=stoplist,
-                space=space,
-            ):
-                objective = append_both_objective
-                best_pickup_index = pickup_idx
-                best_dropoff_rel_index = 0
-        else:
+        if scheduled_end_epoch + pickup_detour <= objective:
             for dropoff_rel_index, dropoff_detour in enumerate(
                 dropoff_detours[pickup_idx:]
             ):
@@ -268,6 +237,23 @@ def ridepooling_dispatcher_min_route_length(
                             objective = separate_insert_objective
                             best_pickup_index = pickup_idx
                             best_dropoff_rel_index = dropoff_rel_index
+    else:
+        pickup_idx = len(stoplist) - 1
+        append_both_objective = (
+            scheduled_end_epoch
+            + pickup_detours[pickup_idx]
+            + space.d(request.origin, request.destination)
+        )
+        if append_both_objective < objective and check_timeframe_constraints(
+            request=request,
+            pickup_index=pickup_idx,
+            dropoff_rel_index=None,
+            stoplist=stoplist,
+            space=space,
+        ):
+            objective = append_both_objective
+            best_pickup_index = pickup_idx
+            best_dropoff_rel_index = 0
 
     CPAT_pu = stoplist[best_pickup_index].estimated_arrival_time + space.d(
         stoplist[best_pickup_index].location, request.origin
