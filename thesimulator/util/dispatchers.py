@@ -194,15 +194,17 @@ def ridepooling_dispatcher_min_route_length(
 
     objective = np.inf
 
-    # iterate over distances incurred at pickup
-    for pickup_idx, pickup_detour in enumerate(pickup_detours):
+    for pickup_idx, pickup_detour in enumerate(pickup_detours[:-1]):
+        # iterate over distances incurred at pickup
         if pickup_detour <= objective:
+            # pickup is only viable if pickup_detour does not already exceed the objective
             for dropoff_rel_index, dropoff_detour in enumerate(
                 dropoff_detours[pickup_idx:]
             ):
+                # now iterate over all possible dropoffs
                 if (
-                    pickup_detour + dropoff_detour > objective
-                    or not check_timeframe_constraints(
+                    pickup_detour + dropoff_detour <= objective
+                    and check_timeframe_constraints(
                         request=request,
                         pickup_index=pickup_idx,
                         dropoff_rel_index=dropoff_rel_index,
@@ -210,9 +212,8 @@ def ridepooling_dispatcher_min_route_length(
                         space=space,
                     )
                 ):
-                    continue
-                else:
                     if dropoff_rel_index == 0:
+                        # adjacent insertion
                         chained_insert_objective = (
                             pickup_detour
                             + space.d(request.origin, request.destination)
@@ -229,6 +230,7 @@ def ridepooling_dispatcher_min_route_length(
                             best_pickup_index = pickup_idx
                             best_dropoff_rel_index = dropoff_rel_index
                     else:
+                        # non-adjacent insertion
                         separate_insert_objective = pickup_detour + dropoff_detour
                         if separate_insert_objective < objective:
                             objective = separate_insert_objective
