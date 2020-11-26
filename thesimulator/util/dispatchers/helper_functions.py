@@ -166,7 +166,7 @@ def is_timewindow_violated_due_to_insertion(
         if new_leeway < 0 <= old_leeway:
             return True
         else:
-            old_departure = max(stop.time_window_min, stop.estimated_arrival_time)
+            old_departure = stop.estimated_departure_time
             new_departure = max(
                 stop.time_window_min, stop.estimated_arrival_time + delta_cpat
             )
