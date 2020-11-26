@@ -107,35 +107,35 @@ def calculate_detour(
 def check_timeframe_constraints(
     *,
     request: TransportationRequest,
-    pickup_index: int,
-    dropoff_rel_index: Union[None, int],
+    pickup_idx: int,
+    dropoff_rel_idx: Union[None, int],
     stoplist: Stoplist,
     space: TransportSpace,
 ):
-    estimated_pickup_time = stoplist[pickup_index].estimated_arrival_time + space.d(
-        stoplist[pickup_index].location, request.origin
+    estimated_pickup_time = stoplist[pickup_idx].estimated_arrival_time + space.d(
+        stoplist[pickup_idx].location, request.origin
     )
     satisfied = True
     if request.pickup_timewindow_min is not None:
         satisfied *= request.pickup_timewindow_min <= estimated_pickup_time
     if request.pickup_timewindow_max is not None:
         satisfied *= request.pickup_timewindow_max >= estimated_pickup_time
-    if dropoff_rel_index is not None:
-        if dropoff_rel_index == 0:
+    if dropoff_rel_idx is not None:
+        if dropoff_rel_idx == 0:
             estimated_dropoff_time = estimated_pickup_time + space.d(
                 request.origin, request.destination
             )
         else:
             estimated_dropoff_time = (
-                stoplist[dropoff_rel_index].estimated_arrival_time
-                + space.d(stoplist[pickup_index].location, request.origin)
-                + space.d(request.origin, stoplist[pickup_index + 1].location)
+                stoplist[dropoff_rel_idx].estimated_arrival_time
+                + space.d(stoplist[pickup_idx].location, request.origin)
+                + space.d(request.origin, stoplist[pickup_idx + 1].location)
                 - space.d(
-                    stoplist[pickup_index].location,
-                    stoplist[pickup_index + 1].location,
+                    stoplist[pickup_idx].location,
+                    stoplist[pickup_idx + 1].location,
                 )
                 + space.d(
-                    stoplist[pickup_index + dropoff_rel_index].location,
+                    stoplist[pickup_idx + dropoff_rel_idx].location,
                     request.destination,
                 )
             )
@@ -198,7 +198,7 @@ def ridepooling_dispatcher_min_route_length(
         # iterate over distances incurred at pickup
         if pickup_detour <= objective:
             # pickup is only viable if pickup_detour does not already exceed the objective
-            for dropoff_rel_index, dropoff_detour in enumerate(
+            for dropoff_rel_idx, dropoff_detour in enumerate(
                 dropoff_detours[pickup_idx:]
             ):
                 # now iterate over all possible dropoffs
@@ -206,13 +206,13 @@ def ridepooling_dispatcher_min_route_length(
                     pickup_detour + dropoff_detour <= objective
                     and check_timeframe_constraints(
                         request=request,
-                        pickup_index=pickup_idx,
-                        dropoff_rel_index=dropoff_rel_index,
+                        pickup_idx=pickup_idx,
+                        dropoff_rel_idx=dropoff_rel_idx,
                         stoplist=stoplist,
                         space=space,
                     )
                 ):
-                    if dropoff_rel_index == 0:
+                    if dropoff_rel_idx == 0:
                         # adjacent insertion
                         chained_insert_objective = (
                             pickup_detour
@@ -227,15 +227,15 @@ def ridepooling_dispatcher_min_route_length(
                         )
                         if chained_insert_objective < objective:
                             objective = chained_insert_objective
-                            best_pickup_index = pickup_idx
-                            best_dropoff_rel_index = dropoff_rel_index
+                            best_pickup_idx = pickup_idx
+                            best_dropoff_rel_idx = dropoff_rel_idx
                     else:
                         # non-adjacent insertion
                         separate_insert_objective = pickup_detour + dropoff_detour
                         if separate_insert_objective < objective:
                             objective = separate_insert_objective
-                            best_pickup_index = pickup_idx
-                            best_dropoff_rel_index = dropoff_rel_index
+                            best_pickup_idx = pickup_idx
+                            best_dropoff_rel_idx = dropoff_rel_idx
     else:
         pickup_idx = len(stoplist) - 1
         append_both_objective = pickup_detours[pickup_idx] + space.d(
@@ -243,29 +243,29 @@ def ridepooling_dispatcher_min_route_length(
         )
         if append_both_objective < objective and check_timeframe_constraints(
             request=request,
-            pickup_index=pickup_idx,
-            dropoff_rel_index=None,
+            pickup_idx=pickup_idx,
+            dropoff_rel_idx=None,
             stoplist=stoplist,
             space=space,
         ):
             objective = append_both_objective
-            best_pickup_index = pickup_idx
-            best_dropoff_rel_index = 0
+            best_pickup_idx = pickup_idx
+            best_dropoff_rel_idx = 0
 
-    CPAT_pu = stoplist[best_pickup_index].estimated_arrival_time + space.d(
-        stoplist[best_pickup_index].location, request.origin
+    CPAT_pu = stoplist[best_pickup_idx].estimated_arrival_time + space.d(
+        stoplist[best_pickup_idx].location, request.origin
     )
-
     EAST_pu = 0
+    LAST_pu = np.inf
+
     CPAT_do = (
-        stoplist[best_pickup_index + best_dropoff_rel_index].estimated_arrival_time
+        stoplist[best_pickup_idx + best_dropoff_rel_idx].estimated_arrival_time
         + space.d(request.origin, request.destination)
-        if best_dropoff_rel_index != 0
-        else stoplist[best_pickup_index].estimated_arrival_time
-        + space.d(stoplist[best_pickup_index].location, request.origin)
+        if best_dropoff_rel_idx != 0
+        else stoplist[best_pickup_idx].estimated_arrival_time
+        + space.d(stoplist[best_pickup_idx].location, request.origin)
         + space.d(request.origin, request.destination)
     )
-    LAST_pu = np.inf
     EAST_do = EAST_pu
     LAST_do = np.inf
 
@@ -277,6 +277,7 @@ def ridepooling_dispatcher_min_route_length(
         time_window_min=EAST_pu,
         time_window_max=LAST_pu,
     )
+
     dropoff_stop = Stop(
         location=request.destination,
         request=request,
@@ -285,23 +286,22 @@ def ridepooling_dispatcher_min_route_length(
         time_window_min=EAST_do,
         time_window_max=LAST_do,
     )
+
     new_stoplist = []
-    if best_pickup_index != len(stoplist) - 1 and best_dropoff_rel_index != 0:
-        pre_pickup_stoplist = stoplist[: best_pickup_index + 1]
+    if best_pickup_idx != len(stoplist) - 1 and best_dropoff_rel_idx != 0:
+        pre_pickup_stoplist = stoplist[: best_pickup_idx + 1]
         post_pickup_stoplist = stoplist[
-            best_pickup_index + 1 : best_pickup_index + best_dropoff_rel_index + 1
+            best_pickup_idx + 1 : best_pickup_idx + best_dropoff_rel_idx + 1
         ]
         for i, x in enumerate(post_pickup_stoplist):
             post_pickup_stoplist[i].estimated_arrival_time += pickup_detours[
-                best_pickup_index
+                best_pickup_idx
             ]
-        post_dropoff_stoplist = stoplist[
-            best_pickup_index + best_dropoff_rel_index + 1 :
-        ]
+        post_dropoff_stoplist = stoplist[best_pickup_idx + best_dropoff_rel_idx + 1 :]
         for i, x in enumerate(post_dropoff_stoplist):
             post_dropoff_stoplist[i].estimated_arrival_time += (
-                pickup_detours[best_pickup_index]
-                + dropoff_detours[best_pickup_index + best_dropoff_rel_index]
+                pickup_detours[best_pickup_idx]
+                + dropoff_detours[best_pickup_idx + best_dropoff_rel_idx]
             )
         new_stoplist = (
             pre_pickup_stoplist
@@ -310,20 +310,20 @@ def ridepooling_dispatcher_min_route_length(
             + [dropoff_stop]
             + post_dropoff_stoplist
         )
-    elif best_pickup_index == len(stoplist) - 1:
+    elif best_pickup_idx == len(stoplist) - 1:
         new_stoplist = stoplist + [pickup_stop] + [dropoff_stop]
-    elif best_dropoff_rel_index == 0:
-        pre_pickup_stoplist = stoplist[: best_pickup_index + 1]
+    elif best_dropoff_rel_idx == 0:
+        pre_pickup_stoplist = stoplist[: best_pickup_idx + 1]
         detour = (
-            space.d(stoplist[best_pickup_index].location, request.origin)
+            space.d(stoplist[best_pickup_idx].location, request.origin)
             + space.d(request.origin, request.destination)
-            + space.d(request.destination, stoplist[best_pickup_index + 1].location)
+            + space.d(request.destination, stoplist[best_pickup_idx + 1].location)
             - space.d(
-                stoplist[best_pickup_index].location,
-                stoplist[best_pickup_index + 1].location,
+                stoplist[best_pickup_idx].location,
+                stoplist[best_pickup_idx + 1].location,
             )
         )
-        post_pickup_stoplist = stoplist[best_pickup_index + 1 :]
+        post_pickup_stoplist = stoplist[best_pickup_idx + 1 :]
         for i, x in enumerate(post_pickup_stoplist):
             post_pickup_stoplist[i].estimated_arrival_time += detour
         new_stoplist = (
