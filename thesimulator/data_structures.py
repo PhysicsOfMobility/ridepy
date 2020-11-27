@@ -74,6 +74,13 @@ class Stop:
     time_window_min: Optional[float] = 0
     time_window_max: Optional[float] = inf
 
+    @property
+    def estimated_departure_time(self):
+        return max(
+            self.estimated_arrival_time,
+            self.time_window_min if self.time_window_min else 0,
+        )
+
 
 @dataclass
 class RequestAcceptanceEvent:
