@@ -147,7 +147,7 @@ class FleetState(ABC):
             #     f"{best_vehicle}: [{', '.join(map(str,[stop.request.request_id for stop in new_stoplist]))}]\n"
             # )
             return RequestAcceptanceEvent(
-                request_id=req,
+                request_id=req.request_id,
                 timestamp=time(),
                 origin=req.origin,
                 destination=req.destination,
