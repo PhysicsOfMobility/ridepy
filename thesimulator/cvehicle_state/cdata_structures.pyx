@@ -1,3 +1,14 @@
+# distutils: language = c++
+
+from cstuff cimport Request as CRequest
+from cstuff cimport Stop as CStop
+from cstuff cimport StopAction as CAction
+from cstuff cimport Stoplist as CStoplist
+from cstuff cimport brute_force_distance_minimizing_dispatcher as c_disp
+from libcpp.vector cimport vector
+
+
+
 from numpy import inf
 from abc import ABC, abstractmethod
 from enum import Enum, auto
