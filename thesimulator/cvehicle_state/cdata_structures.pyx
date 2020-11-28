@@ -19,6 +19,13 @@ from typing import Any, Optional, Union, Tuple, List
 ID = Union[str, int]
 
 
+cdef extern from * namespace 'cstuff':
+    cpdef enum class StopAction(int):
+        pickup=1
+        delivery=2
+        internal=3
+
+
 cdef class Request:
     cdef CRequest c_req
     def __cinit__(self):
@@ -57,11 +64,15 @@ cdef class Stop:
     def __cinit__(self):
         pass
 
-    def __init__(self, Request request, float estimated_arrival_time, CStopAction action,         double estimated_arrival_time
-        double time_window_min
-        double time_window_max
-):
-        self.c_stop = CStop(request.c_req, estimated_arrival_time)
+    def __init__(
+            self, location, Request request,
+            StopAction action, double estimated_arrival_time,
+            double time_window_min,
+            double time_window_max,
+    ):
+        self.c_stop = CStop(
+            location, request.c_req, action, estimated_arrival_time,
+            time_window_min, time_window_max)
 
     def __repr__(self):
         return f'Stop(request={Request.from_c(self.c_stop.request)}, estimated_arrival_time={self.c_stop.estimated_arrival_time})'
@@ -134,5 +145,6 @@ def spam():
     return pyreq
 
 def dispatcher(Request request, Stoplist stoplist):
-    res = c_disp(request.c_req, stoplist.c_stoplist)
-    return Stoplist.from_c(res)
+#    cdef  = c_disp(request.c_req, stoplist.c_stoplist)
+#    return Stoplist.from_c(res)
+    pass

@@ -431,7 +431,7 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
 
     auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
     auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
-    return InsertionResult {min_cost, new_stoplist, EAST_pu, LAST_pu, EAST_do, LAST_do};
+    return InsertionResult {new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
 }
 }// end ns cstuff
 
