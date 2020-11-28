@@ -1,6 +1,6 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
-from libcpp.utility cimport tuple
+from libcpp.utility cimport tuple as ctuple
 
 cdef extern from "cstuff.cpp" namespace 'cstuff':
 
@@ -37,7 +37,15 @@ cdef extern from "cstuff.cpp" namespace 'cstuff':
 
     ctypedef vector[Stop] Stoplist
 
-    tuple[double, Stoplist, double, double, double] brute_force_distance_minimizing_dispatcher(
+    cdef struct InsertionResult:
+        Stoplist new_stoplist
+        double min_cost
+        double EAST_pu
+        double LAST_pu
+        double EAST_do
+        double LAST_do
+
+    InsertionResult brute_force_distance_minimizing_dispatcher(
     Request& request,
     Stoplist& stoplist,
     )

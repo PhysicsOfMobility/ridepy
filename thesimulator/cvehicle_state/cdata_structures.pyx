@@ -2,7 +2,8 @@
 
 from cstuff cimport Request as CRequest
 from cstuff cimport Stop as CStop
-from cstuff cimport StopAction as CAction
+from cstuff cimport R2loc
+from cstuff cimport StopAction as CStopAction
 from cstuff cimport Stoplist as CStoplist
 from cstuff cimport brute_force_distance_minimizing_dispatcher as c_disp
 from libcpp.vector cimport vector
@@ -17,12 +18,21 @@ from typing import Any, Optional, Union, Tuple, List
 
 ID = Union[str, int]
 
+
 cdef class Request:
     cdef CRequest c_req
     def __cinit__(self):
         pass
-    def __init__(self, int request_id, float creation_timestamp):
-        self.c_req = CRequest(request_id, creation_timestamp)
+    def __init__(
+            self, int request_id, float creation_timestamp,
+            origin, destination, pickup_timewindow_min, pickup_timewindow_max,
+            delivery_timewindow_min, delivery_timewindow_max
+    ):
+        self.c_req = CRequest(
+            request_id, creation_timestamp, origin, destination,
+            pickup_timewindow_min, pickup_timewindow_max,
+            delivery_timewindow_min, delivery_timewindow_max
+        )
 
     def __repr__(self):
        return f'Request(request_id={self.c_req.request_id},creation_timestamp={self.c_req.creation_timestamp})'
@@ -47,7 +57,10 @@ cdef class Stop:
     def __cinit__(self):
         pass
 
-    def __init__(self, Request request, float estimated_arrival_time):
+    def __init__(self, Request request, float estimated_arrival_time, CStopAction action,         double estimated_arrival_time
+        double time_window_min
+        double time_window_max
+):
         self.c_stop = CStop(request.c_req, estimated_arrival_time)
 
     def __repr__(self):
@@ -111,30 +124,6 @@ class InternalRequest(Request):
 
     location: Any
 
-
-class StopAction(Enum):
-    """
-    Representing actions that the system may perform at a specific location
-    """
-
-    pickup = 1
-    dropoff = 2
-    internal = 3
-
-RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[
-    RequestAcceptanceEvent,
-    RequestRejectionEvent,
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
-    RequestAssignEvent,
-]
-Stoplist = List[Stop]
-SingleVehicleSolution = Tuple[Any, float, Stoplist, Tuple[float, float, float, float]]
-"""vehicle_id, cost, new_stop_list"""
-RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
 
 def spam():
     cdef CRequest r

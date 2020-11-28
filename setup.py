@@ -14,6 +14,7 @@ extensions = [
         name="thesimulator.cvehicle_state",
         sources=[
            "thesimulator/cvehicle_state/cvehicle_state.pyx",
+           "thesimulator/cvehicle_state/cdata_structures.pyx",
            "thesimulator/cvehicle_state/cstuff.cpp",
         ],
         language="c++",

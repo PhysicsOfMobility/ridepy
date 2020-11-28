@@ -15,6 +15,15 @@ using namespace std;
 namespace cstuff{
 typedef pair<double, double> R2loc;
 
+struct InsertionResult{
+    vector<Stop> new_stoplist;
+    double min_cost;
+    double EAST_pu;
+    double LAST_pu;
+    double EAST_do;
+    double LAST_do
+};
+
 enum class StopAction  : uint32_t {
     pickup = 0,
     dropoff = 1,
@@ -284,8 +293,7 @@ int is_timewindow_violated_dueto_insertion(
     return false;
 }
 
-std::tuple<double, Stoplist, double, double, double, double>
-brute_force_distance_minimizing_dispatcher(
+InsertionResult brute_force_distance_minimizing_dispatcher(
         const Request& request,
         Stoplist& stoplist,
         const Euclidean2D& space
@@ -423,7 +431,7 @@ brute_force_distance_minimizing_dispatcher(
 
     auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
     auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
-    return std::make_tuple(min_cost, new_stoplist, EAST_pu, LAST_pu, EAST_do, LAST_do);
+    return InsertionResult {min_cost, new_stoplist, EAST_pu, LAST_pu, EAST_do, LAST_do};
 }
 }// end ns cstuff
 
