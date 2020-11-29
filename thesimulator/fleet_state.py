@@ -22,6 +22,7 @@ from .data_structures import (
     InternalRequest,
     TransportSpace,
     SingleVehicleSolution,
+    Dispatcher,
 )
 from .vehicle_state import VehicleState
 
@@ -37,7 +38,13 @@ class FleetState(ABC):
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
 
-    def __init__(self, initial_stoplists: Dict[int, Stoplist], space: TransportSpace):
+    def __init__(
+        self,
+        *,
+        initial_stoplists: Dict[int, Stoplist],
+        space: TransportSpace,
+        dispatcher: Dispatcher,
+    ):
         """
         Parameters
         ----------
@@ -47,9 +54,13 @@ class FleetState(ABC):
         """
 
         self.space = space
+        self.dispatcher = dispatcher
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: VehicleState(
-                vehicle_id=vehicle_id, initial_stoplist=stoplist, space=self.space
+                vehicle_id=vehicle_id,
+                initial_stoplist=stoplist,
+                space=self.space,
+                dispatcher=self.dispatcher,
             )
             for vehicle_id, stoplist in initial_stoplists.items()
         }

@@ -15,8 +15,8 @@ from .data_structures import (
     Stop,
     TransportationRequest,
     TransportSpace,
+    Dispatcher,
 )
-from .util.dispatchers import taxicab_dispatcher_drive_first
 
 
 class VehicleState:
@@ -33,7 +33,12 @@ class VehicleState:
             ) + self.space.t(stop_i.location, stop_j.location)
 
     def __init__(
-        self, *, vehicle_id, initial_stoplist: Stoplist, space: TransportSpace
+        self,
+        *,
+        vehicle_id,
+        initial_stoplist: Stoplist,
+        space: TransportSpace,
+        dispatcher: Dispatcher,
     ):
         """
         Create a vehicle.
@@ -51,6 +56,7 @@ class VehicleState:
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         self.stoplist = initial_stoplist
         self.space = space
+        self.dispatcher = dispatcher
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -140,6 +146,6 @@ class VehicleState:
         This returns the single best solution for the respective vehicle.
         """
 
-        return self.vehicle_id, *taxicab_dispatcher_drive_first(
+        return self.vehicle_id, *self.dispatcher(
             request=request, stoplist=self.stoplist, space=self.space
         )
