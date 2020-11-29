@@ -11,11 +11,10 @@ with open("requirements-dev.txt", "r") as f:
 
 extensions = [
     setuptools.Extension(
-        name="thesimulator.cvehicle_state",
+        name="thesimulator.cxxx",
         sources=[
-           "thesimulator/cvehicle_state/cvehicle_state.pyx",
+#           "thesimulator/cvehicle_state/cvehicle_state.pyx",
            "thesimulator/cvehicle_state/cdata_structures.pyx",
-           "thesimulator/cvehicle_state/cstuff.cpp",
         ],
         language="c++",
     )

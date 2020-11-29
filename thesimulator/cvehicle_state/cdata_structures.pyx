@@ -22,7 +22,7 @@ ID = Union[str, int]
 cdef extern from * namespace 'cstuff':
     cpdef enum class StopAction(int):
         pickup=1
-        delivery=2
+        dropoff=2
         internal=3
 
 
@@ -143,6 +143,7 @@ def spam():
     cdef Request pyreq = Request.from_c(r)
 
     return pyreq
+
 
 def dispatcher(Request request, Stoplist stoplist):
 #    cdef  = c_disp(request.c_req, stoplist.c_stoplist)

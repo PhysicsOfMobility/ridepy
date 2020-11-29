@@ -2,12 +2,15 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from libcpp.utility cimport tuple as ctuple
 
-cdef extern from "cstuff.cpp" namespace 'cstuff':
+cdef extern from "cstuff.cpp":
+    pass
+
+cdef extern from "cstuff.h" namespace 'cstuff':
 
     ctypedef pair[double, double] R2loc
     cpdef enum class StopAction(int):
         pickup=1
-        delivery=2
+        dropoff=2
         internal=3
 
     cdef cppclass Request:
