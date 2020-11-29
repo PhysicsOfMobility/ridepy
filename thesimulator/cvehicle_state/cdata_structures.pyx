@@ -1,11 +1,11 @@
 # distutils: language = c++
 
-from cstuff cimport Request as CRequest
-from cstuff cimport Stop as CStop
-from cstuff cimport R2loc
-from cstuff cimport StopAction as CStopAction
-from cstuff cimport Stoplist as CStoplist
-from cstuff cimport brute_force_distance_minimizing_dispatcher as c_disp
+from .cstuff cimport Request as CRequest
+from .cstuff cimport Stop as CStop
+from .cstuff cimport R2loc
+from .cstuff cimport StopAction as CStopAction
+from .cstuff cimport Stoplist as CStoplist
+from .cstuff cimport brute_force_distance_minimizing_dispatcher as c_disp
 from libcpp.vector cimport vector
 
 
@@ -136,13 +136,16 @@ class InternalRequest(Request):
     location: Any
 
 
+
 def spam():
     cdef CRequest r
     r.request_id = 99
 
     cdef Request pyreq = Request.from_c(r)
 
-    return pyreq
+    cdef Stop pystop = Stop((99,23), pyreq, StopAction.pickup, 0, 0,10)
+
+    return pyreq, pystop
 
 
 def dispatcher(Request request, Stoplist stoplist):

@@ -9,23 +9,16 @@ with open("requirements.txt", "r") as f:
 with open("requirements-dev.txt", "r") as f:
     dev_reqs = f.readlines()
 
-extensions = [
-    setuptools.Extension(
-        name="thesimulator.cxxx",
-        sources=[
-#           "thesimulator/cvehicle_state/cvehicle_state.pyx",
-           "thesimulator/cvehicle_state/cdata_structures.pyx",
-        ],
-        language="c++",
-    )
-]
 
 setuptools.setup(
     name="thesimulator",
     version="0.1",
     zip_safe=False,
     packages=setuptools.find_packages(),
-    ext_modules=cythonize(extensions),
+    ext_modules=cythonize(
+        "thesimulator/cvehicle_state/cdata_structures.pyx",
+        language='c++'
+    ),
     install_requires=reqs,
     extras_require={"dev": dev_reqs}
 )
