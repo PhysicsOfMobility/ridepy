@@ -108,6 +108,9 @@ class Euclidean1D(Euclidean):
     def d(self, u, v):
         return abs(v - u)
 
+    def random_point(self):
+        return random.uniform(*self.coord_range[0])
+
 
 class Euclidean2D(Euclidean):
     def __init__(
