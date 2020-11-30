@@ -5,7 +5,6 @@ import numpy as np
 
 
 from abc import ABC, abstractmethod
-from time import time
 from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
@@ -149,7 +148,7 @@ class FleetState(ABC):
         ) = min(all_solutions, key=op.itemgetter(1))
         # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
         if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=time())
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
         else:
             # modify the best vehicle's stoplist
             # print(f"len of new stoplist={len(new_stoplist)}")
@@ -159,7 +158,7 @@ class FleetState(ABC):
             # )
             return RequestAcceptanceEvent(
                 request_id=req.request_id,
-                timestamp=time(),
+                timestamp=self.t,
                 origin=req.origin,
                 destination=req.destination,
                 pickup_timewindow_min=pickup_timewindow_min,
@@ -190,14 +189,16 @@ class FleetState(ABC):
             for the simulation to be actually be performed.
         """
 
+        self.t = 0
+
         for request in requests:
             req_epoch = request.creation_timestamp
 
             # advance clock to req_epoch
-            t = req_epoch
+            self.t = req_epoch
 
             # Visit all the stops upto req_epoch
-            yield from self.fast_forward(t)
+            yield from self.fast_forward(self.t)
 
             # handle the current request
             if isinstance(request, TransportationRequest):
@@ -207,7 +208,7 @@ class FleetState(ABC):
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
 
-            if t >= t_cutoff:
+            if self.t >= t_cutoff:
                 return
 
         # service all remaining stops
@@ -224,8 +225,12 @@ class FleetState(ABC):
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: float):
-        return it.chain.from_iterable(
-            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        return sorted(
+            it.chain.from_iterable(
+                vehicle_state.fast_forward_time(t)
+                for vehicle_state in self.fleet.values()
+            ),
+            key=op.attrgetter("timestamp"),
         )
 
     def handle_transportation_request(self, req: TransportationRequest):
@@ -248,11 +253,14 @@ class MPIFuturesFleetState(FleetState):
     def fast_forward(self, t: float):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
-                return it.chain.from_iterable(
-                    executor.map(
-                        ft.partial(VehicleState.fast_forward_time, t=t),
-                        self.fleet.values(),
-                    )
+                return sorted(
+                    it.chain.from_iterable(
+                        executor.map(
+                            ft.partial(VehicleState.fast_forward_time, t=t),
+                            self.fleet.values(),
+                        )
+                    ),
+                    key=op.attrgetter("timestamp"),
                 )
 
     def handle_transportation_request(self, req: TransportationRequest):

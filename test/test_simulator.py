@@ -1,5 +1,6 @@
 import pytest
 
+import pandas as pd
 import itertools as it
 import collections as cl
 import operator as op
@@ -54,6 +55,23 @@ def test_slow_simple_fleet_state_simulate(initial_stoplists):
     events = list(fs.simulate(reqs, t_cutoff=20))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
+
+
+@pytest.mark.n_buses(10)
+@pytest.mark.initial_location((0, 0))
+def test_events_sorted(initial_stoplists):
+    rg = RandomRequestGenerator(rate=10)
+    reqs = list(it.islice(rg, 1000))
+    fs = SlowSimpleFleetState(
+        initial_stoplists=initial_stoplists,
+        space=Euclidean2D(),
+        dispatcher=taxicab_dispatcher_drive_first,
+    )
+    events = list(fs.simulate(reqs, t_cutoff=20))
+    evs = pd.DataFrame(
+        map(lambda ev: dict(ev.__dict__, event_type=ev.__class__.__name__), events)
+    )
+    assert all(evs.sort_values("timestamp").index == evs.index), "events not sorted"
 
 
 @pytest.mark.n_buses(10)
@@ -113,10 +131,10 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
     )
     events = list(fs.simulate(reqs))
 
-    stop_events = sorted(
-        filter(lambda x: isinstance(x, (PickupEvent, DeliveryEvent)), events),
-        key=op.attrgetter("timestamp"),
+    stop_events = list(
+        filter(lambda x: isinstance(x, (PickupEvent, DeliveryEvent)), events)
     )
+
     vehicle_id_idxs = dict(
         zip(sorted(set(map(op.attrgetter("vehicle_id"), stop_events))), it.count(1))
     )
@@ -168,7 +186,7 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
     )
-    events = sorted(fs.simulate(reqs), key=op.attrgetter("timestamp"))
+    events = list(fs.simulate(reqs))
 
     pickup_events = [event for event in events if isinstance(event, PickupEvent)]
     delivery_events = [event for event in events if isinstance(event, DeliveryEvent)]
@@ -217,7 +235,7 @@ def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
     )
-    events = sorted(fs.simulate(reqs), key=op.attrgetter("timestamp"))
+    events = list(fs.simulate(reqs))
 
     pickup_events = [event for event in events if isinstance(event, PickupEvent)]
     delivery_events = [event for event in events if isinstance(event, DeliveryEvent)]
