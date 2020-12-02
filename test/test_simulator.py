@@ -5,6 +5,7 @@ import itertools as it
 import collections as cl
 import operator as op
 import numpy as np
+import os
 
 from tabulate import tabulate
 
@@ -21,7 +22,10 @@ from thesimulator.data_structures import (
 from thesimulator.util.dispatchers import (
     taxicab_dispatcher_drive_first,
 )
-from thesimulator.util.request_generators import RandomRequestGenerator
+from thesimulator.util.request_generators import (
+    RandomRequestGenerator,
+    DeterministicRequestGenerator,
+)
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
 
 
@@ -40,6 +44,44 @@ def test_random_request_generator():
         assert 0 <= r.origin[1] <= 1
         assert 0 <= r.destination[0] <= 1
         assert 0 <= r.destination[1] <= 1
+
+
+def test_deterministic_request_generator():
+    request_file_string = """ID,time,origin_location_x,origin_location_y,destination_location_x,destination_location_y,pickup_timewindow_min,pickup_timewindow_max
+    0,1,0.2,0,0.8,0,1.2,10.0
+    1,1.1,0,0,0.1,0,1.1,1.2
+    2,1.2,0,0,0.8,0,1.2,10
+    3,1.3,0,0,0.8,0,1.3,10
+    4,1.4,0,0,0.8,0,1.4,10
+    5,1.5,0,0,0.8,0,2.0,10
+    """
+    with open("test_requests.csv", "w") as f:
+        f.write(request_file_string)
+    dg = DeterministicRequestGenerator("test_requests.csv", chunksize=2)
+    reqs = list(dg)
+    assert len(reqs) == 6
+    assert all(
+        reqs[i + 1].creation_timestamp > reqs[i].creation_timestamp for i in range(5)
+    )
+    assert reqs[-1].request_id == 5
+    assert reqs[-1].origin[0] == 0
+    assert reqs[-1].destination[0] == 0.8
+    assert reqs[-1].creation_timestamp == 1.5
+    assert reqs[-1].pickup_timewindow_min == 2.0
+    assert reqs[-1].pickup_timewindow_max == 10
+    assert (
+        reqs[-1].delivery_timewindow_max == np.inf
+    )  # One should really not allow comparing infinities
+
+    for i, r in enumerate(reqs):
+        assert r.request_id == i
+        assert len(r.origin) == 2
+        assert len(r.destination) == 2
+        assert 0 <= r.origin[0] <= 1
+        assert r.origin[1] == 0
+        assert 0 <= r.destination[0] <= 1
+        assert r.destination[1] == 0
+    os.remove("test_requests.csv")
 
 
 @pytest.mark.n_buses(10)
