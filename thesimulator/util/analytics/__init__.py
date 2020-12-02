@@ -38,6 +38,7 @@ def _create_stoplist_without_locations_dataframe(
     )
 
     # NOTE this could/should use the cutoff time, if applicable
+    # https://github.com/PhysicsOfMobility/theSimulator/issues/47
     end_time = stops["timestamp"].max()
 
     end_stops = pd.DataFrame(
