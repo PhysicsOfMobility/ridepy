@@ -16,7 +16,7 @@ from .data_structures import (
     TransportationRequest,
     TransportSpace,
 )
-from .util.dispatchers import taxicab_dispatcher_drive_first
+from .util.dispatchers import taxicab_dispatcher_drive_first, ridesharing_dispatcher_min_route_length
 
 
 class VehicleState:
@@ -139,7 +139,9 @@ class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-
-        return self.vehicle_id, *taxicab_dispatcher_drive_first(
+        return self.vehicle_id, *ridesharing_dispatcher_min_route_length(
             request=request, stoplist=self.stoplist, space=self.space
         )
+        # return self.vehicle_id, *taxicab_dispatcher_drive_first(
+        #     request=request, stoplist=self.stoplist, space=self.space
+        # )
