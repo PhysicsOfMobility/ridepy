@@ -157,7 +157,9 @@ def _add_locations_to_stoplist_dataframe(
     return stops
 
 
-def get_stops_and_requests(events, initial_stoplists, transportation_requests, space):
+def get_stops_and_requests(
+    *, events, initial_stoplists, transportation_requests, space
+):
     vehicle_ids = list(initial_stoplists)
     events_df = _create_events_dataframe(events=events)
 
@@ -166,7 +168,7 @@ def get_stops_and_requests(events, initial_stoplists, transportation_requests, s
     )
 
     requests = _create_requests_dataframe(
-        evs=events,
+        evs=events_df,
         transportation_requests=transportation_requests,
         stops=stops,
         space=space,
