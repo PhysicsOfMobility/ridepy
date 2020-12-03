@@ -1,5 +1,8 @@
 # distutils: language = c++
 
+
+from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
+
 from .cstuff cimport Request as CRequest
 from .cstuff cimport Stop as CStop
 from .cstuff cimport R2loc
@@ -77,12 +80,25 @@ cdef class Stop:
     def __repr__(self):
         return f'Stop(request={Request.from_c(self.c_stop.request)}, estimated_arrival_time={self.c_stop.estimated_arrival_time})'
 
-    def foo(self):
-        return self.c_stop.request.creation_timestamp
+    @property
+    def action(self):
+        return StopAction(self.c_stop.action)
 
     @property
     def estimated_arrival_time(self):
-        return self.c_req.estimated_arrival_time
+        return self.c_stop.estimated_arrival_time
+
+    @property
+    def time_window_min(self):
+        return self.c_stop.time_window_min
+
+    @property
+    def time_window_max(self):
+        return self.c_stop.time_window_max
+
+    @property
+    def request(self):
+        return Request.from_c(self.c_stop.request)
 
     @staticmethod
     cdef Stop from_c(CStop cstop):
@@ -104,6 +120,9 @@ cdef class Stoplist:
     def __getitem__(self, i):
         return Stop.from_c(self.c_stoplist[i])
 
+    def __len__(self):
+        return self.c_stoplist.size()
+
     @staticmethod
     cdef Stoplist from_c(CStoplist cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist)
@@ -123,17 +142,17 @@ def spam():
     return pyreq, pystop
 
 
-class VehicleState:
+cdef class VehicleState:
     """
     Single vehicle insertion logic is implemented in Cython here.
     """
 
-    def recompute_arrival_times_drive_first(self):
-        # update CPATs
-        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
-            stop_j.estimated_arrival_time = max(
-                stop_i.estimated_arrival_time, stop_i.time_window_min
-            ) + self.space.t(stop_i.location, stop_j.location)
+#    def recompute_arrival_times_drive_first(self):
+#        # update CPATs
+#        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
+#            stop_j.estimated_arrival_time = max(
+#                stop_i.estimated_arrival_time, stop_i.time_window_min
+#            ) + self.space.t(stop_i.location, stop_j.location)
 
     def __init__(
         self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified
@@ -141,7 +160,8 @@ class VehicleState:
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist)
-        self.space = space
+        # TODO: re-enable choosing space
+        # self.space = space
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -213,26 +233,26 @@ class VehicleState:
 
         return event_cache
 
-    def handle_transportation_request_single_vehicle(
-        self, request: TransportationRequest
-    ) -> SingleVehicleSolution:
-        """
-        The computational bottleneck. An efficient simulator could do the following:
-        1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
-        2. Implement as a c extension. The args and the return value are all basic c data types,
-           so this should also be easy.
-
-        Parameters
-        ----------
-        request
-
-        Returns
-        -------
-        This returns the single best solution for the respective vehicle.
-        """
-
-        return self.vehicle_id, *taxicab_dispatcher_drive_first(
-            request=request, stoplist=self.stoplist, space=self.space
-        )
+#    def handle_transportation_request_single_vehicle(
+#        self, request: TransportationRequest
+#    ) -> SingleVehicleSolution:
+#        """
+#        The computational bottleneck. An efficient simulator could do the following:
+#        1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
+#        2. Implement as a c extension. The args and the return value are all basic c data types,
+#           so this should also be easy.
+#
+#        Parameters
+#        ----------
+#        request
+#
+#        Returns
+#        -------
+#        This returns the single best solution for the respective vehicle.
+#        """
+#
+#        return self.vehicle_id, *taxicab_dispatcher_drive_first(
+#            request=request, stoplist=self.stoplist, space=self.space
+#        )
 
 
