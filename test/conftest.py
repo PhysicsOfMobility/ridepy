@@ -11,6 +11,14 @@ from thesimulator.data_structures import (
 
 @pytest.fixture
 def initial_stoplists(request):
+    """
+    Use like
+
+    ```py
+    @pytest.mark.n_buses(10)
+    @pytest.mark.initial_location((0, 0))
+    ```
+    """
     n_buses = (
         request.node.get_closest_marker("n_buses").args[0]
         if request.node.get_closest_marker("n_buses") is not None

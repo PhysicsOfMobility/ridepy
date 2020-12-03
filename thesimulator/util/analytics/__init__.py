@@ -160,6 +160,29 @@ def _add_locations_to_stoplist_dataframe(
 def get_stops_and_requests(
     *, events, initial_stoplists, transportation_requests, space
 ):
+    """
+    Prepare two dataframes, containing stops and requests.
+
+    Parameters
+    ----------
+    events
+        list of all the events returned by the simulation
+    initial_stoplists
+        fleet state dictionary containing the initial stoplists indexed by their vehicle IDs
+    transportation_requests
+        list of the transportation requests
+        TODO: this should be optional
+        https://github.com/PhysicsOfMobility/theSimulator/issues/53
+    space
+        transportation space that was used for the simulations
+
+    Returns
+    -------
+    stops
+        dataframe indexed by `[vehicle_id, timestamp]` containing all stops
+    requests
+        dataframe indexed by `request_id` containing all requests
+    """
     vehicle_ids = list(initial_stoplists)
     events_df = _create_events_dataframe(events=events)
 
