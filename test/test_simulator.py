@@ -26,7 +26,7 @@ from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
 
 
 def test_random_request_generator():
-    rg = RandomRequestGenerator()
+    rg = RandomRequestGenerator(space=Euclidean2D())
     reqs = list(it.islice(rg, 10))
     assert len(reqs) == 10
     assert all(
@@ -45,11 +45,12 @@ def test_random_request_generator():
 @pytest.mark.n_buses(10)
 @pytest.mark.initial_location((0, 0))
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator(rate=10)
+    space = Euclidean2D()
+    rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
-        space=Euclidean2D(),
+        space=space,
         dispatcher=taxicab_dispatcher_drive_first,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
@@ -60,11 +61,12 @@ def test_slow_simple_fleet_state_simulate(initial_stoplists):
 @pytest.mark.n_buses(10)
 @pytest.mark.initial_location((0, 0))
 def test_events_sorted(initial_stoplists):
-    rg = RandomRequestGenerator(rate=10)
+    space = Euclidean2D()
+    rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
-        space=Euclidean2D(),
+        space=space,
         dispatcher=taxicab_dispatcher_drive_first,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
@@ -77,11 +79,12 @@ def test_events_sorted(initial_stoplists):
 @pytest.mark.n_buses(10)
 @pytest.mark.initial_location((0, 0))
 def test_mpi_futures_fleet_state_simulate(initial_stoplists):
-    rg = RandomRequestGenerator(rate=10)
+    space = Euclidean2D()
+    rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
     fs = MPIFuturesFleetState(
         initial_stoplists=initial_stoplists,
-        space=Euclidean2D(),
+        space=space,
         dispatcher=taxicab_dispatcher_drive_first,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
