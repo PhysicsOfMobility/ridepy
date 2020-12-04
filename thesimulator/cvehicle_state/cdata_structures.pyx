@@ -9,8 +9,9 @@ from .cstuff cimport R2loc
 from .cstuff cimport StopAction as CStopAction
 from .cstuff cimport Stoplist as CStoplist
 from .cstuff cimport brute_force_distance_minimizing_dispatcher as c_disp
+from .cstuff cimport InsertionResult
 from libcpp.vector cimport vector
-
+from cython.operator cimport dereference
 
 
 from numpy import inf
@@ -87,6 +88,9 @@ cdef class Stop:
     @property
     def estimated_arrival_time(self):
         return self.c_stop.estimated_arrival_time
+    @estimated_arrival_time.setter
+    def estimated_arrival_time(self, estimated_arrival_time):
+        self.c_stop.estimated_arrival_time = estimated_arrival_time
 
     @property
     def time_window_min(self):
@@ -107,27 +111,39 @@ cdef class Stop:
         return stop
 
 
+
 cdef class Stoplist:
-    cdef CStoplist c_stoplist
+    cdef CStoplist* c_stoplist_ptr
+    cdef bint ptr_owner
+
     def __cinit__(self):
-        pass
+        self.ptr_owner=True
+        self.c_stoplist_ptr = new CStoplist(0)
+
     def __init__(self, python_stoplist):
+
         cdef Stop s
         for py_s in python_stoplist:
             s = py_s
-            self.c_stoplist.push_back(s.c_stop)
+            dereference(self.c_stoplist_ptr).push_back(s.c_stop)
 
     def __getitem__(self, i):
-        return Stop.from_c(self.c_stoplist[i])
+        return Stop.from_c(dereference(self.c_stoplist_ptr)[i])
 
     def __len__(self):
-        return self.c_stoplist.size()
+        return dereference(self.c_stoplist_ptr).size()
 
     @staticmethod
-    cdef Stoplist from_c(CStoplist cstoplist):
+    cdef Stoplist from_ptr(CStoplist *cstoplist_ptr):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist)
-        stoplist.c_stoplist = cstoplist
+        stoplist.c_stoplist_ptr = cstoplist_ptr
+        stoplist.ptr_owner = False
         return stoplist
+
+    def __dealloc__(self):
+        if self.ptr_owner:
+            # I was not created from an existing c++ pointer ("owned" by another Stoplist object)
+            del self.c_stoplist_ptr
 
 
 
@@ -153,7 +169,7 @@ cdef class VehicleState:
 #            stop_j.estimated_arrival_time = max(
 #                stop_i.estimated_arrival_time, stop_i.time_window_min
 #            ) + self.space.t(stop_i.location, stop_j.location)
-
+    cdef Stoplist stoplist
     def __init__(
         self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified
         self.vehicle_id = vehicle_id
@@ -207,7 +223,7 @@ cdef class VehicleState:
                         ),
                     )
                 )
-
+                # TODO: make sure this works. Maybe by using std::vector::erase.
                 del self.stoplist[i]
 
         # fix event cache order
@@ -222,6 +238,7 @@ cdef class VehicleState:
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         if len(self.stoplist) > 1:
+            # TODO: won't work since self.space does not exist
             self.stoplist[0].location, _ = self.space.interp_time(
                 u=last_stop.location,
                 v=self.stoplist[1].location,
@@ -233,26 +250,25 @@ cdef class VehicleState:
 
         return event_cache
 
-#    def handle_transportation_request_single_vehicle(
-#        self, request: TransportationRequest
-#    ) -> SingleVehicleSolution:
-#        """
-#        The computational bottleneck. An efficient simulator could do the following:
-#        1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
-#        2. Implement as a c extension. The args and the return value are all basic c data types,
-#           so this should also be easy.
-#
-#        Parameters
-#        ----------
-#        request
-#
-#        Returns
-#        -------
-#        This returns the single best solution for the respective vehicle.
-#        """
-#
-#        return self.vehicle_id, *taxicab_dispatcher_drive_first(
-#            request=request, stoplist=self.stoplist, space=self.space
-#        )
+    def handle_transportation_request_single_vehicle(
+        self, request: TransportationRequest
+       ) -> SingleVehicleSolution:
+        """
+        The computational bottleneck. An efficient simulator could do the following:
+        1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
+        2. Implement as a c extension. The args and the return value are all basic c data types,
+           so this should also be easy.
+
+        Parameters
+        ----------
+        request
+
+        Returns
+        -------
+        This returns the single best solution for the respective vehicle.
+        """
+        cdef Request cy_request = request
+        cdef InsertionResult res = c_disp(cy_request.c_req, dereference(self.stoplist.c_stoplist_ptr))
+        return Stoplist.from_ptr(&res.new_stoplist)
 
 
