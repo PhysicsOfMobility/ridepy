@@ -78,14 +78,14 @@ Stoplist insert_request_to_stoplist_drive_first(
         const Euclidean2D& space
 ){
     /*
-    Inserts a request into  a stoplist. The pickup(dropoff) is inserted after pickup(dropoff)_idx.
+    Inserts a request into  a stoplist. The pickup(dropoff) is inserted *after* pickup(dropoff)_idx.
     The estimated arrival times at all the stops are updated assuming a drive-first strategy.
     */
 
     // We don't want to modify stoplist in place. Make a copy.
     Stoplist new_stoplist{stoplist}; // TODO: NEED TO copy?
     // Handle the pickup
-    auto stop_before_pickup = new_stoplist[pickup_idx];
+    auto& stop_before_pickup = new_stoplist[pickup_idx];
     auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
         stop_before_pickup.location, request.origin
     );
@@ -177,8 +177,9 @@ double distance_to_stop_after_insertion(
         const Stoplist &stoplist, const R2loc location, int index, const Euclidean2D& space
 )
 {
-    // note that index is there the new stop will be inserted. So index+1 is where the next stop is
-    if (index < stoplist.size() - 1) return space.d(location, stoplist[index].location);
+    // note that index is *after which* the new stop will be inserted.
+    // So index+1 is where the next stop is
+    if (index < stoplist.size() - 1) return space.d(location, stoplist[index+1].location);
     else return 0;
 }
 
@@ -216,7 +217,7 @@ int is_timewindow_violated_dueto_insertion(
         auto old_leeway = stop->time_window_max - stop->estimated_arrival_time;
         auto new_leeway = old_leeway - delta_cpat;
 
-        if ((new_leeway < 0) & (0<= old_leeway)) return true;
+        if ((new_leeway < 0) & (new_leeway < old_leeway)) return true;
         else
         {
             auto old_departure = max(stop->time_window_min, stop->estimated_arrival_time);
@@ -262,10 +263,11 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
     // Warning: i,j refers to the indices where the new stop would be inserted. So i-1/j-1 is the index of
     // the stop preceeding the stop to be inserted.
     pair<int, int> best_insertion {0, 0};
-    int i = 0;
+    int i = -1;
     for (auto& stop_before_pickup: stoplist)
     {
-        i++; // The first iteration of the loop: i =1 (new stop would be inserted at idx=1). Insertion at 0 impossible.
+        i++; // The first iteration of the loop: i = 0
+        // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
         auto distance_to_pickup = space.d(stop_before_pickup.location, request.origin);
         auto CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, distance_to_pickup);
         // check for request's pickup timewindow violation
@@ -284,7 +286,7 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
         );
 
         auto original_pickup_edge_length = distance_from_current_stop_to_next(
-            stoplist, i-1, space
+            stoplist, i, space
         );
         auto total_cost = (
             distance_to_pickup
@@ -316,9 +318,9 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
         );
         int j = i;
 //        BOOST_FOREACH(auto stop_before_dropoff, boost::make_iterator_range(stoplist.begin()+i, stoplist.end()))
-        for (auto stop_before_dropoff=stoplist.begin()+i; stop_before_dropoff != stoplist.end(); ++stop_before_dropoff)
+        for (auto stop_before_dropoff=stoplist.begin()+i+1; stop_before_dropoff != stoplist.end(); ++stop_before_dropoff)
         {
-            j++;
+            j++; // first iteration: dropoff after j=(i+1)'th stop. pickup was after i'th stop.
             distance_to_dropoff = space.d(
                 stop_before_dropoff->location, request.destination
             );
@@ -331,7 +333,7 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
                 stoplist, request.destination, j, space
             );
             auto original_dropoff_edge_length = distance_from_current_stop_to_next(
-                stoplist, j-1, space
+                stoplist, j, space
             );
             auto dropoff_cost = (
                 distance_to_dropoff
@@ -340,7 +342,7 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
             );
 
             total_cost = pickup_cost + dropoff_cost;
-            if (total_cost > min_cost) continue;
+            if (total_cost >= min_cost) continue;
             else
             {
                 // cost has decreased. check for constraint violations at later stops
@@ -367,6 +369,7 @@ InsertionResult brute_force_distance_minimizing_dispatcher(
         space
     );
     std::cout<<"Best insertion: "<<best_pickup_idx << ", " <<best_dropoff_idx<<std::endl;
+    std::cout<<"Min cost: " << min_cost << std::endl;
     auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
     auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 

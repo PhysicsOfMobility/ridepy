@@ -15,10 +15,10 @@ from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispat
 from thesimulator.util.testing_utils import stoplist_from_properties
 
 
-def benchmark_insertion_into_long_stoplist():
+def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D()
     n = 1000
-    rnd = np.random.RandomState(56)
+    rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))
     arrival_times = np.cumsum(
         [np.linalg.norm(x - y) for x, y in zip(stop_locations[:-1], stop_locations[1:])]
@@ -47,4 +47,7 @@ def benchmark_insertion_into_long_stoplist():
 
 
 if __name__ == "__main__":
-    benchmark_insertion_into_long_stoplist()
+    import sys
+    if len(sys.argv) > 1:
+        seed = int(sys.argv[1])
+    benchmark_insertion_into_long_stoplist(seed)
