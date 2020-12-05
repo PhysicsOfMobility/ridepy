@@ -7,6 +7,7 @@ from .cstuff cimport Request as CRequest
 from .cstuff cimport Stop as CStop
 from .cstuff cimport R2loc
 from .cstuff cimport StopAction as CStopAction
+from .cstuff cimport Euclidean2D as CEuclidean2D
 from .cstuff cimport Stoplist as CStoplist
 from .cstuff cimport brute_force_distance_minimizing_dispatcher as c_disp
 from .cstuff cimport InsertionResult
@@ -28,6 +29,22 @@ cdef extern from * namespace 'cstuff':
         pickup=1
         dropoff=2
         internal=3
+
+cdef class Euclidean2D:
+    cdef CEuclidean2D c_euclidean2d
+    def __init__(self, double velocity):
+        self.c_euclidean2d.velocity = velocity
+    def d(self, R2loc u, R2loc v):
+        return self.c_euclidean2d.d(u, v)
+
+    def t(self, R2loc u, R2loc v):
+        return self.c_euclidean2d.t(u, v)
+
+    def interp_dist(self, R2loc u, R2loc v, double dist_to_dest):
+        return self.c_euclidean2d.interp_dist(u, v, dist_to_dest)
+
+    def interp_time(self, R2loc u, R2loc v, double time_to_dest):
+        return self.c_euclidean2d.interp_time(u, v, time_to_dest)
 
 
 cdef class Request:
@@ -170,14 +187,14 @@ cdef class VehicleState:
 #                stop_i.estimated_arrival_time, stop_i.time_window_min
 #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist stoplist
+    cdef Euclidean2D space
     def __init__(
         self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist)
-        # TODO: re-enable choosing space
-        # self.space = space
+        self.space = Euclidean2D(1)
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -269,7 +286,10 @@ cdef class VehicleState:
         """
         cdef Request cy_request = request
         # TODO space needs to be implemented
-        cdef InsertionResult res = c_disp(cy_request.c_req, dereference(self.stoplist.c_stoplist_ptr), self.space??)
+        cdef InsertionResult res = c_disp(
+            cy_request.c_req,
+            dereference(self.stoplist.c_stoplist_ptr),
+            self.space.c_euclidean2d
+        )
         return Stoplist.from_ptr(&res.new_stoplist)
-
 
