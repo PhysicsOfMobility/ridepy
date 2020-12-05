@@ -190,7 +190,7 @@ cdef class VehicleState:
     cdef Euclidean2D space
     cdef int vehicle_id
     def __init__(
-        self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified
+        self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified at __init__
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
@@ -256,7 +256,6 @@ cdef class VehicleState:
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         if len(self.stoplist) > 1:
-            # TODO: won't work since self.space does not exist
             self.stoplist[0].location, _ = self.space.interp_time(
                 u=last_stop.location,
                 v=self.stoplist[1].location,
@@ -286,7 +285,6 @@ cdef class VehicleState:
         This returns the single best solution for the respective vehicle.
         """
         cdef Request cy_request = request
-        # TODO space needs to be implemented
         cdef InsertionResult res = c_disp(
             cy_request.c_req,
             dereference(self.stoplist.c_stoplist_ptr),
