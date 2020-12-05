@@ -268,7 +268,8 @@ cdef class VehicleState:
         This returns the single best solution for the respective vehicle.
         """
         cdef Request cy_request = request
-        cdef InsertionResult res = c_disp(cy_request.c_req, dereference(self.stoplist.c_stoplist_ptr))
+        # TODO space needs to be implemented
+        cdef InsertionResult res = c_disp(cy_request.c_req, dereference(self.stoplist.c_stoplist_ptr), self.space??)
         return Stoplist.from_ptr(&res.new_stoplist)
 
 
