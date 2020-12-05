@@ -206,6 +206,7 @@ def brute_force_distance_minimizing_dispatcher(
                     min_cost = total_cost
 
     best_pickup_idx, best_dropoff_idx = best_insertion
+    print(f"best insertion: {best_insertion}")
 
     new_stoplist = insert_request_to_stoplist_drive_first(
         stoplist=stoplist,

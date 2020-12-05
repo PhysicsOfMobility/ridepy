@@ -188,6 +188,7 @@ cdef class VehicleState:
 #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist stoplist
     cdef Euclidean2D space
+    cdef int vehicle_id
     def __init__(
         self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified
         self.vehicle_id = vehicle_id
