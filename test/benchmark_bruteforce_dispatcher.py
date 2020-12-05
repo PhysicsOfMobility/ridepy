@@ -33,8 +33,8 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     request = TransportationRequest(
         request_id="a",
         creation_timestamp=1,
-        origin=(0, 1),
-        destination=(0, 2),
+        origin=rnd.uniform(low=0, high=100, size=2),
+        destination=rnd.uniform(low=0, high=100, size=2),
         pickup_timewindow_min=0,
         pickup_timewindow_max=inf,
         delivery_timewindow_min=0,
