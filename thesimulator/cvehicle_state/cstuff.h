@@ -30,9 +30,15 @@ namespace cstuff {
 
     class Euclidean2D {
     public:
+        double velocity;
+
         double d(R2loc u, R2loc v) const;
+        double t(R2loc u, R2loc v) const;
+        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const;
+        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const;
 
         Euclidean2D();
+        Euclidean2D(double);
     };
 
     class Request {
