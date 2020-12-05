@@ -150,6 +150,11 @@ cdef class Stoplist:
     def __len__(self):
         return dereference(self.c_stoplist_ptr).size()
 
+    def remove_nth_elem(self, int n):
+        dereference(self.c_stoplist_ptr).erase(
+            dereference(self.c_stoplist_ptr).begin()+n
+        )
+
     @staticmethod
     cdef Stoplist from_ptr(CStoplist *cstoplist_ptr):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist)
@@ -241,8 +246,7 @@ cdef class VehicleState:
                         ),
                     )
                 )
-                # TODO: make sure this works. Maybe by using std::vector::erase.
-                del self.stoplist[i]
+                self.stoplist.remove_nth_elem(i)
 
         # fix event cache order
         event_cache = event_cache[::-1]
