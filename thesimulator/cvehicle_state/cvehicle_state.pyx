@@ -113,7 +113,7 @@ cdef class VehicleState:
         return event_cache
 
     def handle_transportation_request_single_vehicle(
-            self, request: TransportationRequest
+            self, Request cy_request
     ) -> SingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could do the following:
@@ -129,7 +129,6 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        cdef Request cy_request = request
         cdef InsertionResult res = c_disp(
             cy_request.c_req,
             dereference(self.stoplist.c_stoplist_ptr),

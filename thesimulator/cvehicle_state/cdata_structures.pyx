@@ -4,17 +4,9 @@ from .cstuff cimport (
     Request as CRequest,
     Stop as CStop,
     R2loc,
-    Euclidean2D as CEuclidean2D,
     Stoplist as CStoplist,
 )
 from cython.operator cimport dereference
-
-
-#cdef extern from * namespace 'cstuff':
-#    cpdef enum class StopAction(int):
-#        pickup=1
-#        dropoff=2
-#        internal=3
 
 cdef class Euclidean2D:
     def __init__(self, double velocity):
@@ -152,11 +144,8 @@ cdef class Stoplist:
 def spam():
     cdef CRequest r
     r.request_id = 99
-
     cdef Request pyreq = Request.from_c(r)
-
     cdef Stop pystop = Stop((99,23), pyreq, StopAction.pickup, 0, 0,10)
-
     return pyreq, pystop
 
 
