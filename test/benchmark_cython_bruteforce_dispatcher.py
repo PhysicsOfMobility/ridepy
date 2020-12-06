@@ -5,7 +5,7 @@ from functools import reduce
 from time import time
 
 
-from thesimulator.cvehicle_state.cdata_structures import (
+from thesimulator.cdata_structures import (
     Euclidean2D,
     Stop,
     Request,

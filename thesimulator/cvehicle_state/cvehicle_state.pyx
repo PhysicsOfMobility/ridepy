@@ -2,24 +2,19 @@
 
 
 from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
-from thesimulator.cvehicle_state.cdata_structures cimport (
+from thesimulator.cdata_structures cimport (
     Request,
     Stop,
+    StopAction,
     Stoplist,
     Euclidean2D
 )
-from .cstuff cimport (
+from thesimulator.cvehicle_state.cstuff cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
     InsertionResult,
 )
 from cython.operator cimport dereference
 from typing import List
-
-
-
-from thesimulator.cvehicle_state.cdata_structures cimport (
-    StopAction, Request, Stop, Stoplist
-  )
 
 cdef class VehicleState:
     """

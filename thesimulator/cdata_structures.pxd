@@ -1,6 +1,6 @@
 # distutils: language = c++
 
-from .cstuff cimport (
+from thesimulator.cvehicle_state.cstuff cimport (
     Request as CRequest,
     Stop as CStop,
     Euclidean2D as CEuclidean2D,
