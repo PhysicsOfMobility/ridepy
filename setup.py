@@ -15,10 +15,11 @@ setuptools.setup(
     version="0.1",
     zip_safe=False,
     packages=setuptools.find_packages(),
-    ext_modules=cythonize(
-        "thesimulator/cvehicle_state/cdata_structures.pyx",
-        language='c++'
-    ),
-    install_requires=reqs,
+#    ext_modules=cythonize(
+#        "thesimulator/cvehicle_state/cdata_structures.pyx",
+#        language='c++'
+#    ),
+    ext_modules=cythonize("thesimulator/cvehicle_state/*.pyx"),
+install_requires=reqs,
     extras_require={"dev": dev_reqs}
 )
