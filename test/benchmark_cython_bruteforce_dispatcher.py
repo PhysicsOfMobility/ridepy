@@ -12,7 +12,7 @@ from thesimulator.cdata_structures import (
     StopAction,
 )
 
-from thesimulator.cvehicle_state.cvehicle_state import VehicleState
+from thesimulator.cvehicle_state import VehicleState
 
 def stoplist_from_properties(stoplist_properties):
     return [
