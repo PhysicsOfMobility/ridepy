@@ -57,6 +57,30 @@ def _create_stoplist_without_locations_dataframe(
 
     stops.sort_values(["vehicle_id", "timestamp", "request_id"], inplace=True)
 
+    def fix_start_stop_order(df):
+        i_start = (df["request_id"] == "START").argmax()
+        i_stop = (df["request_id"] == "STOP").argmax()
+
+        idx = df.index.to_list()
+
+        k_start = idx[i_start]
+        k_stop = idx[i_stop]
+
+        if i_start < i_stop:
+            i_stop -= 1
+        else:
+            i_start -= 1
+
+        del idx[i_start]
+        del idx[i_stop]
+
+        idx.insert(0, k_start)
+        idx.append(k_stop)
+
+        return df.loc[idx]
+
+    stops = stops.groupby("vehicle_id", as_index=False).apply(fix_start_stop_order)
+
     stops["state_duration"] = (
         stops.groupby("vehicle_id")["timestamp"].diff().shift(-1).fillna(0)
     )

@@ -132,8 +132,8 @@ def test_get_stops_and_requests(initial_stoplists):
                 11: 2.0,
             },
             "delta_occupancy": {
-                0: 1.0,
-                1: 0.0,
+                0: 0.0,
+                1: 1.0,
                 2: 1.0,
                 3: -1.0,
                 4: -1.0,
@@ -146,8 +146,8 @@ def test_get_stops_and_requests(initial_stoplists):
                 11: 0.0,
             },
             "request_id": {
-                0: 0,
-                1: "START",
+                0: "START",
+                1: 0,
                 2: 1,
                 3: 1,
                 4: 0,
@@ -174,7 +174,7 @@ def test_get_stops_and_requests(initial_stoplists):
                 11: 0.0,
             },
             "occupancy": {
-                0: 1.0,
+                0: 0.0,
                 1: 1.0,
                 2: 2.0,
                 3: 1.0,
@@ -203,7 +203,6 @@ def test_get_stops_and_requests(initial_stoplists):
             },
         }
     )
-
     expected_requests = pd.DataFrame(
         {
             ("request_id", ""): {0: 0, 1: 1, 2: 2},
@@ -231,7 +230,6 @@ def test_get_stops_and_requests(initial_stoplists):
             ("supplied", "timestamp"): {0: 0, 1: 0, 2: 1},
         }
     )
-
     assert all(stops.reset_index() == expected_stops)
     assert all(requests.reset_index() == expected_requests)
 
