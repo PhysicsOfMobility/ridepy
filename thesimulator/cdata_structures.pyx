@@ -147,7 +147,3 @@ def spam():
     cdef Request pyreq = Request.from_c(r)
     cdef Stop pystop = Stop((99,23), pyreq, StopAction.pickup, 0, 0,10)
     return pyreq, pystop
-
-
-
-
