@@ -233,6 +233,25 @@ def test_get_stops_and_requests(initial_stoplists):
     assert all(stops.reset_index() == expected_stops)
     assert all(requests.reset_index() == expected_requests)
 
+    stops_wo_reqs, requests_wo_reqs = get_stops_and_requests(
+        events=events,
+        initial_stoplists=initial_stoplists,
+        space=space,
+    )
+
+    assert all(stops_wo_reqs.reset_index() == expected_stops)
+    assert all(
+        requests_wo_reqs.reset_index()
+        == expected_requests.drop(
+            [
+                "supplied",
+                ("inferred", "relative_travel_time"),
+                ("inferred", "waiting_time"),
+            ],
+            axis=1,
+        )
+    )
+
 
 @pytest.mark.n_buses(10)
 def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):

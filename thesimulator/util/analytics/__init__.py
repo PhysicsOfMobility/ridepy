@@ -1,8 +1,16 @@
 import dataclasses
-from typing import Iterable
+from typing import Iterable, List, Optional, Dict, Any
 
 import numpy as np
 import pandas as pd
+
+from thesimulator.data_structures import (
+    TransportationRequest,
+    Event,
+    ID,
+    Stop,
+    TransportSpace,
+)
 
 
 def _create_events_dataframe(events: Iterable) -> pd.DataFrame:
@@ -95,26 +103,35 @@ def _create_stoplist_without_locations_dataframe(
 
 
 def _create_requests_dataframe(
-    *, evs: pd.DataFrame, transportation_requests, stops, space
+    *,
+    evs: pd.DataFrame,
+    stops,
+    space,
+    transportation_requests: Optional[List[TransportationRequest]] = None,
 ) -> pd.DataFrame:
     reqs_as_accepted = (
         evs[(evs["event_type"] == "RequestAcceptanceEvent")]
         .drop(["event_type", "vehicle_id"], axis=1)
         .set_index("request_id")
     )
+    if transportation_requests is not None:
+        reqs_as_supplied = (
+            pd.DataFrame(map(dataclasses.asdict, transportation_requests))
+            .set_index("request_id")
+            .rename({"creation_timestamp": "timestamp"}, axis=1)
+        )
 
-    reqs_as_supplied = (
-        pd.DataFrame(map(dataclasses.asdict, transportation_requests))
-        .set_index("request_id")
-        .rename({"creation_timestamp": "timestamp"}, axis=1)
-    )
+        reqs = pd.concat(
+            (reqs_as_supplied, reqs_as_accepted),
+            axis=1,
+            keys=["supplied", "accepted"],
+            names=["source", "quantity"],
+        )
+    else:
+        reqs = pd.concat(
+            (reqs_as_accepted,), keys=["accepted"], names=["source", "quantity"], axis=1
+        )
 
-    reqs = pd.concat(
-        (reqs_as_supplied, reqs_as_accepted),
-        axis=1,
-        keys=["supplied", "accepted"],
-        names=["source", "quantity"],
-    )
     stops_tmp = stops.reset_index()[
         ["request_id", "vehicle_id", "timestamp", "delta_occupancy"]
     ].set_index("request_id")
@@ -129,23 +146,29 @@ def _create_requests_dataframe(
         stops_tmp["delta_occupancy"] == -1
     ]["timestamp"]
 
-    reqs[("supplied", "direct_travel_time")] = space.t(
-        reqs[("supplied", "origin")], reqs[("supplied", "destination")]
-    )
+    if "supplied" in reqs.columns:
+        reqs[("supplied", "direct_travel_time")] = space.t(
+            reqs[("supplied", "origin")], reqs[("supplied", "destination")]
+        )
 
-    reqs[("supplied", "direct_travel_distance")] = space.d(
-        reqs[("supplied", "origin")], reqs[("supplied", "destination")]
-    )
-    reqs[("inferred", "waiting_time")] = (
-        reqs[("serviced", "timestamp_pickup")]
-        - reqs[("supplied", "pickup_timewindow_min")]
-    )
+        reqs[("supplied", "direct_travel_distance")] = space.d(
+            reqs[("supplied", "origin")], reqs[("supplied", "destination")]
+        )
+
+        reqs[("inferred", "waiting_time")] = (
+            reqs[("serviced", "timestamp_pickup")]
+            - reqs[("supplied", "pickup_timewindow_min")]
+        )
+
     reqs[("inferred", "travel_time")] = (
         reqs[("serviced", "timestamp_dropoff")] - reqs[("serviced", "timestamp_pickup")]
     )
-    reqs[("inferred", "relative_travel_time")] = (
-        reqs[("inferred", "travel_time")] / reqs[("supplied", "direct_travel_time")]
-    )
+
+    if "supplied" in reqs.columns:
+        reqs[("inferred", "relative_travel_time")] = (
+            reqs[("inferred", "travel_time")] / reqs[("supplied", "direct_travel_time")]
+        )
+
     reqs.sort_values(["source", "quantity"], axis=1, inplace=True)
     return reqs
 
@@ -182,7 +205,11 @@ def _add_locations_to_stoplist_dataframe(
 
 
 def get_stops_and_requests(
-    *, events, initial_stoplists, transportation_requests, space
+    *,
+    events: List[Event],
+    initial_stoplists: Dict[ID, List[Stop]],
+    space: TransportSpace,
+    transportation_requests: Optional[List[TransportationRequest]] = None,
 ):
     """
     Prepare two dataframes, containing stops and requests.
@@ -194,9 +221,7 @@ def get_stops_and_requests(
     initial_stoplists
         fleet state dictionary containing the initial stoplists indexed by their vehicle IDs
     transportation_requests
-        list of the transportation requests
-        TODO: this should be optional
-        https://github.com/PhysicsOfMobility/theSimulator/issues/53
+        list of the transportation requests, optional
     space
         transportation space that was used for the simulations
 
