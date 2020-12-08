@@ -3,7 +3,6 @@
 from thesimulator.cvehicle_state.cstuff cimport (
     Request as CRequest,
     Stop as CStop,
-    Euclidean2D as CEuclidean2D,
     Stoplist as CStoplist,
 )
 
@@ -12,9 +11,6 @@ cdef extern from * namespace 'cstuff':
         pickup=1
         dropoff=2
         internal=3
-
-cdef class Euclidean2D:
-    cdef CEuclidean2D c_euclidean2d
 
 cdef class Request:
     cdef CRequest c_req

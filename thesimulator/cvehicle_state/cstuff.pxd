@@ -2,9 +2,12 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from libcpp.utility cimport tuple as ctuple
+from thesimulator.util.cspaces.spaces cimport Euclidean2D
 
 cdef extern from "cstuff.cpp":
     pass
+
+
 
 cdef extern from "cstuff.h" namespace 'cstuff':
 
@@ -13,17 +16,6 @@ cdef extern from "cstuff.h" namespace 'cstuff':
         pickup=1
         dropoff=2
         internal=3
-
-    cdef cppclass Euclidean2D:
-        double velocity
-
-        double d(R2loc u, R2loc v)
-        double t(R2loc u, R2loc v)
-        pair[R2loc, double] interp_dist(R2loc u, R2loc v, double dist_to_dest);
-        pair[R2loc, double] interp_time(R2loc u, R2loc v, double time_to_dest);
-
-        Euclidean2D();
-        Euclidean2D(double);
 
     cdef cppclass Request:
         int request_id

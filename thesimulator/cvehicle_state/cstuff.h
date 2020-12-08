@@ -15,7 +15,7 @@
 #include <random>
 #include <chrono> // for benchmarking
 #include <iostream>
-
+#include "../util/cspaces/spaces.h"
 using namespace std;
 
 namespace cstuff {
@@ -26,19 +26,6 @@ namespace cstuff {
         pickup = 0,
         dropoff = 1,
         internal = 2
-    };
-
-    class Euclidean2D {
-    public:
-        double velocity;
-
-        double d(R2loc u, R2loc v) const;
-        double t(R2loc u, R2loc v) const;
-        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const;
-        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const;
-
-        Euclidean2D();
-        Euclidean2D(double);
     };
 
     class Request {

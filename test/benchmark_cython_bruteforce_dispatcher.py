@@ -6,11 +6,12 @@ from time import time
 
 
 from thesimulator.cdata_structures import (
-    Euclidean2D,
     Stop,
     Request,
     StopAction,
 )
+
+from thesimulator.util.cspaces.cspaces import Euclidean2D
 
 from thesimulator.cvehicle_state import VehicleState
 
