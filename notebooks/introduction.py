@@ -89,7 +89,7 @@ initial_stoplists = {
 space = Euclidean1D()
 """transport space to operate on"""
 
-rg = RandomRequestGenerator(rate=10, transport_space=space)
+rg = RandomRequestGenerator(rate=10, space=space)
 """request generator"""
 
 # generate 1000 random requests
