@@ -265,6 +265,8 @@ def test_get_stops_and_requests(initial_stoplists):
         )
     )
 
+    plot_occupancy_hist(stops)
+
 
 @pytest.mark.n_buses(10)
 def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
@@ -289,7 +291,3 @@ def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
 
     assert len(stops) == 2020
     assert len(requests) == 1000
-
-
-def test_plot_occupancy_hist():
-    ...

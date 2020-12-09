@@ -23,7 +23,7 @@ def _create_events_dataframe(events: Iterable) -> pd.DataFrame:
 
 
 def _create_stoplist_without_locations_dataframe(
-    *, evs: pd.DataFrame, vehicle_ids
+    *, evs: pd.DataFrame, vehicle_ids, end_time=None
 ) -> pd.DataFrame:
     stops = evs[
         (evs["event_type"] == "PickupEvent") | (evs["event_type"] == "DeliveryEvent")
@@ -45,9 +45,13 @@ def _create_stoplist_without_locations_dataframe(
         columns=["vehicle_id", "timestamp", "delta_occupancy"],
     )
 
-    # NOTE this could/should use the cutoff time, if applicable
-    # https://github.com/PhysicsOfMobility/theSimulator/issues/47
-    end_time = stops["timestamp"].max()
+    last_stop_time = stops["timestamp"].max()
+    if end_time is None:
+        end_time = last_stop_time
+    elif end_time < last_stop_time:
+        raise ValueError(
+            f"supplied end_time must not be smaller than the last stop time {last_stop_time}"
+        )
 
     end_stops = pd.DataFrame(
         np.r_[
@@ -212,6 +216,7 @@ def get_stops_and_requests(
     initial_stoplists: Dict[ID, List[Stop]],
     space: TransportSpace,
     transportation_requests: Optional[List[TransportationRequest]] = None,
+    end_time: Optional[float] = None,
 ):
     """
     Prepare two dataframes, containing stops and requests.
@@ -226,6 +231,13 @@ def get_stops_and_requests(
         list of the transportation requests, optional
     space
         transportation space that was used for the simulations
+    end_time
+        time at which to presume the simulation has ended. currently this must
+        not be smaller than the time at which the last stop was serviced, i.e. all
+        stops and requests that were treated during the simulation are incorporated
+        into the resulting dataframes. In the future there might be an option to discard
+        everything that happened after a certain time, or even to select a specific time
+        interval of the simulations for analytics.
 
     Returns
     -------
@@ -238,7 +250,7 @@ def get_stops_and_requests(
     events_df = _create_events_dataframe(events=events)
 
     stops = _create_stoplist_without_locations_dataframe(
-        evs=events_df, vehicle_ids=vehicle_ids
+        evs=events_df, vehicle_ids=vehicle_ids, end_time=end_time
     )
 
     requests = _create_requests_dataframe(
