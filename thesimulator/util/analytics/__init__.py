@@ -31,7 +31,7 @@ def _create_stoplist_without_locations_dataframe(
 
     stops["delta_occupancy"] = stops.apply(
         lambda t: {"PickupEvent": 1, "DeliveryEvent": -1}[t["event_type"]], axis=1
-    )
+    ).astype("float64")
 
     stops.drop("event_type", axis=1, inplace=True)
 
@@ -98,7 +98,6 @@ def _create_stoplist_without_locations_dataframe(
 
     # check total operational times of all vehicles are identical
     assert len(stops.groupby("vehicle_id")["state_duration"].sum().unique()) == 1
-
     return stops
 
 
@@ -110,7 +109,10 @@ def _create_requests_dataframe(
     transportation_requests: Optional[List[TransportationRequest]] = None,
 ) -> pd.DataFrame:
     reqs_as_accepted = (
-        evs[(evs["event_type"] == "RequestAcceptanceEvent")]
+        evs[
+            (evs["event_type"] == "RequestAcceptanceEvent")
+            | (evs["event_type"] == "RequestRejectionEvent")
+        ]
         .drop(["event_type", "vehicle_id"], axis=1)
         .set_index("request_id")
     )
@@ -176,13 +178,14 @@ def _create_requests_dataframe(
 def _add_locations_to_stoplist_dataframe(
     *, reqs, stops, initial_stoplists, vehicle_ids
 ) -> pd.DataFrame:
+    breakpoint()
     locations = reqs.loc[:, ("accepted", ["origin", "destination"])]
     locations.columns = locations.columns.droplevel(0).rename("delta_occupancy")
     locations = locations.stack().rename("location")
     locations.index.set_levels(
         locations.index.levels[1]
         .astype("category")
-        .rename_categories({"origin": 1, "destination": -1}),
+        .rename_categories({"origin": 1.0, "destination": -1.0}),
         1,
         inplace=True,
     )
@@ -201,6 +204,7 @@ def _add_locations_to_stoplist_dataframe(
             "location"
         ]
     )
+
     return stops
 
 

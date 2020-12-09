@@ -11,6 +11,7 @@ from thesimulator.data_structures import (
     RequestAcceptanceEvent,
     PickupEvent,
     DeliveryEvent,
+    RequestRejectionEvent,
 )
 from thesimulator.fleet_state import SlowSimpleFleetState
 from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
@@ -54,6 +55,16 @@ def test_get_stops_and_requests(initial_stoplists):
             delivery_timewindow_min=0,
             delivery_timewindow_max=np.inf,
         ),
+        TransportationRequest(
+            request_id=3,
+            creation_timestamp=2,
+            origin=0,
+            destination=1,
+            pickup_timewindow_min=0,
+            pickup_timewindow_max=0,
+            delivery_timewindow_min=0,
+            delivery_timewindow_max=0,
+        ),
     ]
     events = [
         RequestAcceptanceEvent(
@@ -86,6 +97,7 @@ def test_get_stops_and_requests(initial_stoplists):
             delivery_timewindow_min=transportation_requests[2].delivery_timewindow_min,
             delivery_timewindow_max=transportation_requests[2].delivery_timewindow_max,
         ),
+        RequestRejectionEvent(request_id=3, timestamp=2),
         PickupEvent(request_id=0, timestamp=0, vehicle_id=0),
         PickupEvent(request_id=1, timestamp=0.1, vehicle_id=0),
         DeliveryEvent(request_id=1, timestamp=0.2, vehicle_id=0),
@@ -205,31 +217,32 @@ def test_get_stops_and_requests(initial_stoplists):
     )
     expected_requests = pd.DataFrame(
         {
-            ("request_id", ""): {0: 0, 1: 1, 2: 2},
-            ("accepted", "delivery_timewindow_max"): {0: inf, 1: inf, 2: inf},
-            ("accepted", "delivery_timewindow_min"): {0: 0.0, 1: 0.0, 2: 0.0},
-            ("accepted", "destination"): {0: 0.3, 1: 0.2, 2: 0.0},
-            ("accepted", "origin"): {0: 0.0, 1: 0.1, 2: 1.0},
-            ("accepted", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf},
-            ("accepted", "pickup_timewindow_min"): {0: 0.0, 1: 0.0, 2: 0.0},
-            ("accepted", "timestamp"): {0: 0.0, 1: 0.0, 2: 0.0},
-            ("inferred", "relative_travel_time"): {0: 1.0, 1: 1.0, 2: 1.0},
-            ("inferred", "travel_time"): {0: 0.3, 1: 0.1, 2: 1.0},
-            ("inferred", "waiting_time"): {0: 0.0, 1: 0.1, 2: 1.0},
-            ("serviced", "timestamp_dropoff"): {0: 0.3, 1: 0.2, 2: 2.0},
-            ("serviced", "timestamp_pickup"): {0: 0.0, 1: 0.1, 2: 1.0},
-            ("serviced", "vehicle_id"): {0: 0.0, 1: 0.0, 2: 1.0},
-            ("supplied", "delivery_timewindow_max"): {0: inf, 1: inf, 2: inf},
-            ("supplied", "delivery_timewindow_min"): {0: 0, 1: 0, 2: 0},
-            ("supplied", "destination"): {0: 0.3, 1: 0.2, 2: 0.0},
-            ("supplied", "direct_travel_distance"): {0: 0.3, 1: 0.1, 2: 1.0},
-            ("supplied", "direct_travel_time"): {0: 0.3, 1: 0.1, 2: 1.0},
-            ("supplied", "origin"): {0: 0.0, 1: 0.1, 2: 1.0},
-            ("supplied", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf},
-            ("supplied", "pickup_timewindow_min"): {0: 0, 1: 0, 2: 0},
-            ("supplied", "timestamp"): {0: 0, 1: 0, 2: 1},
+            ("request_id", ""): {0: 0, 1: 1, 2: 2, 3: 3},
+            ("accepted", "delivery_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: nan},
+            ("accepted", "delivery_timewindow_min"): {0: 0.0, 1: 0.0, 2: 0.0, 3: nan},
+            ("accepted", "destination"): {0: 0.3, 1: 0.2, 2: 0.0, 3: nan},
+            ("accepted", "origin"): {0: 0.0, 1: 0.1, 2: 1.0, 3: nan},
+            ("accepted", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: nan},
+            ("accepted", "pickup_timewindow_min"): {0: 0.0, 1: 0.0, 2: 0.0, 3: nan},
+            ("accepted", "timestamp"): {0: 0.0, 1: 0.0, 2: 0.0, 3: nan},
+            ("inferred", "relative_travel_time"): {0: 1.0, 1: 1.0, 2: 1.0, 3: nan},
+            ("inferred", "travel_time"): {0: 0.3, 1: 0.1, 2: 1.0, 3: nan},
+            ("inferred", "waiting_time"): {0: 0.0, 1: 0.1, 2: 1.0, 3: nan},
+            ("serviced", "timestamp_dropoff"): {0: 0.3, 1: 0.2, 2: 2.0, 3: nan},
+            ("serviced", "timestamp_pickup"): {0: 0.0, 1: 0.1, 2: 1.0, 3: nan},
+            ("serviced", "vehicle_id"): {0: 0.0, 1: 0.0, 2: 1.0, 3: nan},
+            ("supplied", "delivery_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
+            ("supplied", "delivery_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
+            ("supplied", "destination"): {0: 0.3, 1: 0.2, 2: 0.0, 3: 1},
+            ("supplied", "direct_travel_distance"): {0: 0.3, 1: 0.1, 2: 1.0, 3: 1.0},
+            ("supplied", "direct_travel_time"): {0: 0.3, 1: 0.1, 2: 1.0, 3: 1.0},
+            ("supplied", "origin"): {0: 0.0, 1: 0.1, 2: 1.0, 3: 0},
+            ("supplied", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
+            ("supplied", "pickup_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
+            ("supplied", "timestamp"): {0: 0, 1: 0, 2: 1, 3: 2},
         }
     )
+    breakpoint()
     assert all(stops.reset_index() == expected_stops)
     assert all(requests.reset_index() == expected_requests)
 
