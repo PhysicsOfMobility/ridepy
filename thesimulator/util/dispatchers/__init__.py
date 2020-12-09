@@ -8,6 +8,7 @@ from thesimulator.data_structures import (
     TransportSpace,
     Stop,
     StopAction,
+    SingleVehicleSolution,
 )
 from thesimulator.util.dispatchers.helper_functions import (
     cpat_of_inserted_stop,
@@ -86,7 +87,7 @@ def brute_force_distance_minimizing_dispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
-) -> Tuple[float, Stoplist, Tuple[float, float, float, float]]:
+) -> SingleVehicleSolution:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by minimizing the total driving distance.
@@ -205,21 +206,24 @@ def brute_force_distance_minimizing_dispatcher(
                     best_insertion = i, j
                     min_cost = total_cost
 
-    best_pickup_idx, best_dropoff_idx = best_insertion
+    if min_cost < np.inf:
+        best_pickup_idx, best_dropoff_idx = best_insertion
 
-    new_stoplist = insert_request_to_stoplist_drive_first(
-        stoplist=stoplist,
-        request=request,
-        pickup_idx=best_pickup_idx,
-        dropoff_idx=best_dropoff_idx,
-        space=space,
-    )
-    EAST_pu, LAST_pu = (
-        new_stoplist[best_pickup_idx + 1].time_window_min,
-        new_stoplist[best_pickup_idx + 1].time_window_max,
-    )
-    EAST_do, LAST_do = (
-        new_stoplist[best_dropoff_idx + 2].time_window_min,
-        new_stoplist[best_dropoff_idx + 2].time_window_max,
-    )
-    return min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+        new_stoplist = insert_request_to_stoplist_drive_first(
+            stoplist=stoplist,
+            request=request,
+            pickup_idx=best_pickup_idx,
+            dropoff_idx=best_dropoff_idx,
+            space=space,
+        )
+        EAST_pu, LAST_pu = (
+            new_stoplist[best_pickup_idx + 1].time_window_min,
+            new_stoplist[best_pickup_idx + 1].time_window_max,
+        )
+        EAST_do, LAST_do = (
+            new_stoplist[best_dropoff_idx + 2].time_window_min,
+            new_stoplist[best_dropoff_idx + 2].time_window_max,
+        )
+        return min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+    else:
+        return min_cost, None, (np.nan, np.nan, np.nan, np.nan)

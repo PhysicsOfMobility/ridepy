@@ -20,6 +20,7 @@ from thesimulator.data_structures import (
 )
 from thesimulator.util.dispatchers import (
     taxicab_dispatcher_drive_first,
+    brute_force_distance_minimizing_dispatcher,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
@@ -74,6 +75,28 @@ def test_events_sorted(initial_stoplists):
         map(lambda ev: dict(ev.__dict__, event_type=ev.__class__.__name__), events)
     )
     assert all(evs.sort_values("timestamp").index == evs.index), "events not sorted"
+
+
+@pytest.mark.n_buses(50)
+@pytest.mark.initial_location((0, 0))
+def test_brute_force_dispatcher_2d(initial_stoplists):
+    # failing as of 2011301826,
+    # see https://github.com/PhysicsOfMobility/theSimulator/issues/39
+    space = Euclidean2D()
+    rg = RandomRequestGenerator(
+        rate=10,
+        transport_space=space,
+        pickup_timewindow_start=0,
+        pickup_timewindow_size=20,
+    )
+    transportation_requests = list(it.islice(rg, 1000))
+    fs = SlowSimpleFleetState(
+        initial_stoplists=initial_stoplists,
+        space=space,
+        #         dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=brute_force_distance_minimizing_dispatcher,
+    )
+    events = list(fs.simulate(transportation_requests))
 
 
 @pytest.mark.n_buses(10)
