@@ -5,6 +5,7 @@ from typing import List, Tuple, Union, Any, Iterator
 import numpy as np
 import operator as op
 import math as m
+import pandas as pd
 import networkx as nx
 import itertools as it
 from scipy.spatial import distance as spd
@@ -186,7 +187,10 @@ class Graph(TransportSpace):
         )
 
     def d(self, u, v):
-        return self._distances[u][v]
+        if isinstance(u, pd.Series) and isinstance(v, pd.Series):
+            return pd.DataFrame((u, v)).apply(lambda r: self._distances[r[0]][r[1]])
+        else:
+            return self._distances[u][v]
 
     def t(self, u, v) -> Union[int, float]:
         return self.d(u, v) / self.velocity

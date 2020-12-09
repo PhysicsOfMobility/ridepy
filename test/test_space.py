@@ -6,6 +6,7 @@ from hypothesis import given
 import hypothesis.strategies as st
 
 np.random.seed(0)
+import pandas as pd
 
 from thesimulator.util.spaces import (
     Euclidean,
@@ -78,6 +79,12 @@ def test_cyclic_graph():
     assert space.d(0, 2) == 2
     assert space.d(0, 3) == 1
     assert space.d(0, 4) == np.inf
+
+    x = pd.Series(np.r_[0:0:5j].astype("i8"))
+    y = pd.Series(np.r_[0:4:5j].astype("i8"))
+    d = space.d(x, y)
+
+    assert d.equals(pd.Series([0, 1, 2, 1, np.inf]))
 
 
 def test_CyEuclidean2D():
