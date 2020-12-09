@@ -242,7 +242,7 @@ def test_get_stops_and_requests(initial_stoplists):
             ("supplied", "timestamp"): {0: 0, 1: 0, 2: 1, 3: 2},
         }
     )
-    breakpoint()
+
     assert all(stops.reset_index() == expected_stops)
     assert all(requests.reset_index() == expected_requests)
 

@@ -31,7 +31,7 @@ def _create_stoplist_without_locations_dataframe(
 
     stops["delta_occupancy"] = stops.apply(
         lambda t: {"PickupEvent": 1, "DeliveryEvent": -1}[t["event_type"]], axis=1
-    ).astype("float64")
+    ).astype("f8")
 
     stops.drop("event_type", axis=1, inplace=True)
 
@@ -178,14 +178,12 @@ def _create_requests_dataframe(
 def _add_locations_to_stoplist_dataframe(
     *, reqs, stops, initial_stoplists, vehicle_ids
 ) -> pd.DataFrame:
-    breakpoint()
     locations = reqs.loc[:, ("accepted", ["origin", "destination"])]
     locations.columns = locations.columns.droplevel(0).rename("delta_occupancy")
     locations = locations.stack().rename("location")
+
     locations.index.set_levels(
-        locations.index.levels[1]
-        .astype("category")
-        .rename_categories({"origin": 1.0, "destination": -1.0}),
+        locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
         1,
         inplace=True,
     )
