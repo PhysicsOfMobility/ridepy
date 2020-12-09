@@ -193,7 +193,10 @@ class Graph(TransportSpace):
 
     @smartVectorize
     def d(self, u, v):
-        return self._distances[u][v]
+        if isinstance(u, pd.Series) and isinstance(v, pd.Series):
+            return pd.DataFrame((u, v)).apply(lambda r: self._distances[r[0]][r[1]])
+        else:
+            return self._distances[u][v]
 
     def t(self, u, v) -> Union[int, float]:
         return self.d(u, v) / self.velocity
