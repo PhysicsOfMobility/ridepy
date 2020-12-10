@@ -1,1 +1,1 @@
-from thesimulator.cvehicle_state.cvehicle_state import VehicleState
+from .vehicle_state import VehicleState

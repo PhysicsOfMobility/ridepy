@@ -1,5 +1,5 @@
 # distutils: language = c++
-from .spaces cimport(
+from .cspaces cimport(
     R2loc,
 )
 cdef class Euclidean2D:

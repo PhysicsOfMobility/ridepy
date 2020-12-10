@@ -2,14 +2,14 @@
 
 
 from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
-from thesimulator.cdata_structures cimport (
+from thesimulator.cdata_structures.data_structures cimport (
     Request,
     Stop,
     StopAction,
     Stoplist,
 )
 
-from thesimulator.util.cspaces.cspaces cimport Euclidean2D
+from thesimulator.util.cspaces.spaces cimport Euclidean2D
 
 from thesimulator.cvehicle_state.cstuff cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,

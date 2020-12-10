@@ -11,7 +11,7 @@ from thesimulator.cdata_structures import (
     StopAction,
 )
 
-from thesimulator.util.cspaces.cspaces import Euclidean2D
+from thesimulator.util.cspaces import Euclidean2D
 
 from thesimulator.cvehicle_state import VehicleState
 

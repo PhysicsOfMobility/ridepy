@@ -15,7 +15,7 @@
 #include <random>
 #include <chrono> // for benchmarking
 #include <iostream>
-#include "../util/cspaces/spaces.h"
+#include "../util/cspaces/cspaces.h"
 using namespace std;
 
 namespace cstuff {

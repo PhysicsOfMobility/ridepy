@@ -2,7 +2,7 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from libcpp.utility cimport tuple as ctuple
-from thesimulator.util.cspaces.spaces cimport Euclidean2D
+from thesimulator.util.cspaces.cspaces cimport Euclidean2D
 
 cdef extern from "cstuff.cpp":
     pass
