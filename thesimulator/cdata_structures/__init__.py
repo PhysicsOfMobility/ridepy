@@ -1,1 +1,1 @@
-from .data_structures import Request, Stop, Stoplist, StopAction
+from .data_structures import TransportationRequest, Stop, Stoplist, StopAction

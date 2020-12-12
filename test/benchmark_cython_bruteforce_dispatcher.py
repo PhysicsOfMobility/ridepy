@@ -7,7 +7,7 @@ from time import time
 
 from thesimulator.cdata_structures import (
     Stop,
-    Request,
+    TransportationRequest,
     StopAction,
 )
 
@@ -44,7 +44,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
     vs = VehicleState(vehicle_id=12, initial_stoplist=stoplist)
-    request = Request(
+    request = TransportationRequest(
         request_id=100,
         creation_timestamp=1,
         origin=rnd.uniform(low=0, high=100, size=2),

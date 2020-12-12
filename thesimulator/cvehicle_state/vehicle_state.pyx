@@ -3,7 +3,7 @@
 
 from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
 from thesimulator.cdata_structures.data_structures cimport (
-    Request,
+    TransportationRequest,
     Stop,
     StopAction,
     Stoplist,
@@ -110,7 +110,7 @@ cdef class VehicleState:
         return event_cache
 
     def handle_transportation_request_single_vehicle(
-            self, Request cy_request
+            self, TransportationRequest cy_request
     ) -> SingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could do the following:
@@ -131,4 +131,4 @@ cdef class VehicleState:
             dereference(self.stoplist.c_stoplist_ptr),
             self.space.c_euclidean2d
         )
-        return Stoplist.from_ptr(&res.new_stoplist)
+        return self.vehicle_id, Stoplist.from_ptr(&res.new_stoplist), (res.min_cost, res.EAST_pu, res.LAST_pu, res.EAST_do, res.LAST_do)

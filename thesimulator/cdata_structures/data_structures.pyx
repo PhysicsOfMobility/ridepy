@@ -8,7 +8,7 @@ from thesimulator.cvehicle_state.cstuff cimport (
 )
 from cython.operator cimport dereference
 
-cdef class Request:
+cdef class TransportationRequest:
     def __cinit__(self):
         pass
     def __init__(
@@ -34,8 +34,8 @@ cdef class Request:
         return self.c_req.creation_timestamp
 
     @staticmethod
-    cdef Request from_c(CRequest creq):
-        cdef Request req = Request.__new__(Request)
+    cdef TransportationRequest from_c(CRequest creq):
+        cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
         req.c_req = creq
         return req
 
@@ -45,7 +45,7 @@ cdef class Stop:
         pass
 
     def __init__(
-            self, location, Request request,
+            self, location, TransportationRequest request,
             StopAction action, double estimated_arrival_time,
             double time_window_min,
             double time_window_max,
@@ -55,7 +55,7 @@ cdef class Stop:
             time_window_min, time_window_max)
 
     def __repr__(self):
-        return f'Stop(request={Request.from_c(self.c_stop.request)}, estimated_arrival_time={self.c_stop.estimated_arrival_time})'
+        return f'Stop(request={TransportationRequest.from_c(self.c_stop.request)}, estimated_arrival_time={self.c_stop.estimated_arrival_time})'
 
     @property
     def action(self):
@@ -78,7 +78,7 @@ cdef class Stop:
 
     @property
     def request(self):
-        return Request.from_c(self.c_stop.request)
+        return TransportationRequest.from_c(self.c_stop.request)
 
     @staticmethod
     cdef Stop from_c(CStop cstop):
@@ -128,6 +128,6 @@ cdef class Stoplist:
 def spam():
     cdef CRequest r
     r.request_id = 99
-    cdef Request pyreq = Request.from_c(r)
+    cdef TransportationRequest pyreq = TransportationRequest.from_c(r)
     cdef Stop pystop = Stop((99,23), pyreq, StopAction.pickup, 0, 0,10)
     return pyreq, pystop

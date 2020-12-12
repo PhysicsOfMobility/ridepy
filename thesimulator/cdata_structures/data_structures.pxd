@@ -12,10 +12,10 @@ cdef extern from * namespace 'cstuff':
         dropoff=2
         internal=3
 
-cdef class Request:
+cdef class TransportationRequest:
     cdef CRequest c_req
     @staticmethod
-    cdef Request from_c(CRequest creq)
+    cdef TransportationRequest from_c(CRequest creq)
 
 cdef class Stop:
     cdef CStop c_stop
