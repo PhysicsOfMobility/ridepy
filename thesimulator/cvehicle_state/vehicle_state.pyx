@@ -9,7 +9,7 @@ from thesimulator.cdata_structures.data_structures cimport (
     Stoplist,
 )
 
-from thesimulator.util.cspaces.spaces cimport Euclidean2D
+from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 
 from thesimulator.cvehicle_state.cstuff cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
@@ -30,15 +30,16 @@ cdef class VehicleState:
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist stoplist
-    cdef Euclidean2D space
+#    cdef Euclidean2D space
+    cdef TransportSpace space
     cdef int vehicle_id
     def __init__(
-            self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified at __init__
+            self, *, vehicle_id, initial_stoplist, TransportSpace space): # TODO currently transport_space cannot be specified at __init__
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist)
-        self.space = Euclidean2D(1)
+        self.space = space
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -129,6 +130,6 @@ cdef class VehicleState:
         cdef InsertionResult res = c_disp(
             cy_request.c_req,
             dereference(self.stoplist.c_stoplist_ptr),
-            self.space.c_euclidean2d
+            self.space.c_space
         )
         return self.vehicle_id, Stoplist.from_ptr(&res.new_stoplist), (res.min_cost, res.EAST_pu, res.LAST_pu, res.EAST_do, res.LAST_do)

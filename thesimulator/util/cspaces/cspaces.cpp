@@ -5,8 +5,12 @@ using namespace std;
 
 namespace cstuff{
 
-Euclidean2D::Euclidean2D():velocity{1}{};
-Euclidean2D::Euclidean2D(double velocity):velocity{velocity}{};
+TransportSpace::TransportSpace():velocity{1}{};
+TransportSpace::TransportSpace(double velocity):velocity{velocity}{};
+
+
+Euclidean2D::Euclidean2D():TransportSpace{}{};
+Euclidean2D::Euclidean2D(double velocity):TransportSpace{velocity}{};
 
 double Euclidean2D::d(R2loc u, R2loc v) const
 {
@@ -32,3 +36,5 @@ pair<R2loc, double> Euclidean2D::interp_time(R2loc u, R2loc v, double time_to_de
         R2loc {u.first*frac + (1-frac)*v.first, u.second*frac + (1-frac)*v.second}, 0);
 }
 }
+
+
