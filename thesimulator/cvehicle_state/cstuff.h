@@ -88,7 +88,7 @@ namespace cstuff {
             Stoplist &stoplist,
             Stop &stop,
             int idx,
-            const Euclidean2D &space
+            const TransportSpace &space
     );
 
     Stoplist insert_request_to_stoplist_drive_first(
@@ -96,17 +96,17 @@ namespace cstuff {
             const Request &request,
             int pickup_idx,
             int dropoff_idx,
-            const Euclidean2D &space
+            const TransportSpace &space
     );
 
     double cpat_of_inserted_stop(Stop &stop_before, double distance_from_stop_before);
 
     double distance_to_stop_after_insertion(
-            const Stoplist &stoplist, const R2loc location, int index, const Euclidean2D &space
+            const Stoplist &stoplist, const R2loc location, int index, const TransportSpace &space
     );
 
     double distance_from_current_stop_to_next(
-            const Stoplist &stoplist, int i, const Euclidean2D &space
+            const Stoplist &stoplist, int i, const TransportSpace &space
     );
 
     int is_timewindow_violated_dueto_insertion(
@@ -117,7 +117,7 @@ namespace cstuff {
     brute_force_distance_minimizing_dispatcher(
             const Request &request,
             Stoplist &stoplist,
-            const Euclidean2D &space);
+            const TransportSpace &space);
 
 }
 #endif
