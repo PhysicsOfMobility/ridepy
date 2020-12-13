@@ -19,5 +19,7 @@ cdef class TransportSpace:
         return self.c_space.interp_time(u, v, time_to_dest)
 
 cdef class Euclidean2D(TransportSpace):
+    def __cinit__(self):
+        self.c_space = self.c_space_derived
     def __init__(self, double velocity):
         self.c_space.velocity = velocity

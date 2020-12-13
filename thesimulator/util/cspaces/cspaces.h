@@ -19,16 +19,15 @@
 using namespace std;
 
 namespace cstuff {
-    typedef pair<double, double> R2loc;
 
     class TransportSpace {
     public:
         double velocity;
 
-        virtual double d(R2loc u, R2loc v) const=0;
-        virtual double t(R2loc u, R2loc v) const=0;
-        virtual pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const=0;
-        virtual pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const=0;
+        virtual double d(pair<double, double> u, pair<double, double> v) const=0;
+        virtual double t(pair<double, double> u, pair<double, double> v) const=0;
+        virtual pair<pair<double, double>, double> interp_dist(pair<double, double> u, pair<double, double> v, double dist_to_dest) const=0;
+        virtual pair<pair<double, double>, double> interp_time(pair<double, double> u, pair<double, double> v, double time_to_dest) const=0;
 
         TransportSpace();
         TransportSpace(double);
@@ -37,10 +36,10 @@ namespace cstuff {
 
     class Euclidean2D: public TransportSpace {
     public:
-        double d(R2loc u, R2loc v) const override;
-        double t(R2loc u, R2loc v) const override;
-        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const override;
-        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const override;
+        double d(pair<double, double> u, pair<double, double> v) const override;
+        double t(pair<double, double> u, pair<double, double> v) const override;
+        pair<pair<double, double>, double> interp_dist(pair<double, double> u, pair<double, double> v, double dist_to_dest) const override;
+        pair<pair<double, double>, double> interp_time(pair<double, double> u, pair<double, double> v, double time_to_dest) const override;
 
         Euclidean2D();
         Euclidean2D(double);
