@@ -9,9 +9,9 @@ from thesimulator.cdata_structures.data_structures cimport (
     Stoplist,
 )
 
-from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
+from thesimulator.util.cspaces.spaces cimport Euclidean2D
 
-from thesimulator.util.cdispatchers.dispatchers import (
+from thesimulator.util.cdispatchers.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
 )
 from cython.operator cimport dereference
@@ -29,11 +29,11 @@ cdef class VehicleState:
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist stoplist
-#    cdef Euclidean2D space
-    cdef TransportSpace space
+    cdef Euclidean2D space
+#    cdef TransportSpace space
     cdef int vehicle_id
     def __init__(
-            self, *, vehicle_id, initial_stoplist, TransportSpace space): # TODO currently transport_space cannot be specified at __init__
+            self, *, vehicle_id, initial_stoplist, Euclidean2D space): # TODO currently transport_space cannot be specified at __init__
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
@@ -111,7 +111,7 @@ cdef class VehicleState:
 
     def handle_transportation_request_single_vehicle(
             self, TransportationRequest cy_request
-    ) -> SingleVehicleSolution:
+    ):
         """
         The computational bottleneck. An efficient simulator could do the following:
         1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
@@ -126,8 +126,7 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        return c_disp(
-            cy_request.c_req,
-            dereference(self.stoplist.c_stoplist_ptr),
-            self.space.c_space
-        )
+        return self.vehicle_id, c_disp(
+            cy_request,
+            self.stoplist,
+            self.space)
