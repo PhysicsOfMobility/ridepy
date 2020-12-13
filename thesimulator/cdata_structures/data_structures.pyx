@@ -1,11 +1,12 @@
 # distutils: language = c++
 
-from thesimulator.cvehicle_state.cstuff cimport (
+from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
     Stop as CStop,
     R2loc,
     Stoplist as CStoplist,
 )
+
 from cython.operator cimport dereference
 
 cdef class TransportationRequest:

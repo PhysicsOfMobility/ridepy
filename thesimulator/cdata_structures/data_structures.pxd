@@ -1,10 +1,14 @@
 # distutils: language = c++
 
-from thesimulator.cvehicle_state.cstuff cimport (
+from libcpp.vector cimport vector
+
+
+from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
     Stop as CStop,
     Stoplist as CStoplist,
 )
+
 
 cdef extern from * namespace 'cstuff':
     cpdef enum class StopAction(int):
