@@ -10,4 +10,4 @@ cdef class TransportSpace:
     cdef CTransportSpace c_space
 
 cdef class Euclidean2D(TransportSpace):
-    cdef CEuclidean2D c_space
+    cdef CEuclidean2D c_space_derived
