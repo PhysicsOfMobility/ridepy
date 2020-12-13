@@ -4,16 +4,18 @@ from numpy import inf
 from functools import reduce
 from time import time
 
+from thesimulator.cdata_structures import Stoplist as cyStoplist
 
-from thesimulator import cdata_structures as cds
+from thesimulator import cdata_structures as cyds
 from thesimulator import data_structures as pyds
 from thesimulator.util import spaces as pyspaces
-
-from thesimulator import cvehicle_state as cvs
-from thesimulator import vehicle_state as pyvs
+from thesimulator.util.cspaces import spaces as cyspaces
 
 
-from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
+from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher \
+    as py_brute_force_distance_minimizing_dispatcher
+from thesimulator.util.cdispatchers import brute_force_distance_minimizing_dispatcher \
+    as cy_brute_force_distance_minimizing_dispatcher
 
 def stoplist_from_properties(stoplist_properties, data_structure_module):
     return [
@@ -65,13 +67,13 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
-    pythonic_solution = brute_force_distance_minimizing_dispatcher(request, stoplist, pyspaces.Euclidean2D())
+    pythonic_solution = py_brute_force_distance_minimizing_dispatcher(request, stoplist, pyspaces.Euclidean2D())
     py_min_cost, _, py_timewindows = pythonic_solution
     tock = time()
     print(f"Computing insertion into {len_stoplist}-element stoplist with pure pythonic dispatcher took: {tock - tick} seconds")
 
     # then call the cythonic dispatcher
-    request = cds.TransportationRequest(
+    request = cyds.TransportationRequest(
         request_id=100,
         creation_timestamp=1,
         origin=origin,
@@ -82,13 +84,13 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
         delivery_timewindow_max=inf,
     )
 
-    stoplist = stoplist_from_properties(stoplist_properties, data_structure_module=cds)
-    vstate = cvs.VehicleState(vehicle_id=12, initial_stoplist=stoplist)
+    # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_distance_minimizing_dispatcher
+    stoplist = cyStoplist(stoplist_from_properties(stoplist_properties, data_structure_module=cyds))
 
     tick = time()
-    # vehicle_id, (min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do))
-    cythonic_solution = vstate.handle_transportation_request_single_vehicle(request)
-    _, (cy_min_cost, _, cy_timewindows) = cythonic_solution
+    # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
+    cythonic_solution = cy_brute_force_distance_minimizing_dispatcher(request, stoplist, cyspaces.Euclidean2D(1))
+    cy_min_cost, _, cy_timewindows = cythonic_solution
     tock = time()
     print(f"Computing insertion into {len_stoplist}-element stoplist with cythonic dispatcher took: {tock-tick} seconds")
 

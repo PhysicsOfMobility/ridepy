@@ -1,0 +1,1 @@
+from .dispatchers import brute_force_distance_minimizing_dispatcher

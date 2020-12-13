@@ -9,6 +9,8 @@ from thesimulator.cdata_structures.cdata_structures cimport (
     Stoplist as CStoplist,
 )
 
+cdef extern from "cdata_structures.cpp":
+    pass
 
 cdef extern from * namespace 'cstuff':
     cpdef enum class StopAction(int):

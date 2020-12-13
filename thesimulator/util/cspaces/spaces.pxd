@@ -2,12 +2,10 @@
 
 from .cspaces cimport (
 Euclidean2D as CEuclidean2D,
+R2loc,
 TransportSpace as CTransportSpace
 )
 
 
-cdef class TransportSpace:
-    cdef CTransportSpace c_space
-
-cdef class Euclidean2D(TransportSpace):
-    cdef CEuclidean2D c_space_derived
+cdef class Euclidean2D:
+    cdef CEuclidean2D c_space

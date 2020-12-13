@@ -20,6 +20,7 @@ using namespace std;
 
 namespace cstuff {
 
+    typedef pair<double, double> R2loc;
     class TransportSpace {
     public:
         double velocity;

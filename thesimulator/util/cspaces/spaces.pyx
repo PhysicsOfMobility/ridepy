@@ -3,7 +3,8 @@ from .cspaces cimport(
     R2loc,
 )
 
-cdef class TransportSpace:
+
+cdef class Euclidean2D:
     def __init__(self, double velocity):
         self.c_space.velocity = velocity
     def d(self, R2loc u, R2loc v):
@@ -17,9 +18,3 @@ cdef class TransportSpace:
 
     def interp_time(self, R2loc u, R2loc v, double time_to_dest):
         return self.c_space.interp_time(u, v, time_to_dest)
-
-cdef class Euclidean2D(TransportSpace):
-    def __cinit__(self):
-        self.c_space = self.c_space_derived
-    def __init__(self, double velocity):
-        self.c_space.velocity = velocity
