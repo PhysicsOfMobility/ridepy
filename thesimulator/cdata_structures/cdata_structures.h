@@ -8,10 +8,7 @@
 #include <utility> // for pair
 #include <tuple>
 #include <vector>
-#include <algorithm>  // for max()
 #include <cmath>
-#include <random>
-#include <chrono> // for benchmarking
 #include <iostream>
 #include "../util/cspaces/cspaces.h"
 

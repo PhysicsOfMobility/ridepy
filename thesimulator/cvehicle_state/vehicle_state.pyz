@@ -11,9 +11,8 @@ from thesimulator.cdata_structures.data_structures cimport (
 
 from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 
-from thesimulator.cvehicle_state.cstuff cimport (
+from thesimulator.util.cdispatchers.dispatchers import (
     brute_force_distance_minimizing_dispatcher as c_disp,
-    InsertionResult,
 )
 from cython.operator cimport dereference
 from typing import List
@@ -127,10 +126,8 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        cdef InsertionResult res = c_disp(
+        return c_disp(
             cy_request.c_req,
             dereference(self.stoplist.c_stoplist_ptr),
             self.space.c_space
         )
-        return self.vehicle_id, (res.min_cost, Stoplist.from_ptr(&res.new_stoplist), (res.EAST_pu, res.LAST_pu,
-                                                                                      res.EAST_do, res.LAST_do))
