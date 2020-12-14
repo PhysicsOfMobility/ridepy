@@ -14,7 +14,7 @@ from thesimulator.util.cdispatchers.cdispatchers cimport \
 #cdef extern from "cstuff.cpp":
 #    pass
 
-# This cpdef is crucial, otherwise we can't use this frunction from both python  and cython
+# This cpdef is crucial, otherwise we can't use this function from both python  and cython
 cpdef brute_force_distance_minimizing_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
                                                Euclidean2D space):
     cdef InsertionResult res = c_brute_force_distance_minimizing_dispatcher(
