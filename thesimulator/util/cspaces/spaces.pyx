@@ -6,12 +6,26 @@ from .cspaces cimport(
 )
 from cython.operator cimport dereference
 
+"""
+Note: We are duplicating the c++ class hierarchy in ./cspaces.h. In short, our c++ transport spaces
+all inherit from the abstract base class TransportSpace. Here, we will create a cdef class also called
+TransportSpace and other cdef classes will inherit from that. There are a few caveats, which were described
+in great length at https://stackoverflow.com/a/28727488. Basically:
+
+1. Virtual functions that are later overridden in a child class **must be declared only for the base class**.
+   That is, we must *not* declare Euclidean2D.d/t/... here, only in TransportSpace.
+   Doing so will result in an *ambiguous overridden function* error from cython.
+2. When allocating/deallocating c pointers in __cinit__/__dealloc__ of a cdef class ClassLaterSubclassedFrom 
+   that has been subclassed, a check like `if type(self) == ClassLaterSubclassedFrom` must be used. Otherwise
+   double free occurs. 
+"""
+
 cdef class TransportSpace:
     def __cinit__(self, double velocity=1):
-        print(f"Allocating base class pointer")
-        self.c_space_ptr = new  CTransportSpace(velocity)
+        if type(self) is TransportSpace:
+            self.c_space_ptr = NULL
     def __dealloc__(self):
-        if self.c_space_ptr:
+        if type(self) is TransportSpace:
             del self.c_space_ptr
 
     def d(self, R2loc u, R2loc v):
@@ -26,22 +40,10 @@ cdef class TransportSpace:
     def interp_time(self, R2loc u, R2loc v, double time_to_dest):
         return dereference(self.c_space_ptr).interp_time(u, v, time_to_dest)
 
-cdef class Euclidean2D:
+cdef class Euclidean2D(TransportSpace):
     def __cinit__(self, double velocity=1):
-        #if self.c_space_ptr:
-        #    print(f"Found base class pointer, deleting")
-        #    del self.c_space_ptr
-        print(f"Allocating euclidean class pointer")
-        #self.derived_ptr = self.c_space_ptr = new  CEuclidean2D(velocity)
-        self.derived_ptr = new  CEuclidean2D(velocity)
- #   def __init__(self):
- #       self.c_space_ptr = self.derived_ptr
-    def bla(self):
-        cdef R2loc x = (0,0)
-        cdef R2loc y = (2, 8)
-        return dereference(self.derived_ptr).d(x, y)
+        self.derived_ptr = self.c_space_ptr = new  CEuclidean2D(velocity)
 
     def __dealloc__(self):
-        if self.derived_ptr:
-            del self.derived_ptr
+        del self.derived_ptr
 
