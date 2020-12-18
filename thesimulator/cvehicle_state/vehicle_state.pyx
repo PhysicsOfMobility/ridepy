@@ -9,7 +9,7 @@ from thesimulator.cdata_structures.data_structures cimport (
     Stoplist,
 )
 
-from thesimulator.util.cspaces.spaces cimport Euclidean2D
+from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 
 from thesimulator.util.cdispatchers.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
@@ -33,12 +33,13 @@ cdef class VehicleState:
 #    cdef TransportSpace space
     cdef int vehicle_id
     def __init__(
-            self, *, vehicle_id, initial_stoplist, Euclidean2D space): # TODO currently transport_space cannot be specified at __init__
+            self, *, vehicle_id, initial_stoplist, space): # TODO currently transport_space cannot be specified at __init__
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist)
         self.space = space
+        print("debug distance: ", self.space.d((1,1), (3,7)))
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
