@@ -7,7 +7,27 @@ namespace cstuff{
 
 TransportSpace::TransportSpace():velocity{1}{};
 TransportSpace::TransportSpace(double velocity):velocity{velocity}{};
+double TransportSpace::d(pair<double, double> u, pair<double, double> v) const
+{
+    return 0;
+}
 
+double TransportSpace::t(pair<double, double> u, pair<double, double> v) const
+{
+    return 0;
+}
+
+pair<pair<double, double>, double> TransportSpace::interp_dist(pair<double, double> u, pair<double, double> v, double dist_to_dest) const
+{
+    return make_pair(
+            pair<double, double>{0, 0}, 0);
+}
+
+pair<pair<double, double>, double> TransportSpace::interp_time(pair<double, double> u, pair<double, double> v, double time_to_dest) const
+{
+    return make_pair(
+            pair<double, double>{0, 0}, 0);
+}
 
 Euclidean2D::Euclidean2D():TransportSpace{}{};
 Euclidean2D::Euclidean2D(double velocity):TransportSpace{velocity}{};

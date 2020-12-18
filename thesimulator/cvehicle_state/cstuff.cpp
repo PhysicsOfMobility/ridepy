@@ -9,6 +9,8 @@ int main()
     int n = 1000;
     Euclidean2D space;
 
+    std::cout << "Hello from c++: " << space.d(std::make_pair(0,0), std::make_pair(5,9)) << std::endl;
+
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> distrib(0, 100);
