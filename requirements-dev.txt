@@ -57,3 +57,4 @@ virtualenv==20.0.35; python_full_version >= "3.6.1"
 wcwidth==0.2.5; python_full_version >= "3.6.1" and python_version >= "3.7"
 wmctrl==0.3
 cython>="3.0a6"
+hypothesis>=4.57.1
