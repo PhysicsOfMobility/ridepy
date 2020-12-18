@@ -21,13 +21,10 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
 """
 
 cdef class TransportSpace:
-    def __cinit__(self, double velocity=1):
-        if type(self) is TransportSpace:
-            self.c_space_ptr = NULL
-    def __dealloc__(self):
-        if type(self) is TransportSpace:
-            del self.c_space_ptr
-
+    """
+    We do not need to allocate/free self.c_space_ptr at all since This is a wrapper around the c++ abstract class
+    and will never be instantiated.
+    """
     def d(self, R2loc u, R2loc v):
         return dereference(self.c_space_ptr).d(u, v)
 
