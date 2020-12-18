@@ -38,7 +38,7 @@ cdef class VehicleState:
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist)
         self.space = space
-        print("debug distance: ", self.space.d((1,1), (4,5)))
+        print(f"Created VehicleState with space of type {type(self.space)}")
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
