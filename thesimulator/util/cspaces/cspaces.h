@@ -45,6 +45,17 @@ namespace cstuff {
         Euclidean2D();
         Euclidean2D(double);
     };
+
+    class Manhattan2D: public TransportSpace {
+    public:
+        double d(R2loc u, R2loc v) const override;
+        double t(R2loc u, R2loc v) const override;
+        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const override;
+        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const override;
+
+        Manhattan2D();
+        Manhattan2D(double);
+    };
 }
 
 #endif

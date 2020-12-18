@@ -11,7 +11,7 @@ from thesimulator.cdata_structures import (
     StopAction,
 )
 
-from thesimulator.util.cspaces import Euclidean2D
+from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
 
 from thesimulator.cvehicle_state import VehicleState
 
@@ -30,6 +30,7 @@ def stoplist_from_properties(stoplist_properties):
 
 def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D(1)
+    #space = Manhattan2D(1)
     n = 1000
     rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))

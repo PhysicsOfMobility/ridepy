@@ -29,8 +29,7 @@ cdef class VehicleState:
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist stoplist
-    cdef Euclidean2D space
-#    cdef TransportSpace space
+    cdef TransportSpace space
     cdef int vehicle_id
     def __init__(
             self, *, vehicle_id, initial_stoplist, space): # TODO currently transport_space cannot be specified at __init__
@@ -39,7 +38,7 @@ cdef class VehicleState:
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist)
         self.space = space
-        print("debug distance: ", self.space.d((1,1), (3,7)))
+        print("debug distance: ", self.space.d((1,1), (4,5)))
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
