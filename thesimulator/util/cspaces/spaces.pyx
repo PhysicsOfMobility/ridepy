@@ -44,3 +44,11 @@ cdef class Euclidean2D(TransportSpace):
     def __dealloc__(self):
         del self.derived_ptr
 
+
+cdef class Manhattan2D(TransportSpace):
+    def __cinit__(self, double velocity=1):
+        self.derived_ptr = self.c_space_ptr = new  CManhattan2D(velocity)
+
+    def __dealloc__(self):
+        del self.derived_ptr
+

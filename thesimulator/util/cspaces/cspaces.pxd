@@ -29,3 +29,9 @@ cdef extern from "cspaces.h" namespace 'cstuff':
 
         Euclidean2D();
         Euclidean2D(double);
+
+    cdef cppclass Manhattan2D(TransportSpace):
+        double velocity
+
+        Manhattan2D();
+        Manhattan2D(double);
