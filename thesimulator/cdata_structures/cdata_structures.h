@@ -16,12 +16,13 @@ using namespace std;
 namespace cstuff {
     typedef pair<double, double> R2loc;
 
+    template<typename Loc>
     class Request {
     public:
         int request_id;
         double creation_timestamp;
-        R2loc origin;
-        R2loc destination;
+        Loc origin;
+        Loc destination;
         double pickup_timewindow_min;
         double pickup_timewindow_max;
         double delivery_timewindow_min;
@@ -32,8 +33,8 @@ namespace cstuff {
         Request(
                 int request_id,
                 double creation_timestamp,
-                R2loc origin,
-                R2loc destination,
+                Loc origin,
+                Loc destination,
                 double pickup_timewindow_min,
                 double pickup_timewindow_max,
                 double delivery_timewindow_min,
@@ -47,10 +48,11 @@ namespace cstuff {
         internal = 2
     };
 
+    template<typename Loc>
     class Stop {
     public:
-        R2loc location;
-        Request request;
+        Loc location;
+        Request<Loc> request;
         StopAction action;
         double estimated_arrival_time;
         double time_window_min;
@@ -59,15 +61,15 @@ namespace cstuff {
         Stop();
 
         Stop(
-                R2loc loc, Request req, StopAction action, double estimated_arrival_time,
+                Loc loc, Request<Loc> req, StopAction action, double estimated_arrival_time,
                 double time_window_min, double time_window_max);
 
         double estimated_departure_time();
     };
 
-    typedef vector<Stop> Stoplist;
-
+    template<typename Loc>
     struct InsertionResult {
+        using Stoplist = vector<Stop<Loc>>;
         Stoplist new_stoplist;
         double min_cost;
         double EAST_pu;
@@ -75,6 +77,48 @@ namespace cstuff {
         double EAST_do;
         double LAST_do;
     };
+    //////////////////////////////////////////////////////
+    template<typename Loc>
+    Request<Loc>::Request() = default;
+
+    template<typename Loc>
+    Stop<Loc>::Stop() = default;
+
+    template<typename Loc>
+    Request<Loc>::Request(
+            int request_id,
+            double creation_timestamp,
+            Loc origin,
+            Loc destination,
+            double pickup_timewindow_min,
+            double pickup_timewindow_max,
+            double delivery_timewindow_min,
+            double delivery_timewindow_max
+    ) :
+            request_id{request_id},
+            creation_timestamp{creation_timestamp},
+            origin{origin},
+            destination{destination},
+            pickup_timewindow_min{pickup_timewindow_min},
+            pickup_timewindow_max{pickup_timewindow_max},
+            delivery_timewindow_min{delivery_timewindow_min},
+            delivery_timewindow_max{delivery_timewindow_max} {}
+
+    template<typename Loc>
+    Stop<Loc>::Stop(
+            Loc loc, Request<Loc> req, StopAction action, double estimated_arrival_time,
+            double time_window_min, double time_window_max) :
+            location{loc},
+            request{req},
+            action{action},
+            estimated_arrival_time{estimated_arrival_time},
+            time_window_min{time_window_min},
+            time_window_max{time_window_max} {}
+
+    template<typename Loc>
+    double Stop<Loc>::estimated_departure_time() {
+        return max(estimated_arrival_time, time_window_min);
+    }
 
 }
 

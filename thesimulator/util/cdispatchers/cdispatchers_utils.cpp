@@ -5,9 +5,10 @@
 #include "cdispatchers_utils.h"
 #include "../../cdata_structures/cdata_structures.h"
 namespace cstuff {
-    std::vector<Stop> insert_request_to_stoplist_drive_first(
-            std::vector<Stop> &stoplist,
-            const Request &request,
+    template<typename Loc>
+    std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
+            std::vector<Stop<Loc>> &stoplist,
+            const Request<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
             const TransportSpace &space
@@ -18,13 +19,13 @@ namespace cstuff {
         */
 
         // We don't want to modify stoplist in place. Make a copy.
-        std::vector<Stop> new_stoplist{stoplist}; // TODO: NEED TO copy?
+        std::vector<Stop<Loc>> new_stoplist{stoplist}; // TODO: NEED TO copy?
         // Handle the pickup
         auto &stop_before_pickup = new_stoplist[pickup_idx];
         auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
                 stop_before_pickup.location, request.origin
         );
-        Stop pickup_stop(request.origin, request, StopAction::pickup, cpat_at_pu, request.pickup_timewindow_min,
+        Stop<Loc> pickup_stop(request.origin, request, StopAction::pickup, cpat_at_pu, request.pickup_timewindow_min,
                          request.pickup_timewindow_max);
 
         insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space);
@@ -34,7 +35,7 @@ namespace cstuff {
         auto cpat_at_do = stop_before_dropoff.estimated_departure_time() + space.d(
                 stop_before_dropoff.location, request.destination
         );
-        Stop dropoff_stop(
+        Stop<Loc> dropoff_stop(
                 request.destination,
                 request,
                 StopAction::dropoff,
@@ -45,9 +46,10 @@ namespace cstuff {
         return new_stoplist;
     }
 
+    template<typename Loc>
     void insert_stop_to_stoplist_drive_first(
-            std::vector<Stop> &stoplist,
-            Stop &stop,
+            std::vector<Stop<Loc>> &stoplist,
+            Stop<Loc> &stop,
             int idx,
             const TransportSpace &space
     ) {
@@ -90,7 +92,8 @@ namespace cstuff {
         stoplist.insert(stoplist.begin() + idx + 1, stop);
     }
 
-    double cpat_of_inserted_stop(Stop &stop_before, double distance_from_stop_before) {
+    template<typename Loc>
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double distance_from_stop_before) {
         /*
         Note: Assumes drive first strategy.
         Args:
@@ -103,8 +106,9 @@ namespace cstuff {
         return stop_before.estimated_departure_time() + distance_from_stop_before;
     }
 
+    template<typename Loc>
     double distance_to_stop_after_insertion(
-            const std::vector<Stop> &stoplist, const std::pair<double, double> location, int index,
+            const std::vector<Stop<Loc>> &stoplist, const Loc location, int index,
             const TransportSpace &space
     ) {
         // note that index is *after which* the new stop will be inserted.
@@ -113,15 +117,17 @@ namespace cstuff {
         else return 0;
     }
 
+    template<typename Loc>
     double distance_from_current_stop_to_next(
-            const std::vector<Stop> &stoplist, int i, const TransportSpace &space
+            const std::vector<Stop<Loc>> &stoplist, int i, const TransportSpace &space
     ) {
         if (i < stoplist.size() - 1) return space.d(stoplist[i].location, stoplist[i + 1].location);
         else return 0;
     }
 
+    template<typename Loc>
     int is_timewindow_violated_dueto_insertion(
-            const std::vector<Stop> &stoplist, int idx, double est_arrival_first_stop_after_insertion
+            const std::vector<Stop<Loc>> &stoplist, int idx, double est_arrival_first_stop_after_insertion
     ) {
         /*
         Assumes drive first strategy.

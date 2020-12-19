@@ -4,10 +4,13 @@
 
 using namespace std;
 using namespace cstuff;
+
 int main()
 {
     int n = 1000;
-    Euclidean2D space;
+    typedef pair<double, double> R2loc;
+    //Euclidean2D space;
+    Manhattan2D space;
 
     std::cout << "Hello from c++: " << space.d(std::make_pair(0,0), std::make_pair(5,9)) << std::endl;
 
@@ -15,28 +18,28 @@ int main()
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> distrib(0, 100);
 
-    vector<Stop> stoplist;
+    vector<Stop<R2loc>> stoplist;
     // populate the stoplist
     double arrtime = 0;
     double dist_from_last = 0;
     double dist = 0;
-    Stop stop;
+    Stop<R2loc> stop;
     pair<double, double> a, b;
     for (int i=0; i<n; i++)
     {
         pair<double, double> stop_loc = make_pair(distrib(gen), distrib(gen));
-        if (i>0) dist = space.d(stop_loc, stop.location);
+       if (i>0) dist = space.d(stop_loc, stop.location);
 
         arrtime = arrtime + dist;
-        Request dummy_req {i, 0, make_pair(0,0), make_pair(0,1), 0, INFINITY, 0, INFINITY};
+        Request<R2loc> dummy_req {i, 0, make_pair(0,0), make_pair(0,1), 0, INFINITY, 0, INFINITY};
         stop = {stop_loc, dummy_req, StopAction::internal, arrtime, 0, INFINITY};
 
         stoplist.push_back(stop);
     }
     // create new request
-    pair<double, double> req_origin = make_pair(distrib(gen), distrib(gen));
-    pair<double, double> req_dest = make_pair(distrib(gen), distrib(gen));
-    Request request {42, 1, req_origin, req_dest, 0, INFINITY, 0, INFINITY};
+    R2loc req_origin = make_pair(distrib(gen), distrib(gen));
+    R2loc req_dest = make_pair(distrib(gen), distrib(gen));
+    Request<R2loc> request {42, 1, req_origin, req_dest, 0, INFINITY, 0, INFINITY};
 
     auto start = std::chrono::system_clock::now();
     auto x = brute_force_distance_minimizing_dispatcher(request, stoplist, space);

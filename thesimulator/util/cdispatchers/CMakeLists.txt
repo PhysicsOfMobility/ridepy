@@ -1,1 +1,1 @@
-add_library(dispatchers cdispatchers.cpp cdispatchers.h cdispatchers_utils.h cdispatchers_utils.cpp)
+add_library(dispatchers cdispatchers.h cdispatchers_utils.h)

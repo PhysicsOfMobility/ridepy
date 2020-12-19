@@ -1,9 +1,10 @@
 #include "cdispatchers.h"
 
 namespace cstuff {
-    InsertionResult brute_force_distance_minimizing_dispatcher(
-            const Request &request,
-            vector<Stop> &stoplist,
+    template<typename Loc>
+    InsertionResult<Loc> brute_force_distance_minimizing_dispatcher(
+            const Request<Loc> &request,
+            vector<Stop<Loc>> &stoplist,
             const TransportSpace &space
     ) {
         /*
@@ -135,6 +136,6 @@ namespace cstuff {
 
         auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
         auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
-        return InsertionResult{new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
+        return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
     }
 }
