@@ -4,15 +4,18 @@
 
 #include "cdata_structures.h"
 namespace cstuff {
-    Request::Request() = default;
+    template<typename Loc>
+    Request<Loc>::Request() = default;
 
-    Stop::Stop() = default;
+    template<typename Loc>
+    Stop<Loc>::Stop() = default;
 
-    Request::Request(
+    template<typename Loc>
+    Request<Loc>::Request(
             int request_id,
             double creation_timestamp,
-            pair<double, double> origin,
-            pair<double, double> destination,
+            Loc origin,
+            Loc destination,
             double pickup_timewindow_min,
             double pickup_timewindow_max,
             double delivery_timewindow_min,
@@ -27,8 +30,9 @@ namespace cstuff {
             delivery_timewindow_min{delivery_timewindow_min},
             delivery_timewindow_max{delivery_timewindow_max} {}
 
-    Stop::Stop(
-            R2loc loc, Request req, StopAction action, double estimated_arrival_time,
+    template<typename Loc>
+    Stop<Loc>::Stop(
+            Loc loc, Request<Loc> req, StopAction action, double estimated_arrival_time,
             double time_window_min, double time_window_max) :
             location{loc},
             request{req},
@@ -37,7 +41,8 @@ namespace cstuff {
             time_window_min{time_window_min},
             time_window_max{time_window_max} {}
 
-    double Stop::estimated_departure_time() {
+    template<typename Loc>
+    double Stop<Loc>::estimated_departure_time() {
         return max(estimated_arrival_time, time_window_min);
     }
 }

@@ -10,8 +10,7 @@ add_subdirectory(util)
 
 # add the executable
 add_executable(
-        dispatcher cvehicle_state/cstuff.cpp util/cspaces/cspaces.cpp util/bla.cpp cdata_structures/cdata_structures.cpp
-        util/cdispatchers/cdispatchers.cpp util/cdispatchers/cdispatchers_utils.cpp)
+        dispatcher cvehicle_state/cstuff.cpp util/cspaces/cspaces.cpp)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)

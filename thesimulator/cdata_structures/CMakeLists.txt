@@ -1,1 +1,1 @@
-add_library(data_structures cdata_structures.cpp cdata_structures.h)
+add_library(data_structures cdata_structures.h)
