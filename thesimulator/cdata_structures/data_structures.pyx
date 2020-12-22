@@ -1,28 +1,18 @@
 # distutils: language = c++
 
+from libcpp.vector cimport vector
 from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
     Stop as CStop,
     R2loc,
-    Stoplist as CStoplist,
 )
 
 from cython.operator cimport dereference
 
-cdef class TransportationRequest:
-    def __cinit__(self):
-        pass
-    def __init__(
-            self, int request_id, float creation_timestamp,
-            origin, destination, pickup_timewindow_min, pickup_timewindow_max,
-            delivery_timewindow_min, delivery_timewindow_max
-    ):
-        self.c_req = CRequest(
-            request_id, creation_timestamp, origin, destination,
-            pickup_timewindow_min, pickup_timewindow_max,
-            delivery_timewindow_min, delivery_timewindow_max
-        )
 
+
+
+cdef class TransportationRequestBase:
     def __repr__(self):
        return f'Request(request_id={self.c_req.request_id},creation_timestamp={self.c_req.creation_timestamp})'
 
@@ -34,29 +24,28 @@ cdef class TransportationRequest:
     def creation_timestamp(self):
         return self.c_req.creation_timestamp
 
+cdef class TransportationRequestR2loc(TransportationRequestBase):
+    def __init__(
+            self, int request_id, float creation_timestamp,
+            origin, destination, pickup_timewindow_min, pickup_timewindow_max,
+            delivery_timewindow_min, delivery_timewindow_max
+    ):
+        self.c_req = CRequest[R2loc](
+            request_id, creation_timestamp, origin, destination,
+            pickup_timewindow_min, pickup_timewindow_max,
+            delivery_timewindow_min, delivery_timewindow_max
+        )
+
     @staticmethod
-    cdef TransportationRequest from_c(CRequest creq):
-        cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
+    cdef TransportationRequestR2loc from_c(CRequest[R2loc] creq):
+        cdef TransportationRequestR2loc req = TransportationRequestR2loc.__new__(TransportationRequestR2loc)
         req.c_req = creq
         return req
 
 
-cdef class Stop:
-    def __cinit__(self):
-        pass
-
-    def __init__(
-            self, location, TransportationRequest request,
-            StopAction action, double estimated_arrival_time,
-            double time_window_min,
-            double time_window_max,
-    ):
-        self.c_stop = CStop(
-            location, request.c_req, action, estimated_arrival_time,
-            time_window_min, time_window_max)
-
+cdef class StopBase:
     def __repr__(self):
-        return f'Stop(request={TransportationRequest.from_c(self.c_stop.request)}, estimated_arrival_time={self.c_stop.estimated_arrival_time})'
+        return f'Stop(request={self.request}, estimated_arrival_time={self.c_stop.estimated_arrival_time})'
 
     @property
     def action(self):
@@ -79,30 +68,32 @@ cdef class Stop:
 
     @property
     def request(self):
-        return TransportationRequest.from_c(self.c_stop.request)
+        return self.transportation_request_class.from_c(self.c_stop.request)
+
+
+
+cdef class StopR2loc(StopBase):
+    def __init__(
+            self, location, TransportationRequestR2loc request,
+            StopAction action, double estimated_arrival_time,
+            double time_window_min,
+            double time_window_max,
+    ):
+        self.transportation_request_class = TransportationRequestR2loc
+        self.c_stop = CStop[R2loc](
+            location, request.c_req, action, estimated_arrival_time,
+            time_window_min, time_window_max)
 
     @staticmethod
-    cdef Stop from_c(CStop cstop):
-        cdef Stop stop = Stop.__new__(Stop)
+    cdef StopR2loc from_c(CStop[R2loc] cstop):
+        cdef StopR2loc stop = StopR2loc.__new__(StopR2loc)
         stop.c_stop = cstop
         return stop
 
-
-
-cdef class Stoplist:
-    def __cinit__(self):
-        self.ptr_owner=True
-        self.c_stoplist_ptr = new CStoplist(0)
-
-    def __init__(self, python_stoplist):
-
-        cdef Stop s
-        for py_s in python_stoplist:
-            s = py_s
-            dereference(self.c_stoplist_ptr).push_back(s.c_stop)
+cdef class StoplistBase:
 
     def __getitem__(self, i):
-        return Stop.from_c(dereference(self.c_stoplist_ptr)[i])
+        return self.stop_class.from_c(dereference(self.c_stoplist_ptr)[i])
 
     def __len__(self):
         return dereference(self.c_stoplist_ptr).size()
@@ -112,9 +103,24 @@ cdef class Stoplist:
             dereference(self.c_stoplist_ptr).begin()+n
         )
 
+
+
+
+cdef class StoplistR2loc(StoplistBase):
+    def __cinit__(self):
+        self.ptr_owner=True
+        self.c_stoplist_ptr = new vector[CStop[R2loc]](0)
+
+    def __init__(self, python_stoplist):
+        self.stop_class = StopR2loc
+        cdef StopR2loc s
+        for py_s in python_stoplist:
+            s = py_s
+            dereference(self.c_stoplist_ptr).push_back(s.c_stop)
+
     @staticmethod
-    cdef Stoplist from_ptr(CStoplist *cstoplist_ptr):
-        cdef Stoplist stoplist = Stoplist.__new__(Stoplist)
+    cdef StoplistR2loc from_ptr(vector[CStop[R2loc]] *cstoplist_ptr):
+        cdef StoplistR2loc stoplist = StoplistR2loc.__new__(StoplistR2loc)
         stoplist.c_stoplist_ptr = cstoplist_ptr
         stoplist.ptr_owner = False
         return stoplist
@@ -125,10 +131,9 @@ cdef class Stoplist:
             del self.c_stoplist_ptr
 
 
-
 def spam():
     cdef CRequest r
     r.request_id = 99
-    cdef TransportationRequest pyreq = TransportationRequest.from_c(r)
-    cdef Stop pystop = Stop((99,23), pyreq, StopAction.pickup, 0, 0,10)
+    cdef TransportationRequestR2loc pyreq = TransportationRequestR2loc.from_c(r)
+    cdef StopR2loc pystop = StopR2loc((99,23), pyreq, StopAction.pickup, 0, 0,10)
     return pyreq, pystop

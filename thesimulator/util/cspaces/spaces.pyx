@@ -25,6 +25,7 @@ cdef class TransportSpace:
     We do not need to allocate/free self.c_space_ptr at all since This is a wrapper around the c++ abstract class
     and will never be instantiated.
     """
+    # TODO: Need to template away to eliminate hard requirement that locations are R2loc.
     def d(self, R2loc u, R2loc v):
         return dereference(self.c_space_ptr).d(u, v)
 
