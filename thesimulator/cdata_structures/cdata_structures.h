@@ -70,12 +70,12 @@ namespace cstuff {
     template<typename Loc>
     struct InsertionResult {
         using Stoplist = vector<Stop<Loc>>;
-        Stoplist new_stoplist;
-        double min_cost;
-        double EAST_pu;
-        double LAST_pu;
-        double EAST_do;
-        double LAST_do;
+        Stoplist new_stoplist=vector<Stop<Loc>>(0) ;
+        double min_cost=0;
+        double EAST_pu=0;
+        double LAST_pu=0;
+        double EAST_do=0;
+        double LAST_do=0;
     };
     //////////////////////////////////////////////////////
     template<typename Loc>
