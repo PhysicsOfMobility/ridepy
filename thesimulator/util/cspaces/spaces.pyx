@@ -26,6 +26,8 @@ cdef class TransportSpace:
     and will never be instantiated.
     """
     # TODO: Need to template away to eliminate hard requirement that locations are R2loc.
+    # However, does anything need to be done at all apart from removing all the type declarations from the
+    # method arguments?
     def d(self, R2loc u, R2loc v):
         return dereference(self.c_space_ptr).d(u, v)
 
