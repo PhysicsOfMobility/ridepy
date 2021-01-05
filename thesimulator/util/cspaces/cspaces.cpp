@@ -5,9 +5,6 @@ using namespace std;
 
 namespace cstuff{
 
-TransportSpace::TransportSpace():velocity{1}{};
-TransportSpace::TransportSpace(double velocity):velocity{velocity}{};
-
 
 Euclidean2D::Euclidean2D():TransportSpace{}{};
 Euclidean2D::Euclidean2D(double velocity):TransportSpace{velocity}{};

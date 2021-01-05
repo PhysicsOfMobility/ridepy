@@ -15,7 +15,7 @@ namespace cstuff {
     InsertionResult<Loc> brute_force_distance_minimizing_dispatcher(
             const Request<Loc> &request,
             vector<Stop<Loc>> &stoplist,
-            const TransportSpace &space
+            const TransportSpace<Loc> &space
     ) {
         /*
         Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
