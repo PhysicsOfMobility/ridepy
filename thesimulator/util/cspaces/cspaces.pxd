@@ -14,24 +14,31 @@ Doing so will result in an *ambiguous overridden function* error from cython.
 cdef extern from "cspaces.h" namespace 'cstuff':
 
     ctypedef pair[double, double] R2loc
-    cdef cppclass TransportSpace:
+    cdef cppclass TransportSpace[Loc]:
         double velocity
         TransportSpace();
         TransportSpace(double);
-        double d(R2loc u, R2loc v)
-        double t(R2loc u, R2loc v)
-        pair[R2loc, double] interp_dist(R2loc u, R2loc v, double dist_to_dest);
-        pair[R2loc, double] interp_time(R2loc u, R2loc v, double time_to_dest);
+        double d(Loc u, Loc v)
+        double t(Loc u, Loc v)
+        pair[Loc, double] interp_dist(Loc u, Loc v, double dist_to_dest);
+        pair[Loc, double] interp_time(Loc u, Loc v, double time_to_dest);
 
+    ctypedef TransportSpace[R2loc] TransportSpaceR2loc
+    ctypedef TransportSpace[int] TransportSpaceInt
 
-    cdef cppclass Euclidean2D(TransportSpace):
+    cdef cppclass Euclidean2D(TransportSpace[R2loc]):
         double velocity
 
         Euclidean2D();
         Euclidean2D(double);
 
-    cdef cppclass Manhattan2D(TransportSpace):
+    cdef cppclass Manhattan2D(TransportSpace[R2loc]):
         double velocity
 
         Manhattan2D();
         Manhattan2D(double);
+
+    #cdef cppclass TransportSpaceR2loc:
+    #    pass
+    #cdef cppclass TransportSpaceInt:
+    #    pass
