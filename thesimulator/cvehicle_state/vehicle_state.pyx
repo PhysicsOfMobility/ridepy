@@ -14,7 +14,6 @@ from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 from thesimulator.util.cdispatchers.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
 )
-from cython.operator cimport dereference
 from typing import List
 
 
@@ -34,11 +33,11 @@ cdef class VehicleState:
     cdef TransportSpace space
     cdef int vehicle_id
     def __init__(
-            self, *, vehicle_id, initial_stoplist, space): # TODO currently transport_space cannot be specified at __init__
+            self, *, vehicle_id, initial_stoplist, space, loc_type):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
-        self.stoplist = Stoplist(initial_stoplist)
+        self.stoplist = Stoplist(initial_stoplist, loc_type)
         self.space = space
         print(f"Created VehicleState with space of type {type(self.space)}")
 

@@ -69,9 +69,9 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
 
 cdef class TransportSpace:
     def __init__(self, loc_type):
-        if loc_type == 'int':
+        if loc_type == LocType.INT:
             self.loc_type = LocType.INT
-        elif loc_type == 'r2loc':
+        elif loc_type == LocType.R2LOC:
             self.loc_type = LocType.R2LOC
         else:
             raise ValueError("This line should never have been reached")
@@ -116,6 +116,9 @@ cdef class Euclidean2D(TransportSpace):
         self.loc_type == LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
+    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+        TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+
     def __dealloc__(self):
         del self.derived_ptr
 
@@ -125,6 +128,8 @@ cdef class Manhattan2D(TransportSpace):
         self.loc_type == LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
 
+    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+        TransportSpace.__init__(self, loc_type=LocType.R2LOC)
     def __dealloc__(self):
         del self.derived_ptr
 

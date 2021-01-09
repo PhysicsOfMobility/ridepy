@@ -8,16 +8,11 @@ from .cspaces cimport (
 
 from thesimulator.cdata_structures.data_structures cimport LocType, R2loc
 
-#cdef class TransportSpace:
-#    cdef CTransportSpace *c_space_ptr
-
 cdef union USpace:
     CTransportSpace[R2loc] *space_r2loc_ptr
     CTransportSpace[int] *space_int_ptr
 
 
-#cdef class TransportSpaceR2loc:
-#    cdef CTransportSpaceR2loc *c_space_ptr
 
 cdef class TransportSpace:
     cdef USpace u_space

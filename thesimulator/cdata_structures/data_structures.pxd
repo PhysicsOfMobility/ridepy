@@ -15,7 +15,7 @@ cdef extern from * namespace 'cstuff':
         dropoff=2
         internal=3
 
-ctypedef enum LocType:
+cpdef enum class LocType:
     R2LOC  = 1
     INT = 2
 
@@ -54,9 +54,9 @@ cdef class Stop:
 
 
 cdef class Stoplist:
+    cdef bint ptr_owner
     cdef LocType loc_type
     cdef _UStoplist ustoplist
-    cdef _UStop this_stop
     cdef Stop py_s
 #    @staticmethod
 #    cdef Stoplist from_c_union(_UStoplist ustoplist, LocType loc_type)

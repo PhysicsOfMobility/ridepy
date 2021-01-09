@@ -9,6 +9,7 @@ from thesimulator.cdata_structures import (
     Stop,
     TransportationRequest,
     StopAction,
+    LocType
 )
 
 from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
@@ -44,7 +45,8 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
-    vs = VehicleState(vehicle_id=12, initial_stoplist=stoplist, space=space)
+    #breakpoint()
+    vs = VehicleState(vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC)
     request = TransportationRequest(
         request_id=100,
         creation_timestamp=1,
@@ -65,4 +67,6 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         seed = int(sys.argv[1])
+    else:
+        seed = 0
     benchmark_insertion_into_long_stoplist(seed)
