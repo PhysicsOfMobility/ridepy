@@ -23,9 +23,6 @@ cdef extern from "cspaces.h" namespace 'cstuff':
         pair[Loc, double] interp_dist(Loc u, Loc v, double dist_to_dest);
         pair[Loc, double] interp_time(Loc u, Loc v, double time_to_dest);
 
-    ctypedef TransportSpace[R2loc] TransportSpaceR2loc
-    ctypedef TransportSpace[int] TransportSpaceInt
-
     cdef cppclass Euclidean2D(TransportSpace[R2loc]):
         double velocity
 
@@ -38,7 +35,3 @@ cdef extern from "cspaces.h" namespace 'cstuff':
         Manhattan2D();
         Manhattan2D(double);
 
-    #cdef cppclass TransportSpaceR2loc:
-    #    pass
-    #cdef cppclass TransportSpaceInt:
-    #    pass

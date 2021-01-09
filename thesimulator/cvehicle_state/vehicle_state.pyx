@@ -17,6 +17,8 @@ from thesimulator.util.cdispatchers.dispatchers cimport (
 from cython.operator cimport dereference
 from typing import List
 
+
+
 cdef class VehicleState:
     """
     Single vehicle insertion logic is implemented in Cython here.
