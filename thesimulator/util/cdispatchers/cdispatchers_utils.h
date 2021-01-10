@@ -44,7 +44,7 @@ namespace cstuff {
             const std::vector<Stop<Loc>> &stoplist, int idx, double est_arrival_first_stop_after_insertion
     );
 
-    //////////////////////////////////////////////////////////////////////////////
+    /* Now the implementations */
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
