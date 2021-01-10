@@ -86,9 +86,9 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     vstate = cvs.VehicleState(vehicle_id=12, initial_stoplist=stoplist)
 
     tick = time()
-    # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
+    # vehicle_id, (min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do))
     cythonic_solution = vstate.handle_transportation_request_single_vehicle(request)
-    _, _, (cy_min_cost, *cy_timewindows) = cythonic_solution
+    _, (cy_min_cost, _, cy_timewindows) = cythonic_solution
     tock = time()
     print(f"Computing insertion into {len_stoplist}-element stoplist with cythonic dispatcher took: {tock-tick} seconds")
 

@@ -131,4 +131,5 @@ cdef class VehicleState:
             dereference(self.stoplist.c_stoplist_ptr),
             self.space.c_euclidean2d
         )
-        return self.vehicle_id, Stoplist.from_ptr(&res.new_stoplist), (res.min_cost, res.EAST_pu, res.LAST_pu, res.EAST_do, res.LAST_do)
+        return self.vehicle_id, (res.min_cost, Stoplist.from_ptr(&res.new_stoplist), (res.EAST_pu, res.LAST_pu,
+                                                                                      res.EAST_do, res.LAST_do))
