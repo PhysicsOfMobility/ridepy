@@ -43,4 +43,3 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         double EAST_do
         double LAST_do
 
-

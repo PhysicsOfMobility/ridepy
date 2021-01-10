@@ -22,51 +22,6 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
    that has been subclassed, a check like `if type(self) == ClassLaterSubclassedFrom` must be used. Otherwise
    double free occurs. 
 """
-
-#cdef class TransportSpace:
-#    """
-#    We do not need to allocate/free self.c_space_ptr at all since This is a wrapper around the c++ abstract class
-#    and will never be instantiated.
-#    """
-#    # TODO: Need to template away to eliminate hard requirement that locations are R2loc.
-#    # However, does anything need to be done at all apart from removing all the type declarations from the
-#    # method arguments?
-#    def d(self, R2loc u, R2loc v):
-#        return dereference(self.c_space_ptr).d(u, v)
-#
-#    def t(self, R2loc u, R2loc v):
-#        return dereference(self.c_space_ptr).t(u, v)
-#
-#    def interp_dist(self, R2loc u, R2loc v, double dist_to_dest):
-#        return dereference(self.c_space_ptr).interp_dist(u, v, dist_to_dest)
-#
-#    def interp_time(self, R2loc u, R2loc v, double time_to_dest):
-#        return dereference(self.c_space_ptr).interp_time(u, v, time_to_dest)
-
-
-#cdef class TransportSpaceR2loc:
-#    """
-#    We do not need to allocate/free self.c_space_ptr at all since This is a wrapper around the c++ abstract class
-#    and will never be instantiated.
-#    """
-#    # TODO: Need to template away to eliminate hard requirement that locations are R2loc.
-#    # However, does anything need to be done at all apart from removing all the type declarations from the
-#    # method arguments?
-#    def d(self, R2loc u, R2loc v):
-#        return dereference(self.c_space_ptr).d(u, v)
-#
-#    def t(self, R2loc u, R2loc v):
-#        return dereference(self.c_space_ptr).t(u, v)
-#
-#    def interp_dist(self, R2loc u, R2loc v, double dist_to_dest):
-#        return dereference(self.c_space_ptr).interp_dist(u, v, dist_to_dest)
-#
-#    def interp_time(self, R2loc u, R2loc v, double time_to_dest):
-#        return dereference(self.c_space_ptr).interp_time(u, v, time_to_dest)
-#
-
-
-
 cdef class TransportSpace:
     def __init__(self, loc_type):
         if loc_type == LocType.INT:
