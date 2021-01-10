@@ -23,6 +23,12 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
    double free occurs. 
 """
 cdef class TransportSpace:
+    """
+    Base class for extension types wrapping c++ TransportSpace class template. Since there's no elegant way of
+    wrapping templates in cython and exposing them to python, we will use the [Explicit Run-Time Dispatch approach]
+    (https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/). See the docstring of
+    thesimulator/cdata_structures/data_structures.pyx for details.
+    """
     def __init__(self, loc_type):
         if loc_type == LocType.INT:
             self.loc_type = LocType.INT
@@ -62,7 +68,10 @@ cdef class TransportSpace:
             raise ValueError("This line should never have been reached")
 
     def __dealloc__(self):
-        #free the correct pointer
+        """
+        Since this is a base class that will never be instantiated, we do not need to free any pointer here.
+        Take care to do so in the derived classes though.
+        """
         ...
 
 
