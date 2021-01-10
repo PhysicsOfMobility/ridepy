@@ -1,5 +1,15 @@
 # distutils: language = c++
+"""
+This cython module wraps the struct templates exposed from c++ by cdata_structures.pxd into extension types.
+However an extension type obviously cannot be templated (at compile time, all possible variations of a template
+must be known). There is no really elegant way of doing it in cython as of v3.0a6. So we will use the [Explicit
+Run-Time Dispatch approach](https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/).
 
+In short, an enum LocType (resides in data_structures.pxd) contains all template types Loc we are likely to need.
+The extension dtype for Request[Loc] then will contain *an union* holding one of the variants (e.g. Request[int],
+Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the method
+call to the appropriate object inside that union.
+"""
 from cython.operator cimport dereference
 from libcpp.vector cimport vector
 
@@ -20,6 +30,7 @@ cdef class TransportationRequest:
     ):
 
         if hasattr(origin, '__len__') and len(origin) == 2:
+            # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
             self._ureq._req_r2loc = CRequest[R2loc](
@@ -62,6 +73,7 @@ cdef class TransportationRequest:
             return self._ureq._req_int.creation_timestamp
         else:
             raise ValueError("This line should never have been reached")
+    # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
 
     @staticmethod
     cdef TransportationRequest from_c_r2loc(CRequest[R2loc] creq):
