@@ -14,10 +14,14 @@ from thesimulator.util.cdispatchers.cdispatchers cimport \
 #cdef extern from "cstuff.cpp":
 #    pass
 
-
-cdef union _UInsertionResult:
-     InsertionResult[R2loc] insertion_result_r2loc
-     InsertionResult[int] insertion_result_int
+# Just like we did in cdata_structures.Stop, we would have liked to have an union holding
+# InsertionResult[R2loc] and InsertionResult[int] inside brute_force_distance_minimizing_dispatcher. However,
+# that is nontrivial because any non-POD union member needs to have explicitly defined constructor and copy constructor
+# (https://en.wikipedia.org/wiki/C%2B%2B11#Unrestricted_unions). Hence, the following union does *not* work, and we
+# need to store two InsertionResult objects (one for each type) inside brute_force_distance_minimizing_dispatcher
+#cdef union _UInsertionResult:
+#     InsertionResult[R2loc] insertion_result_r2loc
+#     InsertionResult[int] insertion_result_int
 
 # This cpdef is crucial, otherwise we can't use this function from both python  and cython
 cpdef brute_force_distance_minimizing_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
