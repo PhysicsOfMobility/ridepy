@@ -28,6 +28,21 @@ Generally branch from `master`, implement stuff® and file a pull request back t
 - `master` should always improve. Incomplete functionality is welcome.
 - `production` should always be usable and, if possible, not break things.
 
+### Testing
+- for each new feature introduced, tests should be written, using the [pytest](https://docs.pytest.org/en/stable/) framework
+- running tests is easy--just execute `pytest` in the project directory
+- additional pointers for running pytest:
+    - drop into a debugger on failing test through `pytest --pdb`
+    - show stdout `pytest -s`
+    - run specific test by matching test function name string `pytest -k <match expression>`
+    - be more verbose `pytest -v`
+- Warning 1: Pytest may cause confusion as it automagically imports stuff and supplies function
+  with stuff they need based on their signature. For this, e.g. see the docs on
+  [fixtures](https://docs.pytest.org/en/stable/fixture.html).
+- Warning 2: Warning 1 applies in particular to stuff hiding in innocent-looking
+  files named `conftest.py`. See docs on
+  [conftest](https://docs.pytest.org/en/2.7.3/plugins.html).
+
 ## Principles
 ### Jargon
 - **estimated arrival time**, also Cached Predicted Arrival Time CPAT

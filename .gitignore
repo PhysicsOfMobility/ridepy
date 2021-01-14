@@ -1,16 +1,13 @@
-*.h5
-*.pickle
-*.pkl
-*.osm
-core
-.idea
-
-
+#
+#
 # source: https://github.com/github/gitignore/blob/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.ipynb
+.idea
+core
 
 # C extensions
 *.so
@@ -38,7 +35,7 @@ MANIFEST
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject ymd/other infos into it.
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -83,7 +80,6 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-.ipynb
 
 # IPython
 profile_default/
@@ -144,4 +140,3 @@ Session.vim
 tags
 # Persistent undo
 [._]*.un~
-

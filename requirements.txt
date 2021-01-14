@@ -2,5 +2,9 @@ decorator==4.4.2; python_version >= "3.6" and python_full_version < "3.0.0" or p
 mpi4py==3.0.3
 networkx==2.5; python_version >= "3.6"
 numpy==1.19.2; python_version >= "3.6"
+pandas==1.1.4
 scipy==1.5.3; python_version >= "3.6"
 tabulate==0.8.7
+notebook
+jupytext
+matplotlib
