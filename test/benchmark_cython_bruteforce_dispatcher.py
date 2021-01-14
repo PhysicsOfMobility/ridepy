@@ -4,19 +4,32 @@ from numpy import inf
 from functools import reduce
 from time import time
 
-from thesimulator.data_structures import (
-    Stop,
-    InternalRequest,
-    StopAction,
-    TransportationRequest,
-)
-from thesimulator.util.spaces import Euclidean2D
-from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
-from thesimulator.util.testing_utils import stoplist_from_properties
 
+from thesimulator.cdata_structures import (
+    Stop,
+    TransportationRequest,
+    StopAction,
+)
+
+from thesimulator.util.cspaces import Euclidean2D
+
+from thesimulator.cvehicle_state import VehicleState
+
+def stoplist_from_properties(stoplist_properties):
+    return [
+        Stop(
+            location=loc,
+            request=None,
+            action=StopAction.internal,
+            estimated_arrival_time=cpat,
+            time_window_min=tw_min,
+            time_window_max=tw_max,
+        )
+        for loc, cpat, tw_min, tw_max in stoplist_properties
+    ]
 
 def benchmark_insertion_into_long_stoplist(seed=0):
-    space = Euclidean2D()
+    space = Euclidean2D(1)
     n = 1000
     rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))
@@ -30,8 +43,9 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
+    vs = VehicleState(vehicle_id=12, initial_stoplist=stoplist)
     request = TransportationRequest(
-        request_id="a",
+        request_id=100,
         creation_timestamp=1,
         origin=rnd.uniform(low=0, high=100, size=2),
         destination=rnd.uniform(low=0, high=100, size=2),
@@ -41,7 +55,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_max=inf,
     )
     tick = time()
-    brute_force_distance_minimizing_dispatcher(request, stoplist, space)
+    vs.handle_transportation_request_single_vehicle(request)
     tock = time()
     print(f"Computing insertion into {n}-element stoplist took: {tock-tick} seconds")
 

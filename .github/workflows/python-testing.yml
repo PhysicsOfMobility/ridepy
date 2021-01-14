@@ -26,7 +26,8 @@ jobs:
 
 
     - name: Install Dependencies
-      run: pip install -e .[dev]
+      # Somehow the test fail if we do python setup.py install
+      run: pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
 
 
     - name: Test with pytest
