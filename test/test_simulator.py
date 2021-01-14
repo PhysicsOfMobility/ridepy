@@ -85,7 +85,7 @@ def test_brute_force_dispatcher_2d(initial_stoplists):
     space = Euclidean2D()
     rg = RandomRequestGenerator(
         rate=10,
-        transport_space=space,
+        space=space,
         pickup_timewindow_start=0,
         pickup_timewindow_size=20,
     )
