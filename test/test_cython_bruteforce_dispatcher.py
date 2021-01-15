@@ -8,14 +8,18 @@ from thesimulator.cdata_structures import Stoplist as cyStoplist
 
 from thesimulator import cdata_structures as cyds
 from thesimulator import data_structures as pyds
+from thesimulator.cdata_structures.data_structures import LocType
 from thesimulator.util import spaces as pyspaces
 from thesimulator.util.cspaces import spaces as cyspaces
 
 
-from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher \
-    as py_brute_force_distance_minimizing_dispatcher
-from thesimulator.util.cdispatchers import brute_force_distance_minimizing_dispatcher \
-    as cy_brute_force_distance_minimizing_dispatcher
+from thesimulator.util.dispatchers import (
+    brute_force_distance_minimizing_dispatcher as py_brute_force_distance_minimizing_dispatcher,
+)
+from thesimulator.util.cdispatchers import (
+    brute_force_distance_minimizing_dispatcher as cy_brute_force_distance_minimizing_dispatcher,
+)
+
 
 def stoplist_from_properties(stoplist_properties, data_structure_module):
     return [
@@ -29,7 +33,6 @@ def stoplist_from_properties(stoplist_properties, data_structure_module):
         )
         for loc, cpat, tw_min, tw_max in stoplist_properties
     ]
-
 
 
 def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
@@ -67,10 +70,14 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
-    pythonic_solution = py_brute_force_distance_minimizing_dispatcher(request, stoplist, pyspaces.Euclidean2D())
+    pythonic_solution = py_brute_force_distance_minimizing_dispatcher(
+        request, stoplist, pyspaces.Euclidean2D()
+    )
     py_min_cost, _, py_timewindows = pythonic_solution
     tock = time()
-    print(f"Computing insertion into {len_stoplist}-element stoplist with pure pythonic dispatcher took: {tock - tick} seconds")
+    print(
+        f"Computing insertion into {len_stoplist}-element stoplist with pure pythonic dispatcher took: {tock - tick} seconds"
+    )
 
     # then call the cythonic dispatcher
     request = cyds.TransportationRequest(
@@ -85,15 +92,21 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     )
 
     # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_distance_minimizing_dispatcher
-    stoplist = cyStoplist(stoplist_from_properties(stoplist_properties, data_structure_module=cyds))
+    stoplist = cyStoplist(
+        stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
+        loc_type=LocType.R2LOC,
+    )
 
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = cy_brute_force_distance_minimizing_dispatcher(request, stoplist, cyspaces.Euclidean2D(1))
+    cythonic_solution = cy_brute_force_distance_minimizing_dispatcher(
+        request, stoplist, cyspaces.Euclidean2D(1)
+    )
     cy_min_cost, _, cy_timewindows = cythonic_solution
     tock = time()
-    print(f"Computing insertion into {len_stoplist}-element stoplist with cythonic dispatcher took: {tock-tick} seconds")
+    print(
+        f"Computing insertion into {len_stoplist}-element stoplist with cythonic dispatcher took: {tock-tick} seconds"
+    )
 
     assert np.isclose(py_min_cost, cy_min_cost)
     assert np.allclose(py_timewindows, cy_timewindows)
-
