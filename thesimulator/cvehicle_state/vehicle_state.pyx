@@ -9,14 +9,14 @@ from thesimulator.cdata_structures.data_structures cimport (
     Stoplist,
 )
 
-from thesimulator.util.cspaces.spaces cimport Euclidean2D
+from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 
-from thesimulator.cvehicle_state.cstuff cimport (
+from thesimulator.util.cdispatchers.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
-    InsertionResult,
 )
-from cython.operator cimport dereference
 from typing import List
+
+
 
 cdef class VehicleState:
     """
@@ -30,15 +30,16 @@ cdef class VehicleState:
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist stoplist
-    cdef Euclidean2D space
+    cdef TransportSpace space
     cdef int vehicle_id
     def __init__(
-            self, *, vehicle_id, initial_stoplist): # TODO currently transport_space cannot be specified at __init__
+            self, *, vehicle_id, initial_stoplist, space, loc_type):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
-        self.stoplist = Stoplist(initial_stoplist)
-        self.space = Euclidean2D(1)
+        self.stoplist = Stoplist(initial_stoplist, loc_type)
+        self.space = space
+        print(f"Created VehicleState with space of type {type(self.space)}")
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -111,7 +112,7 @@ cdef class VehicleState:
 
     def handle_transportation_request_single_vehicle(
             self, TransportationRequest cy_request
-    ) -> SingleVehicleSolution:
+    ):
         """
         The computational bottleneck. An efficient simulator could do the following:
         1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
@@ -126,10 +127,7 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        cdef InsertionResult res = c_disp(
-            cy_request.c_req,
-            dereference(self.stoplist.c_stoplist_ptr),
-            self.space.c_euclidean2d
-        )
-        return self.vehicle_id, (res.min_cost, Stoplist.from_ptr(&res.new_stoplist), (res.EAST_pu, res.LAST_pu,
-                                                                                      res.EAST_do, res.LAST_do))
+        return self.vehicle_id, c_disp(
+            cy_request,
+            self.stoplist,
+            self.space)

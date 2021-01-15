@@ -1,1 +1,1 @@
-from .spaces import Euclidean2D
+from .spaces import Euclidean2D, Manhattan2D, TransportSpace

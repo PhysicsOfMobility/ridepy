@@ -1,9 +1,12 @@
 # distutils: language = c++
 
-from thesimulator.cvehicle_state.cstuff cimport (
+from libcpp.vector cimport vector
+
+
+from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
     Stop as CStop,
-    Stoplist as CStoplist,
+    R2loc
 )
 
 cdef extern from * namespace 'cstuff':
@@ -12,19 +15,52 @@ cdef extern from * namespace 'cstuff':
         dropoff=2
         internal=3
 
+cpdef enum class LocType:
+    R2LOC  = 1
+    INT = 2
+
+cdef union _URequest:
+    CRequest[R2loc] _req_r2loc
+    CRequest[int] _req_int
+
+cdef union _UStop:
+    CStop[R2loc] _stop_r2loc
+    CStop[int] _stop_int
+
+cdef union _UStoplist:
+    vector[CStop[R2loc]]* _stoplist_r2loc_ptr
+    vector[CStop[int]]* _stoplist_int_ptr
+
+
 cdef class TransportationRequest:
-    cdef CRequest c_req
+    cdef _URequest _ureq
+    cdef LocType loc_type
+#    @staticmethod
+#    cdef TransportationRequest from_c_union(_URequest, LocType)
     @staticmethod
-    cdef TransportationRequest from_c(CRequest creq)
+    cdef TransportationRequest from_c_r2loc(CRequest[R2loc] creq)
+    @staticmethod
+    cdef TransportationRequest from_c_int(CRequest[int] creq)
 
 cdef class Stop:
-    cdef CStop c_stop
+    cdef _UStop ustop
+    cdef LocType loc_type
+#    @staticmethod
+#    cdef Stop from_c_union(_UStop ustop, LocType loc_type)
     @staticmethod
-    cdef Stop from_c(CStop cstop)
+    cdef Stop from_c_r2loc(CStop[R2loc] cstop)
+    @staticmethod
+    cdef Stop from_c_int(CStop[int] cstop)
+
 
 cdef class Stoplist:
-    cdef CStoplist* c_stoplist_ptr
     cdef bint ptr_owner
+    cdef LocType loc_type
+    cdef _UStoplist ustoplist
+    cdef Stop py_s
+#    @staticmethod
+#    cdef Stoplist from_c_union(_UStoplist ustoplist, LocType loc_type)
     @staticmethod
-    cdef Stoplist from_ptr(CStoplist *cstoplist_ptr)
-
+    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist_ptr)
+    @staticmethod
+    cdef Stoplist from_c_int(vector[CStop[int]] *cstoplist_ptr)
