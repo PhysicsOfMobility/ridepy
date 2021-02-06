@@ -10,8 +10,6 @@
 #include <vector>
 #include <algorithm>  // for max()
 #include <cmath>
-//#include <boost/foreach.hpp>
-//#include <boost/range/iterator_range.hpp>
 #include <random>
 #include <chrono> // for benchmarking
 #include <iostream>
@@ -26,10 +24,10 @@ namespace cstuff {
     public:
         double velocity;
 
-        virtual double d(Loc u, Loc v) const=0;
-        virtual double t(Loc u, Loc v) const=0;
-        virtual pair<Loc, double> interp_dist(Loc u, Loc v, double dist_to_dest) const=0;
-        virtual pair<Loc, double> interp_time(Loc u, Loc v, double time_to_dest) const=0;
+        virtual double d(Loc u, Loc v)=0;
+        virtual double t(Loc u, Loc v)=0;
+        virtual pair<Loc, double> interp_dist(Loc u, Loc v, double dist_to_dest)=0;
+        virtual pair<Loc, double> interp_time(Loc u, Loc v, double time_to_dest)=0;
 
         TransportSpace():velocity{1}{};
         TransportSpace(double velocity):velocity{velocity}{};
@@ -39,10 +37,10 @@ namespace cstuff {
 
     class Euclidean2D: public TransportSpace<R2loc> {
     public:
-        double d(R2loc u, R2loc v) const override;
-        double t(R2loc u, R2loc v) const override;
-        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const override;
-        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const override;
+        double d(R2loc u, R2loc v) override;
+        double t(R2loc u, R2loc v) override;
+        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) override;
+        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) override;
 
         Euclidean2D();
         Euclidean2D(double);
@@ -50,10 +48,10 @@ namespace cstuff {
 
     class Manhattan2D: public TransportSpace<R2loc> {
     public:
-        double d(R2loc u, R2loc v) const override;
-        double t(R2loc u, R2loc v) const override;
-        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) const override;
-        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) const override;
+        double d(R2loc u, R2loc v) override;
+        double t(R2loc u, R2loc v) override;
+        pair<R2loc, double> interp_dist(R2loc u, R2loc v, double dist_to_dest) override;
+        pair<R2loc, double> interp_time(R2loc u, R2loc v, double time_to_dest) override;
 
         Manhattan2D();
         Manhattan2D(double);

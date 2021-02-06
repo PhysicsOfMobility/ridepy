@@ -273,3 +273,5 @@ class ContinuousGraph(Graph):
 
     def random_point(self):
         ...
+
+

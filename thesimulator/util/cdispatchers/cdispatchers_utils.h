@@ -14,7 +14,7 @@ namespace cstuff {
             const Request<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
-            const TransportSpace<Loc> &space
+            TransportSpace<Loc> &space
     );
 
     template<typename Loc>
@@ -22,7 +22,7 @@ namespace cstuff {
             std::vector<Stop<Loc>> &stoplist,
             Stop<Loc> &stop,
             int idx,
-            const TransportSpace<Loc> &space
+            TransportSpace<Loc> &space
     );
 
     template<typename Loc>
@@ -31,12 +31,12 @@ namespace cstuff {
     template<typename Loc>
     double distance_to_stop_after_insertion(
             const std::vector<Stop<Loc>> &stoplist, const Loc location, int index,
-            const TransportSpace<Loc> &space
+            TransportSpace<Loc> &space
     );
 
     template<typename Loc>
     double distance_from_current_stop_to_next(
-            const std::vector<Stop<Loc>> &stoplist, int i, const TransportSpace<Loc> &space
+            const std::vector<Stop<Loc>> &stoplist, int i, TransportSpace<Loc> &space
     );
 
     template<typename Loc>
@@ -51,7 +51,7 @@ namespace cstuff {
             const Request<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
-            const TransportSpace<Loc> &space
+            TransportSpace<Loc> &space
     ) {
         /*
         Inserts a request into  a stoplist. The pickup(dropoff) is inserted *after* pickup(dropoff)_idx.
@@ -91,7 +91,7 @@ namespace cstuff {
             std::vector<Stop<Loc>> &stoplist,
             Stop<Loc> &stop,
             int idx,
-            const TransportSpace<Loc> &space
+            TransportSpace<Loc> &space
     ) {
         /*
         Note: Modifies stoplist in-place. The passed stop has estimated_arrival_time set to None
@@ -149,7 +149,7 @@ namespace cstuff {
     template<typename Loc>
     double distance_to_stop_after_insertion(
             const std::vector<Stop<Loc>> &stoplist, const Loc location, int index,
-            const TransportSpace<Loc> &space
+            TransportSpace<Loc> &space
     ) {
         // note that index is *after which* the new stop will be inserted.
         // So index+1 is where the next stop is
@@ -159,7 +159,7 @@ namespace cstuff {
 
     template<typename Loc>
     double distance_from_current_stop_to_next(
-            const std::vector<Stop<Loc>> &stoplist, int i, const TransportSpace<Loc> &space
+            const std::vector<Stop<Loc>> &stoplist, int i, TransportSpace<Loc> &space
     ) {
         if (i < stoplist.size() - 1) return space.d(stoplist[i].location, stoplist[i + 1].location);
         else return 0;
