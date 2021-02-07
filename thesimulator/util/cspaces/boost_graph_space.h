@@ -75,7 +75,7 @@ namespace cstuff {
 
         GraphSpace(double velocity, vector <vertex_t> vertex_vec, vector <Edge> edge_vec, vector<double> weight_vec)
                 : _g{vertex_vec.size()}, velocity{velocity}, vertex2label{get(vertex_name, _g)},
-                  _distances{static_cast<int>(vertex_vec.size())}, _predecessors{static_cast<int>(vertex_vec.size())},
+                  _distances(static_cast<int>(vertex_vec.size())), _predecessors(static_cast<int>(vertex_vec.size())),
                   _weights{weight_vec}, edge2weight{get(edge_weight, _g)} {
             // this->vertex2label = get(vertex_name, this->_g);
             // add vertex properties
@@ -95,6 +95,7 @@ namespace cstuff {
                 idx++;
             }
         }
+        ~GraphSpace(){}
 
         void print_shortest_paths(vertex_t src) {
             // call dijkstra

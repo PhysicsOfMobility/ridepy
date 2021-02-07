@@ -1,7 +1,7 @@
 import pytest
 import math as m
 import numpy as np
-
+import networkx as nx
 from hypothesis import given
 import hypothesis.strategies as st
 
@@ -13,7 +13,9 @@ from thesimulator.util.spaces import (
     ContinuousGraph,
 )
 from thesimulator.util.cspaces import (
-    Euclidean2D as CyEuclidean2D, Manhattan2D as CyManhattan2D
+    Euclidean2D as CyEuclidean2D,
+    Manhattan2D as CyManhattan2D,
+    Graph as CyGraph
 )
 
 
@@ -88,6 +90,29 @@ def test_Manhattan2D():
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == 2
+
+def test_cyGraph_distance():
+    G = nx.binomial_tree(n=4)
+    edge_weight = 2
+    velocity = 0.17
+    for u, v in G.edges():
+        G[u][v]['distance'] = edge_weight
+    pyG = Graph(G, distance_attribute='distance', velocity=velocity)
+
+    vertices = list(G.nodes())
+    edges = list(G.edges())
+    weights = [edge_weight]*len(edges)
+    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+
+    for u in G.nodes():
+        for v in G.nodes():
+            if u>=v:
+                py_dist = pyG.d(u, v)
+                cy_dist = cyG.d(u, v)
+                if (py_dist != cy_dist):
+                    breakpoint()
+                assert py_dist == cy_dist
+
 
 @given(rest_frac=st.floats(0,1))
 def test_interpolation_in_2D_continuous_spaces(rest_frac):

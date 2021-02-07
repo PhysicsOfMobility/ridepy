@@ -103,16 +103,15 @@ cdef class Manhattan2D(TransportSpace):
     def __dealloc__(self):
         del self.derived_ptr
 
-cdef class GraphSpace(TransportSpace):
+cdef class Graph(TransportSpace):
     def __cinit__(self, vertex_vec, edge_vec, weight_vec, double velocity=1):
         self.loc_type = LocType.INT
-        self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](velocity, <vector[int]>vertex_vec,
-                                                                             <vector[pair[int, int]]>edge_vec, <vector[double]>weight_vec)
+        self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
+            velocity, <vector[int]>vertex_vec, <vector[pair[int, int]]>edge_vec, <vector[double]>weight_vec
+        )
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
-        TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+        TransportSpace.__init__(self, loc_type=LocType.INT)
     def __dealloc__(self):
         del self.derived_ptr
-
-
 

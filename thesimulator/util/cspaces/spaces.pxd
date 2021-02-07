@@ -26,5 +26,5 @@ cdef class Manhattan2D(TransportSpace):
     cdef CManhattan2D *derived_ptr
 
 
-cdef class GraphSpace(TransportSpace):
+cdef class Graph(TransportSpace):
     cdef CGraphSpace[int] *derived_ptr
