@@ -15,7 +15,7 @@ using namespace boost;
 namespace cstuff {
     template<typename vertex_t>
     class GraphSpace : public TransportSpace<vertex_t> {
-        typedef adjacency_list <vecS, vecS, undirectedS, property<vertex_name_t, vertex_t>, property<edge_weight_t, int>>
+        typedef adjacency_list <vecS, vecS, undirectedS, property<vertex_name_t, vertex_t>, property<edge_weight_t, double>>
                 Graph;
         typedef pair <vertex_t, vertex_t> Edge;
     private:
@@ -23,7 +23,8 @@ namespace cstuff {
         map<vertex_t, int> vertex_label2index;
         typename boost::property_map<Graph, vertex_name_t>::type vertex2label;
         typename boost::property_map<Graph, edge_weight_t>::type edge2weight;
-        vector<int> _distances, _predecessors;
+        vector<double> _distances;
+        vector<int> _predecessors;
         vector<double> _weights;
 
     public:
@@ -68,7 +69,8 @@ namespace cstuff {
 
         pair<vertex_t, double> interp_time(vertex_t u, vertex_t v, double time_to_dest) override {
             double dist_to_dest = time_to_dest * (this->velocity);
-            return this->interp_dist(u, v, dist_to_dest);
+            auto [w, d] = this->interp_dist(u, v, dist_to_dest);
+            return make_pair(w, d/this->velocity);
         }
 
         GraphSpace(double velocity, vector <vertex_t> vertex_vec, vector <Edge> edge_vec)
@@ -89,7 +91,7 @@ namespace cstuff {
             // add edges
             idx = 0;
             for (auto &e: edge_vec) {
-                property<edge_weight_t, int> edge_property(weight_vec[idx]);
+                property<edge_weight_t, double> edge_property(weight_vec[idx]);
                 add_edge(this->vertex_label2index[e.first], this->vertex_label2index[e.second], edge_property,
                          this->_g);
                 idx++;

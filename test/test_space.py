@@ -5,6 +5,8 @@ import networkx as nx
 from hypothesis import given
 import hypothesis.strategies as st
 
+np.random.seed(0)
+
 from thesimulator.util.spaces import (
     Euclidean,
     Euclidean1D,
@@ -115,7 +117,7 @@ def test_cyGraph_distance():
 
 def test_cyGraph_interpolate():
     G = nx.Graph()
-    G.add_weighted_edges_from([(1,2,10), (2,3,4)])
+    G.add_weighted_edges_from([(1,2,10.5), (2,3,3.5)])
     velocity = 0.17
     vertices = list(G.nodes())
     edges = list(G.edges())
@@ -128,23 +130,59 @@ def test_cyGraph_interpolate():
         0            | 3    | 0
         1            | 3    | 1
         3            | 3    | 3
-        4            | 2    | 0
-        5            | 2    | 1
-        13           | 2    | 9
+        3.5          | 2    | 0
+        4            | 2    | 0.5
+        5            | 2    | 1.5
+        13           | 2    | 9.5
         14           | 1    | 0
         """
         if dist_to_dest < 0:
             return None, None
-        elif dist_to_dest < 4:
+        elif dist_to_dest < 3.5:
             return 3, dist_to_dest
         elif dist_to_dest < 14:
-            return 2, dist_to_dest - 4
+            return 2, dist_to_dest - 3.5
         elif dist_to_dest == 14:
             return 1, 0
         else:
             return None, None
     for d in np.linspace(0.001, 13.999, 100):
         assert np.allclose(cyG.interp_dist(1,3,d), true_interp_1_to_3(d))
+
+
+@given(velocity=st.floats(0.00001,10))
+def test_cyGraph_interp_d_vs_t(velocity):
+    G = nx.Graph()
+    G.add_weighted_edges_from([(1,2,10), (2,3,4)])
+    vertices = list(G.nodes())
+    edges = list(G.edges())
+    weights = [G[u][v]['weight'] for u,v in G.edges()]
+    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+
+    for d in np.linspace(0.001, 13.999, 100):
+        v1, dist = cyG.interp_dist(1,3,d)
+        v2, time = cyG.interp_time(1,3,d/velocity)
+
+        assert v1 == v2
+        assert np.isclose(dist, time*velocity)
+
+
+@given(velocity=st.floats(0.00001,10))
+def test_cyGraph_interpolation_d_vs_t(velocity):
+    G = nx.cycle_graph(10)
+
+    for u, v in G.edges():
+        G[u][v]['weight'] = np.random.random()
+
+    vertices = list(G.nodes())
+    edges = list(G.edges())
+    weights = [G[u][v]['weight'] for u,v in G.edges()]
+    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+
+    ds = np.array([cyG.d(u, v) for u in G.nodes() for v in G.nodes()])
+    ts = np.array([cyG.t(u, v) for u in G.nodes() for v in G.nodes()])
+
+    assert np.allclose(ds, ts*velocity)
 
 
 
