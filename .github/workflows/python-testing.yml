@@ -18,7 +18,7 @@ jobs:
         python-version: 3.8
     - name: Install system dependencies using apt
       run: |
-        sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev
+        sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev
 
     - name: Create venv
       run: |
