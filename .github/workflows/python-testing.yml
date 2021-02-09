@@ -20,14 +20,10 @@ jobs:
       run: |
         sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev
 
-    - name: Create venv
-      run: |
-        python3.8 -m venv .venv
-
 
     - name: Install Dependencies
-      # Somehow the test fail if we do python setup.py install
-      run: pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
+      # Somehow the tests fail if we do python setup.py install
+      run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
 
 
     - name: Test with pytest
