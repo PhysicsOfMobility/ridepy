@@ -93,9 +93,10 @@ def test_Manhattan2D():
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == 2
 
-def test_cyGraph_distance():
+
+@given(edge_weight=st.floats(0.00001,10))
+def test_cyGraph_distance(edge_weight):
     G = nx.binomial_tree(n=4)
-    edge_weight = 2
     velocity = 0.17
     for u, v in G.edges():
         G[u][v]['distance'] = edge_weight
@@ -108,11 +109,10 @@ def test_cyGraph_distance():
 
     for u in G.nodes():
         for v in G.nodes():
-            if u>=v:
+            if u >= v:
                 py_dist = pyG.d(u, v)
                 cy_dist = cyG.d(u, v)
                 assert py_dist == cy_dist
-
 
 
 def test_cyGraph_interpolate():
@@ -168,7 +168,7 @@ def test_cyGraph_interp_d_vs_t(velocity):
 
 
 @given(velocity=st.floats(0.00001,10))
-def test_cyGraph_interpolation_d_vs_t(velocity):
+def test_cyGraph_d_vs_t(velocity):
     G = nx.cycle_graph(10)
 
     for u, v in G.edges():
