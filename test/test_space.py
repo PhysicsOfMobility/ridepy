@@ -109,9 +109,43 @@ def test_cyGraph_distance():
             if u>=v:
                 py_dist = pyG.d(u, v)
                 cy_dist = cyG.d(u, v)
-                if (py_dist != cy_dist):
-                    breakpoint()
                 assert py_dist == cy_dist
+
+
+
+def test_cyGraph_interpolate():
+    G = nx.Graph()
+    G.add_weighted_edges_from([(1,2,10), (2,3,4)])
+    velocity = 0.17
+    vertices = list(G.nodes())
+    edges = list(G.edges())
+    weights = [G[u][v]['weight'] for u,v in G.edges()]
+    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+
+    def true_interp_1_to_3(dist_to_dest):
+        """
+       dist_to_dest  | node | jump_dist
+        0            | 3    | 0
+        1            | 3    | 1
+        3            | 3    | 3
+        4            | 2    | 0
+        5            | 2    | 1
+        13           | 2    | 9
+        14           | 1    | 0
+        """
+        if dist_to_dest < 0:
+            return None, None
+        elif dist_to_dest < 4:
+            return 3, dist_to_dest
+        elif dist_to_dest < 14:
+            return 2, dist_to_dest - 4
+        elif dist_to_dest == 14:
+            return 1, 0
+        else:
+            return None, None
+    for d in np.linspace(0.001, 13.999, 100):
+        assert np.allclose(cyG.interp_dist(1,3,d), true_interp_1_to_3(d))
+
 
 
 @given(rest_frac=st.floats(0,1))

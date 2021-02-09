@@ -49,7 +49,8 @@ namespace cstuff {
                     &this->_distances[0]));
 
             vertex_t predecessor, current_node = v_idx;
-            double dist_from_dest, current_edge_weight{0};
+            double dist_from_dest = 0;
+            double current_edge_weight = 0;
             while (current_node != u_idx) {
                 predecessor = this->_predecessors[current_node];
                 auto[e, is_edge] = edge(current_node, predecessor, this->_g);
@@ -82,8 +83,7 @@ namespace cstuff {
             int idx = 0;
             for (auto &vlabel: vertex_vec) {
                 this->vertex_label2index[vlabel] = idx;
-                this->vertex2label[idx] = vlabel;
-
+                put(this->vertex2label, idx, vlabel);
                 idx++;
             }
             // add edges
@@ -133,8 +133,4 @@ namespace cstuff {
         }
     };
 }
-
-
-
-
 #endif
