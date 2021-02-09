@@ -112,7 +112,7 @@ namespace cstuff {
                 distance_to_new_stop
         );
         stop.estimated_arrival_time = cpat_new_stop;
-        if (idx < stoplist.size() - 1) {
+        if (idx < static_cast<int>(stoplist.size() - 1)) {
             // update cpats of later stops
             auto departure_previous_stop = stop.estimated_departure_time();
             auto cpat_next_stop = departure_previous_stop + space.d(
@@ -153,7 +153,7 @@ namespace cstuff {
     ) {
         // note that index is *after which* the new stop will be inserted.
         // So index+1 is where the next stop is
-        if (index < stoplist.size() - 1) return space.d(location, stoplist[index + 1].location);
+        if (index < static_cast<int>(stoplist.size() - 1)) return space.d(location, stoplist[index + 1].location);
         else return 0;
     }
 
@@ -161,7 +161,7 @@ namespace cstuff {
     double distance_from_current_stop_to_next(
             const std::vector<Stop<Loc>> &stoplist, int i, TransportSpace<Loc> &space
     ) {
-        if (i < stoplist.size() - 1) return space.d(stoplist[i].location, stoplist[i + 1].location);
+        if (i < static_cast<int>(stoplist.size() - 1)) return space.d(stoplist[i].location, stoplist[i + 1].location);
         else return 0;
     }
 
@@ -180,7 +180,7 @@ namespace cstuff {
 
         */
         // double delta_cpat, old_leeway, new_leeway, old_departure, new_departure
-        if (idx >= stoplist.size() - 1) return false;
+        if (idx >= static_cast<int>(stoplist.size() - 1)) return false;
         auto delta_cpat = (
                 est_arrival_first_stop_after_insertion
                 - stoplist[idx].estimated_arrival_time
