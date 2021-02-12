@@ -1,5 +1,8 @@
 # distutils: language=c++
+# distutils: include_dirs = boost_1_75_0
+
 from libcpp.pair cimport pair
+from libcpp.vector cimport vector
 
 cdef extern from "cspaces.cpp":
     pass
@@ -35,3 +38,12 @@ cdef extern from "cspaces.h" namespace 'cstuff':
         Manhattan2D();
         Manhattan2D(double);
 
+
+
+cdef extern from "boost_graph_space.h" namespace 'cstuff':
+    cdef cppclass GraphSpace[Loc](TransportSpace[Loc]):
+        ctypedef pair[Loc, Loc] Edge
+        double velocity
+
+        GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec, vector[double] weight_vec)
+        GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec)

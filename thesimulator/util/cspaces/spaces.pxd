@@ -3,7 +3,8 @@
 from .cspaces cimport (
     Euclidean2D as CEuclidean2D,
     TransportSpace as CTransportSpace,
-    Manhattan2D as CManhattan2D
+    Manhattan2D as CManhattan2D,
+    GraphSpace as CGraphSpace
 )
 
 from thesimulator.cdata_structures.data_structures cimport LocType, R2loc
@@ -24,3 +25,6 @@ cdef class Euclidean2D(TransportSpace):
 cdef class Manhattan2D(TransportSpace):
     cdef CManhattan2D *derived_ptr
 
+
+cdef class Graph(TransportSpace):
+    cdef CGraphSpace[int] *derived_ptr

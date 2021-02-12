@@ -1,9 +1,15 @@
 # distutils: language = c++
+from libcpp.vector cimport vector
+from libcpp.pair cimport pair
+
 from .cspaces cimport(
     R2loc,
     Euclidean2D as CEuclidean2D,
     Manhattan2D as CManhattan2D,
+    GraphSpace as CGraphSpace
 )
+
+from typing import List, Tuple
 
 from thesimulator.cdata_structures.data_structures cimport LocType, R2loc
 
@@ -77,7 +83,7 @@ cdef class TransportSpace:
 
 cdef class Euclidean2D(TransportSpace):
     def __cinit__(self, double velocity=1):
-        self.loc_type == LocType.R2LOC
+        self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
@@ -89,11 +95,23 @@ cdef class Euclidean2D(TransportSpace):
 
 cdef class Manhattan2D(TransportSpace):
     def __cinit__(self, double velocity=1):
-        self.loc_type == LocType.R2LOC
+        self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+    def __dealloc__(self):
+        del self.derived_ptr
+
+cdef class Graph(TransportSpace):
+    def __cinit__(self, vertex_vec, edge_vec, weight_vec, double velocity=1):
+        self.loc_type = LocType.INT
+        self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
+            velocity, <vector[int]>vertex_vec, <vector[pair[int, int]]>edge_vec, <vector[double]>weight_vec
+        )
+
+    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+        TransportSpace.__init__(self, loc_type=LocType.INT)
     def __dealloc__(self):
         del self.derived_ptr
 

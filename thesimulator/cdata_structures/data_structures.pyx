@@ -52,9 +52,11 @@ cdef class TransportationRequest:
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f'Request(request_id={self._ureq._req_r2loc.request_id},creation_timestamp={self._ureq._req_r2loc.creation_timestamp})'
+            return f'Request(request_id={self._ureq._req_r2loc.request_id},"' \
+                   f'f"creation_timestamp={self._ureq._req_r2loc.creation_timestamp})'
         elif self.loc_type == LocType.INT:
-            return f'Request(request_id={self._ureq._req_int.request_id},creation_timestamp={self._ureq._req_int.creation_timestamp})'
+            return f'Request(request_id={self._ureq._req_int.request_id},"' \
+                   f'f"creation_timestamp={self._ureq._req_int.creation_timestamp})'
         else:
             raise ValueError("This line should never have been reached")
 
@@ -117,9 +119,11 @@ cdef class Stop:
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f'Stop(request={TransportationRequest.from_c_r2loc(self.ustop._stop_r2loc.request)}, estimated_arrival_time={self.ustop._stop_r2loc.estimated_arrival_time})'
+            return f'Stop(request={TransportationRequest.from_c_r2loc(self.ustop._stop_r2loc.request)}, "' \
+                   f'f"estimated_arrival_time={self.ustop._stop_r2loc.estimated_arrival_time})'
         elif self.loc_type == LocType.INT:
-            return f'Stop(request={TransportationRequest.from_c_int(self.ustop._stop_int.request)}, estimated_arrival_time={self.ustop._stop_int.estimated_arrival_time})'
+            return f'Stop(request={TransportationRequest.from_c_int(self.ustop._stop_int.request)},"' \
+                   f'f" estimated_arrival_time={self.ustop._stop_int.estimated_arrival_time})'
         else:
             raise ValueError("This line should never have been reached")
 
