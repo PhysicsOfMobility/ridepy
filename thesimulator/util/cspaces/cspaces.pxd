@@ -21,10 +21,10 @@ cdef extern from "cspaces.h" namespace 'cstuff':
         double velocity
         TransportSpace();
         TransportSpace(double);
-        double d(Loc u, Loc v)
-        double t(Loc u, Loc v)
-        pair[Loc, double] interp_dist(Loc u, Loc v, double dist_to_dest);
-        pair[Loc, double] interp_time(Loc u, Loc v, double time_to_dest);
+        double d(Loc u, Loc v) except +
+        double t(Loc u, Loc v) except +
+        pair[Loc, double] interp_dist(Loc u, Loc v, double dist_to_dest) except +;
+        pair[Loc, double] interp_time(Loc u, Loc v, double time_to_dest) except +;
 
     cdef cppclass Euclidean2D(TransportSpace[R2loc]):
         double velocity

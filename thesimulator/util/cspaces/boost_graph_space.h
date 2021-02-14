@@ -1,10 +1,12 @@
 #ifndef BOOST_GRAPH_SPACE_H
 #define BOOST_GRAPH_SPACE_H
 #include <iostream>
+#include <stdexcept>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/format.hpp>
 
 #include "cspaces.h"
 
@@ -27,14 +29,25 @@ namespace cstuff {
         vector<int> _predecessors;
         vector<double> _weights;
 
+        int get_vertex_label(vertex_t v) {
+            try {
+                return this->vertex_label2index.at(v);
+            }
+            catch (out_of_range& err) {
+                throw invalid_argument((boost::format("Invalid node: %1%")%v).str());
+            }
+        }
+
     public:
         double velocity;
         double d(vertex_t src, vertex_t target) override {
             // call dijkstra
-            int src_idx = this->vertex_label2index[src];
+            int src_idx = this->get_vertex_label(src);
+            int target_idx = this->get_vertex_label(target);
+
             dijkstra_shortest_paths(this->_g, src_idx, predecessor_map(&this->_predecessors[0]).distance_map(
                     &this->_distances[0]));
-            return this->_distances[this->vertex_label2index[target]];
+            return this->_distances[target_idx];
         }
 
         double t(vertex_t src, vertex_t target) override {
@@ -44,8 +57,8 @@ namespace cstuff {
         pair<vertex_t, double> interp_dist(vertex_t u, vertex_t v, double dist_to_dest) override {
             if (u == v) return make_pair(v, 0);
             // call dijkstra
-            int u_idx = this->vertex_label2index[u];
-            const int v_idx = this->vertex_label2index[v];
+            const int u_idx = this->get_vertex_label(u);
+            const int v_idx = this->get_vertex_label(v);
             dijkstra_shortest_paths(this->_g, u_idx, predecessor_map(&this->_predecessors[0]).distance_map(
                     &this->_distances[0]));
 
