@@ -101,11 +101,7 @@ def test_cyGraph_distance(edge_weight):
     for u, v in G.edges():
         G[u][v]["distance"] = edge_weight
     pyG = Graph(G, distance_attribute="distance", velocity=velocity)
-
-    vertices = list(G.nodes())
-    edges = list(G.edges())
-    weights = [edge_weight] * len(edges)
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(G, distance_attribute="distance", velocity=velocity)
 
     for u in G.nodes():
         for v in G.nodes():
@@ -117,12 +113,9 @@ def test_cyGraph_distance(edge_weight):
 
 def test_cyGraph_interpolate():
     G = nx.Graph()
-    G.add_weighted_edges_from([(1, 2, 10.5), (2, 3, 3.5)])
+    G.add_weighted_edges_from([(1, 2, 10.5), (2, 3, 3.5)], weight="distance")
     velocity = 0.17
-    vertices = list(G.nodes())
-    edges = list(G.edges())
-    weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(G, distance_attribute="distance", velocity=velocity)
 
     def true_interp_1_to_3(dist_to_dest):
         """
@@ -154,11 +147,8 @@ def test_cyGraph_interpolate():
 @given(velocity=st.floats(0.00001, 10))
 def test_cyGraph_interp_d_vs_t(velocity):
     G = nx.Graph()
-    G.add_weighted_edges_from([(1, 2, 10), (2, 3, 4)])
-    vertices = list(G.nodes())
-    edges = list(G.edges())
-    weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    G.add_weighted_edges_from([(1, 2, 10), (2, 3, 4)], weight="distance")
+    cyG = CyGraph(G, distance_attribute="distance", velocity=velocity)
 
     for d in np.linspace(0.001, 13.999, 100):
         v1, dist = cyG.interp_dist(1, 3, d)
@@ -173,12 +163,9 @@ def test_cyGraph_d_vs_t(velocity):
     G = nx.cycle_graph(10)
 
     for u, v in G.edges():
-        G[u][v]["weight"] = np.random.random()
+        G[u][v]["distance"] = np.random.random()
 
-    vertices = list(G.nodes())
-    edges = list(G.edges())
-    weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(G, distance_attribute="distance", velocity=velocity)
 
     ds = np.array([cyG.d(u, v) for u in G.nodes() for v in G.nodes()])
     ts = np.array([cyG.t(u, v) for u in G.nodes() for v in G.nodes()])
