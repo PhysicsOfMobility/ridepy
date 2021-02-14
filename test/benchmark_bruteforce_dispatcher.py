@@ -48,6 +48,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) > 1:
         seed = int(sys.argv[1])
     benchmark_insertion_into_long_stoplist(seed)
