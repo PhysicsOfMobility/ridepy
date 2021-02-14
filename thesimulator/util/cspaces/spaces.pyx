@@ -1,4 +1,6 @@
 # distutils: language = c++
+import networkx as nx
+
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
@@ -106,10 +108,14 @@ cdef class Manhattan2D(TransportSpace):
 
 
 cdef class Graph(TransportSpace):
-    def __cinit__(self, vertex_vec, edge_vec, weight_vec, double velocity=1):
+    def __cinit__(self, G: nx.Graph, distance_attribute="distance", velocity: float = 1):
         self.loc_type = LocType.INT
+        cdef vector[int] vertex_vec = G.nodes()
+        cdef vector[pair[int, int]] edge_vec = G.edges()
+        cdef vector[double] weight_vec = [data[distance_attribute] for _,_,data in G.edges(data=True)]
+
         self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
-            velocity, <vector[int]>vertex_vec, <vector[pair[int, int]]>edge_vec, <vector[double]>weight_vec
+            velocity, vertex_vec, edge_vec, weight_vec
         )
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
