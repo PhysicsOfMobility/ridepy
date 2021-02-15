@@ -7,11 +7,24 @@ Simulates a dispatching algorithm serving exogeneous transportation requests wit
 ### Prerequisites
 * Python 3.8
 * git
+* boost >=1.75.0
 
 You should probably use an environment. For example, using [conda](https://www.anaconda.com/):
 ```sh
 conda create -n the_simulator python=3.8
 conda activate the_simulator
+```
+
+#### Environment variables recommended for avoiding compiler troubles
+If the build fails because the compiler cannot find boost, you might need:
+```sh
+export CPPFLAGS="-I/path/to/boost/include"
+```
+The build process of the cython extensions have only been tested with gcc. If your default compiler is something else, 
+you should set the following environment variables before building:
+```sh
+export CC=/path/to/gcc # especially recommened on MacOS
+export CXX=/path/to/g++
 ```
 
 ### Installation
@@ -21,6 +34,7 @@ cd theSimulator
 pre-commit install
 pytest
 ```
+
 ## Contributing
 Generally branch from `master`, implement stuff® and file a pull request back to
 `master`. Feel free to do the latter at an early stage, prefixing the pull request with
