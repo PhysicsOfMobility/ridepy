@@ -9,6 +9,29 @@ def short_uuid():
 
 
 class smartVectorize:
+    """
+    Method decorator for TransportSpace and its subclasses.
+
+    Wraps methods to make them handle both operations
+    on single space coordinates, and array-like bunches of coordinates.
+    * checks whether dimensions of coordinates match with the space
+    * loops over method handling single coordinates as arguments
+    * dispatches to vectorized version of the function is existent
+
+    Use like:
+    ```
+    @smartVectorize
+    def foo(self, u, v):
+        return magic(u, v)
+    ```
+    and optionally in addition
+    ```
+    @foo.vectorized
+    def foo(self, u, v):
+        return np.magic(u, v)
+    ```
+    """
+
     def __init__(self, base_fn, vectorized_fn=None, self_=None):
         self.base_fn = base_fn
         self.vectorized_fn = vectorized_fn
