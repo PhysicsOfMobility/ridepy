@@ -9,12 +9,13 @@ from thesimulator.cdata_structures import (
     Stop,
     TransportationRequest,
     StopAction,
-    LocType
+    LocType,
 )
 
 from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
 
 from thesimulator.cvehicle_state import VehicleState
+
 
 def stoplist_from_properties(stoplist_properties):
     return [
@@ -29,9 +30,10 @@ def stoplist_from_properties(stoplist_properties):
         for loc, cpat, tw_min, tw_max in stoplist_properties
     ]
 
+
 def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D(1)
-    #space = Manhattan2D(1)
+    # space = Manhattan2D(1)
     n = 1000
     rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))
@@ -45,8 +47,10 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
-    #breakpoint()
-    vs = VehicleState(vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC)
+    # breakpoint()
+    vs = VehicleState(
+        vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC
+    )
     request = TransportationRequest(
         request_id=100,
         creation_timestamp=1,
@@ -65,6 +69,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) > 1:
         seed = int(sys.argv[1])
     else:
