@@ -11,6 +11,7 @@ import itertools as it
 from scipy.spatial import distance as spd
 
 from thesimulator.data_structures import TransportSpace, ID
+from thesimulator.util import smartVectorize
 
 
 class Euclidean(TransportSpace):
@@ -137,7 +138,11 @@ class Graph(TransportSpace):
     """
 
     def __init__(
-        self, graph: nx.Graph, distance_attribute="distance", velocity: float = 1
+        self,
+        graph: nx.Graph,
+        distance_attribute="distance",
+        velocity: float = 1,
+        n_dim=1,
     ):
         self.G = graph
         self.distance_attribute = distance_attribute
@@ -146,6 +151,7 @@ class Graph(TransportSpace):
             self._distances,
         ) = nx.floyd_warshall_predecessor_and_distance(self.G, self.distance_attribute)
         self.velocity = velocity
+        self.n_dim = n_dim
 
     @classmethod
     def create_random(cls):
@@ -167,6 +173,7 @@ class Graph(TransportSpace):
             graph=graph,
             velocity=velocity,
             distance_attribute=distance_attribute,
+            n_dim=2,
         )
 
     @classmethod
@@ -186,11 +193,9 @@ class Graph(TransportSpace):
             distance_attribute=distance_attribute,
         )
 
+    @smartVectorize
     def d(self, u, v):
-        if isinstance(u, pd.Series) and isinstance(v, pd.Series):
-            return pd.DataFrame((u, v)).apply(lambda r: self._distances[r[0]][r[1]])
-        else:
-            return self._distances[u][v]
+        return self._distances[u][v]
 
     def t(self, u, v) -> Union[int, float]:
         return self.d(u, v) / self.velocity
