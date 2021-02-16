@@ -166,7 +166,6 @@ def test_cyGraph_interp_d_vs_t(velocity):
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
     cyG = CyGraph(vertices, edges, weights, velocity=velocity)
-
     for d in np.linspace(0.001, 13.999, 100):
         v1, dist = cyG.interp_dist(1, 3, d)
         v2, time = cyG.interp_time(1, 3, d / velocity)
@@ -186,7 +185,6 @@ def test_cyGraph_d_vs_t(velocity):
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
     cyG = CyGraph(vertices, edges, weights, velocity=velocity)
-
     ds = np.array([cyG.d(u, v) for u in G.nodes() for v in G.nodes()])
     ts = np.array([cyG.t(u, v) for u in G.nodes() for v in G.nodes()])
 

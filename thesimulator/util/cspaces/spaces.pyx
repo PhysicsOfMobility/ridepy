@@ -2,6 +2,7 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
+from thesimulator.util import smartVectorize
 from .cspaces cimport(
     R2loc,
     Euclidean2D as CEuclidean2D,
@@ -35,14 +36,18 @@ cdef class TransportSpace:
     (https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/). See the docstring of
     thesimulator/cdata_structures/data_structures.pyx for details.
     """
+
     def __init__(self, loc_type):
         if loc_type == LocType.INT:
             self.loc_type = LocType.INT
+            self.n_dim = 1
         elif loc_type == LocType.R2LOC:
             self.loc_type = LocType.R2LOC
+            self.n_dim = 2
         else:
             raise ValueError("This line should never have been reached")
 
+    @smartVectorize
     def d(self, u, v):
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).d(<R2loc>u, <R2loc>v)
@@ -51,6 +56,7 @@ cdef class TransportSpace:
         else:
             raise ValueError("This line should never have been reached")
 
+    @smartVectorize
     def t(self, u, v):
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).t(<R2loc>u, <R2loc>v)
