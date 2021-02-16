@@ -23,11 +23,11 @@ from thesimulator.util.cspaces import (
 
 
 def test_Euclidean():
-    space = Euclidean(n_dimensions=1)
+    space = Euclidean(n_dim=1)
     assert space.d(0, 1) == 1.0
     assert space.d(0, 0) == 0.0
 
-    space = Euclidean(n_dimensions=2)
+    space = Euclidean(n_dim=2)
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)

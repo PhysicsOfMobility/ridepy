@@ -68,12 +68,10 @@ class smartVectorize:
                 else:
                     atype = None
 
-                if atype == np.ndarray:
-                    return np.array(res)
-                elif atype == pd.Series:
+                if atype == pd.Series:
                     return pd.Series(res)
                 else:
-                    return res
+                    return np.array(res)
 
             else:
                 return self.vectorized_fn(self.self_, *args, **kwargs)
