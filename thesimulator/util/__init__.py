@@ -101,7 +101,7 @@ class smartVectorize:
         else:
             raise ValueError(
                 f"Got {len(shape)+1}-dimensional object "
-                f"instead of expected {self.ndim} dimensions"
+                f"instead of expected {self.self_.n_dim} dimensions"
             )
 
     def vectorized(self, vectorized_fn):
