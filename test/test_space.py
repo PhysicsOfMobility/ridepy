@@ -6,6 +6,7 @@ from hypothesis import given
 import hypothesis.strategies as st
 
 np.random.seed(0)
+import pandas as pd
 
 from thesimulator.util.spaces import (
     Euclidean,
@@ -22,11 +23,11 @@ from thesimulator.util.cspaces import (
 
 
 def test_Euclidean():
-    space = Euclidean(n_dimensions=1)
+    space = Euclidean(n_dim=1)
     assert space.d(0, 1) == 1.0
     assert space.d(0, 0) == 0.0
 
-    space = Euclidean(n_dimensions=2)
+    space = Euclidean(n_dim=2)
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
@@ -78,6 +79,12 @@ def test_cyclic_graph():
     assert space.d(0, 2) == 2
     assert space.d(0, 3) == 1
     assert space.d(0, 4) == np.inf
+
+    x = pd.Series(np.zeros(5, dtype="i8"))
+    y = pd.Series(np.arange(5, dtype="i8"))
+    d = space.d(x, y)
+
+    assert d.equals(pd.Series([0, 1, 2, 1, np.inf]))
 
 
 def test_CyEuclidean2D():
@@ -159,7 +166,6 @@ def test_cyGraph_interp_d_vs_t(velocity):
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
     cyG = CyGraph(vertices, edges, weights, velocity=velocity)
-
     for d in np.linspace(0.001, 13.999, 100):
         v1, dist = cyG.interp_dist(1, 3, d)
         v2, time = cyG.interp_time(1, 3, d / velocity)
@@ -179,7 +185,6 @@ def test_cyGraph_d_vs_t(velocity):
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
     cyG = CyGraph(vertices, edges, weights, velocity=velocity)
-
     ds = np.array([cyG.d(u, v) for u in G.nodes() for v in G.nodes()])
     ts = np.array([cyG.t(u, v) for u in G.nodes() for v in G.nodes()])
 

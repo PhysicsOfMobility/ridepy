@@ -18,6 +18,7 @@ cdef union USpace:
 cdef class TransportSpace:
     cdef USpace u_space
     cdef LocType loc_type
+    cdef readonly int n_dim
 
 cdef class Euclidean2D(TransportSpace):
     cdef CEuclidean2D *derived_ptr
