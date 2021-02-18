@@ -38,9 +38,8 @@ class smartVectorize:
         self.self_ = self_
 
     def __get__(self, obj, objtype=None):
-        return type(self)(
-            base_fn=self.base_fn, vectorized_fn=self.vectorized_fn, self_=obj
-        )
+        self.self_ = obj
+        return self
 
     def __call__(self, *args, **kwargs):
         shape = None
@@ -105,6 +104,5 @@ class smartVectorize:
             )
 
     def vectorized(self, vectorized_fn):
-        return type(self)(
-            base_fn=self.base_fn, vectorized_fn=vectorized_fn, self_=self.self_
-        )
+        self.vectorized_fn = vectorized_fn
+        return self
