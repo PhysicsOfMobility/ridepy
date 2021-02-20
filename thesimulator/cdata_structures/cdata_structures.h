@@ -21,6 +21,19 @@ namespace cstuff {
     public:
         int request_id;
         double creation_timestamp;
+
+        Request() = default;
+        Request(
+            int request_id,
+            double creation_timestamp
+            ) :
+            request_id{request_id},
+            creation_timestamp{creation_timestamp} {}
+    };
+
+    template<typename Loc>
+    class TransportationRequest: public Request<Loc> {
+    public:
         Loc origin;
         Loc destination;
         double pickup_timewindow_min;
@@ -28,8 +41,8 @@ namespace cstuff {
         double delivery_timewindow_min;
         double delivery_timewindow_max;
 
-        Request() = default;
-        Request(
+        TransportationRequest() = default;
+        TransportationRequest(
             int request_id,
             double creation_timestamp,
             Loc origin,
@@ -39,14 +52,28 @@ namespace cstuff {
             double delivery_timewindow_min,
             double delivery_timewindow_max
             ) :
-            request_id{request_id},
-            creation_timestamp{creation_timestamp},
+            Request<Loc>{request_id, creation_timestamp},
             origin{origin},
             destination{destination},
             pickup_timewindow_min{pickup_timewindow_min},
             pickup_timewindow_max{pickup_timewindow_max},
             delivery_timewindow_min{delivery_timewindow_min},
             delivery_timewindow_max{delivery_timewindow_max} {}
+    };
+
+    template<typename Loc>
+    class InternalRequest: public Request<Loc> {
+    public:
+        Loc location;
+
+        InternalRequest() = default;
+        InternalRequest(
+            int request_id,
+            double creation_timestamp,
+            Loc location
+            ) :
+            Request<Loc>{request_id, creation_timestamp},
+            location{location} {}
     };
 
     enum class StopAction : uint32_t {

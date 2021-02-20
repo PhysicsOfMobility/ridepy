@@ -15,39 +15,32 @@ from libcpp.vector cimport vector
 
 from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
+    TransportationRequest as CTransportationRequest,
+    InternalRequest as CInternalRequest,
     Stop as CStop,
     R2loc,
 )
 
+
 import logging
 logger = logging.getLogger(__name__)
 
-cdef class TransportationRequest:
+cdef class Request:
     def __init__(
-            self, int request_id, float creation_timestamp,
-            origin, destination, pickup_timewindow_min, pickup_timewindow_max,
-            delivery_timewindow_min, delivery_timewindow_max
-    ):
-
-        if hasattr(origin, '__len__') and len(origin) == 2:
-            # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
-            # let's assume both origin and destination are Tuple[double, double]
-            self.loc_type = LocType.R2LOC
+            self, int request_id, float creation_timestamp, loc_type):
+        self.loc_type = <LocType> loc_type
+        #if hasattr(origin, '__len__') and len(origin) == 2:
+        if self.loc_type == LocType.R2LOC:
             self._ureq._req_r2loc = CRequest[R2loc](
-                request_id, creation_timestamp, origin, destination,
-                pickup_timewindow_min, pickup_timewindow_max,
-                delivery_timewindow_min, delivery_timewindow_max
+                request_id, creation_timestamp
             )
-        elif isinstance(origin, int):
-            # let's assume both origin and destination are int
-            self.loc_type = LocType.INT
+        #elif isinstance(origin, int):
+        elif self.loc_type == LocType.INT:
             self._ureq._req_int = CRequest[int](
-                request_id, creation_timestamp, origin, destination,
-                pickup_timewindow_min, pickup_timewindow_max,
-                delivery_timewindow_min, delivery_timewindow_max
+                request_id, creation_timestamp
             )
         else:
-            raise TypeError(f"Cannot handle origin of type {type(origin)}")
+            raise ValueError("This line should never have been reached")
 
 
     def __repr__(self):
@@ -75,21 +68,61 @@ cdef class TransportationRequest:
             return self._ureq._req_int.creation_timestamp
         else:
             raise ValueError("This line should never have been reached")
-    # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
 
     @staticmethod
-    cdef TransportationRequest from_c_r2loc(CRequest[R2loc] creq):
-        cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
+    cdef Request from_c_r2loc(CRequest[R2loc] creq):
+        cdef Request req = Request.__new__(Request)
         req._ureq._req_r2loc = creq
         req.loc_type = LocType.R2LOC
         return req
 
     @staticmethod
-    cdef TransportationRequest from_c_int(CRequest[int] creq):
-        cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
+    cdef Request from_c_int(CRequest[int] creq):
+        cdef Request req = Request.__new__(Request)
         req._ureq._req_int = creq
         req.loc_type = LocType.INT
         return req
+
+
+cdef class TransportationRequest(Request):
+    def __init__(
+            self, int request_id, float creation_timestamp,
+            origin, destination, pickup_timewindow_min, pickup_timewindow_max,
+            delivery_timewindow_min, delivery_timewindow_max
+    ):
+        if hasattr(origin, '__len__') and len(origin) == 2:
+            # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
+            # let's assume both origin and destination are Tuple[double, double]
+            self.loc_type = LocType.R2LOC
+            self._ureq._req_r2loc = CTransportationRequest[R2loc](
+                request_id, creation_timestamp, origin, destination,
+                pickup_timewindow_min, pickup_timewindow_max,
+                delivery_timewindow_min, delivery_timewindow_max
+            )
+        elif isinstance(origin, int):
+            # let's assume both origin and destination are int
+            self.loc_type = LocType.INT
+            self._ureq._req_int = CTransportationRequest[int](
+                request_id, creation_timestamp, origin, destination,
+                pickup_timewindow_min, pickup_timewindow_max,
+                delivery_timewindow_min, delivery_timewindow_max
+            )
+        else:
+            raise TypeError(f"Cannot handle origin of type {type(origin)}")
+
+
+    def __repr__(self):
+        if self.loc_type == LocType.R2LOC:
+            return f'Request(request_id={self._ureq._req_r2loc.request_id},"' \
+                   f'f"creation_timestamp={self._ureq._req_r2loc.creation_timestamp})'
+        elif self.loc_type == LocType.INT:
+            return f'Request(request_id={self._ureq._req_int.request_id},"' \
+                   f'f"creation_timestamp={self._ureq._req_int.creation_timestamp})'
+        else:
+            raise ValueError("This line should never have been reached")
+
+    # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
+
 
 cdef class Stop:
     def __cinit__(self):

@@ -28,7 +28,8 @@ namespace cstuff {
         vector<double> _weights;
 
     public:
-        double velocity;
+        double velocity;  // Might consider not storing velocity as an attribute of this class, rather as that of the
+        // parent class (TransportSpace)
         double d(vertex_t src, vertex_t target) override {
             // call dijkstra
             int src_idx = this->vertex_label2index[src];

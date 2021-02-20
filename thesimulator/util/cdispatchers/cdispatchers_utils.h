@@ -11,7 +11,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            const Request<Loc> &request,
+            const TransportationRequest<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -48,7 +48,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            const Request<Loc> &request,
+            const TransportationRequest<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space

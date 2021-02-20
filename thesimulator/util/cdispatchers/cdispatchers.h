@@ -13,7 +13,7 @@ using namespace std;
 namespace cstuff {
     template<typename Loc>
     InsertionResult<Loc> brute_force_distance_minimizing_dispatcher(
-            const Request<Loc> &request,
+            const TransportationRequest<Loc> &request,
             vector<Stop<Loc>> &stoplist,
             TransportSpace<Loc> &space
     ) {

@@ -14,6 +14,11 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
     cdef cppclass Request[Loc]:
         int request_id
         double creation_timestamp
+
+        Request()
+        Request(int, double)
+
+    cdef cppclass TransportationRequest[Loc](Request[Loc]):
         Loc origin
         Loc destination
         double pickup_timewindow_min
@@ -21,8 +26,15 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         double delivery_timewindow_min
         double delivery_timewindow_max
 
+        TransportationRequest()
+        TransportationRequest(int, double, Loc, Loc, double, double, double, double)
+
+    cdef cppclass InternalRequest[Loc](Request[Loc]):
+        Loc location
+
         Request()
-        Request(int, double, Loc, Loc, double, double, double, double)
+        Request(int, double, Loc)
+
 
     cdef cppclass Stop[Loc]:
         Loc location

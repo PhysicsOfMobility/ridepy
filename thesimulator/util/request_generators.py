@@ -1,8 +1,10 @@
 import random
-
 import numpy as np
 
+from typing import Union
+
 from thesimulator.data_structures import TransportSpace, TransportationRequest
+from thesimulator.cdata_structures import TransportationRequest as  CTransportationRequest
 from thesimulator.util.spaces import Euclidean
 
 
@@ -17,6 +19,7 @@ class RandomRequestGenerator:
         pickup_timewindow_size=np.inf,
         dropoff_timewindow_start=0,
         dropoff_timewindow_size=np.inf,
+        request_class : Union[TransportationRequest, CTransportationRequest] = TransportationRequest
     ):
         if seed is not None:
             np.random.seed(seed)
@@ -37,7 +40,7 @@ class RandomRequestGenerator:
     def __next__(self):
         self.now += np.random.exponential(1 / self.rate)
         self.request_index += 1
-        return TransportationRequest(
+        return request_class(
             request_id=self.request_index,
             creation_timestamp=self.now,
             origin=self.transport_space.random_point(),
