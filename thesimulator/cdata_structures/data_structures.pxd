@@ -5,6 +5,8 @@ from libcpp.vector cimport vector
 
 from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
+    TransportationRequest as CTransportationRequest,
+    InternalRequest as CInternalRequest,
     Stop as CStop,
     R2loc
 )
@@ -32,21 +34,20 @@ cdef union _UStoplist:
     vector[CStop[int]]* _stoplist_int_ptr
 
 
-cdef class TransportationRequest:
+cdef class Request:
     cdef _URequest _ureq
     cdef LocType loc_type
-#    @staticmethod
-#    cdef TransportationRequest from_c_union(_URequest, LocType)
     @staticmethod
-    cdef TransportationRequest from_c_r2loc(CRequest[R2loc] creq)
+    cdef Request from_c_r2loc(CRequest[R2loc] creq)
     @staticmethod
-    cdef TransportationRequest from_c_int(CRequest[int] creq)
+    cdef Request from_c_int(CRequest[int] creq)
+
+cdef class TransportationRequest(Request):
+    pass
 
 cdef class Stop:
     cdef _UStop ustop
     cdef LocType loc_type
-#    @staticmethod
-#    cdef Stop from_c_union(_UStop ustop, LocType loc_type)
     @staticmethod
     cdef Stop from_c_r2loc(CStop[R2loc] cstop)
     @staticmethod
@@ -58,8 +59,6 @@ cdef class Stoplist:
     cdef LocType loc_type
     cdef _UStoplist ustoplist
     cdef Stop py_s
-#    @staticmethod
-#    cdef Stoplist from_c_union(_UStoplist ustoplist, LocType loc_type)
     @staticmethod
     cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist_ptr)
     @staticmethod
