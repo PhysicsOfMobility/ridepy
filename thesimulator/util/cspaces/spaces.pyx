@@ -56,7 +56,7 @@ cdef class TransportSpace:
         else:
             raise ValueError("This line should never have been reached")
 
-    @smartVectorize
+    @smartVectorize # TODO: check if the smartvectorize works for this cdef class
     def t(self, u, v):
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).t(<R2loc>u, <R2loc>v)

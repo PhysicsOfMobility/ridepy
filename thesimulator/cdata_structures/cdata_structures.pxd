@@ -38,14 +38,14 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
 
     cdef cppclass Stop[Loc]:
         Loc location
-        Request[Loc] request
+        Request[Loc]* request
         StopAction action
         double estimated_arrival_time
         double time_window_min
         double time_window_max
 
         Stop()
-        Stop(Loc, Request, StopAction, double, double, double)
+        Stop(Loc, Request*, StopAction, double, double, double)
 
     cdef cppclass InsertionResult[Loc]:
         vector[Stop[Loc]] new_stoplist

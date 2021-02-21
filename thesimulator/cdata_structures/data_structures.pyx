@@ -31,12 +31,12 @@ cdef class Request:
         self.loc_type = <LocType> loc_type
         #if hasattr(origin, '__len__') and len(origin) == 2:
         if self.loc_type == LocType.R2LOC:
-            self._ureq._req_r2loc = CRequest[R2loc](
+            self._ureq._req_r2loc = new CRequest[R2loc](
                 request_id, creation_timestamp
             )
         #elif isinstance(origin, int):
         elif self.loc_type == LocType.INT:
-            self._ureq._req_int = CRequest[int](
+            self._ureq._req_int = new CRequest[int](
                 request_id, creation_timestamp
             )
         else:
@@ -45,11 +45,11 @@ cdef class Request:
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f'Request(request_id={self._ureq._req_r2loc.request_id},"' \
-                   f'f"creation_timestamp={self._ureq._req_r2loc.creation_timestamp})'
+            return f'Request(request_id={dereference(self._ureq._req_r2loc).request_id},"' \
+                   f'f"creation_timestamp={dereference(self._ureq._req_r2loc).creation_timestamp)})'
         elif self.loc_type == LocType.INT:
-            return f'Request(request_id={self._ureq._req_int.request_id},"' \
-                   f'f"creation_timestamp={self._ureq._req_int.creation_timestamp})'
+            return f'Request(request_id={dereference(self._ureq._req_int).request_id},"' \
+                   f'f"creation_timestamp={dereference(self._ureq._req_int).creation_timestamp})'
         else:
             raise ValueError("This line should never have been reached")
 
@@ -70,18 +70,25 @@ cdef class Request:
             raise ValueError("This line should never have been reached")
 
     @staticmethod
-    cdef Request from_c_r2loc(CRequest[R2loc] creq):
+    cdef Request from_c_r2loc(CRequest[R2loc] *creq):
         cdef Request req = Request.__new__(Request)
         req._ureq._req_r2loc = creq
         req.loc_type = LocType.R2LOC
         return req
 
     @staticmethod
-    cdef Request from_c_int(CRequest[int] creq):
+    cdef Request from_c_int(CRequest[int] *creq):
         cdef Request req = Request.__new__(Request)
         req._ureq._req_int = creq
         req.loc_type = LocType.INT
         return req
+
+    def __dealloc__(self):
+        """
+        Since this is a base class that will never be instantiated, we do not need to free any pointer here.
+        Take care to do so in the derived classes though.
+        """
+        ...
 
 
 cdef class TransportationRequest(Request):
@@ -94,7 +101,7 @@ cdef class TransportationRequest(Request):
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
-            self._ureq._req_r2loc = CTransportationRequest[R2loc](
+            self._ureq._req_r2loc = new CTransportationRequest[R2loc](
                 request_id, creation_timestamp, origin, destination,
                 pickup_timewindow_min, pickup_timewindow_max,
                 delivery_timewindow_min, delivery_timewindow_max
@@ -102,7 +109,7 @@ cdef class TransportationRequest(Request):
         elif isinstance(origin, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self._ureq._req_int = CTransportationRequest[int](
+            self._ureq._req_int = new CTransportationRequest[int](
                 request_id, creation_timestamp, origin, destination,
                 pickup_timewindow_min, pickup_timewindow_max,
                 delivery_timewindow_min, delivery_timewindow_max
@@ -113,15 +120,22 @@ cdef class TransportationRequest(Request):
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f'Request(request_id={self._ureq._req_r2loc.request_id},"' \
-                   f'f"creation_timestamp={self._ureq._req_r2loc.creation_timestamp})'
+            return f'Request(request_id={dereference(self._ureq._req_r2loc).request_id},"' \
+                   f'f"creation_timestamp={dereference(self._ureq._req_r2loc).creation_timestamp})'
         elif self.loc_type == LocType.INT:
-            return f'Request(request_id={self._ureq._req_int.request_id},"' \
-                   f'f"creation_timestamp={self._ureq._req_int.creation_timestamp})'
+            return f'Request(request_id={dereference(self._ureq._req_int).request_id},"' \
+                   f'f"creation_timestamp={dereference(self._ureq._req_int).creation_timestamp})'
         else:
             raise ValueError("This line should never have been reached")
 
     # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
+    def __dealloc__(self):
+        if self.loc_type == LocType.R2LOC:
+            del self._ureq._req_r2loc
+        elif self.loc_type == LocType.INT:
+            del self._ureq._req_int
+        else:
+            raise ValueError("This line should never have been reached")
 
 
 cdef class Stop:
@@ -129,7 +143,7 @@ cdef class Stop:
         pass
 
     def __init__(
-            self, location, TransportationRequest request,
+            self, location, Request request,
             StopAction action, double estimated_arrival_time,
             double time_window_min,
             double time_window_max,
@@ -151,11 +165,12 @@ cdef class Stop:
 
 
     def __repr__(self):
+        # TODO: should also show the CPAT, EAST and LAST and Action
         if self.loc_type == LocType.R2LOC:
-            return f'Stop(request={TransportationRequest.from_c_r2loc(self.ustop._stop_r2loc.request)}, "' \
+            return f'Stop(request={Request.from_c_r2loc(self.ustop._stop_r2loc.request)}, "' \
                    f'f"estimated_arrival_time={self.ustop._stop_r2loc.estimated_arrival_time})'
         elif self.loc_type == LocType.INT:
-            return f'Stop(request={TransportationRequest.from_c_int(self.ustop._stop_int.request)},"' \
+            return f'Stop(request={Request.from_c_int(self.ustop._stop_int.request)},"' \
                    f'f" estimated_arrival_time={self.ustop._stop_int.estimated_arrival_time})'
         else:
             raise ValueError("This line should never have been reached")
@@ -205,9 +220,9 @@ cdef class Stop:
     @property
     def request(self):
         if self.loc_type == LocType.R2LOC:
-            return TransportationRequest.from_c_r2loc(self.ustop._stop_r2loc.request)
+            return Request.from_c_r2loc(self.ustop._stop_r2loc.request)
         elif self.loc_type == LocType.INT:
-            return TransportationRequest.from_c_int(self.ustop._stop_int.request)
+            return Request.from_c_int(self.ustop._stop_int.request)
         else:
             raise ValueError("This line should never have been reached")
 

@@ -11,7 +11,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            const TransportationRequest<Loc> &request,
+            TransportationRequest<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -48,7 +48,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            const TransportationRequest<Loc> &request,
+            TransportationRequest<Loc> &request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -65,7 +65,7 @@ namespace cstuff {
         auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
                 stop_before_pickup.location, request.origin
         );
-        Stop<Loc> pickup_stop(request.origin, request, StopAction::pickup, cpat_at_pu, request.pickup_timewindow_min,
+        Stop<Loc> pickup_stop(request.origin, &request, StopAction::pickup, cpat_at_pu, request.pickup_timewindow_min,
                               request.pickup_timewindow_max);
 
         insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space);
@@ -77,7 +77,7 @@ namespace cstuff {
         );
         Stop<Loc> dropoff_stop(
                 request.destination,
-                request,
+                &request,
                 StopAction::dropoff,
                 cpat_at_do,
                 request.delivery_timewindow_min,
