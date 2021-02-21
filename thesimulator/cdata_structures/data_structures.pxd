@@ -35,6 +35,7 @@ cdef union _UStoplist:
 
 
 cdef class Request:
+    cdef bint ptr_owner
     cdef _URequest _ureq
     cdef LocType loc_type
     @staticmethod

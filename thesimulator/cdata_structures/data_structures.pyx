@@ -30,6 +30,7 @@ cdef class Request:
     # an __init__?
     def __init__(
             self, int request_id, float creation_timestamp, loc_type):
+        self.ptr_owner=True # I have not been created from an existing pointer
         self.loc_type = <LocType> loc_type
         #if hasattr(origin, '__len__') and len(origin) == 2:
         if self.loc_type == LocType.R2LOC:
@@ -74,6 +75,7 @@ cdef class Request:
     @staticmethod
     cdef Request from_c_r2loc(CRequest[R2loc] *creq):
         cdef Request req = Request.__new__(Request)
+        req.ptr_owner = False
         req._ureq._req_r2loc = creq
         req.loc_type = LocType.R2LOC
         return req
@@ -81,6 +83,7 @@ cdef class Request:
     @staticmethod
     cdef Request from_c_int(CRequest[int] *creq):
         cdef Request req = Request.__new__(Request)
+        req.ptr_owner = False
         req._ureq._req_int = creq
         req.loc_type = LocType.INT
         return req
@@ -99,6 +102,7 @@ cdef class TransportationRequest(Request):
             origin, destination, pickup_timewindow_min, pickup_timewindow_max,
             delivery_timewindow_min, delivery_timewindow_max
     ):
+        self.ptr_owner=True # I have not been created from an existing pointer
         if hasattr(origin, '__len__') and len(origin) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
@@ -132,12 +136,14 @@ cdef class TransportationRequest(Request):
 
     # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
     def __dealloc__(self):
-        if self.loc_type == LocType.R2LOC:
-            del self._ureq._req_r2loc
-        elif self.loc_type == LocType.INT:
-            del self._ureq._req_int
-        else:
-            raise ValueError("This line should never have been reached")
+        if self.ptr_owner:
+            # I was not created from an existing c++ pointer ("owned" by another object)
+            if self.loc_type == LocType.R2LOC:
+                del self._ureq._req_r2loc
+            elif self.loc_type == LocType.INT:
+                del self._ureq._req_int
+            else:
+                raise ValueError("This line should never have been reached")
 
 
 cdef class Stop:
