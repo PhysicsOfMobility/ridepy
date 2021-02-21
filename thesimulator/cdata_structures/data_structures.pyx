@@ -151,7 +151,7 @@ cdef class Stop:
         pass
 
     def __init__(
-            self, location, Request request,
+            self, location, Request request not None,
             StopAction action, double estimated_arrival_time,
             double time_window_min,
             double time_window_max,
