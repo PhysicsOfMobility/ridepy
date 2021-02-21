@@ -28,7 +28,8 @@ namespace cstuff {
             double creation_timestamp
             ) :
             request_id{request_id},
-            creation_timestamp{creation_timestamp} {}
+            creation_timestamp{creation_timestamp} {};
+        ~Request() {};
     };
 
     template<typename Loc>
@@ -73,7 +74,7 @@ namespace cstuff {
             Loc location
             ) :
             Request<Loc>{request_id, creation_timestamp},
-            location{location} {}
+            location{location} {};
     };
 
     enum class StopAction : uint32_t {
@@ -86,7 +87,7 @@ namespace cstuff {
     class Stop {
     public:
         Loc location;
-        Request<Loc> request;
+        Request<Loc> *request;
         StopAction action;
         double estimated_arrival_time;
         double time_window_min;
@@ -94,7 +95,7 @@ namespace cstuff {
 
         Stop() = default;
         Stop(
-            Loc loc, Request<Loc> req, StopAction action, double estimated_arrival_time,
+            Loc loc, Request<Loc> *req, StopAction action, double estimated_arrival_time,
             double time_window_min, double time_window_max) :
             location{loc},
             request{req},

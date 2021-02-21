@@ -22,8 +22,8 @@ cpdef enum class LocType:
     INT = 2
 
 cdef union _URequest:
-    CRequest[R2loc] _req_r2loc
-    CRequest[int] _req_int
+    CRequest[R2loc]* _req_r2loc
+    CRequest[int]* _req_int
 
 cdef union _UStop:
     CStop[R2loc] _stop_r2loc
@@ -38,9 +38,9 @@ cdef class Request:
     cdef _URequest _ureq
     cdef LocType loc_type
     @staticmethod
-    cdef Request from_c_r2loc(CRequest[R2loc] creq)
+    cdef Request from_c_r2loc(CRequest[R2loc] *creq)
     @staticmethod
-    cdef Request from_c_int(CRequest[int] creq)
+    cdef Request from_c_int(CRequest[int] *creq)
 
 cdef class TransportationRequest(Request):
     pass
