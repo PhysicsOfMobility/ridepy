@@ -47,7 +47,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
-    # breakpoint()
+    breakpoint()
     vs = VehicleState(
         vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC
     )

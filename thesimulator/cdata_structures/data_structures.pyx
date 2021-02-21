@@ -26,6 +26,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 cdef class Request:
+    # TODO: Since this is a base class never to be instantiated, probably we do not need
+    # an __init__?
     def __init__(
             self, int request_id, float creation_timestamp, loc_type):
         self.loc_type = <LocType> loc_type
