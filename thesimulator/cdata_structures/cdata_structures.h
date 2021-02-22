@@ -23,6 +23,7 @@ namespace cstuff {
         double creation_timestamp;
 
         Request() = default;
+        Request(const Request&) = default;
         Request(
             int request_id,
             double creation_timestamp
@@ -87,7 +88,7 @@ namespace cstuff {
     class Stop {
     public:
         Loc location;
-        Request<Loc> *request;
+        unique_ptr<Request<Loc>> request;
         StopAction action;
         double estimated_arrival_time;
         double time_window_min;
@@ -95,14 +96,16 @@ namespace cstuff {
 
         Stop() = default;
         Stop(
-            Loc loc, Request<Loc> *req, StopAction action, double estimated_arrival_time,
+            Loc loc, unique_ptr<Request<Loc>> req, StopAction action, double estimated_arrival_time,
             double time_window_min, double time_window_max) :
             location{loc},
             request{req},
             action{action},
             estimated_arrival_time{estimated_arrival_time},
             time_window_min{time_window_min},
-            time_window_max{time_window_max} {}
+            time_window_max{time_window_max} {std::cout<<"At c++ Stop init. request_id: " << (this->request)->request_id << std::endl;}
+
+
 
         double estimated_departure_time() {
             return max(estimated_arrival_time, time_window_min);

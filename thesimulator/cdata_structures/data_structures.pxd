@@ -1,6 +1,7 @@
 # distutils: language = c++
 
 from libcpp.vector cimport vector
+from libcpp.memory cimport unique_ptr
 
 
 from thesimulator.cdata_structures.cdata_structures cimport (
@@ -22,8 +23,8 @@ cpdef enum class LocType:
     INT = 2
 
 cdef union _URequest:
-    CRequest[R2loc]* _req_r2loc
-    CRequest[int]* _req_int
+    unique_ptr[CRequest[R2loc]] _req_r2loc
+    unique_ptr[CRequest[int]] _req_int
 
 cdef union _UStop:
     CStop[R2loc] _stop_r2loc
@@ -39,11 +40,14 @@ cdef class Request:
     cdef _URequest _ureq
     cdef LocType loc_type
     @staticmethod
-    cdef Request from_c_r2loc(CRequest[R2loc] *creq)
+    cdef Request from_c_r2loc(unique_ptr[CRequest[R2loc]] creq)
     @staticmethod
-    cdef Request from_c_int(CRequest[int] *creq)
+    cdef Request from_c_int(unique_ptr[CRequest[int]] creq)
 
 cdef class TransportationRequest(Request):
+    pass
+
+cdef class InternalRequest(Request):
     pass
 
 cdef class Stop:
