@@ -32,8 +32,8 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
     cdef cppclass InternalRequest[Loc](Request[Loc]):
         Loc location
 
-        Request()
-        Request(int, double, Loc)
+        InternalRequest()
+        InternalRequest(int, double, Loc)
 
 
     cdef cppclass Stop[Loc]:
