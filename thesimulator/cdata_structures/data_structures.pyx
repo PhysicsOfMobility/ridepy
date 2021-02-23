@@ -151,6 +151,7 @@ cdef class InternalRequest(Request):
             location
     ):
         self.ptr_owner=True # I have not been created from an existing pointer
+        print(f"Request.__init__: request_id={request_id}")
         if hasattr(location, '__len__') and len(location) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
@@ -309,6 +310,7 @@ cdef class Stoplist:
         if loc_type == LocType.R2LOC:
             for py_s in python_stoplist:
                 print("before pushing back: ", py_s)
+                # TODO: This is probably the cause of py_s changing: Stop needs move and copy constructur?
                 dereference(self.ustoplist._stoplist_r2loc_ptr).push_back((<Stop> py_s).ustop._stop_r2loc)
                 print("after pushing back: ", py_s)
         elif loc_type == LocType.INT:

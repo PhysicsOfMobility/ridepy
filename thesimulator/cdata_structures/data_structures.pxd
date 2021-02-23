@@ -59,7 +59,6 @@ cdef class Stoplist:
     cdef bint ptr_owner
     cdef LocType loc_type
     cdef _UStoplist ustoplist
-    cdef Stop py_s
     @staticmethod
     cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist_ptr)
     @staticmethod
