@@ -35,12 +35,12 @@ cdef class Request:
         self.loc_type = <LocType> loc_type
         #if hasattr(origin, '__len__') and len(origin) == 2:
         if self.loc_type == LocType.R2LOC:
-            self._ureq._req_r2loc = unique_ptr[CRequest[R2loc]](new CRequest[R2loc](
+            self._ureq._req_r2loc = shared_ptr[CRequest[R2loc]](new CRequest[R2loc](
                 request_id, creation_timestamp
             ))
         #elif isinstance(origin, int):
         elif self.loc_type == LocType.INT:
-            self._ureq._req_int = unique_ptr[CRequest[int]](new CRequest[int](
+            self._ureq._req_int = shared_ptr[CRequest[int]](new CRequest[int](
                 request_id, creation_timestamp
             ))
         else:
@@ -74,25 +74,24 @@ cdef class Request:
             raise ValueError("This line should never have been reached")
 
     @staticmethod
-    cdef Request from_c_r2loc(unique_ptr[CRequest[R2loc]] creq):
+    cdef Request from_c_r2loc(shared_ptr[CRequest[R2loc]] creq):
         cdef Request req = Request.__new__(Request)
         req.ptr_owner = False
-        req._ureq._req_r2loc = unique_ptr[CRequest[R2loc]](new CRequest[R2loc](dereference(creq)))
+        req._ureq._req_r2loc = creq
         req.loc_type = LocType.R2LOC
         return req
 
     @staticmethod
-    cdef Request from_c_int(unique_ptr[CRequest[int]] creq):
+    cdef Request from_c_int(shared_ptr[CRequest[int]] creq):
         cdef Request req = Request.__new__(Request)
         req.ptr_owner = False
-        req._ureq._req_int = unique_ptr[CRequest[int]](new CRequest[int](dereference(creq)))
+        req._ureq._req_int = creq
         req.loc_type = LocType.INT
         return req
 
     def __dealloc__(self):
         """
-        Since this is a base class that will never be instantiated, we do not need to free any pointer here.
-        Take care to do so in the derived classes though.
+        Using smart pointers. Do not need to delete the base pointer.
         """
         ...
 
@@ -108,7 +107,7 @@ cdef class TransportationRequest(Request):
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
-            self._ureq._req_r2loc = unique_ptr[CRequest[R2loc]](new CTransportationRequest[R2loc](
+            self._ureq._req_r2loc = shared_ptr[CRequest[R2loc]](new CTransportationRequest[R2loc](
                 request_id, creation_timestamp, origin, destination,
                 pickup_timewindow_min, pickup_timewindow_max,
                 delivery_timewindow_min, delivery_timewindow_max
@@ -116,7 +115,7 @@ cdef class TransportationRequest(Request):
         elif isinstance(origin, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self._ureq._req_int = unique_ptr[CRequest[int]](new CTransportationRequest[int](
+            self._ureq._req_int = shared_ptr[CRequest[int]](new CTransportationRequest[int](
                 request_id, creation_timestamp, origin, destination,
                 pickup_timewindow_min, pickup_timewindow_max,
                 delivery_timewindow_min, delivery_timewindow_max
@@ -159,13 +158,13 @@ cdef class InternalRequest(Request):
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
-            self._ureq._req_r2loc = unique_ptr[CRequest[R2loc]](new CInternalRequest[R2loc](
+            self._ureq._req_r2loc = shared_ptr[CRequest[R2loc]](new CInternalRequest[R2loc](
                 request_id, creation_timestamp, location
             ))
         elif isinstance(location, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self._ureq._req_int = unique_ptr[CRequest[int]](new CInternalRequest[int](
+            self._ureq._req_int = shared_ptr[CRequest[int]](new CInternalRequest[int](
                 request_id, creation_timestamp, location
             ))
         else:
@@ -185,17 +184,8 @@ cdef class InternalRequest(Request):
     # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
     def __dealloc__(self):
         if self.ptr_owner:
-            # using unique_ptr's no no deletion
+            # using shared_ptr's no no deletion
             pass
-
-#            # I was not created from an existing c++ pointer ("owned" by another object)
-#            if self.loc_type == LocType.R2LOC:
-#                del self._ureq._req_r2loc
-#            elif self.loc_type == LocType.INT:
-#                del self._ureq._req_int
-#            else:
-#                raise ValueError("This line should never have been reached")
-#
 
 cdef class Stop:
     def __cinit__(self):
@@ -207,6 +197,7 @@ cdef class Stop:
             double time_window_min,
             double time_window_max,
     ):
+        self.cy_request = request
         print("req at Stop.__init__: ", request)
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]

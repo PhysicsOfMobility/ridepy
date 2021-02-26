@@ -11,7 +11,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            TransportationRequest<Loc> &request,
+            std::shared_ptr<TransportationRequest<Loc>> request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -48,7 +48,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            TransportationRequest<Loc> &request,
+            std::shared_ptr<TransportationRequest<Loc>> request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -63,25 +63,25 @@ namespace cstuff {
         // Handle the pickup
         auto &stop_before_pickup = new_stoplist[pickup_idx];
         auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
-                stop_before_pickup.location, request.origin
+                stop_before_pickup.location, request->origin
         );
-        Stop<Loc> pickup_stop(request.origin, &request, StopAction::pickup, cpat_at_pu, request.pickup_timewindow_min,
-                              request.pickup_timewindow_max);
+        Stop<Loc> pickup_stop(request->origin, request, StopAction::pickup, cpat_at_pu, request->pickup_timewindow_min,
+                              request->pickup_timewindow_max);
 
         insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space);
         // Handle the dropoff
         dropoff_idx += 1;
         auto &stop_before_dropoff = new_stoplist[dropoff_idx];
         auto cpat_at_do = stop_before_dropoff.estimated_departure_time() + space.d(
-                stop_before_dropoff.location, request.destination
+                stop_before_dropoff.location, request->destination
         );
         Stop<Loc> dropoff_stop(
-                request.destination,
-                &request,
+                request->destination,
+                request,
                 StopAction::dropoff,
                 cpat_at_do,
-                request.delivery_timewindow_min,
-                request.delivery_timewindow_max);
+                request->delivery_timewindow_min,
+                request->delivery_timewindow_max);
         insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx, space);
         return new_stoplist;
     }

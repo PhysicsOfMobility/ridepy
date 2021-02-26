@@ -15,6 +15,7 @@ from thesimulator.cdata_structures import (
 )
 
 from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
+from random import randint
 
 from thesimulator.cvehicle_state import VehicleState
 
@@ -23,7 +24,7 @@ def stoplist_from_properties(stoplist_properties):
     return [
         Stop(
             location=loc,
-            request=InternalRequest(request_id=0, creation_timestamp=0, location=(0, 0)),
+            request=InternalRequest(request_id=randint(0,100), creation_timestamp=0, location=(0, 0)),
             action=StopAction.internal,
             estimated_arrival_time=cpat,
             time_window_min=tw_min,
@@ -68,6 +69,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     tick = time()
     # TODO: instead of creating VehicleState, call cythonic dispatcher directly (same as the pythonic benchmark script)
     vs.handle_transportation_request_single_vehicle(request)
+    breakpoint()
     tock = time()
     print(f"Computing insertion into {n}-element stoplist took: {tock-tick} seconds")
 

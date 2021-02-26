@@ -2,7 +2,7 @@
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
-from libcpp.memory cimport unique_ptr
+from libcpp.memory cimport shared_ptr
 
 cdef extern from "cdata_structures.h" namespace 'cstuff':
 
@@ -40,14 +40,14 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
 
     cdef cppclass Stop[Loc]:
         Loc location
-        unique_ptr[Request[Loc]] request
+        shared_ptr[Request[Loc]] request
         StopAction action
         double estimated_arrival_time
         double time_window_min
         double time_window_max
 
         Stop()
-        Stop(Loc, unique_ptr[Request], StopAction, double, double, double)
+        Stop(Loc, const shared_ptr[Request]&, StopAction, double, double, double)
 
     cdef cppclass InsertionResult[Loc]:
         vector[Stop[Loc]] new_stoplist

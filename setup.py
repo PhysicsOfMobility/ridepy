@@ -25,7 +25,7 @@ setuptools.setup(
     zip_safe=False,
     packages=setuptools.find_packages(),
     # ext_modules=cythonize("thesimulator/**/*.pyx", language='c++',),
-    ext_modules=cythonize(extensions),
+    ext_modules=cythonize(extensions, language='c++'),
     install_requires=reqs,
     extras_require={"dev": dev_reqs},
 )

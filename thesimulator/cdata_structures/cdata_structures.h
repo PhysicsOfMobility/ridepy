@@ -10,6 +10,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include "../util/cspaces/cspaces.h"
 
 using namespace std;
@@ -30,7 +31,7 @@ namespace cstuff {
             ) :
             request_id{request_id},
             creation_timestamp{creation_timestamp} {};
-        ~Request() {};
+        virtual ~Request()=default;
     };
 
     template<typename Loc>
@@ -88,7 +89,7 @@ namespace cstuff {
     class Stop {
     public:
         Loc location;
-        unique_ptr<Request<Loc>> request;
+        std::shared_ptr<Request<Loc>> request;
         StopAction action;
         double estimated_arrival_time;
         double time_window_min;
@@ -96,7 +97,7 @@ namespace cstuff {
 
         Stop() = default;
         Stop(
-            Loc loc, unique_ptr<Request<Loc>> req, StopAction action, double estimated_arrival_time,
+            Loc loc, const std::shared_ptr<Request<Loc>>& req, StopAction action, double estimated_arrival_time,
             double time_window_min, double time_window_max) :
             location{loc},
             request{req},
@@ -105,7 +106,49 @@ namespace cstuff {
             time_window_min{time_window_min},
             time_window_max{time_window_max} {std::cout<<"At c++ Stop init. request_id: " << (this->request)->request_id << std::endl;}
 
+        Stop(const Stop& a) :
+            location{a.location},
+            request{a.request},
+            action{a.action},
+            estimated_arrival_time{a.estimated_arrival_time},
+            time_window_min{a.time_window_min},
+            time_window_max{a.time_window_max}{}
 
+        Stop& operator=(const Stop &other) {
+            location = other.location;
+            request.reset();
+            request = other.request;
+            action = other.action;
+            estimated_arrival_time = other.estimated_arrival_time;
+            time_window_min = other.time_window_min;
+            time_window_max = other.time_window_max;
+
+            return *this;
+        }
+
+        Stop(Stop&& a) :
+            location{a.location},
+            request{a.request},
+            action{a.action},
+            estimated_arrival_time{a.estimated_arrival_time},
+            time_window_min{a.time_window_min},
+            time_window_max{a.time_window_max}{
+               a.request.reset();
+        }
+
+        Stop& operator=(Stop&& other){
+            location = other.location;
+            request.reset();
+            request = other.request;
+            other.request.reset();
+            action = other.action;
+            estimated_arrival_time = other.estimated_arrival_time;
+            time_window_min = other.time_window_min;
+            time_window_max = other.time_window_max;
+            return *this;
+        }
+
+// "grab the elements" from a // now a has no elements
 
         double estimated_departure_time() {
             return max(estimated_arrival_time, time_window_min);
