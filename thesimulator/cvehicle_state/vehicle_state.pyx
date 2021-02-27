@@ -32,13 +32,16 @@ cdef class VehicleState:
     cdef Stoplist stoplist
     cdef TransportSpace space
     cdef int vehicle_id
+    cdef dict __dict__
+
     def __init__(
-            self, *, vehicle_id, initial_stoplist, space, loc_type):
+            self, *, vehicle_id, initial_stoplist, space, loc_type, dispatcher):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist, loc_type)
         self.space = space
+        self.dispatcher=dispatcher
         print(f"Created VehicleState with space of type {type(self.space)}")
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
@@ -111,7 +114,7 @@ cdef class VehicleState:
         return event_cache
 
     def handle_transportation_request_single_vehicle(
-            self, TransportationRequest cy_request
+            self, TransportationRequest request
     ):
         """
         The computational bottleneck. An efficient simulator could do the following:
@@ -127,7 +130,7 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        return self.vehicle_id, c_disp(
-            cy_request,
+        return self.vehicle_id, *self.dispatcher(
+            request,
             self.stoplist,
             self.space)

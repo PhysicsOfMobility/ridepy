@@ -17,12 +17,18 @@ from .data_structures import (
     RequestAcceptanceEvent,
     RequestEvent,
     StopEvent,
-    TransportationRequest,
-    InternalRequest,
+    TransportationRequest as pyTransportationRequest,
+    InternalRequest as pyInternalRequest,
     TransportSpace,
     SingleVehicleSolution,
     Dispatcher,
 )
+from .cdata_structures import (
+    TransportationRequest as cyTransportationRequest,
+    InternalRequest as cyInternalRequest,
+    LocType
+)
+
 from .vehicle_state import VehicleState
 
 
@@ -43,7 +49,8 @@ class FleetState(ABC):
         initial_stoplists: Dict[int, Stoplist],
         space: TransportSpace,
         dispatcher: Dispatcher,
-        vehicle_state_class = VehicleState
+        vehicle_state_class = VehicleState,
+        loc_type: LocType = LocType.R2LOC
     ):
         """
         Parameters
@@ -55,12 +62,14 @@ class FleetState(ABC):
 
         self.space = space
         self.dispatcher = dispatcher
+        self.vehicle_state_class = vehicle_state_class
         self.fleet: Dict[int, VehicleState] = {
-            vehicle_id: VehicleState(
+            vehicle_id: vehicle_state_class(
                 vehicle_id=vehicle_id,
                 initial_stoplist=stoplist,
                 space=self.space,
                 dispatcher=self.dispatcher,
+                loc_type=loc_type
             )
             for vehicle_id, stoplist in initial_stoplists.items()
         }
@@ -84,7 +93,7 @@ class FleetState(ABC):
         """
         ...
 
-    def handle_transportation_request(self, req: TransportationRequest) -> RequestEvent:
+    def handle_transportation_request(self, req: pyTransportationRequest) -> RequestEvent:
         """
         Handle a request by mapping the request and the fleet state onto a request response,
         modifying the fleet state in-place.
@@ -105,7 +114,7 @@ class FleetState(ABC):
         ...
 
     @abstractmethod
-    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
         """
 
         Parameters
@@ -202,9 +211,11 @@ class FleetState(ABC):
             yield from self.fast_forward(self.t)
 
             # handle the current request
-            if isinstance(request, TransportationRequest):
-                yield self.handle_transportation_request(request)
-            elif isinstance(request, InternalRequest):
+            if isinstance(request, (pyTransportationRequest, cyTransportationRequest)):
+                ev = self.handle_transportation_request(request)
+                print(ev)
+                yield ev
+            elif isinstance(request, (pyInternalRequest, cyInternalRequest)):
                 yield self.handle_internal_request(request)
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
@@ -234,19 +245,19 @@ class SlowSimpleFleetState(FleetState):
             key=op.attrgetter("timestamp"),
         )
 
-    def handle_transportation_request(self, req: TransportationRequest):
+    def handle_transportation_request(self, req: pyTransportationRequest):
         return self._apply_request_solution(
             req,
             map(
                 ft.partial(
-                    VehicleState.handle_transportation_request_single_vehicle,
+                    self.vehicle_state_class.handle_transportation_request_single_vehicle,
                     request=req,
                 ),
                 self.fleet.values(),
             ),
         )
 
-    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
         ...
 
 
@@ -264,7 +275,7 @@ class MPIFuturesFleetState(FleetState):
                     key=op.attrgetter("timestamp"),
                 )
 
-    def handle_transportation_request(self, req: TransportationRequest):
+    def handle_transportation_request(self, req: pyTransportationRequest):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             # TODO: what happens if executor is not there?
             if executor is not None:
@@ -279,5 +290,5 @@ class MPIFuturesFleetState(FleetState):
                     ),
                 )
 
-    def handle_internal_request(self, req: InternalRequest) -> RequestEvent:
+    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
         ...

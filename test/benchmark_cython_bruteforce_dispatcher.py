@@ -16,6 +16,8 @@ from thesimulator.cdata_structures import (
 )
 
 from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
+from thesimulator.util.cdispatchers import brute_force_distance_minimizing_dispatcher
+
 from random import randint
 
 from thesimulator.cvehicle_state import VehicleState
@@ -52,7 +54,8 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
     vs = VehicleState(
-        vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC
+        vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC,
+        dispatcher=brute_force_distance_minimizing_dispatcher
     )
     request = TransportationRequest(
         request_id=100,
