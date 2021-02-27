@@ -64,6 +64,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
+    breakpoint()
     tick = time()
     # TODO: instead of creating VehicleState, call cythonic dispatcher directly (same as the pythonic benchmark script)
     vs.handle_transportation_request_single_vehicle(request)

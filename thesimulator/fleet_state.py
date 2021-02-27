@@ -43,6 +43,7 @@ class FleetState(ABC):
         initial_stoplists: Dict[int, Stoplist],
         space: TransportSpace,
         dispatcher: Dispatcher,
+        vehicle_state_class = VehicleState
     ):
         """
         Parameters

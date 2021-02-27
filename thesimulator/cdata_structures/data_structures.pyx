@@ -14,6 +14,8 @@ from cython.operator cimport dereference
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport dynamic_pointer_cast
+from cython.operator cimport typeid
+
 
 from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
@@ -341,7 +343,6 @@ cdef class Stop:
             double time_window_min,
             double time_window_max,
     ):
-        self.cy_request = request
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
@@ -359,19 +360,17 @@ cdef class Stop:
 
 
     def __repr__(self):
-        # Since we are storing the cy_request passed into __init__ in order to stop the cy_request getting
-        # garbage collected, we can just use it here
         # TODO: should also show the CPAT, EAST and LAST and Action
         if self.loc_type == LocType.R2LOC:
             return f'Stop(location={self.ustop._stop_r2loc.location}, '\
-                   f'request={self.cy_request}, ' \
+                   f'request={self.request}, ' \
                    f'estimated_arrival_time={self.ustop._stop_r2loc.estimated_arrival_time}, ' \
                    f'action={StopAction(self.ustop._stop_r2loc.action).name}, ' \
                    f'time_window_min={self.ustop._stop_r2loc.time_window_min}, '\
                    f'time_window_max={self.ustop._stop_r2loc.time_window_max})'
         elif self.loc_type == LocType.INT:
             return f'Stop(location={self.ustop._stop_int.location}, '\
-                   f'request={self.cy_request}, ' \
+                   f'request={self.request}, ' \
                    f'estimated_arrival_time={self.ustop._stop_int.estimated_arrival_time}, ' \
                    f'action={StopAction(self.ustop._stop_int.action).name}, ' \
                    f'time_window_min={self.ustop._stop_int.time_window_min}, '\
@@ -423,9 +422,27 @@ cdef class Stop:
 
     @property
     def request(self):
-        # Since we are storing the cy_request passed into __init__ in order to stop the cy_request getting
-        # garbage collected, we can just use it here
-        return self.cy_request
+        if self.loc_type == LocType.R2LOC:
+            if typeid(dereference(self.ustop._stop_r2loc.request)) == typeid(CTransportationRequest[R2loc]):
+                return TransportationRequest.from_c_r2loc(
+                    dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](self.ustop._stop_r2loc.request))
+            elif typeid(dereference(self.ustop._stop_r2loc.request)) == typeid(CInternalRequest[R2loc]):
+                return InternalRequest.from_c_r2loc(
+                    dynamic_pointer_cast[CInternalRequest[R2loc], CRequest[R2loc]](self.ustop._stop_r2loc.request))
+            else:
+                raise ValueError("This line should never have been reached")
+        elif self.loc_type == LocType.INT:
+            if typeid(dereference(self.ustop._stop_int.request)) == typeid(CTransportationRequest[int]):
+                return TransportationRequest.from_c_int(
+                    dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](self.ustop._stop_int.request))
+            elif typeid(dereference(self.ustop._stop_int.request)) == typeid(CInternalRequest[int]):
+                return InternalRequest.from_c_int(
+                    dynamic_pointer_cast[CInternalRequest[int], CRequest[int]](self.ustop._stop_int.request))
+            else:
+                raise ValueError("This line should never have been reached")
+        else:
+            raise ValueError("This line should never have been reached")
+
 
     @staticmethod
     cdef Stop from_c_r2loc(CStop[R2loc] cstop):

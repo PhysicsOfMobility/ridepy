@@ -62,7 +62,6 @@ cdef class InternalRequest(Request):
     cdef InternalRequest from_c_int(shared_ptr[CInternalRequest[int]] creq)
 
 cdef class Stop:
-    cdef Request cy_request
     cdef _UStop ustop
     cdef LocType loc_type
     @staticmethod
