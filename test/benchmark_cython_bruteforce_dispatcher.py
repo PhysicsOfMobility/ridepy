@@ -37,7 +37,7 @@ def stoplist_from_properties(stoplist_properties):
 def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D(1)
     # space = Manhattan2D(1)
-    n = 3
+    n = 1000
     rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))
     arrival_times = np.cumsum(
@@ -50,11 +50,9 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
-    print(stoplist)
     vs = VehicleState(
         vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC
     )
-    print(stoplist)
     request = TransportationRequest(
         request_id=100,
         creation_timestamp=1,
@@ -65,11 +63,9 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    breakpoint()
     tick = time()
     # TODO: instead of creating VehicleState, call cythonic dispatcher directly (same as the pythonic benchmark script)
     vs.handle_transportation_request_single_vehicle(request)
-    breakpoint()
     tock = time()
     print(f"Computing insertion into {n}-element stoplist took: {tock-tick} seconds")
 

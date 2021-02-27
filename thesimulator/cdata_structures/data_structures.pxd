@@ -26,6 +26,14 @@ cdef union _URequest:
     shared_ptr[CRequest[R2loc]] _req_r2loc
     shared_ptr[CRequest[int]] _req_int
 
+cdef union _UTransportationRequest:
+    shared_ptr[CTransportationRequest[R2loc]] _req_r2loc
+    shared_ptr[CTransportationRequest[int]] _req_int
+
+cdef union _UInternalRequest:
+    shared_ptr[CInternalRequest[R2loc]] _req_r2loc
+    shared_ptr[CInternalRequest[int]] _req_int
+
 cdef union _UStop:
     CStop[R2loc] _stop_r2loc
     CStop[int] _stop_int
@@ -36,7 +44,6 @@ cdef union _UStoplist:
 
 
 cdef class Request:
-    cdef bint ptr_owner
     cdef _URequest _ureq
     cdef LocType loc_type
     @staticmethod
@@ -45,9 +52,10 @@ cdef class Request:
     cdef Request from_c_int(shared_ptr[CRequest[int]] creq)
 
 cdef class TransportationRequest(Request):
-    pass
+    cdef _UTransportationRequest _utranspreq
 
 cdef class InternalRequest(Request):
+    cdef _UInternalRequest _uinternreq
     pass
 
 cdef class Stop:

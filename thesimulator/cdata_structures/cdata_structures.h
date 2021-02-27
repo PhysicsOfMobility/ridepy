@@ -104,7 +104,7 @@ namespace cstuff {
             action{action},
             estimated_arrival_time{estimated_arrival_time},
             time_window_min{time_window_min},
-            time_window_max{time_window_max} {std::cout<<"At c++ Stop init. request_id: " << (this->request)->request_id << std::endl;}
+            time_window_max{time_window_max} {}
 
         Stop(const Stop& a) :
             location{a.location},
