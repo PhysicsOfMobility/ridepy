@@ -23,14 +23,13 @@ namespace cstuff {
         int request_id;
         double creation_timestamp;
 
-        Request() = default;
-        Request(const Request&) = default;
         Request(
             int request_id,
             double creation_timestamp
             ) :
             request_id{request_id},
             creation_timestamp{creation_timestamp} {};
+
         virtual ~Request()=default;
     };
 

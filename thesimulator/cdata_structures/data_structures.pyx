@@ -14,7 +14,6 @@ from cython.operator cimport dereference
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport dynamic_pointer_cast
-from cython.operator cimport typeid
 
 from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
@@ -29,26 +28,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 cdef class Request:
-    # TODO: Since this is a base class never to be instantiated, probably we do not need
-    # an __init__?
-    def __init__(
-            self, int request_id, float creation_timestamp, loc_type):
-        self.ptr_owner=True # I have not been created from an existing pointer
-        self.loc_type = <LocType> loc_type
-        #if hasattr(origin, '__len__') and len(origin) == 2:
-        if self.loc_type == LocType.R2LOC:
-            self._ureq._req_r2loc = shared_ptr[CRequest[R2loc]](new CRequest[R2loc](
-                request_id, creation_timestamp
-            ))
-        #elif isinstance(origin, int):
-        elif self.loc_type == LocType.INT:
-            self._ureq._req_int = shared_ptr[CRequest[int]](new CRequest[int](
-                request_id, creation_timestamp
-            ))
-        else:
-            raise ValueError("This line should never have been reached")
-
-
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
             return f'Request(request_id={dereference(self._ureq._req_r2loc).request_id},' \
@@ -91,20 +70,6 @@ cdef class Request:
             else:
                 raise ValueError("This line should never have been reached")
 
-
-    @staticmethod
-    cdef Request from_c_r2loc(shared_ptr[CRequest[R2loc]] creq):
-        cdef Request req = Request.__new__(Request)
-        req._ureq._req_r2loc = creq
-        req.loc_type = LocType.R2LOC
-        return req
-
-    @staticmethod
-    cdef Request from_c_int(shared_ptr[CRequest[int]] creq):
-        cdef Request req = Request.__new__(Request)
-        req._ureq._req_int = creq
-        req.loc_type = LocType.INT
-        return req
 
     def __dealloc__(self):
         """

@@ -46,17 +46,20 @@ cdef union _UStoplist:
 cdef class Request:
     cdef _URequest _ureq
     cdef LocType loc_type
-    @staticmethod
-    cdef Request from_c_r2loc(shared_ptr[CRequest[R2loc]] creq)
-    @staticmethod
-    cdef Request from_c_int(shared_ptr[CRequest[int]] creq)
 
 cdef class TransportationRequest(Request):
     cdef _UTransportationRequest _utranspreq
+    @staticmethod
+    cdef TransportationRequest from_c_r2loc(shared_ptr[CTransportationRequest[R2loc]] creq)
+    @staticmethod
+    cdef TransportationRequest from_c_int(shared_ptr[CTransportationRequest[int]] creq)
 
 cdef class InternalRequest(Request):
     cdef _UInternalRequest _uinternreq
-    pass
+    @staticmethod
+    cdef InternalRequest from_c_r2loc(shared_ptr[CInternalRequest[R2loc]] creq)
+    @staticmethod
+    cdef InternalRequest from_c_int(shared_ptr[CInternalRequest[int]] creq)
 
 cdef class Stop:
     cdef Request cy_request

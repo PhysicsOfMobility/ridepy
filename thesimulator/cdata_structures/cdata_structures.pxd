@@ -16,10 +16,6 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         int request_id
         double creation_timestamp
 
-        Request()
-        Request(int, double)
-        Request(const Request&)
-
     cdef cppclass TransportationRequest[Loc](Request[Loc]):
         Loc origin
         Loc destination

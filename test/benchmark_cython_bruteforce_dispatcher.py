@@ -3,7 +3,8 @@ import numpy as np
 from numpy import inf
 from functools import reduce
 from time import time
-
+import os
+import psutil
 
 from thesimulator.cdata_structures import (
     Stop,
@@ -77,4 +78,11 @@ if __name__ == "__main__":
         seed = int(sys.argv[1])
     else:
         seed = 0
-    benchmark_insertion_into_long_stoplist(seed)
+    if len(sys.argv) > 2 and sys.argv[2]=='memcheck':
+        # Run 100 times
+        for i in range(100):
+            process = psutil.Process(os.getpid())
+            print(f"Before run #{i}: {process.memory_info().rss/1024} kB")
+            benchmark_insertion_into_long_stoplist(seed)
+    else: # run only once
+        benchmark_insertion_into_long_stoplist(seed)
