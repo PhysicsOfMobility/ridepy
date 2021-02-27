@@ -31,6 +31,7 @@ class RandomRequestGenerator:
         self.pickup_timewindow_size = pickup_timewindow_size
         self.dropoff_timewindow_start = dropoff_timewindow_start
         self.dropoff_timewindow_size = dropoff_timewindow_size
+        self.request_class = request_class
 
     def __iter__(self):
         self.now = 0
@@ -40,7 +41,7 @@ class RandomRequestGenerator:
     def __next__(self):
         self.now += np.random.exponential(1 / self.rate)
         self.request_index += 1
-        return request_class(
+        return self.request_class(
             request_id=self.request_index,
             creation_timestamp=self.now,
             origin=self.transport_space.random_point(),
