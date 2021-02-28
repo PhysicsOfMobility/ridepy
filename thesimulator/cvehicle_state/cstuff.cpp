@@ -39,6 +39,12 @@ int main()
 
         stoplist.push_back(stop);
     }
+    //debug
+    std::cout<<"begin debug:"<<std::endl;
+    std::cout<<stoplist[0].estimated_arrival_time<<std::endl;
+    stoplist[0].estimated_arrival_time = 8.4362;
+    std::cout<<stoplist[0].estimated_arrival_time<<std::endl;
+
     // create new request
     R2loc req_origin = make_pair(distrib(gen), distrib(gen));
     R2loc req_dest = make_pair(distrib(gen), distrib(gen));

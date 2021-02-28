@@ -12,7 +12,7 @@ call to the appropriate object inside that union.
 """
 from cython.operator cimport dereference
 from libcpp.vector cimport vector
-from libcpp.memory cimport shared_ptr
+from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.memory cimport dynamic_pointer_cast
 from cython.operator cimport typeid
 
@@ -346,13 +346,13 @@ cdef class Stop:
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
-            self.ustop._stop_r2loc = CStop[R2loc](
+            self.ustop._stop_r2loc = new CStop[R2loc](
                 location, request._ureq._req_r2loc, action, estimated_arrival_time,
                 time_window_min, time_window_max)
         elif isinstance(location, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self.ustop._stop_int = CStop[int](
+            self.ustop._stop_int = new CStop[int](
                 location, request._ureq._req_int, action, estimated_arrival_time,
                 time_window_min, time_window_max)
         else:
@@ -362,97 +362,121 @@ cdef class Stop:
     def __repr__(self):
         # TODO: should also show the CPAT, EAST and LAST and Action
         if self.loc_type == LocType.R2LOC:
-            return f'Stop(location={self.ustop._stop_r2loc.location}, '\
+            return f'Stop(location={dereference(self.ustop._stop_r2loc).location}, '\
                    f'request={self.request}, ' \
-                   f'estimated_arrival_time={self.ustop._stop_r2loc.estimated_arrival_time}, ' \
-                   f'action={StopAction(self.ustop._stop_r2loc.action).name}, ' \
-                   f'time_window_min={self.ustop._stop_r2loc.time_window_min}, '\
-                   f'time_window_max={self.ustop._stop_r2loc.time_window_max})'
+                   f'estimated_arrival_time={dereference(self.ustop._stop_r2loc).estimated_arrival_time}, ' \
+                   f'action={StopAction(dereference(self.ustop._stop_r2loc).action).name}, ' \
+                   f'time_window_min={dereference(self.ustop._stop_r2loc).time_window_min}, '\
+                   f'time_window_max={dereference(self.ustop._stop_r2loc).time_window_max})'
         elif self.loc_type == LocType.INT:
-            return f'Stop(location={self.ustop._stop_int.location}, '\
+            return f'Stop(location={dereference(self.ustop._stop_int).location}, '\
                    f'request={self.request}, ' \
-                   f'estimated_arrival_time={self.ustop._stop_int.estimated_arrival_time}, ' \
-                   f'action={StopAction(self.ustop._stop_int.action).name}, ' \
-                   f'time_window_min={self.ustop._stop_int.time_window_min}, '\
-                   f'time_window_max={self.ustop._stop_int.time_window_max})'
+                   f'estimated_arrival_time={dereference(self.ustop._stop_int).estimated_arrival_time}, ' \
+                   f'action={StopAction(dereference(self.ustop._stop_int).action).name}, ' \
+                   f'time_window_min={dereference(self.ustop._stop_int).time_window_min}, '\
+                   f'time_window_max={dereference(self.ustop._stop_int).time_window_max})'
+        else:
+            raise ValueError("This line should never have been reached")
+
+
+    property location:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return dereference(self.ustop._stop_r2loc).location
+            elif self.loc_type == LocType.INT:
+                return dereference(self.ustop._stop_int).location
+            else:
+                raise ValueError("This line should never have been reached")
+
+        def __set__(self, loc):
+            if self.loc_type == LocType.R2LOC:
+                dereference(self.ustop._stop_r2loc).location = loc
+            elif self.loc_type == LocType.INT:
+                dereference(self.ustop._stop_int).location = loc
+            else:
+                raise ValueError("This line should never have been reached")
+
+    @property
+    def request(self):
+        if self.loc_type == LocType.R2LOC:
+            if typeid(dereference(dereference(self.ustop._stop_r2loc).request)) == typeid(CTransportationRequest[R2loc]):
+                return TransportationRequest.from_c_r2loc(
+                    dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](dereference(self.ustop._stop_r2loc).request))
+            elif typeid(dereference(dereference(self.ustop._stop_r2loc).request)) == typeid(CInternalRequest[R2loc]):
+                return InternalRequest.from_c_r2loc(
+                    dynamic_pointer_cast[CInternalRequest[R2loc], CRequest[R2loc]](dereference(self.ustop._stop_r2loc).request))
+            else:
+                raise ValueError("This line should never have been reached")
+        elif self.loc_type == LocType.INT:
+            if typeid(dereference(dereference(self.ustop._stop_int).request)) == typeid(CTransportationRequest[int]):
+                return TransportationRequest.from_c_int(
+                    dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](dereference(self.ustop._stop_int).request))
+            elif typeid(dereference(dereference(self.ustop._stop_int).request)) == typeid(CInternalRequest[int]):
+                return InternalRequest.from_c_int(
+                    dynamic_pointer_cast[CInternalRequest[int], CRequest[int]](dereference(self.ustop._stop_int).request))
+            else:
+                raise ValueError("This line should never have been reached")
         else:
             raise ValueError("This line should never have been reached")
 
     @property
     def action(self):
         if self.loc_type == LocType.R2LOC:
-            return StopAction(self.ustop._stop_r2loc.action)
+            return StopAction(dereference(self.ustop._stop_r2loc).action)
         elif self.loc_type == LocType.INT:
-            return StopAction(self.ustop._stop_int.action)
+            return StopAction(dereference(self.ustop._stop_int).action)
         else:
             raise ValueError("This line should never have been reached")
 
     property estimated_arrival_time:
         def __get__(self):
             if self.loc_type == LocType.R2LOC:
-                return self.ustop._stop_r2loc.estimated_arrival_time
+                return dereference(self.ustop._stop_r2loc).estimated_arrival_time
             elif self.loc_type == LocType.INT:
-                return self.ustop._stop_int.estimated_arrival_time
+                return dereference(self.ustop._stop_int).estimated_arrival_time
+            else:
+                raise ValueError("This line should never have been reached")
+
         def __set__(self, estimated_arrival_time):
             if self.loc_type == LocType.R2LOC:
-                self.ustop._stop_r2loc.estimated_arrival_time = estimated_arrival_time
+                dereference(self.ustop._stop_r2loc).estimated_arrival_time = estimated_arrival_time
             elif self.loc_type == LocType.INT:
-                self.ustop._stop_int.estimated_arrival_time = estimated_arrival_time
+                dereference(self.ustop._stop_int).estimated_arrival_time = estimated_arrival_time
             else:
                 raise ValueError("This line should never have been reached")
 
     @property
     def time_window_min(self):
         if self.loc_type == LocType.R2LOC:
-            return self.ustop._stop_r2loc.time_window_min
+            return dereference(self.ustop._stop_r2loc).time_window_min
         elif self.loc_type == LocType.INT:
-            return self.ustop._stop_int.time_window_min
+            return dereference(self.ustop._stop_int).time_window_min
         else:
             raise ValueError("This line should never have been reached")
 
     @property
     def time_window_max(self):
         if self.loc_type == LocType.R2LOC:
-            return self.ustop._stop_r2loc.time_window_max
+            return dereference(self.ustop._stop_r2loc).time_window_max
         elif self.loc_type == LocType.INT:
-            return self.ustop._stop_int.time_window_max
+            return dereference(self.ustop._stop_int).time_window_max
         else:
             raise ValueError("This line should never have been reached")
 
-    @property
-    def request(self):
-        if self.loc_type == LocType.R2LOC:
-            if typeid(dereference(self.ustop._stop_r2loc.request)) == typeid(CTransportationRequest[R2loc]):
-                return TransportationRequest.from_c_r2loc(
-                    dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](self.ustop._stop_r2loc.request))
-            elif typeid(dereference(self.ustop._stop_r2loc.request)) == typeid(CInternalRequest[R2loc]):
-                return InternalRequest.from_c_r2loc(
-                    dynamic_pointer_cast[CInternalRequest[R2loc], CRequest[R2loc]](self.ustop._stop_r2loc.request))
-            else:
-                raise ValueError("This line should never have been reached")
-        elif self.loc_type == LocType.INT:
-            if typeid(dereference(self.ustop._stop_int.request)) == typeid(CTransportationRequest[int]):
-                return TransportationRequest.from_c_int(
-                    dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](self.ustop._stop_int.request))
-            elif typeid(dereference(self.ustop._stop_int.request)) == typeid(CInternalRequest[int]):
-                return InternalRequest.from_c_int(
-                    dynamic_pointer_cast[CInternalRequest[int], CRequest[int]](self.ustop._stop_int.request))
-            else:
-                raise ValueError("This line should never have been reached")
-        else:
-            raise ValueError("This line should never have been reached")
 
 
     @staticmethod
-    cdef Stop from_c_r2loc(CStop[R2loc] cstop):
+    cdef Stop from_c_r2loc(CStop[R2loc] *cstop):
         cdef Stop stop = Stop.__new__(Stop)
+        stop.ptr_owner = False
         stop.ustop._stop_r2loc = cstop
         stop.loc_type = LocType.R2LOC
         return stop
 
     @staticmethod
-    cdef Stop from_c_int(CStop[int] cstop):
+    cdef Stop from_c_int(CStop[int] *cstop):
         cdef Stop stop = Stop.__new__(Stop)
+        stop.ptr_owner = False
         stop.ustop._stop_int = cstop
         stop.loc_type = LocType.INT
         return stop
@@ -461,22 +485,21 @@ cdef class Stoplist:
     # TODO: May need to allow nice ways of converting a Stoplist to python lists or similar. Use case: calling code
     # doing post optimization
     def __init__(self, python_stoplist, loc_type):
-        self.ptr_owner=True # I have not been created from an existing pointer
         self.loc_type = loc_type
 
         if self.loc_type == LocType.R2LOC:
-            self.ustoplist._stoplist_r2loc_ptr = new vector[CStop[R2loc]](0)
+            self.ustoplist._stoplist_r2loc = vector[CStop[R2loc]](0)
         elif self.loc_type == LocType.INT:
-            self.ustoplist._stoplist_int_ptr = new vector[CStop[int]](0)
+            self.ustoplist._stoplist_int = vector[CStop[int]](0)
         else:
             raise ValueError(f"This line should never have been reached: {type(loc_type)}")
 
         if loc_type == LocType.R2LOC:
             for py_s in python_stoplist:
-                dereference(self.ustoplist._stoplist_r2loc_ptr).push_back((<Stop> py_s).ustop._stop_r2loc)
+                self.ustoplist._stoplist_r2loc.push_back(dereference((<Stop> py_s).ustop._stop_r2loc))
         elif loc_type == LocType.INT:
             for py_s in python_stoplist:
-                dereference(self.ustoplist._stoplist_int_ptr).push_back((<Stop> py_s).ustop._stop_int)
+                self.ustoplist._stoplist_int.push_back(dereference((<Stop> py_s).ustop._stop_int))
         else:
             raise ValueError("This line should never have been reached")
         logger.info("Created Stoplist")
@@ -490,65 +513,51 @@ cdef class Stoplist:
         else:
             raise IndexError(f"list index {i} out of range")
         if self.loc_type == LocType.R2LOC:
-            return Stop.from_c_r2loc(dereference(self.ustoplist._stoplist_r2loc_ptr)[i])
+            return Stop.from_c_r2loc(&self.ustoplist._stoplist_r2loc[i])
         elif self.loc_type == LocType.INT:
-            return Stop.from_c_int(dereference(self.ustoplist._stoplist_int_ptr)[i])
+            return Stop.from_c_int(&self.ustoplist._stoplist_int[i])
         else:
             raise ValueError("This line should never have been reached")
 
     def __len__(self):
         if self.loc_type == LocType.R2LOC:
-            return <int> dereference(self.ustoplist._stoplist_r2loc_ptr).size()
+            return <int> self.ustoplist._stoplist_r2loc.size()
         elif self.loc_type == LocType.INT:
-            return <int> dereference(self.ustoplist._stoplist_int_ptr).size()
+            return <int> self.ustoplist._stoplist_int.size()
         else:
             raise ValueError("This line should never have been reached")
 
     def remove_nth_elem(self, int n):
         if self.loc_type == LocType.R2LOC:
-            dereference(self.ustoplist._stoplist_r2loc_ptr).erase(
-                dereference(self.ustoplist._stoplist_r2loc_ptr).begin()+n
+            self.ustoplist._stoplist_r2loc.erase(
+                self.ustoplist._stoplist_r2loc.begin()+n
             )
         elif self.loc_type == LocType.INT:
-            dereference(self.ustoplist._stoplist_int_ptr).erase(
-                dereference(self.ustoplist._stoplist_int_ptr).begin()+n
+            self.ustoplist._stoplist_int.erase(
+                self.ustoplist._stoplist_int.begin()+n
             )
         else:
             raise ValueError("This line should never have been reached")
 
     @staticmethod
-    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist_ptr):
+    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.R2LOC
-        stoplist.ptr_owner = False
-        stoplist.ustoplist._stoplist_r2loc_ptr = cstoplist_ptr
+        stoplist.ustoplist._stoplist_r2loc = cstoplist
         return stoplist
 
     @staticmethod
-    cdef Stoplist from_c_int(vector[CStop[int]] *cstoplist_ptr):
+    cdef Stoplist from_c_int(vector[CStop[int]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.INT
-        stoplist.ptr_owner = False
-        stoplist.ustoplist._stoplist_int_ptr = cstoplist_ptr
+        stoplist.ustoplist._stoplist_int = cstoplist
         return stoplist
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f"[{','.join(repr(Stop.from_c_r2loc(s)) for s in dereference(self.ustoplist._stoplist_r2loc_ptr))}]"
+            return f"[{','.join(repr(Stop.from_c_r2loc(&s)) for s in self.ustoplist._stoplist_r2loc)}]"
         elif self.loc_type == LocType.INT:
-            return f"[{','.join(repr(Stop.from_c_int(s)) for s in dereference(self.ustoplist._stoplist_int_ptr))}]"
-
-
-    def __dealloc__(self):
-        # TODO: Use smart pointer and get rid of manual del
-        if self.ptr_owner:
-            # I was not created from an existing c++ pointer ("owned" by another Stoplist object)
-            if self.loc_type == LocType.R2LOC:
-                del self.ustoplist._stoplist_r2loc_ptr
-            elif self.loc_type == LocType.INT:
-                del self.ustoplist._stoplist_int_ptr
-            else:
-                raise ValueError("This line should never have been reached")
+            return f"[{','.join(repr(Stop.from_c_int(&s)) for s in self.ustoplist._stoplist_int)}]"
 

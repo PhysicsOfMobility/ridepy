@@ -53,6 +53,14 @@ class StopAction(Enum):
     internal = 3
 
 
+class LocType(Enum):
+    """
+    Representing the kind of location objects the simulator supports.
+    """
+    R2LOC = 1  # points in R^2
+    INT = 2
+
+
 @dataclass
 class Stop:
     """

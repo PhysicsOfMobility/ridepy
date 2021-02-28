@@ -16,6 +16,7 @@ from .data_structures import (
     TransportationRequest,
     TransportSpace,
     Dispatcher,
+    LocType
 )
 
 
@@ -38,6 +39,7 @@ class VehicleState:
         vehicle_id,
         initial_stoplist: Stoplist,
         space: TransportSpace,
+        loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
     ):
         """

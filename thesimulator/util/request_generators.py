@@ -19,7 +19,7 @@ class RandomRequestGenerator:
         pickup_timewindow_size=np.inf,
         dropoff_timewindow_start=0,
         dropoff_timewindow_size=np.inf,
-        request_class : Union[TransportationRequest, CTransportationRequest] = TransportationRequest
+        request_class = TransportationRequest
     ):
         if seed is not None:
             np.random.seed(seed)

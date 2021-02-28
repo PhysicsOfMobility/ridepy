@@ -14,6 +14,8 @@ def test_attr_none():
 
 
 def test_attr_get():
+    # check also doing it in a nested manner, e.g.
+    # stoplist[0].request.request_id = "foo"
     assert False
 
 def test_attr_set():

@@ -118,7 +118,6 @@ cdef class VehicleState:
         else:
             # stoplist is empty, only CPE is there. Therefore we just stick around...
             pass
-
         return event_cache
 
     def handle_transportation_request_single_vehicle(
