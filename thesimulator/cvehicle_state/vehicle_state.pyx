@@ -44,6 +44,14 @@ cdef class VehicleState:
         self.dispatcher=dispatcher
         print(f"Created VehicleState with space of type {type(self.space)}")
 
+    property stoplist:
+        def __get__(self):
+            return self.stoplist
+        def __set__(self, new_stoplist):
+            self.stoplist = new_stoplist
+
+
+
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
         Update the vehicle_state to the simulator time `t`.

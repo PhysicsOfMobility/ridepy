@@ -387,20 +387,19 @@ cdef class Stop:
         else:
             raise ValueError("This line should never have been reached")
 
-    @property
-    def estimated_arrival_time(self):
-        if self.loc_type == LocType.R2LOC:
-            return self.ustop._stop_r2loc.estimated_arrival_time
-        elif self.loc_type == LocType.INT:
-            return self.ustop._stop_int.estimated_arrival_time
-    @estimated_arrival_time.setter
-    def estimated_arrival_time(self, estimated_arrival_time):
-        if self.loc_type == LocType.R2LOC:
-            self.ustop._stop_r2loc.estimated_arrival_time = estimated_arrival_time
-        elif self.loc_type == LocType.INT:
-            self.ustop._stop_int.estimated_arrival_time = estimated_arrival_time
-        else:
-            raise ValueError("This line should never have been reached")
+    property estimated_arrival_time:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return self.ustop._stop_r2loc.estimated_arrival_time
+            elif self.loc_type == LocType.INT:
+                return self.ustop._stop_int.estimated_arrival_time
+        def __set__(self, estimated_arrival_time):
+            if self.loc_type == LocType.R2LOC:
+                self.ustop._stop_r2loc.estimated_arrival_time = estimated_arrival_time
+            elif self.loc_type == LocType.INT:
+                self.ustop._stop_int.estimated_arrival_time = estimated_arrival_time
+            else:
+                raise ValueError("This line should never have been reached")
 
     @property
     def time_window_min(self):
@@ -483,6 +482,13 @@ cdef class Stoplist:
         logger.info("Created Stoplist")
 
     def __getitem__(self, i):
+        len_ = self.__len__()
+        if 0 <= i < len_:
+            i = i
+        elif -len_ <= i < 0:
+            i = len_+i
+        else:
+            raise IndexError(f"list index {i} out of range")
         if self.loc_type == LocType.R2LOC:
             return Stop.from_c_r2loc(dereference(self.ustoplist._stoplist_r2loc_ptr)[i])
         elif self.loc_type == LocType.INT:
@@ -492,9 +498,9 @@ cdef class Stoplist:
 
     def __len__(self):
         if self.loc_type == LocType.R2LOC:
-            return dereference(self.ustoplist._stoplist_r2loc_ptr).size()
+            return <int> dereference(self.ustoplist._stoplist_r2loc_ptr).size()
         elif self.loc_type == LocType.INT:
-            return dereference(self.ustoplist._stoplist_int_ptr).size()
+            return <int> dereference(self.ustoplist._stoplist_int_ptr).size()
         else:
             raise ValueError("This line should never have been reached")
 
@@ -517,6 +523,7 @@ cdef class Stoplist:
         stoplist.loc_type = LocType.R2LOC
         stoplist.ptr_owner = False
         stoplist.ustoplist._stoplist_r2loc_ptr = cstoplist_ptr
+        return stoplist
 
     @staticmethod
     cdef Stoplist from_c_int(vector[CStop[int]] *cstoplist_ptr):
@@ -525,6 +532,14 @@ cdef class Stoplist:
         stoplist.loc_type = LocType.INT
         stoplist.ptr_owner = False
         stoplist.ustoplist._stoplist_int_ptr = cstoplist_ptr
+        return stoplist
+
+    def __repr__(self):
+        if self.loc_type == LocType.R2LOC:
+            return f"[{','.join(repr(Stop.from_c_r2loc(s)) for s in dereference(self.ustoplist._stoplist_r2loc_ptr))}]"
+        elif self.loc_type == LocType.INT:
+            return f"[{','.join(repr(Stop.from_c_int(s)) for s in dereference(self.ustoplist._stoplist_int_ptr))}]"
+
 
     def __dealloc__(self):
         # TODO: Use smart pointer and get rid of manual del

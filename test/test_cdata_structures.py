@@ -11,3 +11,10 @@ def test_attr_none():
     s0 = Stop((0, 0), ir, StopAction.internal, 0, 0, 0)
     sl = Stoplist([s0], LocType.R2LOC)
     assert sl[0].request is not None
+
+
+def test_attr_get():
+    assert False
+
+def test_attr_set():
+    assert False

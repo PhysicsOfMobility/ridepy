@@ -144,7 +144,6 @@ class FleetState(ABC):
         -------
 
         """
-        # breakpoint()
         (
             best_vehicle,
             min_cost,
@@ -212,9 +211,7 @@ class FleetState(ABC):
 
             # handle the current request
             if isinstance(request, (pyTransportationRequest, cyTransportationRequest)):
-                ev = self.handle_transportation_request(request)
-                print(ev)
-                yield ev
+                yield self.handle_transportation_request(request)
             elif isinstance(request, (pyInternalRequest, cyInternalRequest)):
                 yield self.handle_internal_request(request)
             else:
