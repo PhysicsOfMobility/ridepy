@@ -108,6 +108,18 @@ cdef class TransportationRequest(Request):
         else:
             raise TypeError(f"Cannot handle origin of type {type(origin)}")
 
+    def __eq__(self, other: TransportationRequest):
+        if not isinstance(other, TransportationRequest):
+            return False
+        return self.request_id == other.request_id \
+            and self.loc_type == other.loc_type \
+            and self.creation_timestamp == other.creation_timestamp \
+            and self.origin == other.origin \
+            and self.destination == other.destination \
+            and self.pickup_timewindow_min == other.pickup_timewindow_min \
+            and self.pickup_timewindow_max == other.pickup_timewindow_max \
+            and self.delivery_timewindow_min == other.delivery_timewindow_min \
+            and self.delivery_timewindow_max == other.delivery_timewindow_max
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
@@ -131,7 +143,6 @@ cdef class TransportationRequest(Request):
         else:
             raise ValueError("This line should never have been reached")
 
-    # TODO: Need to expose the properties origin, destination, (pickup|delivery)_timewindow_(min|max)
 
     property origin:
         def __get__(self):
@@ -284,6 +295,15 @@ cdef class InternalRequest(Request):
             raise TypeError(f"Cannot handle origin of type {type(location)}")
 
 
+    def __eq__(self, other: InternalRequest):
+        if not isinstance(other, InternalRequest):
+            return False
+        return self.request_id == other.request_id \
+            and self.loc_type == other.loc_type \
+            and self.creation_timestamp == other.creation_timestamp \
+            and self.location == other.location
+
+
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
             return f'InternalRequest(request_id={dereference(self._uinternreq._req_r2loc).request_id}, ' \
@@ -358,9 +378,23 @@ cdef class Stop:
         else:
             raise ValueError("This line should never have been reached")
 
+
+    def __eq__(self, other: Stop):
+        if not isinstance(other, Stop):
+            return False
+        return self.location == other.location \
+            and self.loc_type == other.loc_type \
+            and self.request == other.request \
+            and self.action == other.action \
+            and self.estimated_arrival_time == other.estimated_arrival_time \
+            and self.time_window_min == other.time_window_min \
+            and self.time_window_max == other.time_window_max
+
+
     def __deepcopy__(self, *args, **kwargs):
         return Stop(self.location, self.request, self.action, self.estimated_arrival_time, self.time_window_min,
                    self.time_window_max)
+
 
     def __repr__(self):
         # TODO: should also show the CPAT, EAST and LAST and Action

@@ -119,6 +119,9 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
 
 def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
+    """
+    Tests that the simulation runs with pure pythonic and cythonic brute force dispatcher produces identical events.
+    """
     n_reqs = 100
     ir = pyds.InternalRequest(999, 0, (0, 0))
     s0 = pyds.Stop((0,0), ir, pyds.StopAction.internal, 0,0,0)
