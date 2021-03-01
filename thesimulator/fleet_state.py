@@ -26,7 +26,7 @@ from .data_structures import (
 from .cdata_structures import (
     TransportationRequest as cyTransportationRequest,
     InternalRequest as cyInternalRequest,
-    LocType
+    LocType,
 )
 
 from .vehicle_state import VehicleState
@@ -49,8 +49,8 @@ class FleetState(ABC):
         initial_stoplists: Dict[int, Stoplist],
         space: TransportSpace,
         dispatcher: Dispatcher,
-        vehicle_state_class = VehicleState,
-        loc_type: LocType = LocType.R2LOC
+        vehicle_state_class=VehicleState,
+        loc_type: LocType = LocType.R2LOC,
     ):
         """
         Parameters
@@ -69,7 +69,7 @@ class FleetState(ABC):
                 initial_stoplist=stoplist,
                 space=self.space,
                 dispatcher=self.dispatcher,
-                loc_type=loc_type
+                loc_type=loc_type,
             )
             for vehicle_id, stoplist in initial_stoplists.items()
         }
@@ -93,7 +93,9 @@ class FleetState(ABC):
         """
         ...
 
-    def handle_transportation_request(self, req: pyTransportationRequest) -> RequestEvent:
+    def handle_transportation_request(
+        self, req: pyTransportationRequest
+    ) -> RequestEvent:
         """
         Handle a request by mapping the request and the fleet state onto a request response,
         modifying the fleet state in-place.

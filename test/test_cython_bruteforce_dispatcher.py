@@ -124,28 +124,38 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     """
     n_reqs = 100
     ir = pyds.InternalRequest(999, 0, (0, 0))
-    s0 = pyds.Stop((0,0), ir, pyds.StopAction.internal, 0,0,0)
+    s0 = pyds.Stop((0, 0), ir, pyds.StopAction.internal, 0, 0, 0)
     sl = [s0]
 
-    sfls = SlowSimpleFleetState(initial_stoplists={7: sl},
-                                space=pyspaces.Euclidean2D(),
-                                dispatcher=py_brute_force_distance_minimizing_dispatcher, vehicle_state_class=py_VehicleState)
-    rg = RandomRequestGenerator(space=pyspaces.Euclidean2D(), request_class=pyds.TransportationRequest, )
+    sfls = SlowSimpleFleetState(
+        initial_stoplists={7: sl},
+        space=pyspaces.Euclidean2D(),
+        dispatcher=py_brute_force_distance_minimizing_dispatcher,
+        vehicle_state_class=py_VehicleState,
+    )
+    rg = RandomRequestGenerator(
+        space=pyspaces.Euclidean2D(),
+        request_class=pyds.TransportationRequest,
+    )
     reqs = list(it.islice(rg, n_reqs))
     py_events = list(sfls.simulate(reqs))
 
-
     ir = cyds.InternalRequest(999, 0, (0, 0))
-    s0 = cyds.Stop((0,0), ir, cyds.StopAction.internal, 0,0,0)
+    s0 = cyds.Stop((0, 0), ir, cyds.StopAction.internal, 0, 0, 0)
     sl = [s0]
 
-    sfls = SlowSimpleFleetState(initial_stoplists={7: sl},
-                                space=cyspaces.Euclidean2D(),
-                                dispatcher=cy_brute_force_distance_minimizing_dispatcher, vehicle_state_class=cy_VehicleState)
+    sfls = SlowSimpleFleetState(
+        initial_stoplists={7: sl},
+        space=cyspaces.Euclidean2D(),
+        dispatcher=cy_brute_force_distance_minimizing_dispatcher,
+        vehicle_state_class=cy_VehicleState,
+    )
     # So far, cyspaces.Euclidean2D doesn't support random point generation. So we are using the hack of
     # Asking RandomRequestGenerator to use the python space to generate random points, but return cython
     # objects. This should be changed when the cython spaces support random sampling.
-    rg = RandomRequestGenerator(space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest)
+    rg = RandomRequestGenerator(
+        space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest
+    )
     reqs = list(it.islice(rg, n_reqs))
     cy_events = list(sfls.simulate(reqs))
 
@@ -153,6 +163,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     assert len(cy_events) == len(py_events)
     for num, (cev, pev) in enumerate(zip(cy_events, py_events)):
         assert type(cev) == type(pev)
-        np.allclose(list(flatten(list(pev.__dict__.values()))),
-                    list(flatten(list(cev.__dict__.values()))))
-
+        np.allclose(
+            list(flatten(list(pev.__dict__.values()))),
+            list(flatten(list(cev.__dict__.values()))),
+        )

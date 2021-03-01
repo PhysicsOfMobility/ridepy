@@ -27,7 +27,9 @@ def stoplist_from_properties(stoplist_properties):
     return [
         Stop(
             location=loc,
-            request=InternalRequest(request_id=randint(0,100), creation_timestamp=0, location=(0, 0)),
+            request=InternalRequest(
+                request_id=randint(0, 100), creation_timestamp=0, location=(0, 0)
+            ),
             action=StopAction.internal,
             estimated_arrival_time=cpat,
             time_window_min=tw_min,
@@ -54,8 +56,11 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
     vs = VehicleState(
-        vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC,
-        dispatcher=brute_force_distance_minimizing_dispatcher
+        vehicle_id=12,
+        initial_stoplist=stoplist,
+        space=space,
+        loc_type=LocType.R2LOC,
+        dispatcher=brute_force_distance_minimizing_dispatcher,
     )
     request = TransportationRequest(
         request_id=100,
@@ -82,11 +87,11 @@ if __name__ == "__main__":
         seed = int(sys.argv[1])
     else:
         seed = 0
-    if len(sys.argv) > 2 and sys.argv[2]=='memcheck':
+    if len(sys.argv) > 2 and sys.argv[2] == "memcheck":
         # Run 100 times
         for i in range(100):
             process = psutil.Process(os.getpid())
             print(f"Before run #{i}: {process.memory_info().rss/1024} kB")
             benchmark_insertion_into_long_stoplist(seed)
-    else: # run only once
+    else:  # run only once
         benchmark_insertion_into_long_stoplist(seed)

@@ -4,7 +4,9 @@ import numpy as np
 from typing import Union
 
 from thesimulator.data_structures import TransportSpace, TransportationRequest
-from thesimulator.cdata_structures import TransportationRequest as  CTransportationRequest
+from thesimulator.cdata_structures import (
+    TransportationRequest as CTransportationRequest,
+)
 from thesimulator.util.spaces import Euclidean
 
 
@@ -19,7 +21,7 @@ class RandomRequestGenerator:
         pickup_timewindow_size=np.inf,
         dropoff_timewindow_start=0,
         dropoff_timewindow_size=np.inf,
-        request_class = TransportationRequest
+        request_class=TransportationRequest,
     ):
         if seed is not None:
             np.random.seed(seed)

@@ -16,7 +16,7 @@ from .data_structures import (
     TransportationRequest,
     TransportSpace,
     Dispatcher,
-    LocType
+    LocType,
 )
 
 
