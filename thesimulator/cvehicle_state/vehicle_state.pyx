@@ -83,6 +83,9 @@ cdef class VehicleState:
             if stop.estimated_arrival_time <= t:
                 # as we are iterating backwards, the first stop iterated over is the last one serviced
                 if last_stop is None:
+                    # this deepcopy is necessary because otherwise after removing elements from stoplist,
+                    # last_stop will point to the wrong element.  See the failing test as well:
+                    # test.test_cdata_structures.test_stoplist_getitem_and_elem_removal_consistent
                     last_stop = deepcopy(stop)
 
                 event_cache.append(

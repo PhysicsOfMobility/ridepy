@@ -147,8 +147,6 @@ namespace cstuff {
             return *this;
         }
 
-// "grab the elements" from a // now a has no elements
-
         double estimated_departure_time() {
             return max(estimated_arrival_time, time_window_min);
         }
