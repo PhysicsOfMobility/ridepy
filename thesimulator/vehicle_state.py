@@ -127,10 +127,6 @@ class VehicleState:
         else:
             # stoplist is empty, only CPE is there. Therefore we just stick around...
             pass
-        print(f"t: {t}")
-        print("post-fast-forward stoplist")
-        for s in self.stoplist:
-            print(f"{tuple(s.location)} -- {s.request.request_id} -- {s.action} -- {s.estimated_arrival_time} -- {s.time_window_min} -- {s.time_window_max}")
         return event_cache
 
     def handle_transportation_request_single_vehicle(

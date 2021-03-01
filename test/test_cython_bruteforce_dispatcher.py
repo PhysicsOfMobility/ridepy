@@ -118,81 +118,8 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     assert np.allclose(py_timewindows, cy_timewindows)
 
 
-def test_equivalence_cython_and_python_bruteforce_dispatcher_edge_case():
-    """
-    Tests that the pure pythonic and cythonic brute force dispatcher produces identical results in a specific edge case.
-    """
-    stop_locations = np.array([
-        [0.11214248, 0.3257659],
-        [0.05808361, 0.86617615],
-        [0.60111501, 0.70807258],
-        [0.96990985, 0.83244264],
-        [0.95071431, 0.73199394],
-        [0.59865848, 0.15601864],
-        [0.21233911, 0.18182497]
-    ])
-    arrival_times = np.cumsum(
-        [np.linalg.norm(x - y) for x, y in zip(stop_locations[:-1], stop_locations[1:])]
-    )
-    arrival_times = np.insert(arrival_times, 0, 0)
-    # location, CPAT, tw_min, tw_max,
-    stoplist_properties = [
-        [stop_loc, CPAT, 0, inf]
-        for stop_loc, CPAT in zip(stop_locations, arrival_times)
-    ]
-    origin = np.array([0.30424224, 0.52475643])
-    destination = np.array([0.43194502, 0.29122914])
-
-    # first call the pure pythonic dispatcher
-    request = pyds.TransportationRequest(
-        request_id=100,
-        creation_timestamp=1,
-        origin=origin,
-        destination=destination,
-        pickup_timewindow_min=0,
-        pickup_timewindow_max=inf,
-        delivery_timewindow_min=0,
-        delivery_timewindow_max=inf,
-    )
-
-    stoplist = stoplist_from_properties(stoplist_properties, data_structure_module=pyds)
-
-    # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
-    pythonic_solution = py_brute_force_distance_minimizing_dispatcher(
-        request, stoplist, pyspaces.Euclidean2D()
-    )
-    py_min_cost, _, py_timewindows = pythonic_solution
-
-    # then call the cythonic dispatcher
-    request = cyds.TransportationRequest(
-        request_id=100,
-        creation_timestamp=1,
-        origin=origin,
-        destination=destination,
-        pickup_timewindow_min=0,
-        pickup_timewindow_max=inf,
-        delivery_timewindow_min=0,
-        delivery_timewindow_max=inf,
-    )
-
-    # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_distance_minimizing_dispatcher
-    stoplist = cyStoplist(
-        stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
-        loc_type=LocType.R2LOC,
-    )
-
-    # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = cy_brute_force_distance_minimizing_dispatcher(
-        request, stoplist, cyspaces.Euclidean2D(1)
-    )
-    cy_min_cost, _, cy_timewindows = cythonic_solution
-
-    assert np.isclose(py_min_cost, cy_min_cost)
-    assert np.allclose(py_timewindows, cy_timewindows)
-
-
-
 def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
+    n_reqs = 100
     ir = pyds.InternalRequest(999, 0, (0, 0))
     s0 = pyds.Stop((0,0), ir, pyds.StopAction.internal, 0,0,0)
     sl = [s0]
@@ -201,7 +128,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
                                 space=pyspaces.Euclidean2D(),
                                 dispatcher=py_brute_force_distance_minimizing_dispatcher, vehicle_state_class=py_VehicleState)
     rg = RandomRequestGenerator(space=pyspaces.Euclidean2D(), request_class=pyds.TransportationRequest, )
-    reqs = list(it.islice(rg, 10))
+    reqs = list(it.islice(rg, n_reqs))
     py_events = list(sfls.simulate(reqs))
 
 
@@ -216,7 +143,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     # Asking RandomRequestGenerator to use the python space to generate random points, but return cython
     # objects. This should be changed when the cython spaces support random sampling.
     rg = RandomRequestGenerator(space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest)
-    reqs = list(it.islice(rg, 10))
+    reqs = list(it.islice(rg, n_reqs))
     cy_events = list(sfls.simulate(reqs))
 
     # assert that the returned events are the same

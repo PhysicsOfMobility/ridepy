@@ -69,7 +69,6 @@ namespace cstuff {
                     + distance_from_dropoff
                     - original_pickup_edge_length
             );
-            if (request->request_id==3) std::cout<<"cyCost:("<<i<<","<<i<<"): "<<total_cost<<std::endl;
             if (total_cost < min_cost) {
                 // check for constraint violations at later points
                 auto cpat_at_next_stop =
@@ -117,7 +116,6 @@ namespace cstuff {
 
                 total_cost = pickup_cost + dropoff_cost;
 
-                if (request->request_id==3) std::cout<<"cyCost:("<<i<<","<<j<<"): "<<total_cost<<std::endl;
                 if (total_cost >= min_cost) continue;
                 else {
                     // cost has decreased. check for constraint violations at later stops
