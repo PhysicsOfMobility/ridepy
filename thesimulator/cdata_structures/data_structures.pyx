@@ -358,6 +358,9 @@ cdef class Stop:
         else:
             raise ValueError("This line should never have been reached")
 
+    def __deepcopy__(self, *args, **kwargs):
+        return Stop(self.location, self.request, self.action, self.estimated_arrival_time, self.time_window_min,
+                   self.time_window_max)
 
     def __repr__(self):
         # TODO: should also show the CPAT, EAST and LAST and Action

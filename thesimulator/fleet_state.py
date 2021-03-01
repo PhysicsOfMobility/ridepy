@@ -162,9 +162,10 @@ class FleetState(ABC):
             # modify the best vehicle's stoplist
             # print(f"len of new stoplist={len(new_stoplist)}")
             self.fleet[best_vehicle].stoplist = new_stoplist
-            print(
-                 f"{best_vehicle}: [{', '.join(map(str,[(stop.request.request_id, stop.estimated_arrival_time) for stop in new_stoplist]))}]\n"
-            )
+            print(f"request: {req}")
+            print("post-insertion stoplist")
+            for s in new_stoplist:
+                print(f"{tuple(s.location)}--{s.request.request_id}--{s.action}--{s.estimated_arrival_time}")
             return RequestAcceptanceEvent(
                 request_id=req.request_id,
                 timestamp=self.t,

@@ -20,3 +20,6 @@ def test_attr_get():
 
 def test_attr_set():
     assert False
+
+def test_attr_get_set_deepcopy_stops():
+    assert False

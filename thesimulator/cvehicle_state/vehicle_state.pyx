@@ -9,13 +9,15 @@ from thesimulator.cdata_structures.data_structures cimport (
     Stoplist,
 )
 
+from thesimulator.cdata_structures.data_structures import StopAction  as pStopAction # only for a debug print statemnet
+
 from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 
 from thesimulator.util.cdispatchers.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
 )
 from typing import List
-
+from copy import deepcopy
 
 
 cdef class VehicleState:
@@ -81,7 +83,7 @@ cdef class VehicleState:
             if stop.estimated_arrival_time <= t:
                 # as we are iterating backwards, the first stop iterated over is the last one serviced
                 if last_stop is None:
-                    last_stop = stop
+                    last_stop = deepcopy(stop)
 
                 event_cache.append(
                     {
@@ -109,6 +111,7 @@ cdef class VehicleState:
         self.stoplist[0].estimated_arrival_time = t
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
+
         if len(self.stoplist) > 1:
             self.stoplist[0].location, _ = self.space.interp_time(
                 u=last_stop.location,
@@ -118,6 +121,10 @@ cdef class VehicleState:
         else:
             # stoplist is empty, only CPE is there. Therefore we just stick around...
             pass
+        print(f"t: {t}")
+        print("post-fast-forward stoplist")
+        for s in self.stoplist:
+            print(f"{tuple(s.location)} -- {s.request.request_id} -- {pStopAction(s.action).name} -- {s.estimated_arrival_time} -- {s.time_window_min} -- {s.time_window_max}")
         return event_cache
 
     def handle_transportation_request_single_vehicle(

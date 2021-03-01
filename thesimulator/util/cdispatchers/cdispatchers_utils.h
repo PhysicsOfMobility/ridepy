@@ -186,11 +186,13 @@ namespace cstuff {
                 - stoplist[idx].estimated_arrival_time
         );
 //    BOOST_FOREACH(auto& stop, boost::make_iterator_range(stoplist.begin()+idx, stoplist.end()))
-        for (auto stop = stoplist.begin() + idx; stop != stoplist.end(); ++stop) {
+        // Remember that the insertion is *after* idx'th stop. We need to check for violations from
+        // idx+1'th stop onwards
+        for (auto stop = stoplist.begin() + idx + 1; stop != stoplist.end(); ++stop) {
             auto old_leeway = stop->time_window_max - stop->estimated_arrival_time;
             auto new_leeway = old_leeway - delta_cpat;
 
-            if ((new_leeway < 0) & (new_leeway < old_leeway)) return true;
+            if ((new_leeway < 0) && (new_leeway < old_leeway)) return true;
             else {
                 auto old_departure = max(stop->time_window_min, stop->estimated_arrival_time);
                 auto new_departure = max(
