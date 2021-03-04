@@ -144,7 +144,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     s0 = cyds.Stop((0, 0), ir, cyds.StopAction.internal, 0, 0, 0)
     sl = [s0]
 
-    sfls = SlowSimpleFleetState(
+    ffls = SlowSimpleFleetState(
         initial_stoplists={7: sl},
         space=cyspaces.Euclidean2D(),
         dispatcher=cy_brute_force_distance_minimizing_dispatcher,
@@ -157,7 +157,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest
     )
     reqs = list(it.islice(rg, n_reqs))
-    cy_events = list(sfls.simulate(reqs))
+    cy_events = list(ffls.simulate(reqs))
 
     # assert that the returned events are the same
     assert len(cy_events) == len(py_events)
