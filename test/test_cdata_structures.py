@@ -16,7 +16,7 @@ from copy import deepcopy
 
 def test_attr_not_none():
     """
-    Failing test added to demonstrate that there's a problem with with creating cython
+    Test added to check for problems with creating cython
     objects from existing pointers and garbage collection.
     """
     ir = InternalRequest(999, 0, (0, 0))
