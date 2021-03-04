@@ -1,8 +1,9 @@
 # distutils: language=c++
 
 from libcpp.vector cimport vector
+from libcpp.memory cimport shared_ptr
 from thesimulator.cdata_structures.cdata_structures cimport (
-    InsertionResult, Request, Stop)
+    InsertionResult, TransportationRequest, Stop)
 from thesimulator.util.cspaces.cspaces cimport TransportSpace, Euclidean2D
 
 #cdef extern from "cdispatchers.cpp":
@@ -13,6 +14,6 @@ from thesimulator.util.cspaces.cspaces cimport TransportSpace, Euclidean2D
 
 cdef extern from "cdispatchers.h" namespace 'cstuff':
     InsertionResult[Loc] brute_force_distance_minimizing_dispatcher[Loc](
-    const Request[Loc] &request,
+          shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
           const TransportSpace &space)

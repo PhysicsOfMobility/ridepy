@@ -1,10 +1,13 @@
 # distutils: language = c++
 
 from libcpp.vector cimport vector
+from libcpp.memory cimport shared_ptr
 
 
 from thesimulator.cdata_structures.cdata_structures cimport (
     Request as CRequest,
+    TransportationRequest as CTransportationRequest,
+    InternalRequest as CInternalRequest,
     Stop as CStop,
     R2loc
 )
@@ -20,47 +23,60 @@ cpdef enum class LocType:
     INT = 2
 
 cdef union _URequest:
-    CRequest[R2loc] _req_r2loc
-    CRequest[int] _req_int
+    shared_ptr[CRequest[R2loc]] _req_r2loc
+    shared_ptr[CRequest[int]] _req_int
+
+cdef union _UTransportationRequest:
+    shared_ptr[CTransportationRequest[R2loc]] _req_r2loc
+    shared_ptr[CTransportationRequest[int]] _req_int
+
+cdef union _UInternalRequest:
+    shared_ptr[CInternalRequest[R2loc]] _req_r2loc
+    shared_ptr[CInternalRequest[int]] _req_int
 
 cdef union _UStop:
-    CStop[R2loc] _stop_r2loc
-    CStop[int] _stop_int
+    # have to store a pointer otherwise setting attribute from python side does not work
+    CStop[R2loc] *_stop_r2loc
+    CStop[int] *_stop_int
 
 cdef union _UStoplist:
-    vector[CStop[R2loc]]* _stoplist_r2loc_ptr
-    vector[CStop[int]]* _stoplist_int_ptr
+    vector[CStop[R2loc]] _stoplist_r2loc
+    vector[CStop[int]] _stoplist_int
 
 
-cdef class TransportationRequest:
+cdef class Request:
     cdef _URequest _ureq
     cdef LocType loc_type
-#    @staticmethod
-#    cdef TransportationRequest from_c_union(_URequest, LocType)
+
+cdef class TransportationRequest(Request):
+    cdef _UTransportationRequest _utranspreq
     @staticmethod
-    cdef TransportationRequest from_c_r2loc(CRequest[R2loc] creq)
+    cdef TransportationRequest from_c_r2loc(shared_ptr[CTransportationRequest[R2loc]] creq)
     @staticmethod
-    cdef TransportationRequest from_c_int(CRequest[int] creq)
+    cdef TransportationRequest from_c_int(shared_ptr[CTransportationRequest[int]] creq)
+
+cdef class InternalRequest(Request):
+    cdef _UInternalRequest _uinternreq
+    @staticmethod
+    cdef InternalRequest from_c_r2loc(shared_ptr[CInternalRequest[R2loc]] creq)
+    @staticmethod
+    cdef InternalRequest from_c_int(shared_ptr[CInternalRequest[int]] creq)
 
 cdef class Stop:
+    cdef bint ptr_owner
     cdef _UStop ustop
     cdef LocType loc_type
-#    @staticmethod
-#    cdef Stop from_c_union(_UStop ustop, LocType loc_type)
     @staticmethod
-    cdef Stop from_c_r2loc(CStop[R2loc] cstop)
+    cdef Stop from_c_r2loc(CStop[R2loc] *cstop)
     @staticmethod
-    cdef Stop from_c_int(CStop[int] cstop)
+    cdef Stop from_c_int(CStop[int] *cstop)
 
 
 cdef class Stoplist:
-    cdef bint ptr_owner
     cdef LocType loc_type
     cdef _UStoplist ustoplist
     cdef Stop py_s
-#    @staticmethod
-#    cdef Stoplist from_c_union(_UStoplist ustoplist, LocType loc_type)
     @staticmethod
-    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist_ptr)
+    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] cstoplist)
     @staticmethod
-    cdef Stoplist from_c_int(vector[CStop[int]] *cstoplist_ptr)
+    cdef Stoplist from_c_int(vector[CStop[int]] cstoplist)

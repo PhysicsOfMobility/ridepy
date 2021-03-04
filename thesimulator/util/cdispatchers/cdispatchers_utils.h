@@ -11,7 +11,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            const Request<Loc> &request,
+            std::shared_ptr<TransportationRequest<Loc>> request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -48,7 +48,7 @@ namespace cstuff {
     template<typename Loc>
     std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
             std::vector<Stop<Loc>> &stoplist,
-            const Request<Loc> &request,
+            std::shared_ptr<TransportationRequest<Loc>> request,
             int pickup_idx,
             int dropoff_idx,
             TransportSpace<Loc> &space
@@ -63,25 +63,25 @@ namespace cstuff {
         // Handle the pickup
         auto &stop_before_pickup = new_stoplist[pickup_idx];
         auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
-                stop_before_pickup.location, request.origin
+                stop_before_pickup.location, request->origin
         );
-        Stop<Loc> pickup_stop(request.origin, request, StopAction::pickup, cpat_at_pu, request.pickup_timewindow_min,
-                              request.pickup_timewindow_max);
+        Stop<Loc> pickup_stop(request->origin, request, StopAction::pickup, cpat_at_pu, request->pickup_timewindow_min,
+                              request->pickup_timewindow_max);
 
         insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space);
         // Handle the dropoff
         dropoff_idx += 1;
         auto &stop_before_dropoff = new_stoplist[dropoff_idx];
         auto cpat_at_do = stop_before_dropoff.estimated_departure_time() + space.d(
-                stop_before_dropoff.location, request.destination
+                stop_before_dropoff.location, request->destination
         );
         Stop<Loc> dropoff_stop(
-                request.destination,
+                request->destination,
                 request,
                 StopAction::dropoff,
                 cpat_at_do,
-                request.delivery_timewindow_min,
-                request.delivery_timewindow_max);
+                request->delivery_timewindow_min,
+                request->delivery_timewindow_max);
         insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx, space);
         return new_stoplist;
     }
@@ -186,11 +186,13 @@ namespace cstuff {
                 - stoplist[idx].estimated_arrival_time
         );
 //    BOOST_FOREACH(auto& stop, boost::make_iterator_range(stoplist.begin()+idx, stoplist.end()))
-        for (auto stop = stoplist.begin() + idx; stop != stoplist.end(); ++stop) {
+        // Remember that the insertion is *after* idx'th stop. We need to check for violations from
+        // idx+1'th stop onwards
+        for (auto stop = stoplist.begin() + idx + 1; stop != stoplist.end(); ++stop) {
             auto old_leeway = stop->time_window_max - stop->estimated_arrival_time;
             auto new_leeway = old_leeway - delta_cpat;
 
-            if ((new_leeway < 0) & (new_leeway < old_leeway)) return true;
+            if ((new_leeway < 0) && (new_leeway < old_leeway)) return true;
             else {
                 auto old_departure = max(stop->time_window_min, stop->estimated_arrival_time);
                 auto new_departure = max(

@@ -2,6 +2,7 @@
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
+from libcpp.memory cimport shared_ptr
 
 cdef extern from "cdata_structures.h" namespace 'cstuff':
 
@@ -14,6 +15,8 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
     cdef cppclass Request[Loc]:
         int request_id
         double creation_timestamp
+
+    cdef cppclass TransportationRequest[Loc](Request[Loc]):
         Loc origin
         Loc destination
         double pickup_timewindow_min
@@ -21,19 +24,26 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         double delivery_timewindow_min
         double delivery_timewindow_max
 
-        Request()
-        Request(int, double, Loc, Loc, double, double, double, double)
+        TransportationRequest()
+        TransportationRequest(int, double, Loc, Loc, double, double, double, double)
+
+    cdef cppclass InternalRequest[Loc](Request[Loc]):
+        Loc location
+
+        InternalRequest()
+        InternalRequest(int, double, Loc)
+
 
     cdef cppclass Stop[Loc]:
         Loc location
-        Request[Loc] request
+        shared_ptr[Request[Loc]] request
         StopAction action
         double estimated_arrival_time
         double time_window_min
         double time_window_max
 
         Stop()
-        Stop(Loc, Request, StopAction, double, double, double)
+        Stop(Loc, const shared_ptr[Request]&, StopAction, double, double, double)
 
     cdef cppclass InsertionResult[Loc]:
         vector[Stop[Loc]] new_stoplist

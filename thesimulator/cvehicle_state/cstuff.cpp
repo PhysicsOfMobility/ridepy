@@ -24,6 +24,7 @@ int main()
     double dist_from_last = 0;
     double dist = 0;
     Stop<R2loc> stop;
+    shared_ptr<Request<R2loc>> req_ptr;
     pair<double, double> a, b;
     for (int i=0; i<n; i++)
     {
@@ -31,18 +32,27 @@ int main()
        if (i>0) dist = space.d(stop_loc, stop.location);
 
         arrtime = arrtime + dist;
-        Request<R2loc> dummy_req {i, 0, make_pair(0,0), make_pair(0,1), 0, INFINITY, 0, INFINITY};
-        stop = {stop_loc, dummy_req, StopAction::internal, arrtime, 0, INFINITY};
+        auto req_ptr = make_shared<TransportationRequest<R2loc>>(i, 0, make_pair(0,0), make_pair(0,1), 0, INFINITY, 0, INFINITY);
+
+        stop = {stop_loc, req_ptr, StopAction::internal, arrtime, 0, INFINITY};
+
 
         stoplist.push_back(stop);
     }
+    //debug
+    std::cout<<"begin debug:"<<std::endl;
+    std::cout<<stoplist[0].estimated_arrival_time<<std::endl;
+    stoplist[0].estimated_arrival_time = 8.4362;
+    std::cout<<stoplist[0].estimated_arrival_time<<std::endl;
+
     // create new request
     R2loc req_origin = make_pair(distrib(gen), distrib(gen));
     R2loc req_dest = make_pair(distrib(gen), distrib(gen));
-    Request<R2loc> request {42, 1, req_origin, req_dest, 0, INFINITY, 0, INFINITY};
+
+    auto request_ptr = make_shared<TransportationRequest<R2loc>>(42, 1, req_origin, req_dest, 0, INFINITY, 0, INFINITY);
 
     auto start = std::chrono::system_clock::now();
-    auto x = brute_force_distance_minimizing_dispatcher(request, stoplist, space);
+    auto x = brute_force_distance_minimizing_dispatcher(request_ptr, stoplist, space);
     auto end = std::chrono::system_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;

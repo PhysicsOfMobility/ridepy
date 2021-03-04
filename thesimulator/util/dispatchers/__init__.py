@@ -208,8 +208,8 @@ def brute_force_distance_minimizing_dispatcher(
 
     if min_cost < np.inf:
         best_pickup_idx, best_dropoff_idx = best_insertion
-        # print(f"Best insertion: {best_insertion}")
-        # print(f"Min cost: {min_cost}")
+        print(f"Best insertion: {best_insertion}")
+        print(f"Min cost: {min_cost}")
 
         best_pickup_idx, best_dropoff_idx = best_insertion
 

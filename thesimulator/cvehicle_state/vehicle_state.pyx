@@ -9,13 +9,15 @@ from thesimulator.cdata_structures.data_structures cimport (
     Stoplist,
 )
 
+from thesimulator.cdata_structures.data_structures import StopAction  as pStopAction # only for a debug print statemnet
+
 from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
 
 from thesimulator.util.cdispatchers.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
 )
 from typing import List
-
+from copy import deepcopy
 
 
 cdef class VehicleState:
@@ -32,14 +34,25 @@ cdef class VehicleState:
     cdef Stoplist stoplist
     cdef TransportSpace space
     cdef int vehicle_id
+    cdef dict __dict__
+
     def __init__(
-            self, *, vehicle_id, initial_stoplist, space, loc_type):
+            self, *, vehicle_id, initial_stoplist, space, loc_type, dispatcher):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist, loc_type)
         self.space = space
+        self.dispatcher=dispatcher
         print(f"Created VehicleState with space of type {type(self.space)}")
+
+    property stoplist:
+        def __get__(self):
+            return self.stoplist
+        def __set__(self, new_stoplist):
+            self.stoplist = new_stoplist
+
+
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -70,7 +83,10 @@ cdef class VehicleState:
             if stop.estimated_arrival_time <= t:
                 # as we are iterating backwards, the first stop iterated over is the last one serviced
                 if last_stop is None:
-                    last_stop = stop
+                    # this deepcopy is necessary because otherwise after removing elements from stoplist,
+                    # last_stop will point to the wrong element.  See the failing test as well:
+                    # test.test_cdata_structures.test_stoplist_getitem_and_elem_removal_consistent
+                    last_stop = deepcopy(stop)
 
                 event_cache.append(
                     {
@@ -98,6 +114,7 @@ cdef class VehicleState:
         self.stoplist[0].estimated_arrival_time = t
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
+
         if len(self.stoplist) > 1:
             self.stoplist[0].location, _ = self.space.interp_time(
                 u=last_stop.location,
@@ -107,11 +124,10 @@ cdef class VehicleState:
         else:
             # stoplist is empty, only CPE is there. Therefore we just stick around...
             pass
-
         return event_cache
 
     def handle_transportation_request_single_vehicle(
-            self, TransportationRequest cy_request
+            self, TransportationRequest request
     ):
         """
         The computational bottleneck. An efficient simulator could do the following:
@@ -127,7 +143,7 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        return self.vehicle_id, c_disp(
-            cy_request,
+        return self.vehicle_id, *self.dispatcher(
+            request,
             self.stoplist,
             self.space)

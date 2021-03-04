@@ -3,6 +3,8 @@ import numpy as np
 from numpy import inf
 from functools import reduce
 from time import time
+import itertools as it
+from pandas.core.common import flatten
 
 from thesimulator.cdata_structures import Stoplist as cyStoplist
 
@@ -11,7 +13,7 @@ from thesimulator import data_structures as pyds
 from thesimulator.cdata_structures.data_structures import LocType
 from thesimulator.util import spaces as pyspaces
 from thesimulator.util.cspaces import spaces as cyspaces
-
+from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.dispatchers import (
     brute_force_distance_minimizing_dispatcher as py_brute_force_distance_minimizing_dispatcher,
@@ -19,6 +21,10 @@ from thesimulator.util.dispatchers import (
 from thesimulator.util.cdispatchers import (
     brute_force_distance_minimizing_dispatcher as cy_brute_force_distance_minimizing_dispatcher,
 )
+from thesimulator.vehicle_state import VehicleState as py_VehicleState
+from thesimulator.cvehicle_state import VehicleState as cy_VehicleState
+
+from thesimulator.fleet_state import SlowSimpleFleetState
 
 
 def stoplist_from_properties(stoplist_properties, data_structure_module):
@@ -110,3 +116,54 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     assert np.isclose(py_min_cost, cy_min_cost)
     assert np.allclose(py_timewindows, cy_timewindows)
+
+
+def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
+    """
+    Tests that the simulation runs with pure pythonic and cythonic brute force dispatcher produces identical events.
+    """
+    n_reqs = 100
+    ir = pyds.InternalRequest(999, 0, (0, 0))
+    s0 = pyds.Stop((0, 0), ir, pyds.StopAction.internal, 0, 0, 0)
+    sl = [s0]
+
+    sfls = SlowSimpleFleetState(
+        initial_stoplists={7: sl},
+        space=pyspaces.Euclidean2D(),
+        dispatcher=py_brute_force_distance_minimizing_dispatcher,
+        vehicle_state_class=py_VehicleState,
+    )
+    rg = RandomRequestGenerator(
+        space=pyspaces.Euclidean2D(),
+        request_class=pyds.TransportationRequest,
+    )
+    reqs = list(it.islice(rg, n_reqs))
+    py_events = list(sfls.simulate(reqs))
+
+    ir = cyds.InternalRequest(999, 0, (0, 0))
+    s0 = cyds.Stop((0, 0), ir, cyds.StopAction.internal, 0, 0, 0)
+    sl = [s0]
+
+    ffls = SlowSimpleFleetState(
+        initial_stoplists={7: sl},
+        space=cyspaces.Euclidean2D(),
+        dispatcher=cy_brute_force_distance_minimizing_dispatcher,
+        vehicle_state_class=cy_VehicleState,
+    )
+    # So far, cyspaces.Euclidean2D doesn't support random point generation. So we are using the hack of
+    # Asking RandomRequestGenerator to use the python space to generate random points, but return cython
+    # objects. This should be changed when the cython spaces support random sampling.
+    rg = RandomRequestGenerator(
+        space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest
+    )
+    reqs = list(it.islice(rg, n_reqs))
+    cy_events = list(ffls.simulate(reqs))
+
+    # assert that the returned events are the same
+    assert len(cy_events) == len(py_events)
+    for num, (cev, pev) in enumerate(zip(cy_events, py_events)):
+        assert type(cev) == type(pev)
+        np.allclose(
+            list(flatten(list(pev.__dict__.values()))),
+            list(flatten(list(cev.__dict__.values()))),
+        )

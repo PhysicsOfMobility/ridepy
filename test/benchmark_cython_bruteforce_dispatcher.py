@@ -3,16 +3,22 @@ import numpy as np
 from numpy import inf
 from functools import reduce
 from time import time
-
+import os
+import psutil
 
 from thesimulator.cdata_structures import (
     Stop,
     TransportationRequest,
+    InternalRequest,
     StopAction,
     LocType,
+    Stoplist,
 )
 
 from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
+from thesimulator.util.cdispatchers import brute_force_distance_minimizing_dispatcher
+
+from random import randint
 
 from thesimulator.cvehicle_state import VehicleState
 
@@ -21,7 +27,9 @@ def stoplist_from_properties(stoplist_properties):
     return [
         Stop(
             location=loc,
-            request=None,
+            request=InternalRequest(
+                request_id=randint(0, 100), creation_timestamp=0, location=(0, 0)
+            ),
             action=StopAction.internal,
             estimated_arrival_time=cpat,
             time_window_min=tw_min,
@@ -47,9 +55,12 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
     stoplist = stoplist_from_properties(stoplist_properties)
-    # breakpoint()
     vs = VehicleState(
-        vehicle_id=12, initial_stoplist=stoplist, space=space, loc_type=LocType.R2LOC
+        vehicle_id=12,
+        initial_stoplist=stoplist,
+        space=space,
+        loc_type=LocType.R2LOC,
+        dispatcher=brute_force_distance_minimizing_dispatcher,
     )
     request = TransportationRequest(
         request_id=100,
@@ -62,6 +73,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_max=inf,
     )
     tick = time()
+    # TODO: instead of creating VehicleState, call cythonic dispatcher directly (same as the pythonic benchmark script)
     vs.handle_transportation_request_single_vehicle(request)
     tock = time()
     print(f"Computing insertion into {n}-element stoplist took: {tock-tick} seconds")
@@ -74,4 +86,11 @@ if __name__ == "__main__":
         seed = int(sys.argv[1])
     else:
         seed = 0
-    benchmark_insertion_into_long_stoplist(seed)
+    if len(sys.argv) > 2 and sys.argv[2] == "memcheck":
+        # Run 100 times
+        for i in range(100):
+            process = psutil.Process(os.getpid())
+            print(f"Before run #{i}: {process.memory_info().rss/1024} kB")
+            benchmark_insertion_into_long_stoplist(seed)
+    else:  # run only once
+        benchmark_insertion_into_long_stoplist(seed)
