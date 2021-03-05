@@ -5,10 +5,10 @@ from libcpp.memory cimport dynamic_pointer_cast
 
 from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
 from thesimulator.data_structures_cython.data_structures cimport TransportationRequest, Stoplist, LocType, R2loc
-from thesimulator.data_structures_cython.data_structures_cython cimport InsertionResult, \
+from thesimulator.data_structures_cython.cdata_structures cimport InsertionResult, \
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
-from thesimulator.util.dispatchers_cython.dispatchers_cython cimport \
+from thesimulator.util.dispatchers_cython.cdispatchers cimport \
     brute_force_distance_minimizing_dispatcher as c_brute_force_distance_minimizing_dispatcher
 
 # Just like we did in data_structures_cython.Stop, we would have liked to have an union holding

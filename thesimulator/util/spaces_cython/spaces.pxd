@@ -1,6 +1,6 @@
 # distutils: language = c++
 
-from .spaces_cython cimport (
+from .cspaces cimport (
     Euclidean2D as CEuclidean2D,
     TransportSpace as CTransportSpace,
     Manhattan2D as CManhattan2D,

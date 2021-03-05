@@ -3,7 +3,7 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
 from thesimulator.util import smartVectorize
-from .spaces_cython cimport(
+from .cspaces cimport(
     R2loc,
     Euclidean2D as CEuclidean2D,
     Manhattan2D as CManhattan2D,

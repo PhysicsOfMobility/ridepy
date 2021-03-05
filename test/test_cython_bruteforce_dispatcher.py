@@ -22,7 +22,7 @@ from thesimulator.util.dispatchers_cython import (
     brute_force_distance_minimizing_dispatcher as cy_brute_force_distance_minimizing_dispatcher,
 )
 from thesimulator.vehicle_state import VehicleState as py_VehicleState
-from thesimulator.cvehicle_state import VehicleState as cy_VehicleState
+from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
 
 from thesimulator.fleet_state import SlowSimpleFleetState
 

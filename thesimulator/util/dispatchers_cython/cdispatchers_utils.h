@@ -5,7 +5,7 @@
 #ifndef THESIMULATOR_CDISPATCHERS_UTILS_H
 #define THESIMULATOR_CDISPATCHERS_UTILS_H
 
-#include "../../data_structures_cython/data_structures_cython.h"
+#include "../../data_structures_cython/cdata_structures.h"
 
 namespace cstuff {
     template<typename Loc>
