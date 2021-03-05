@@ -28,8 +28,6 @@ namespace cstuff {
         vector<double> _weights;
 
     public:
-        double velocity;  // Might consider not storing velocity as an attribute of this class, rather as that of the
-        // parent class (TransportSpace)
         double d(vertex_t src, vertex_t target) override {
             // call dijkstra
             int src_idx = this->vertex_label2index[src];
@@ -78,7 +76,7 @@ namespace cstuff {
                 : GraphSpace(velocity, vertex_vec, edge_vec, vector < double > {static_cast<int>(edge_vec.size()), 1}) {}
 
         GraphSpace(double velocity, vector <vertex_t> vertex_vec, vector <Edge> edge_vec, vector<double> weight_vec)
-                : _g{vertex_vec.size()}, velocity{velocity}, vertex2label{get(vertex_name, _g)},
+                : TransportSpace<vertex_t>{velocity}, _g{vertex_vec.size()}, vertex2label{get(vertex_name, _g)},
                   _distances(static_cast<int>(vertex_vec.size())), _predecessors(static_cast<int>(vertex_vec.size())),
                   _weights{weight_vec}, edge2weight{get(edge_weight, _g)} {
             // this->vertex2label = get(vertex_name, this->_g);
