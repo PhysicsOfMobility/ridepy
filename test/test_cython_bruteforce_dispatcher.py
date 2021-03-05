@@ -6,19 +6,19 @@ from time import time
 import itertools as it
 from pandas.core.common import flatten
 
-from thesimulator.cdata_structures import Stoplist as cyStoplist
+from thesimulator.data_structures_cython import Stoplist as cyStoplist
 
-from thesimulator import cdata_structures as cyds
+from thesimulator import data_structures_cython as cyds
 from thesimulator import data_structures as pyds
-from thesimulator.cdata_structures.data_structures import LocType
+from thesimulator.data_structures_cython.data_structures import LocType
 from thesimulator.util import spaces as pyspaces
-from thesimulator.util.cspaces import spaces as cyspaces
+from thesimulator.util.spaces_cython import spaces as cyspaces
 from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.dispatchers import (
     brute_force_distance_minimizing_dispatcher as py_brute_force_distance_minimizing_dispatcher,
 )
-from thesimulator.util.cdispatchers import (
+from thesimulator.util.dispatchers_cython import (
     brute_force_distance_minimizing_dispatcher as cy_brute_force_distance_minimizing_dispatcher,
 )
 from thesimulator.vehicle_state import VehicleState as py_VehicleState

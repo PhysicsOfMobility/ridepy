@@ -4,7 +4,7 @@ from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr
 
 
-from thesimulator.cdata_structures.cdata_structures cimport (
+from thesimulator.data_structures_cython.data_structures_cython cimport (
     Request as CRequest,
     TransportationRequest as CTransportationRequest,
     InternalRequest as CInternalRequest,

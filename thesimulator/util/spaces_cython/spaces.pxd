@@ -1,13 +1,13 @@
 # distutils: language = c++
 
-from .cspaces cimport (
+from .spaces_cython cimport (
     Euclidean2D as CEuclidean2D,
     TransportSpace as CTransportSpace,
     Manhattan2D as CManhattan2D,
     GraphSpace as CGraphSpace
 )
 
-from thesimulator.cdata_structures.data_structures cimport LocType, R2loc
+from thesimulator.data_structures_cython.data_structures cimport LocType, R2loc
 
 cdef union USpace:
     CTransportSpace[R2loc] *space_r2loc_ptr

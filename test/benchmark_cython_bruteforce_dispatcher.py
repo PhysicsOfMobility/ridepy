@@ -6,7 +6,7 @@ from time import time
 import os
 import psutil
 
-from thesimulator.cdata_structures import (
+from thesimulator.data_structures_cython import (
     Stop,
     TransportationRequest,
     InternalRequest,
@@ -15,8 +15,8 @@ from thesimulator.cdata_structures import (
     Stoplist,
 )
 
-from thesimulator.util.cspaces import Euclidean2D, Manhattan2D
-from thesimulator.util.cdispatchers import brute_force_distance_minimizing_dispatcher
+from thesimulator.util.spaces_cython import Euclidean2D, Manhattan2D
+from thesimulator.util.dispatchers_cython import brute_force_distance_minimizing_dispatcher
 
 from random import randint
 

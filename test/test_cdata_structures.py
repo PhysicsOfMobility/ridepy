@@ -1,11 +1,11 @@
-from thesimulator.cdata_structures import (
+from thesimulator.data_structures_cython import (
     TransportationRequest,
     InternalRequest,
     Stop,
     StopAction,
     Stoplist,
 )
-from thesimulator.cdata_structures import LocType
+from thesimulator.data_structures_cython import LocType
 
 import pytest
 

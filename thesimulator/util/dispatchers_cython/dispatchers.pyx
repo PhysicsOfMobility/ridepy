@@ -3,15 +3,15 @@
 from cython.operator cimport dereference
 from libcpp.memory cimport dynamic_pointer_cast
 
-from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
-from thesimulator.cdata_structures.data_structures cimport TransportationRequest, Stoplist, LocType, R2loc
-from thesimulator.cdata_structures.cdata_structures cimport InsertionResult, \
+from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
+from thesimulator.data_structures_cython.data_structures cimport TransportationRequest, Stoplist, LocType, R2loc
+from thesimulator.data_structures_cython.data_structures_cython cimport InsertionResult, \
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
-from thesimulator.util.cdispatchers.cdispatchers cimport \
+from thesimulator.util.dispatchers_cython.dispatchers_cython cimport \
     brute_force_distance_minimizing_dispatcher as c_brute_force_distance_minimizing_dispatcher
 
-# Just like we did in cdata_structures.Stop, we would have liked to have an union holding
+# Just like we did in data_structures_cython.Stop, we would have liked to have an union holding
 # InsertionResult[R2loc] and InsertionResult[int] inside brute_force_distance_minimizing_dispatcher. However,
 # that is nontrivial because any non-POD union member needs to have explicitly defined constructor and copy constructor
 # (https://en.wikipedia.org/wiki/C%2B%2B11#Unrestricted_unions). Hence, the following union does *not* work, and we

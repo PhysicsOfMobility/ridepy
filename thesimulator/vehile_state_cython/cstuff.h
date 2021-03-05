@@ -15,9 +15,9 @@
 #include <random>
 #include <chrono> // for benchmarking
 #include <iostream>
-#include "../cdata_structures/cdata_structures.h"
-#include "../util/cdispatchers/cdispatchers.h"
-#include "../util/cspaces/cspaces.h"
+#include "../data_structures_cython/data_structures_cython.h"
+#include "../util/dispatchers_cython/dispatchers_cython.h"
+#include "../util/spaces_cython/spaces_cython.h"
 
 using namespace std;
 

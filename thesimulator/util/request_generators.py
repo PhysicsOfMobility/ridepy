@@ -4,7 +4,7 @@ import numpy as np
 from typing import Union
 
 from thesimulator.data_structures import TransportSpace, TransportationRequest
-from thesimulator.cdata_structures import (
+from thesimulator.data_structures_cython import (
     TransportationRequest as CTransportationRequest,
 )
 from thesimulator.util.spaces import Euclidean

@@ -1,4 +1,4 @@
-from thesimulator.cdata_structures.data_structures import (
+from thesimulator.data_structures_cython.data_structures import (
     TransportationRequest,
     InternalRequest,
     Stop,

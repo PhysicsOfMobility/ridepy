@@ -23,7 +23,7 @@ from .data_structures import (
     SingleVehicleSolution,
     Dispatcher,
 )
-from .cdata_structures import (
+from .data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
     InternalRequest as cyInternalRequest,
     LocType,

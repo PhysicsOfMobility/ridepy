@@ -1,4 +1,4 @@
-#include "cspaces.h"
+#include "spaces_cython.h"
 
 
 using namespace std;

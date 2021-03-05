@@ -4,7 +4,7 @@
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
-cdef extern from "cspaces.cpp":
+cdef extern from "spaces_cython.cpp":
     pass
 
 """
@@ -14,7 +14,7 @@ That is, we must *not* declare Euclidean2D.d/t/... here, only in TransportSpace.
 Doing so will result in an *ambiguous overridden function* error from cython.
 """
 
-cdef extern from "cspaces.h" namespace 'cstuff':
+cdef extern from "spaces_cython.h" namespace 'cstuff':
 
     ctypedef pair[double, double] R2loc
     cdef cppclass TransportSpace[Loc]:

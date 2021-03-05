@@ -6,7 +6,7 @@
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-#include "cspaces.h"
+#include "spaces_cython.h"
 
 using namespace std;
 using namespace boost;

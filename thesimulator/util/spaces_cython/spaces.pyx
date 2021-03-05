@@ -3,7 +3,7 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
 from thesimulator.util import smartVectorize
-from .cspaces cimport(
+from .spaces_cython cimport(
     R2loc,
     Euclidean2D as CEuclidean2D,
     Manhattan2D as CManhattan2D,
@@ -12,12 +12,12 @@ from .cspaces cimport(
 
 from typing import List, Tuple
 
-from thesimulator.cdata_structures.data_structures cimport LocType, R2loc
+from thesimulator.data_structures_cython.data_structures cimport LocType, R2loc
 
 from cython.operator cimport dereference
 
 """
-Note: We are duplicating the c++ class hierarchy in ./cspaces.h. In short, our c++ transport spaces
+Note: We are duplicating the c++ class hierarchy in ./spaces_cython.h. In short, our c++ transport spaces
 all inherit from the abstract base class TransportSpace. Here, we will create a cdef class also called
 TransportSpace and other cdef classes will inherit from that. There are a few caveats, which were described
 in great length at https://stackoverflow.com/a/28727488. Basically:
@@ -34,7 +34,7 @@ cdef class TransportSpace:
     Base class for extension types wrapping c++ TransportSpace class template. Since there's no elegant way of
     wrapping templates in cython and exposing them to python, we will use the [Explicit Run-Time Dispatch approach]
     (https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/). See the docstring of
-    thesimulator/cdata_structures/data_structures.pyx for details.
+    thesimulator/data_structures_cython/data_structures.pyx for details.
     """
 
     def __init__(self, loc_type):

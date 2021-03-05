@@ -11,7 +11,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include "../util/cspaces/cspaces.h"
+#include "../util/spaces_cython/cspaces.h"
 
 using namespace std;
 namespace cstuff {
