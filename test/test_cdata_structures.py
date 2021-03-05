@@ -198,6 +198,51 @@ def test_attr_get_stoplist(r0, r1, r2, s0, s1, s2, s3, s4, stoplist):
     )
 
 
+def test_stoplist_attr_against_dangling_pointers():
+    """
+    Tests for potential problems where we create an instance of a cython extension dtype,
+    holding another extension dtype like x = Ext1(foo=Ext2(),...) and Ext1.foo becomes
+    undefined since Ext2() went out of scope.
+    """
+    sl = Stoplist(
+        [
+            Stop(
+                location=(1, 3),
+                request=InternalRequest(request_id=999, creation_timestamp=7.89, location=(1, 3)),
+                action=StopAction.internal,
+                estimated_arrival_time=3.67,
+                time_window_min=9.12,
+                time_window_max=inf
+                ),
+            Stop(
+                location=(3, 7),
+                request=TransportationRequest(
+                    request_id=7,
+                    creation_timestamp=1.8,
+                    origin=(3, 7),
+                    destination=(2, 1),
+                    pickup_timewindow_min=2.13,
+                    pickup_timewindow_max=inf,
+                    delivery_timewindow_min=4.24,
+                    delivery_timewindow_max=inf,
+                ),
+                action=StopAction.pickup,
+                estimated_arrival_time=2.51,
+                time_window_min=inf,
+                time_window_max=9.13
+                )
+            ],
+        loc_type=LocType.R2LOC
+    )
+    assert sl[0].request.request_id == 999
+    assert_array_almost_equal(sl[0].request.creation_timestamp, 7.89)
+    assert_array_almost_equal(sl[0].request.location, (1, 3))
+
+    assert sl[1].request.request_id == 7
+    assert_array_almost_equal(sl[1].request.creation_timestamp, 1.8)
+    assert_array_almost_equal(sl[1].request.origin, (3, 7))
+
+
 def test_attr_set_intern_req(r0):
     # test internal requests
     r0.location = (5, 1)
