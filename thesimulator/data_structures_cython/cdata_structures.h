@@ -11,7 +11,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include "../util/cspaces/cspaces.h"
+#include "../util/spaces_cython/cspaces.h"
 
 using namespace std;
 namespace cstuff {
@@ -104,48 +104,6 @@ namespace cstuff {
             estimated_arrival_time{estimated_arrival_time},
             time_window_min{time_window_min},
             time_window_max{time_window_max} {}
-
-        Stop(const Stop& a) :
-            location{a.location},
-            request{a.request},
-            action{a.action},
-            estimated_arrival_time{a.estimated_arrival_time},
-            time_window_min{a.time_window_min},
-            time_window_max{a.time_window_max}{}
-
-        Stop& operator=(const Stop &other) {
-            location = other.location;
-            request.reset();
-            request = other.request;
-            action = other.action;
-            estimated_arrival_time = other.estimated_arrival_time;
-            time_window_min = other.time_window_min;
-            time_window_max = other.time_window_max;
-
-            return *this;
-        }
-
-        Stop(Stop&& a) :
-            location{a.location},
-            request{a.request},
-            action{a.action},
-            estimated_arrival_time{a.estimated_arrival_time},
-            time_window_min{a.time_window_min},
-            time_window_max{a.time_window_max}{
-               a.request.reset();
-        }
-
-        Stop& operator=(Stop&& other){
-            location = other.location;
-            request.reset();
-            request = other.request;
-            other.request.reset();
-            action = other.action;
-            estimated_arrival_time = other.estimated_arrival_time;
-            time_window_min = other.time_window_min;
-            time_window_max = other.time_window_max;
-            return *this;
-        }
 
         double estimated_departure_time() {
             return max(estimated_arrival_time, time_window_min);

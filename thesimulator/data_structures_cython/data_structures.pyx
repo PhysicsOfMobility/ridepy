@@ -1,6 +1,6 @@
 # distutils: language = c++
 """
-This cython module wraps the struct templates exposed from c++ by cdata_structures.pxd into extension types.
+This cython module wraps the struct templates exposed from c++ by data_structures_cython.pxd into extension types.
 However an extension type obviously cannot be templated (at compile time, all possible variations of a template
 must be known). There is no really elegant way of doing it in cython as of v3.0a6. So we will use the [Explicit
 Run-Time Dispatch approach](https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/).
@@ -17,7 +17,7 @@ from libcpp.memory cimport dynamic_pointer_cast
 from cython.operator cimport typeid
 
 
-from thesimulator.cdata_structures.cdata_structures cimport (
+from thesimulator.data_structures_cython.cdata_structures cimport (
     Request as CRequest,
     TransportationRequest as CTransportationRequest,
     InternalRequest as CInternalRequest,

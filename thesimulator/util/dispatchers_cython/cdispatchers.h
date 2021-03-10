@@ -5,8 +5,8 @@
 #ifndef THESIMULATOR_CDISPATCHERS_H
 #define THESIMULATOR_CDISPATCHERS_H
 
-#include "../cspaces/cspaces.h"
-#include "../../cdata_structures/cdata_structures.h"
+#include "../spaces_cython/cspaces.h"
+#include "../../data_structures_cython/cdata_structures.h"
 #include "cdispatchers_utils.h"
 
 using namespace std;

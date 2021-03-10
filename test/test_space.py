@@ -15,7 +15,7 @@ from thesimulator.util.spaces import (
     Graph,
     ContinuousGraph,
 )
-from thesimulator.util.cspaces import (
+from thesimulator.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Manhattan2D as CyManhattan2D,
     Graph as CyGraph,

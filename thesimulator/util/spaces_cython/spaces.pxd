@@ -7,7 +7,7 @@ from .cspaces cimport (
     GraphSpace as CGraphSpace
 )
 
-from thesimulator.cdata_structures.data_structures cimport LocType, R2loc
+from thesimulator.data_structures_cython.data_structures cimport LocType, R2loc
 
 cdef union USpace:
     CTransportSpace[R2loc] *space_r2loc_ptr

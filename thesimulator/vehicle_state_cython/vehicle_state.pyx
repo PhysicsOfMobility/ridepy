@@ -2,18 +2,18 @@
 
 
 from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
-from thesimulator.cdata_structures.data_structures cimport (
+from thesimulator.data_structures_cython.data_structures cimport (
     TransportationRequest,
     Stop,
     StopAction,
     Stoplist,
 )
 
-from thesimulator.cdata_structures.data_structures import StopAction  as pStopAction # only for a debug print statemnet
+from thesimulator.data_structures_cython.data_structures import StopAction  as pStopAction # only for a debug print statemnet
 
-from thesimulator.util.cspaces.spaces cimport Euclidean2D, TransportSpace
+from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
 
-from thesimulator.util.cdispatchers.dispatchers cimport (
+from thesimulator.util.dispatchers_cython.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
 )
 from typing import List
@@ -85,7 +85,7 @@ cdef class VehicleState:
                 if last_stop is None:
                     # this deepcopy is necessary because otherwise after removing elements from stoplist,
                     # last_stop will point to the wrong element.  See the failing test as well:
-                    # test.test_cdata_structures.test_stoplist_getitem_and_elem_removal_consistent
+                    # test.test_data_structures_cython.test_stoplist_getitem_and_elem_removal_consistent
                     last_stop = deepcopy(stop)
 
                 event_cache.append(
