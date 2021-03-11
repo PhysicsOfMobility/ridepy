@@ -29,5 +29,5 @@ setuptools.setup(
     ext_modules=cythonize(extensions, compiler_directives={"embedsignature": True}),
     install_requires=reqs,
     extras_require={"dev": dev_reqs},
-    options={"build_ext": {"inplace": True, "parallel": os.cpu_count()}},
+    options={"build_ext": {"inplace": True, "parallel": os.cpu_count()-1}},
 )

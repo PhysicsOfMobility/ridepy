@@ -41,7 +41,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_max=inf,
     )
     tick = time()
-    brute_force_distance_minimizing_dispatcher(request, stoplist, space)
+    brute_force_distance_minimizing_dispatcher(request, stoplist, space, seat_capacity=10)
     tock = time()
     print(f"Computing insertion into {n}-element stoplist took: {tock-tick} seconds")
 

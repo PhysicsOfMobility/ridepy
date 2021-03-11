@@ -36,7 +36,7 @@ def test_append_to_empty_stoplist():
     )
     stoplist = [cpestop]
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
@@ -64,7 +64,7 @@ def test_append_due_to_timewindow():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
@@ -94,7 +94,7 @@ def test_inserted_at_the_middle():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
@@ -125,7 +125,7 @@ def test_inserted_separately():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[3].location == request.destination
@@ -205,7 +205,7 @@ def test_stoplist_not_modified_inplace():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination

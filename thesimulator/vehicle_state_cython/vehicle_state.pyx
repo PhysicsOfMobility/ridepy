@@ -44,7 +44,7 @@ cdef class VehicleState:
         self,
         *,
         vehicle_id,
-        initial_stoplist: Stoplist,
+        initial_stoplist: List[Stop],
         space: TransportSpace,
         loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
