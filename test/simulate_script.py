@@ -40,12 +40,13 @@ def simulate_on_r2(
         initial_location = space.random_point()
         initial_stoplist = [
             Stop(
-                initial_location,
-                InternalRequest(-1, 0, initial_location),
-                StopAction.internal,
-                0,
-                0,
-                0,
+                location=initial_location,
+                request=InternalRequest(-1, 0, initial_location),
+                action=StopAction.internal,
+                estimated_arrival_time=0,
+                occupancy_after_servicing=0,
+                time_window_min=0,
+                time_window_max=0,
             )
         ]
         initial_stoplists[vehicle_id] = initial_stoplist
@@ -55,6 +56,7 @@ def simulate_on_r2(
         space=Euclidean2D(),
         dispatcher=brute_force_distance_minimizing_dispatcher,
         vehicle_state_class=VehicleState,
+        seat_capacities=8,
     )
 
     rg = RandomRequestGenerator(
