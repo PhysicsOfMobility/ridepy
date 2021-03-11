@@ -279,7 +279,7 @@ cdef class TransportationRequest(Request):
         cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
         req._utranspreq._req_int = creq
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](creq)
-        req.loc_type = LocType.R2LOC
+        req.loc_type = LocType.INT
         return req
 
 
@@ -408,7 +408,6 @@ cdef class Stop:
         else:
             raise ValueError("This line should never have been reached")
 
-
     def __eq__(self, other: Stop):
         if not isinstance(other, Stop):
             return False
@@ -444,7 +443,7 @@ cdef class Stop:
                    f'action={StopAction(dereference(self.ustop._stop_int).action).name}, ' \
                    f'time_window_min={dereference(self.ustop._stop_int).time_window_min}, '\
                    f'time_window_max={dereference(self.ustop._stop_int).time_window_max}, '\
-                   f'occupancy_after_servicing={dereference(self.ustop._stop_r2loc).occupancy_after_servicing})'
+                   f'occupancy_after_servicing={dereference(self.ustop._stop_int).occupancy_after_servicing})'
         else:
             raise ValueError("This line should never have been reached")
 
