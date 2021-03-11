@@ -39,7 +39,7 @@ namespace cstuff {
         double min_cost = INFINITY;
 
         // Warning: i,j refers to the indices where the new stop would be inserted. So i-1/j-1 is the index of
-        // the stop preceeding the stop to be inserted.
+        // the stop preceding the stop to be inserted.
         pair<int, int> best_insertion{0, 0};
         int i = -1;
         for (auto &stop_before_pickup: stoplist) {

@@ -14,7 +14,8 @@ namespace cstuff {
             std::shared_ptr<TransportationRequest<Loc>> request,
             int pickup_idx,
             int dropoff_idx,
-            TransportSpace<Loc> &space
+            TransportSpace<Loc> &space,
+            int n_passengers = 1
     );
 
     template<typename Loc>
@@ -51,7 +52,8 @@ namespace cstuff {
             std::shared_ptr<TransportationRequest<Loc>> request,
             int pickup_idx,
             int dropoff_idx,
-            TransportSpace<Loc> &space
+            TransportSpace<Loc> &space,
+            int n_passengers
     ) {
         /*
         Inserts a request into  a stoplist. The pickup(dropoff) is inserted *after* pickup(dropoff)_idx.
@@ -66,14 +68,14 @@ namespace cstuff {
                 stop_before_pickup.location, request->origin
         );
         Stop<Loc> pickup_stop(request->origin, request, StopAction::pickup, cpat_at_pu,
-            stop_before_pickup.occupancy_after_servicing+1, request->pickup_timewindow_min,
+            stop_before_pickup.occupancy_after_servicing+n_passengers, request->pickup_timewindow_min,
             request->pickup_timewindow_max);
 
         // increase the occupancies of all the stops between pickup and dropoff
         // remember, the indices are as follows:
         // 0,1,...,pickup_idx,(pickup_not_yet_inserted),...,dropoff_idx,(dropoff_not_yet_inserted), ...
-        for (auto s = stoplist.begin() + pickup_idx + 1; s != stoplist.begin()+dropoff_idx+1; ++s) {
-            s->occupancy_after_servicing += 1;
+        for (auto s = stoplist.begin() + pickup_idx + 1; s != stoplist.begin() + dropoff_idx + 1; ++s) {
+            s->occupancy_after_servicing += n_passengers;
         }
 
 
@@ -89,7 +91,7 @@ namespace cstuff {
                 request,
                 StopAction::dropoff,
                 cpat_at_do,
-                stop_before_dropoff.occupancy_after_servicing-1,
+                stop_before_dropoff.occupancy_after_servicing - n_passengers,
                 request->delivery_timewindow_min,
                 request->delivery_timewindow_max);
         insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx, space);

@@ -15,6 +15,7 @@ def insert_request_to_stoplist_drive_first(
     pickup_idx: int,
     dropoff_idx: int,
     space: TransportSpace,
+    n_passengers: int = 1,
 ) -> Stoplist:
     """
     Inserts a request into  a stoplist. The pickup (dropoff) is inserted after pickup_idx (dropoff_idx).
@@ -35,13 +36,14 @@ def insert_request_to_stoplist_drive_first(
         time_window_min=request.pickup_timewindow_min,
         time_window_max=request.pickup_timewindow_max,
         request=request,
-        occupancy_after_servicing=stop_before_pickup.occupancy_after_servicing + 1,
+        occupancy_after_servicing=stop_before_pickup.occupancy_after_servicing
+        + n_passengers,
     )
     # increase the occupancies of all the stops between pickup and dropoff
     # remember, the indices are as follows:
     # 0,1,...,pickup_idx,(pickup_not_yet_inserted),...,dropoff_idx,(dropoff_not_yet_inserted), ...
     for s in new_stoplist[pickup_idx + 1 : dropoff_idx + 1]:
-        s.occupancy_after_servicing += 1
+        s.occupancy_after_servicing += n_passengers
 
     insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space)
 
@@ -58,7 +60,8 @@ def insert_request_to_stoplist_drive_first(
         time_window_min=request.delivery_timewindow_min,
         time_window_max=request.delivery_timewindow_max,
         request=request,
-        occupancy_after_servicing=stop_before_dropoff.occupancy_after_servicing - 1,
+        occupancy_after_servicing=stop_before_dropoff.occupancy_after_servicing
+        - n_passengers,
     )
     insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx, space)
 
