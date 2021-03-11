@@ -23,6 +23,7 @@ def taxicab_dispatcher_drive_first(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
+    seat_capacity: float = np.inf,
 ) -> Tuple[float, Stoplist, Tuple[float, float, float, float]]:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
@@ -68,6 +69,7 @@ def taxicab_dispatcher_drive_first(
             request=request,
             action=StopAction.pickup,
             estimated_arrival_time=CPAT_pu,
+            occupancy_after_servicing=stoplist[-1].occupancy_after_servicing + 1,
             time_window_min=EAST_pu,
             time_window_max=LAST_pu,
         ),
@@ -76,6 +78,7 @@ def taxicab_dispatcher_drive_first(
             request=request,
             action=StopAction.dropoff,
             estimated_arrival_time=CPAT_do,
+            occupancy_after_servicing=0,
             time_window_min=EAST_do,
             time_window_max=LAST_do,
         ),
@@ -87,28 +90,26 @@ def brute_force_distance_minimizing_dispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
+    seat_capacity: float = np.inf,
 ) -> SingleVehicleSolution:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by minimizing the total driving distance.
 
-    Parameters
-    ----------
-    request
-        request to be serviced
-    stoplist
-        stoplist of the vehicle, to be mapped to a new stoplist
-    space
-        transport space the vehicle is operating on
+    Args:
+        request: request to be serviced
+        stoplist: stoplist of the vehicle, to be mapped to a new stoplist
+        space: transport space the vehicle is operating on
 
-    Returns
-    -------
-
-
+    Returns:
     """
+    # TODO: Fix the d()/t() dichotomy
     min_cost = np.inf
     best_insertion = None
     for i, stop_before_pickup in enumerate(stoplist):
+        if stop_before_pickup.occupancy_after_servicing == seat_capacity:
+            # inserting here will violate capacity constraint
+            continue
         distance_to_pickup = space.d(stop_before_pickup.location, request.origin)
         CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, distance_to_pickup)
         # check for request's pickup timewindow violation
@@ -163,12 +164,18 @@ def brute_force_distance_minimizing_dispatcher(
             stoplist, i, cpat_at_next_stop
         ):
             continue
-
         pickup_cost = (
             distance_to_pickup + distance_from_pickup - original_pickup_edge_length
         )
 
         for j, stop_before_dropoff in enumerate(stoplist[i + 1 :], start=i + 1):
+            # Need to check for seat capacity constraints. Note the loop: the constraint was not violated after
+            # servicing the previous stop (otherwise we wouldn't've reached this line). Need to check that the
+            # constraint is not violated due to the action at this stop (stop_before_dropoff)
+            if stop_before_dropoff.occupancy_after_servicing == seat_capacity:
+                # Capacity is violated. We need to break off this loop because no insertion either here or at a later
+                # stop is permitted
+                break
             distance_to_dropoff = space.d(
                 stop_before_dropoff.location, request.destination
             )
@@ -176,6 +183,7 @@ def brute_force_distance_minimizing_dispatcher(
                 stop_before_dropoff,
                 distance_to_dropoff,
             )
+            # check for request's dropoff timewindow violation
             if CPAT_do > request.delivery_timewindow_max:
                 continue
 
@@ -213,6 +221,7 @@ def brute_force_distance_minimizing_dispatcher(
 
         best_pickup_idx, best_dropoff_idx = best_insertion
 
+        # TODO: Compute occupancies in both new and old stops
         new_stoplist = insert_request_to_stoplist_drive_first(
             stoplist=stoplist,
             request=request,

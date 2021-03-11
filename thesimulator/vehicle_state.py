@@ -41,6 +41,7 @@ class VehicleState:
         space: TransportSpace,
         loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
+        seat_capacity: int = np.inf,
     ):
         """
         Create a vehicle.
@@ -59,6 +60,7 @@ class VehicleState:
         self.stoplist = initial_stoplist
         self.space = space
         self.dispatcher = dispatcher
+        self.seat_capacity = seat_capacity
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -148,5 +150,8 @@ class VehicleState:
         """
 
         return self.vehicle_id, *self.dispatcher(
-            request=request, stoplist=self.stoplist, space=self.space
+            request=request,
+            stoplist=self.stoplist,
+            space=self.space,
+            seat_capacity=self.seat_capacity,
         )

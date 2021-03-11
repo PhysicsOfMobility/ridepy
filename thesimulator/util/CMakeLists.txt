@@ -1,2 +1,2 @@
-add_subdirectory(cdispatchers)
-add_subdirectory(cspaces)
+add_subdirectory(dispatchers_cython)
+add_subdirectory(spaces_cython)

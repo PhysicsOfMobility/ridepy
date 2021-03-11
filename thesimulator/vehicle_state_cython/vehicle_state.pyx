@@ -34,16 +34,18 @@ cdef class VehicleState:
     cdef Stoplist stoplist
     cdef TransportSpace space
     cdef int vehicle_id
+    cdef int seat_capacity
     cdef dict __dict__
 
     def __init__(
-            self, *, vehicle_id, initial_stoplist, space, loc_type, dispatcher):
+            self, *, vehicle_id, initial_stoplist, space, loc_type, dispatcher, seat_capacity):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist, loc_type)
         self.space = space
-        self.dispatcher=dispatcher
+        self.dispatcher = dispatcher
+        self.seat_capacity = seat_capacity
         print(f"Created VehicleState with space of type {type(self.space)}")
 
     property stoplist:
@@ -146,4 +148,4 @@ cdef class VehicleState:
         return self.vehicle_id, *self.dispatcher(
             request,
             self.stoplist,
-            self.space)
+            self.space, self.seat_capacity)

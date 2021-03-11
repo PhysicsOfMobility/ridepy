@@ -4,13 +4,13 @@ cmake_minimum_required(VERSION 3.10)
 project(thesimulator)
 
 # add the MathFunctions library
-add_subdirectory(cvehicle_state)
-add_subdirectory(cdata_structures)
+add_subdirectory(vehicle_state_cython)
+add_subdirectory(data_structures_cython)
 add_subdirectory(util)
 
 # add the executable
 add_executable(
-        dispatcher cvehicle_state/cstuff.cpp util/cspaces/cspaces.cpp)
+        dispatcher vehicle_state_cython/cstuff.cpp util/spaces_cython/cspaces.cpp)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)

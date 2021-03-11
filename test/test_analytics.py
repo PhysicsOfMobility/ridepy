@@ -276,6 +276,7 @@ def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
 
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[10] * (len(initial_stoplists)),
         space=space,
         dispatcher=brute_force_distance_minimizing_dispatcher,
     )

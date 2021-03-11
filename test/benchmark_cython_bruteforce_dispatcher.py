@@ -16,11 +16,13 @@ from thesimulator.data_structures_cython import (
 )
 
 from thesimulator.util.spaces_cython import Euclidean2D, Manhattan2D
-from thesimulator.util.dispatchers_cython import brute_force_distance_minimizing_dispatcher
+from thesimulator.util.dispatchers_cython import (
+    brute_force_distance_minimizing_dispatcher,
+)
 
 from random import randint
 
-from thesimulator.cvehicle_state import VehicleState
+from thesimulator.vehicle_state_cython import VehicleState
 
 
 def stoplist_from_properties(stoplist_properties):
@@ -32,6 +34,7 @@ def stoplist_from_properties(stoplist_properties):
             ),
             action=StopAction.internal,
             estimated_arrival_time=cpat,
+            occupancy_after_servicing=0,
             time_window_min=tw_min,
             time_window_max=tw_max,
         )
@@ -61,6 +64,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         space=space,
         loc_type=LocType.R2LOC,
         dispatcher=brute_force_distance_minimizing_dispatcher,
+        seat_capacity=1000,
     )
     request = TransportationRequest(
         request_id=100,

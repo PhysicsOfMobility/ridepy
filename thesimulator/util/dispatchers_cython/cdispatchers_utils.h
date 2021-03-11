@@ -65,8 +65,17 @@ namespace cstuff {
         auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
                 stop_before_pickup.location, request->origin
         );
-        Stop<Loc> pickup_stop(request->origin, request, StopAction::pickup, cpat_at_pu, request->pickup_timewindow_min,
-                              request->pickup_timewindow_max);
+        Stop<Loc> pickup_stop(request->origin, request, StopAction::pickup, cpat_at_pu,
+            stop_before_pickup.occupancy_after_servicing+1, request->pickup_timewindow_min,
+            request->pickup_timewindow_max);
+
+        // increase the occupancies of all the stops between pickup and dropoff
+        // remember, the indices are as follows:
+        // 0,1,...,pickup_idx,(pickup_not_yet_inserted),...,dropoff_idx,(dropoff_not_yet_inserted), ...
+        for (auto s = stoplist.begin() + pickup_idx + 1; s != stoplist.begin()+dropoff_idx+1; ++s) {
+            s->occupancy_after_servicing += 1;
+        }
+
 
         insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx, space);
         // Handle the dropoff
@@ -80,6 +89,7 @@ namespace cstuff {
                 request,
                 StopAction::dropoff,
                 cpat_at_do,
+                stop_before_dropoff.occupancy_after_servicing-1,
                 request->delivery_timewindow_min,
                 request->delivery_timewindow_max);
         insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx, space);

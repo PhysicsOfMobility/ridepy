@@ -91,17 +91,19 @@ namespace cstuff {
         std::shared_ptr<Request<Loc>> request;
         StopAction action;
         double estimated_arrival_time;
+        int occupancy_after_servicing;
         double time_window_min;
         double time_window_max;
 
         Stop() = default;
         Stop(
             Loc loc, const std::shared_ptr<Request<Loc>>& req, StopAction action, double estimated_arrival_time,
-            double time_window_min, double time_window_max) :
+            int occupancy_after_servicing, double time_window_min, double time_window_max) :
             location{loc},
             request{req},
             action{action},
             estimated_arrival_time{estimated_arrival_time},
+            occupancy_after_servicing{occupancy_after_servicing},
             time_window_min{time_window_min},
             time_window_max{time_window_max} {}
 

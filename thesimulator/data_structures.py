@@ -78,6 +78,7 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
+    occupancy_after_servicing: int = 0
     time_window_min: Optional[float] = 0
     time_window_max: Optional[float] = inf
 

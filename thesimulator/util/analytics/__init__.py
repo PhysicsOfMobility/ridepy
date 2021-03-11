@@ -267,8 +267,25 @@ def _create_requests_dataframe(
     else:
         # otherwise, create an additional dataframe containing the supplied requests
         # which possibly may have different properties and join it to the logged ones.
+
+        transportation_requests_attrs = (
+            "request_id",
+            "creation_timestamp",
+            "origin",
+            "destination",
+            "pickup_timewindow_min",
+            "pickup_timewindow_max",
+            "delivery_timewindow_min",
+            "delivery_timewindow_max",
+        )
         reqs_as_supplied = (
-            pd.DataFrame(map(dataclasses.asdict, transportation_requests))
+            pd.DataFrame(
+                columns=transportation_requests_attrs,
+                data=[
+                    [getattr(req, attr) for attr in transportation_requests_attrs]
+                    for req in transportation_requests
+                ],
+            )
             .set_index("request_id")
             .rename({"creation_timestamp": "timestamp"}, axis=1)
         )
@@ -313,12 +330,14 @@ def _create_requests_dataframe(
         # we only compute these quantities if transportation_requests are supplied.
         # - direct travel time
         reqs[("supplied", "direct_travel_time")] = space.t(
-            reqs[("supplied", "origin")], reqs[("supplied", "destination")]
+            np.asarray(list(reqs[("supplied", "origin")].values)),
+            np.asarray(list(reqs[("supplied", "destination")].values)),
         )
 
         # - direct travel distance
         reqs[("supplied", "direct_travel_distance")] = space.d(
-            reqs[("supplied", "origin")], reqs[("supplied", "destination")]
+            np.asarray(list(reqs[("supplied", "origin")].values)),
+            np.asarray(list(reqs[("supplied", "destination")].values)),
         )
 
         # - waiting time

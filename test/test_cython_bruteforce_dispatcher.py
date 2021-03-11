@@ -31,9 +31,12 @@ def stoplist_from_properties(stoplist_properties, data_structure_module):
     return [
         data_structure_module.Stop(
             location=loc,
-            request=None,
+            request=data_structure_module.InternalRequest(
+                request_id=999, creation_timestamp=0, location=loc
+            ),
             action=data_structure_module.StopAction.internal,
             estimated_arrival_time=cpat,
+            occupancy_after_servicing=0,
             time_window_min=tw_min,
             time_window_max=tw_max,
         )
@@ -46,6 +49,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     Tests that the pure pythonic and cythonic brute force dispatcher produces identical results.
     """
     len_stoplist = 100
+    seat_capacity = 4
     rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(len_stoplist, 2))
     arrival_times = np.cumsum(
@@ -77,7 +81,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
     pythonic_solution = py_brute_force_distance_minimizing_dispatcher(
-        request, stoplist, pyspaces.Euclidean2D()
+        request, stoplist, pyspaces.Euclidean2D(), seat_capacity
     )
     py_min_cost, _, py_timewindows = pythonic_solution
     tock = time()
@@ -106,7 +110,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
     cythonic_solution = cy_brute_force_distance_minimizing_dispatcher(
-        request, stoplist, cyspaces.Euclidean2D(1)
+        request, stoplist, cyspaces.Euclidean2D(1), seat_capacity
     )
     cy_min_cost, _, cy_timewindows = cythonic_solution
     tock = time()
@@ -124,11 +128,12 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     """
     n_reqs = 100
     ir = pyds.InternalRequest(999, 0, (0, 0))
-    s0 = pyds.Stop((0, 0), ir, pyds.StopAction.internal, 0, 0, 0)
+    s0 = pyds.Stop((0, 0), ir, pyds.StopAction.internal, 0, 0, 0, 0)
     sl = [s0]
 
-    sfls = SlowSimpleFleetState(
+    ssfs = SlowSimpleFleetState(
         initial_stoplists={7: sl},
+        seat_capacities=[10],
         space=pyspaces.Euclidean2D(),
         dispatcher=py_brute_force_distance_minimizing_dispatcher,
         vehicle_state_class=py_VehicleState,
@@ -138,14 +143,15 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         request_class=pyds.TransportationRequest,
     )
     reqs = list(it.islice(rg, n_reqs))
-    py_events = list(sfls.simulate(reqs))
+    py_events = list(ssfs.simulate(reqs))
 
     ir = cyds.InternalRequest(999, 0, (0, 0))
-    s0 = cyds.Stop((0, 0), ir, cyds.StopAction.internal, 0, 0, 0)
+    s0 = cyds.Stop((0, 0), ir, cyds.StopAction.internal, 0, 0, 0, 0)
     sl = [s0]
 
-    ffls = SlowSimpleFleetState(
+    ssfs = SlowSimpleFleetState(
         initial_stoplists={7: sl},
+        seat_capacities=[10],
         space=cyspaces.Euclidean2D(),
         dispatcher=cy_brute_force_distance_minimizing_dispatcher,
         vehicle_state_class=cy_VehicleState,
@@ -157,7 +163,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest
     )
     reqs = list(it.islice(rg, n_reqs))
-    cy_events = list(ffls.simulate(reqs))
+    cy_events = list(ssfs.simulate(reqs))
 
     # assert that the returned events are the same
     assert len(cy_events) == len(py_events)
