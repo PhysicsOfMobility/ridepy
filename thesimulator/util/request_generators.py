@@ -11,7 +11,7 @@ from thesimulator.util.spaces import Euclidean
 class RandomRequestGenerator:
     """
     Generates random requests in the chosen transport space with a certain rate.
-    The time windoes for the request are configurable.
+    The timewindows for the request are configurable.
 
     Note:
         The pickup and dropoff timewindows are calculated as follows:
@@ -35,11 +35,13 @@ class RandomRequestGenerator:
     ):
         """
         Args:
-            space: the TransportSpace in which the requests will be gnerated.
+            space: the TransportSpace in which the requests will be generated.
             rate: the number of requests per time unit to generate
             seed: the random seed
-            pickup_timewindow_offset: each request's pickup_timwwindow_min will be this much from the creation timestamp
-            request_class: the generated requests will be instances of this class. Needed to generate pythonic or cythinic requests at will.
+            pickup_timewindow_offset: each request's pickup_timewindow_min will
+                be this much from the creation timestamp
+            request_class: the generated requests will be instances of this class.
+                Needed to generate pythonic or cythonic requests at will.
             max_pickup_delay: see class docstring
             max_delivery_delay_abs: see class docstring
             max_delivery_delay_rel: see class docstring
