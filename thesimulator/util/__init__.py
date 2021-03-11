@@ -1,11 +1,14 @@
 import random
 import string
+import sys
 import numpy as np
 import pandas as pd
 import dataclasses
 
 from typing import Dict
 
+
+MAX_SEAT_CAPACITY = sys.maxsize     # A very large int, because np.inf is a float
 
 def short_uuid():
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=8))

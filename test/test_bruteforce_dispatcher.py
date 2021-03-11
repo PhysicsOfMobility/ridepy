@@ -213,10 +213,5 @@ def test_stoplist_not_modified_inplace():
     assert stoplist[1].estimated_arrival_time == 3
 
 
-def test_occupancy_calculation_after_insertion():
-    assert False
-
-
 if __name__ == "__main__":
     pytest.main(args=[__file__])
-#

@@ -1,5 +1,6 @@
 import functools as ft
 import itertools as it
+from collections.abc import Sequence
 import operator as op
 import numpy as np
 
@@ -64,7 +65,7 @@ class FleetState(ABC):
         self.space = space
         self.dispatcher = dispatcher
         self.vehicle_state_class = vehicle_state_class
-        if hasattr(seat_capacities, "__iter__"):
+        if isinstance(seat_capacities, Sequence):
             assert len(seat_capacities) == len(
                 initial_stoplists
             ), "seat_capacities and initial_stoplists have unequal lengths"

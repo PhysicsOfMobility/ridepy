@@ -1,5 +1,6 @@
 # distutils: language=c++
 
+from thesimulator.util import MAX_SEAT_CAPACITY
 
 from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
 from thesimulator.data_structures_cython.data_structures cimport (
@@ -16,9 +17,11 @@ from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
 from thesimulator.util.dispatchers_cython.dispatchers cimport (
     brute_force_distance_minimizing_dispatcher as c_disp,
 )
-from typing import List
+from typing import Optional, SupportsFloat, List
 from copy import deepcopy
 
+cdef extern from "limits.h":
+    cdef int INT_MAX
 
 cdef class VehicleState:
     """
@@ -38,13 +41,23 @@ cdef class VehicleState:
     cdef dict __dict__
 
     def __init__(
-            self, *, vehicle_id, initial_stoplist, space, loc_type, dispatcher, seat_capacity):
+        self,
+        *,
+        vehicle_id,
+        initial_stoplist: Stoplist,
+        space: TransportSpace,
+        loc_type: Optional[LocType] = None,
+        dispatcher: Dispatcher,
+        seat_capacity: int,
+    ):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         self.stoplist = Stoplist(initial_stoplist, loc_type)
         self.space = space
         self.dispatcher = dispatcher
+        if seat_capacity > INT_MAX:
+            raise ValueError("Cannot use seat_capacity bigger that c++'s INT_MAX")
         self.seat_capacity = seat_capacity
         print(f"Created VehicleState with space of type {type(self.space)}")
 

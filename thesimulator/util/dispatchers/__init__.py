@@ -23,7 +23,7 @@ def taxicab_dispatcher_drive_first(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
-    seat_capacity: float = np.inf,
+    seat_capacity: int,
 ) -> Tuple[float, Stoplist, Tuple[float, float, float, float]]:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
@@ -43,6 +43,9 @@ def taxicab_dispatcher_drive_first(
 
 
     """
+    # TODO: When we have multi-passenger requests, this dispatcher needs to be changed and
+    # include capacity constraints. Currently, taxi := single seat
+    assert seat_capacity == 1
     CPAT_pu = (
         max(
             stoplist[-1].estimated_arrival_time,
@@ -90,16 +93,20 @@ def brute_force_distance_minimizing_dispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
-    seat_capacity: float = np.inf,
+    seat_capacity: int,
 ) -> SingleVehicleSolution:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by minimizing the total driving distance.
 
-    Args:
-        request: request to be serviced
-        stoplist: stoplist of the vehicle, to be mapped to a new stoplist
-        space: transport space the vehicle is operating on
+    Parameters
+    ----------
+    request
+        request to be serviced
+    stoplist
+        stoplist of the vehicle, to be mapped to a new stoplist
+    space
+        transport space the vehicle is operating on
 
     Returns:
     """
@@ -216,12 +223,6 @@ def brute_force_distance_minimizing_dispatcher(
 
     if min_cost < np.inf:
         best_pickup_idx, best_dropoff_idx = best_insertion
-        # print(f"Best insertion: {best_insertion}")
-        # print(f"Min cost: {min_cost}")
-
-        best_pickup_idx, best_dropoff_idx = best_insertion
-
-        # TODO: Compute occupancies in both new and old stops
         new_stoplist = insert_request_to_stoplist_drive_first(
             stoplist=stoplist,
             request=request,

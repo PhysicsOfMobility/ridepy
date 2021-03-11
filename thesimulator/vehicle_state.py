@@ -1,4 +1,3 @@
-import operator as op
 import numpy as np
 
 from typing import Optional, SupportsFloat, List
@@ -18,6 +17,8 @@ from .data_structures import (
     Dispatcher,
     LocType,
 )
+
+from thesimulator.util import MAX_SEAT_CAPACITY
 
 
 class VehicleState:
@@ -41,7 +42,7 @@ class VehicleState:
         space: TransportSpace,
         loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
-        seat_capacity: int = np.inf,
+        seat_capacity: int,
     ):
         """
         Create a vehicle.
