@@ -321,7 +321,6 @@ cdef class InternalRequest(Request):
             and self.creation_timestamp == other.creation_timestamp \
             and self.location == other.location
 
-
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
             return f'InternalRequest(request_id={dereference(self._uinternreq._req_r2loc).request_id}, ' \
@@ -333,6 +332,15 @@ cdef class InternalRequest(Request):
                    f'location={dereference(self._uinternreq._req_int).location})'
         else:
             raise ValueError("This line should never have been reached")
+
+
+    def asdict(self):
+        return dict(
+            request_id=self.request_id,
+            creation_timestamp=self.creation_timestamp,
+            location=self.location,
+        )
+
 
     property location:
         def __get__(self):
@@ -439,6 +447,18 @@ cdef class Stop:
                    f'occupancy_after_servicing={dereference(self.ustop._stop_r2loc).occupancy_after_servicing})'
         else:
             raise ValueError("This line should never have been reached")
+
+
+    def asdict(self):
+        return dict(
+            location=self.location,
+            request=self.request.asdict(),
+            estimated_arrival_time=self.estimated_arrival_time,
+            action=self.action,
+            time_window_min=self.time_window_min,
+            time_window_max=self.time_window_max,
+            occupancy_after_servicing=self.occupancy_after_servicing,
+        )
 
 
     property location:

@@ -1,7 +1,21 @@
 import pytest
 import numpy as np
 import pandas as pd
-from thesimulator.util import smartVectorize
+from thesimulator.util import smartVectorize, make_dict
+
+from thesimulator.data_structures import (
+    TransportationRequest as pyTransportationRequest,
+    InternalRequest as pyInternalRequest,
+    Stop as pyStop,
+    StopAction as pyStopAction,
+)
+
+from thesimulator.data_structures_cython import (
+    TransportationRequest as cyTransportationRequest,
+    InternalRequest as cyInternalRequest,
+    Stop as cyStop,
+    StopAction as cyStopAction,
+)
 
 
 def test_smartVectorize():
@@ -99,3 +113,46 @@ def test_smartVectorize():
             w2(y, z)
         with pytest.raises(ValueError, match=r"shapes must match"):
             w3(y, z)
+
+
+def test_make_dict():
+    transreq_dict = dict(
+        request_id=1,
+        creation_timestamp=2,
+        origin=3,
+        destination=4,
+        pickup_timewindow_min=5.9,
+        pickup_timewindow_max=6.1,
+        delivery_timewindow_min=7.2,
+        delivery_timewindow_max=8.3,
+    )
+
+    intreq_dict = dict(request_id=1, creation_timestamp=2, location=3)
+
+    get_stop_dict = lambda transreq, action: dict(
+        location=1,
+        request=transreq,
+        action=action,
+        estimated_arrival_time=3,
+        occupancy_after_servicing=4,
+        time_window_min=5.1,
+        time_window_max=6.2,
+    )
+
+    py_transreq = pyTransportationRequest(**transreq_dict)
+    cy_transreq = cyTransportationRequest(**transreq_dict)
+
+    py_intreq = pyInternalRequest(**intreq_dict)
+    cy_intreq = cyInternalRequest(**intreq_dict)
+
+    py_stop = pyStop(**get_stop_dict(py_transreq, pyStopAction.pickup))
+    cy_stop = cyStop(**get_stop_dict(cy_transreq, cyStopAction.pickup))
+
+    assert make_dict(py_transreq) == transreq_dict
+    assert make_dict(cy_transreq) == transreq_dict
+
+    assert make_dict(py_intreq) == intreq_dict
+    assert make_dict(cy_intreq) == intreq_dict
+
+    assert make_dict(py_stop) == get_stop_dict(transreq_dict, pyStopAction.pickup)
+    assert make_dict(cy_stop) == get_stop_dict(transreq_dict, cyStopAction.pickup)
