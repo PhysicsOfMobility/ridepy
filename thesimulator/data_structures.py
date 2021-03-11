@@ -1,7 +1,7 @@
 from numpy import inf
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any, Optional, Union, Tuple, List, Callable
 
 ID = Union[str, int]
