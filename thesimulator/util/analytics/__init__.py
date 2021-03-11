@@ -1,4 +1,5 @@
 import dataclasses
+import operator as op
 from typing import Iterable, List, Optional, Dict, Any
 
 import numpy as np
@@ -11,6 +12,8 @@ from thesimulator.data_structures import (
     Stop,
     TransportSpace,
 )
+
+from thesimulator.util import make_dict
 
 
 def _create_events_dataframe(events: Iterable) -> pd.DataFrame:
@@ -267,25 +270,8 @@ def _create_requests_dataframe(
     else:
         # otherwise, create an additional dataframe containing the supplied requests
         # which possibly may have different properties and join it to the logged ones.
-
-        transportation_requests_attrs = (
-            "request_id",
-            "creation_timestamp",
-            "origin",
-            "destination",
-            "pickup_timewindow_min",
-            "pickup_timewindow_max",
-            "delivery_timewindow_min",
-            "delivery_timewindow_max",
-        )
         reqs_as_supplied = (
-            pd.DataFrame(
-                columns=transportation_requests_attrs,
-                data=[
-                    [getattr(req, attr) for attr in transportation_requests_attrs]
-                    for req in transportation_requests
-                ],
-            )
+            pd.DataFrame(map(make_dict, transportation_requests))
             .set_index("request_id")
             .rename({"creation_timestamp": "timestamp"}, axis=1)
         )
@@ -328,16 +314,23 @@ def _create_requests_dataframe(
         # inferred requests, but in case of differences between the requests
         # the resulting change in behavior might not intended. Therefore so far
         # we only compute these quantities if transportation_requests are supplied.
+
         # - direct travel time
+        # `to_list()` is necessary as for dimensionality > 1 the `pd.Series` will contain tuples
+        # which will not be understood as a dimension by `np.shape(...)` which subsequently confuses smartVectorize
+        # see https://github.com/PhysicsOfMobility/theSimulator/issues/85
         reqs[("supplied", "direct_travel_time")] = space.t(
-            np.asarray(list(reqs[("supplied", "origin")].values)),
-            np.asarray(list(reqs[("supplied", "destination")].values)),
+            reqs[("supplied", "origin")].to_list(),
+            reqs[("supplied", "destination")].to_list(),
         )
 
         # - direct travel distance
+        # again: `to_list()` is necessary as for dimensionality > 1 the `pd.Series` will contain tuples
+        # which will not be understood as a dimension by `np.shape(...)` which subsequently  confuses smartVectorize
+        # see https://github.com/PhysicsOfMobility/theSimulator/issues/85
         reqs[("supplied", "direct_travel_distance")] = space.d(
-            np.asarray(list(reqs[("supplied", "origin")].values)),
-            np.asarray(list(reqs[("supplied", "destination")].values)),
+            reqs[("supplied", "origin")].to_list(),
+            reqs[("supplied", "destination")].to_list(),
         )
 
         # - waiting time
