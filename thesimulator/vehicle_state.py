@@ -119,6 +119,7 @@ class VehicleState:
 
         # set CPE time to current time
         self.stoplist[0].estimated_arrival_time = t
+        self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         if len(self.stoplist) > 1:

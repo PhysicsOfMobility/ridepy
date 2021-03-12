@@ -27,6 +27,7 @@ def simulate_on_r2(
     num_vehicles,
     rate,
     num_requests,
+    seat_capacities,
     seed=0,
     request_kwargs={"max_pickup_delay": 3, "max_delivery_delay_rel": 1.9},
 ):
@@ -54,9 +55,9 @@ def simulate_on_r2(
     ssfs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
         space=Euclidean2D(),
+        seat_capacities=seat_capacities,
         dispatcher=brute_force_distance_minimizing_dispatcher,
         vehicle_state_class=VehicleState,
-        seat_capacities=8,
     )
 
     rg = RandomRequestGenerator(
@@ -69,6 +70,9 @@ def simulate_on_r2(
     reqs = list(it.islice(rg, num_requests))
     events = list(ssfs.simulate(reqs))
 
+    for ev in events:
+        print(ev)
+
     stops, requests = get_stops_and_requests(
         events=events,
         initial_stoplists=initial_stoplists,
@@ -80,4 +84,4 @@ def simulate_on_r2(
 
 
 if __name__ == "__main__":
-    stops, requests = simulate_on_r2(num_vehicles=10, rate=10, num_requests=1000)
+    stops, requests = simulate_on_r2(num_vehicles=10, rate=13, seat_capacities=2, num_requests=100)

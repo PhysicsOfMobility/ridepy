@@ -67,6 +67,9 @@ cdef class VehicleState:
         def __set__(self, new_stoplist):
             self.stoplist = new_stoplist
 
+    property seat_capacity:
+        def __get__(self):
+            return self.seat_capacity
 
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
@@ -118,6 +121,7 @@ cdef class VehicleState:
                 )
                 self.stoplist.remove_nth_elem(i)
 
+
         # fix event cache order
         event_cache = event_cache[::-1]
 
@@ -127,6 +131,7 @@ cdef class VehicleState:
 
         # set CPE time to current time
         self.stoplist[0].estimated_arrival_time = t
+        self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
 

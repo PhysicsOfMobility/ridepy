@@ -74,7 +74,7 @@ namespace cstuff {
         // increase the occupancies of all the stops between pickup and dropoff
         // remember, the indices are as follows:
         // 0,1,...,pickup_idx,(pickup_not_yet_inserted),...,dropoff_idx,(dropoff_not_yet_inserted), ...
-        for (auto s = stoplist.begin() + pickup_idx + 1; s != stoplist.begin() + dropoff_idx + 1; ++s) {
+        for (auto s = new_stoplist.begin() + pickup_idx + 1; s != new_stoplist.begin() + dropoff_idx + 1; ++s) {
             s->occupancy_after_servicing += n_passengers;
         }
 
