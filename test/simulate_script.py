@@ -84,4 +84,6 @@ def simulate_on_r2(
 
 
 if __name__ == "__main__":
-    stops, requests = simulate_on_r2(num_vehicles=10, rate=13, seat_capacities=2, num_requests=100)
+    stops, requests = simulate_on_r2(
+        num_vehicles=10, rate=13, seat_capacities=2, num_requests=100
+    )
