@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import setuptools
 from Cython.Build import cythonize
 from setuptools import Extension
@@ -25,9 +26,8 @@ setuptools.setup(
     zip_safe=False,
     packages=setuptools.find_packages(),
     # ext_modules=cythonize("thesimulator/**/*.pyx", language='c++',),
-    ext_modules=cythonize(
-        extensions, language="c++", compiler_directives={"embedsignature": True}
-    ),
+    ext_modules=cythonize(extensions, compiler_directives={"embedsignature": True}),
     install_requires=reqs,
     extras_require={"dev": dev_reqs},
+    options={"build_ext": {"inplace": True, "parallel": os.cpu_count() - 1}},
 )

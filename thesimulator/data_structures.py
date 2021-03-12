@@ -1,7 +1,7 @@
 from numpy import inf
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any, Optional, Union, Tuple, List, Callable
 
 ID = Union[str, int]
@@ -78,6 +78,7 @@ class Stop:
     request: Request
     action: StopAction
     estimated_arrival_time: float
+    occupancy_after_servicing: int = 0
     time_window_min: Optional[float] = 0
     time_window_max: Optional[float] = inf
 

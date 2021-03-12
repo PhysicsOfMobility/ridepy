@@ -8,6 +8,7 @@
 #include "../spaces_cython/cspaces.h"
 #include "../../data_structures_cython/cdata_structures.h"
 #include "cdispatchers_utils.h"
+#include <climits>
 
 using namespace std;
 namespace cstuff {
@@ -15,7 +16,8 @@ namespace cstuff {
     InsertionResult<Loc> brute_force_distance_minimizing_dispatcher(
             std::shared_ptr<TransportationRequest<Loc>> request,
             vector<Stop<Loc>> &stoplist,
-            TransportSpace<Loc> &space
+            TransportSpace<Loc> &space,
+            int seat_capacity
     ) {
         /*
         Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
@@ -37,11 +39,15 @@ namespace cstuff {
         double min_cost = INFINITY;
 
         // Warning: i,j refers to the indices where the new stop would be inserted. So i-1/j-1 is the index of
-        // the stop preceeding the stop to be inserted.
+        // the stop preceding the stop to be inserted.
         pair<int, int> best_insertion{0, 0};
         int i = -1;
         for (auto &stop_before_pickup: stoplist) {
             i++; // The first iteration of the loop: i = 0
+            if (stop_before_pickup.occupancy_after_servicing == seat_capacity){
+                // inserting here will violate capacity constraint
+                continue;
+            }
             // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
             auto distance_to_pickup = space.d(stop_before_pickup.location, request->origin);
             auto CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, distance_to_pickup);
@@ -94,6 +100,14 @@ namespace cstuff {
             for (auto stop_before_dropoff = stoplist.begin() + i + 1;
                  stop_before_dropoff != stoplist.end(); ++stop_before_dropoff) {
                 j++; // first iteration: dropoff after j=(i+1)'th stop. pickup was after i'th stop.
+                // Need to check for seat capacity constraints. Note the loop: the constraint was not violated after
+                // servicing the previous stop (otherwise we wouldn't've reached this line). Need to check that the
+                // constraint is not violated due to the action at this stop (stop_before_dropoff)
+                if (stop_before_dropoff->occupancy_after_servicing == seat_capacity){
+                    // Capacity is violated. We need to break off this loop because no insertion either here or at a later
+                    // stop is permitted
+                    break;
+                }
                 distance_to_dropoff = space.d(
                         stop_before_dropoff->location, request->destination
                 );
@@ -133,6 +147,7 @@ namespace cstuff {
         }
         int best_pickup_idx = best_insertion.first;
         int best_dropoff_idx = best_insertion.second;
+        // TODO: Compute occupancies in both new and old stops
         auto new_stoplist = insert_request_to_stoplist_drive_first(
                 stoplist,
                 request,
@@ -140,8 +155,8 @@ namespace cstuff {
                 best_dropoff_idx,
                 space
         );
-        std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
-        std::cout << "Min cost: " << min_cost << std::endl;
+//        std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
+//        std::cout << "Min cost: " << min_cost << std::endl;
         auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
         auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 

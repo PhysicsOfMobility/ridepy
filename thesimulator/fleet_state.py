@@ -1,5 +1,6 @@
 import functools as ft
 import itertools as it
+from collections.abc import Sequence
 import operator as op
 import numpy as np
 
@@ -47,6 +48,7 @@ class FleetState(ABC):
         self,
         *,
         initial_stoplists: Dict[int, Stoplist],
+        seat_capacities: Union[int, List[int]],
         space: TransportSpace,
         dispatcher: Dispatcher,
         vehicle_state_class=VehicleState,
@@ -63,6 +65,12 @@ class FleetState(ABC):
         self.space = space
         self.dispatcher = dispatcher
         self.vehicle_state_class = vehicle_state_class
+        if isinstance(seat_capacities, Sequence):
+            assert len(seat_capacities) == len(
+                initial_stoplists
+            ), "seat_capacities and initial_stoplists have unequal lengths"
+        else:
+            seat_capacities = it.repeat(seat_capacities)
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: vehicle_state_class(
                 vehicle_id=vehicle_id,
@@ -70,8 +78,11 @@ class FleetState(ABC):
                 space=self.space,
                 dispatcher=self.dispatcher,
                 loc_type=loc_type,
+                seat_capacity=seat_capacity,
             )
-            for vehicle_id, stoplist in initial_stoplists.items()
+            for seat_capacity, (vehicle_id, stoplist) in zip(
+                seat_capacities, initial_stoplists.items()
+            )
         }
 
     @abstractmethod

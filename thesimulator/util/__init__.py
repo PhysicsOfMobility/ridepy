@@ -1,7 +1,14 @@
 import random
 import string
+import sys
 import numpy as np
 import pandas as pd
+import dataclasses
+
+from typing import Dict
+
+
+MAX_SEAT_CAPACITY = sys.maxsize  # A very large int, because np.inf is a float
 
 
 def short_uuid():
@@ -149,3 +156,24 @@ class smartVectorize:
         # to the vectorized method to the smartVectorize instance
         self.vectorized_fn = vectorized_fn
         return self
+
+
+def make_dict(item) -> Dict:
+    """
+    Convert data structure object to dict
+    Parameters
+    ----------
+    item
+        the object to convert
+
+    Returns
+    -------
+    resulting dictionary
+
+    """
+    if dataclasses.is_dataclass(item):
+        return dataclasses.asdict(item)
+    elif hasattr(item, "asdict"):
+        return item.asdict()
+    else:
+        raise TypeError(f"Cannot convert object of type {type(item)} to dict")

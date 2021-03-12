@@ -82,9 +82,15 @@ cdef class Request:
 
 cdef class TransportationRequest(Request):
     def __init__(
-            self, int request_id, float creation_timestamp,
-            origin, destination, pickup_timewindow_min, pickup_timewindow_max,
-            delivery_timewindow_min, delivery_timewindow_max
+            self,
+            int request_id,
+            float creation_timestamp,
+            origin,
+            destination,
+            pickup_timewindow_min,
+            pickup_timewindow_max,
+            delivery_timewindow_min,
+            delivery_timewindow_max,
     ):
         if hasattr(origin, '__len__') and len(origin) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
@@ -107,6 +113,18 @@ cdef class TransportationRequest(Request):
             self._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](self._utranspreq._req_int)
         else:
             raise TypeError(f"Cannot handle origin of type {type(origin)}")
+
+    def asdict(self):
+        return dict(
+            request_id=self.request_id,
+            creation_timestamp=self.creation_timestamp,
+            origin=self.origin,
+            destination=self.destination,
+            pickup_timewindow_min=self.pickup_timewindow_min,
+            pickup_timewindow_max=self.pickup_timewindow_max,
+            delivery_timewindow_min=self.delivery_timewindow_min,
+            delivery_timewindow_max=self.delivery_timewindow_max
+        )
 
     def __eq__(self, other: TransportationRequest):
         if not isinstance(other, TransportationRequest):
@@ -261,7 +279,7 @@ cdef class TransportationRequest(Request):
         cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
         req._utranspreq._req_int = creq
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](creq)
-        req.loc_type = LocType.R2LOC
+        req.loc_type = LocType.INT
         return req
 
 
@@ -303,7 +321,6 @@ cdef class InternalRequest(Request):
             and self.creation_timestamp == other.creation_timestamp \
             and self.location == other.location
 
-
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
             return f'InternalRequest(request_id={dereference(self._uinternreq._req_r2loc).request_id}, ' \
@@ -315,6 +332,15 @@ cdef class InternalRequest(Request):
                    f'location={dereference(self._uinternreq._req_int).location})'
         else:
             raise ValueError("This line should never have been reached")
+
+
+    def asdict(self):
+        return dict(
+            request_id=self.request_id,
+            creation_timestamp=self.creation_timestamp,
+            location=self.location,
+        )
+
 
     property location:
         def __get__(self):
@@ -358,8 +384,12 @@ cdef class Stop:
         pass
 
     def __init__(
-            self, location, Request request,
-            StopAction action, double estimated_arrival_time,
+            self,
+            location,
+            Request request,
+            StopAction action,
+            double estimated_arrival_time,
+            int occupancy_after_servicing,
             double time_window_min,
             double time_window_max,
     ):
@@ -367,17 +397,16 @@ cdef class Stop:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
             self.ustop._stop_r2loc = new CStop[R2loc](
-                location, request._ureq._req_r2loc, action, estimated_arrival_time,
+                location, request._ureq._req_r2loc, action, estimated_arrival_time, occupancy_after_servicing,
                 time_window_min, time_window_max)
         elif isinstance(location, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
             self.ustop._stop_int = new CStop[int](
-                location, request._ureq._req_int, action, estimated_arrival_time,
+                location, request._ureq._req_int, action, estimated_arrival_time, occupancy_after_servicing,
                 time_window_min, time_window_max)
         else:
             raise ValueError("This line should never have been reached")
-
 
     def __eq__(self, other: Stop):
         if not isinstance(other, Stop):
@@ -387,13 +416,14 @@ cdef class Stop:
             and self.request == other.request \
             and self.action == other.action \
             and self.estimated_arrival_time == other.estimated_arrival_time \
+            and self.occupancy_after_servicing == other.occupancy_after_servicing \
             and self.time_window_min == other.time_window_min \
             and self.time_window_max == other.time_window_max
 
 
     def __deepcopy__(self, *args, **kwargs):
-        return Stop(self.location, self.request, self.action, self.estimated_arrival_time, self.time_window_min,
-                   self.time_window_max)
+        return Stop(self.location, self.request, self.action, self.estimated_arrival_time,
+                    self.occupancy_after_servicing, self.time_window_min, self.time_window_max)
 
 
     def __repr__(self):
@@ -404,16 +434,30 @@ cdef class Stop:
                    f'estimated_arrival_time={dereference(self.ustop._stop_r2loc).estimated_arrival_time}, ' \
                    f'action={StopAction(dereference(self.ustop._stop_r2loc).action).name}, ' \
                    f'time_window_min={dereference(self.ustop._stop_r2loc).time_window_min}, '\
-                   f'time_window_max={dereference(self.ustop._stop_r2loc).time_window_max})'
+                   f'time_window_max={dereference(self.ustop._stop_r2loc).time_window_max}, '\
+                   f'occupancy_after_servicing={dereference(self.ustop._stop_r2loc).occupancy_after_servicing})'
         elif self.loc_type == LocType.INT:
             return f'Stop(location={dereference(self.ustop._stop_int).location}, '\
                    f'request={self.request}, ' \
                    f'estimated_arrival_time={dereference(self.ustop._stop_int).estimated_arrival_time}, ' \
                    f'action={StopAction(dereference(self.ustop._stop_int).action).name}, ' \
                    f'time_window_min={dereference(self.ustop._stop_int).time_window_min}, '\
-                   f'time_window_max={dereference(self.ustop._stop_int).time_window_max})'
+                   f'time_window_max={dereference(self.ustop._stop_int).time_window_max}, '\
+                   f'occupancy_after_servicing={dereference(self.ustop._stop_int).occupancy_after_servicing})'
         else:
             raise ValueError("This line should never have been reached")
+
+
+    def asdict(self):
+        return dict(
+            location=self.location,
+            request=self.request.asdict(),
+            estimated_arrival_time=self.estimated_arrival_time,
+            action=self.action,
+            time_window_min=self.time_window_min,
+            time_window_max=self.time_window_max,
+            occupancy_after_servicing=self.occupancy_after_servicing,
+        )
 
 
     property location:
@@ -430,6 +474,23 @@ cdef class Stop:
                 dereference(self.ustop._stop_r2loc).location = loc
             elif self.loc_type == LocType.INT:
                 dereference(self.ustop._stop_int).location = loc
+            else:
+                raise ValueError("This line should never have been reached")
+
+    property occupancy_after_servicing:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return dereference(self.ustop._stop_r2loc).occupancy_after_servicing
+            elif self.loc_type == LocType.INT:
+                return dereference(self.ustop._stop_int).occupancy_after_servicing
+            else:
+                raise ValueError("This line should never have been reached")
+
+        def __set__(self, occ):
+            if self.loc_type == LocType.R2LOC:
+                dereference(self.ustop._stop_r2loc).occupancy_after_servicing = occ
+            elif self.loc_type == LocType.INT:
+                dereference(self.ustop._stop_int).occupancy_after_servicing = occ
             else:
                 raise ValueError("This line should never have been reached")
 
@@ -597,4 +658,3 @@ cdef class Stoplist:
             return f"[{','.join(repr(Stop.from_c_r2loc(&s)) for s in self.ustoplist._stoplist_r2loc)}]"
         elif self.loc_type == LocType.INT:
             return f"[{','.join(repr(Stop.from_c_int(&s)) for s in self.ustoplist._stoplist_int)}]"
-

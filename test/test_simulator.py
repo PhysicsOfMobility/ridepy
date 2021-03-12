@@ -51,6 +51,7 @@ def test_slow_simple_fleet_state_simulate(initial_stoplists):
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[1] * len(initial_stoplists),
         space=space,
         dispatcher=taxicab_dispatcher_drive_first,
     )
@@ -67,6 +68,7 @@ def test_events_sorted(initial_stoplists):
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[1] * len(initial_stoplists),
         space=space,
         dispatcher=taxicab_dispatcher_drive_first,
     )
@@ -86,14 +88,13 @@ def test_brute_force_dispatcher_2d(initial_stoplists):
     rg = RandomRequestGenerator(
         rate=10,
         space=space,
-        pickup_timewindow_start=0,
-        pickup_timewindow_size=20,
+        max_pickup_delay=20,
     )
     transportation_requests = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[10] * len(initial_stoplists),
         space=space,
-        #         dispatcher=taxicab_dispatcher_drive_first,
         dispatcher=brute_force_distance_minimizing_dispatcher,
     )
     events = list(fs.simulate(transportation_requests))
@@ -107,6 +108,7 @@ def test_mpi_futures_fleet_state_simulate(initial_stoplists):
     reqs = list(it.islice(rg, 1000))
     fs = MPIFuturesFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[1] * len(initial_stoplists),
         space=space,
         dispatcher=taxicab_dispatcher_drive_first,
     )
@@ -152,6 +154,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
     ]
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[1] * len(initial_stoplists),
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
     )
@@ -209,6 +212,7 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
     ]
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[1] * len(initial_stoplists),
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
     )
@@ -258,6 +262,7 @@ def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
     ]
     fs = SlowSimpleFleetState(
         initial_stoplists=initial_stoplists,
+        seat_capacities=[1] * len(initial_stoplists),
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
     )

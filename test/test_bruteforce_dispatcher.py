@@ -36,7 +36,7 @@ def test_append_to_empty_stoplist():
     )
     stoplist = [cpestop]
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
@@ -64,10 +64,12 @@ def test_append_due_to_timewindow():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
+
+    assert [s.occupancy_after_servicing for s in new_stoplist] == [0, 0, 1, 0]
 
 
 def test_inserted_at_the_middle():
@@ -92,10 +94,11 @@ def test_inserted_at_the_middle():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
+    assert [s.occupancy_after_servicing for s in new_stoplist] == [0, 1, 0, 0]
 
 
 def test_inserted_separately():
@@ -122,10 +125,62 @@ def test_inserted_separately():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[3].location == request.destination
+    assert [s.occupancy_after_servicing for s in new_stoplist] == [0, 1, 1, 0, 0, 0]
+
+
+def test_not_inserted_separately_dueto_capacity_constraint():
+    """
+    Forces the pickup and dropoff to be inserted together solely because
+    of seat_capacity=1
+    """
+    space = Euclidean2D()
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 3), 3, 0, inf],
+        [(0, 5), 5, 0, inf],
+        [(0, 7), 7, 0, inf],
+    ]
+    # fmt: on
+    eps = 1e-4
+    request = TransportationRequest(
+        request_id="a",
+        creation_timestamp=1,
+        origin=(eps, 2),
+        destination=(eps, 4),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=inf,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    # the best insertion would be [s0, +, -, s1, s2, s3]
+    stoplist = stoplist_from_properties(stoplist_properties)
+    for s, cap in zip(stoplist, [0, 1, 0, 1]):
+        s.occupancy_after_servicing = cap
+
+    min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity=1
+    )
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[2].location == request.destination
+    assert [s.occupancy_after_servicing for s in new_stoplist] == [0, 1, 0, 1, 0, 1]
+
+    stoplist = stoplist_from_properties(stoplist_properties)
+    # the best insertion would be [s0, s1, s2, s3, +, -,]
+    for s, cap in zip(stoplist, [1, 1, 1, 0]):
+        s.occupancy_after_servicing = cap
+
+    min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity=1
+    )
+    assert new_stoplist[4].location == request.origin
+    assert new_stoplist[5].location == request.destination
+    assert [s.occupancy_after_servicing for s in new_stoplist] == [1, 1, 1, 0, 1, 0]
 
 
 def test_stoplist_not_modified_inplace():
@@ -150,7 +205,7 @@ def test_stoplist_not_modified_inplace():
         delivery_timewindow_max=inf,
     )
     min_cost, new_stoplist, *_ = brute_force_distance_minimizing_dispatcher(
-        request, stoplist, space
+        request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
@@ -160,4 +215,3 @@ def test_stoplist_not_modified_inplace():
 
 if __name__ == "__main__":
     pytest.main(args=[__file__])
-#

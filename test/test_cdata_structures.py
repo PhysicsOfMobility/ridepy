@@ -20,7 +20,7 @@ def test_attr_not_none():
     objects from existing pointers and garbage collection.
     """
     ir = InternalRequest(999, 0, (0, 0))
-    s0 = Stop((0, 0), ir, StopAction.internal, 0, 0, 0)
+    s0 = Stop((0, 0), ir, StopAction.internal, 0, 0, 0, 0)
     sl = Stoplist([s0], LocType.R2LOC)
     assert sl[0].request is not None
 
@@ -65,6 +65,7 @@ def s0(r0):
         request=r0,
         action=StopAction.internal,
         estimated_arrival_time=3.67,
+        occupancy_after_servicing=0,
         time_window_min=9.12,
         time_window_max=inf,
     )
@@ -77,6 +78,7 @@ def s1(r1):
         request=r1,
         action=StopAction.pickup,
         estimated_arrival_time=2.51,
+        occupancy_after_servicing=1,
         time_window_min=inf,
         time_window_max=9.13,
     )
@@ -89,6 +91,7 @@ def s2(r2):
         request=r2,
         action=StopAction.pickup,
         estimated_arrival_time=3.86,
+        occupancy_after_servicing=2,
         time_window_min=1,
         time_window_max=inf,
     )
@@ -101,6 +104,7 @@ def s3(r1):
         request=r1,
         action=StopAction.dropoff,
         estimated_arrival_time=2.17,
+        occupancy_after_servicing=1,
         time_window_min=1,
         time_window_max=inf,
     )
@@ -113,6 +117,7 @@ def s4(r2):
         request=r2,
         action=StopAction.dropoff,
         estimated_arrival_time=7.16,
+        occupancy_after_servicing=1,
         time_window_min=1,
         time_window_max=inf,
     )
@@ -158,6 +163,7 @@ def test_attr_get():
         request=r0,
         action=StopAction.internal,
         estimated_arrival_time=3.67,
+        occupancy_after_servicing=0,
         time_window_min=9.12,
         time_window_max=inf,
     )
@@ -174,6 +180,7 @@ def test_attr_get():
         request=r1,
         action=StopAction.pickup,
         estimated_arrival_time=2.51,
+        occupancy_after_servicing=1,
         time_window_min=inf,
         time_window_max=9.13,
     )
@@ -208,12 +215,15 @@ def test_stoplist_attr_against_dangling_pointers():
         [
             Stop(
                 location=(1, 3),
-                request=InternalRequest(request_id=999, creation_timestamp=7.89, location=(1, 3)),
+                request=InternalRequest(
+                    request_id=999, creation_timestamp=7.89, location=(1, 3)
+                ),
                 action=StopAction.internal,
                 estimated_arrival_time=3.67,
+                occupancy_after_servicing=0,
                 time_window_min=9.12,
-                time_window_max=inf
-                ),
+                time_window_max=inf,
+            ),
             Stop(
                 location=(3, 7),
                 request=TransportationRequest(
@@ -228,11 +238,12 @@ def test_stoplist_attr_against_dangling_pointers():
                 ),
                 action=StopAction.pickup,
                 estimated_arrival_time=2.51,
+                occupancy_after_servicing=1,
                 time_window_min=inf,
-                time_window_max=9.13
-                )
-            ],
-        loc_type=LocType.R2LOC
+                time_window_max=9.13,
+            ),
+        ],
+        loc_type=LocType.R2LOC,
     )
     assert sl[0].request.request_id == 999
     assert_array_almost_equal(sl[0].request.creation_timestamp, 7.89)
@@ -353,3 +364,43 @@ def test_stoplist_getitem_and_elem_removal_consistent_with_deepcopy(stoplist):
     assert s3.request.request_id == 7
     assert_array_almost_equal(s3.request.pickup_timewindow_min, 2.13)
     assert_array_almost_equal(s3.estimated_arrival_time, 2.17)
+
+
+def test_stoplist_generation_performs_deepcopy_of_stops(r0, r1, r2):
+    s0 = Stop(
+        location=r0.location,
+        request=r0,
+        action=StopAction.internal,
+        estimated_arrival_time=3.67,
+        occupancy_after_servicing=0,
+        time_window_min=9.12,
+        time_window_max=inf,
+    )
+
+    s1 = Stop(
+        location=r1.origin,
+        request=r1,
+        action=StopAction.pickup,
+        estimated_arrival_time=2.51,
+        occupancy_after_servicing=1,
+        time_window_min=inf,
+        time_window_max=9.13,
+    )
+
+    s2 = Stop(
+        location=r2.origin,
+        request=r2,
+        action=StopAction.pickup,
+        estimated_arrival_time=3.86,
+        occupancy_after_servicing=2,
+        time_window_min=1,
+        time_window_max=inf,
+    )
+
+    sl = Stoplist([s0, s1, s2], loc_type=LocType.R2LOC)
+
+    s0.estimated_arrival_time = 99
+    assert_array_almost_equal(sl[0].estimated_arrival_time, 3.67)
+
+    s1.estimated_arrival_time = 97
+    assert_array_almost_equal(sl[1].estimated_arrival_time, 2.51)

@@ -41,9 +41,10 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         double estimated_arrival_time
         double time_window_min
         double time_window_max
+        int occupancy_after_servicing
 
         Stop()
-        Stop(Loc, const shared_ptr[Request]&, StopAction, double, double, double)
+        Stop(Loc, const shared_ptr[Request]&, StopAction, double, int, double, double)
 
     cdef cppclass InsertionResult[Loc]:
         vector[Stop[Loc]] new_stoplist

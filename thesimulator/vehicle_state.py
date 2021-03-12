@@ -1,4 +1,3 @@
-import operator as op
 import numpy as np
 
 from typing import Optional, SupportsFloat, List
@@ -18,6 +17,8 @@ from .data_structures import (
     Dispatcher,
     LocType,
 )
+
+from thesimulator.util import MAX_SEAT_CAPACITY
 
 
 class VehicleState:
@@ -41,6 +42,7 @@ class VehicleState:
         space: TransportSpace,
         loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
+        seat_capacity: int,
     ):
         """
         Create a vehicle.
@@ -59,6 +61,7 @@ class VehicleState:
         self.stoplist = initial_stoplist
         self.space = space
         self.dispatcher = dispatcher
+        self.seat_capacity = seat_capacity
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -116,6 +119,7 @@ class VehicleState:
 
         # set CPE time to current time
         self.stoplist[0].estimated_arrival_time = t
+        self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
         if len(self.stoplist) > 1:
@@ -148,5 +152,8 @@ class VehicleState:
         """
 
         return self.vehicle_id, *self.dispatcher(
-            request=request, stoplist=self.stoplist, space=self.space
+            request=request,
+            stoplist=self.stoplist,
+            space=self.space,
+            seat_capacity=self.seat_capacity,
         )
