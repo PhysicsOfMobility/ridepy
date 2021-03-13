@@ -30,15 +30,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 cdef class Request:
+    def asdict(self):
+        return dict(
+            request_id=self.request_id,
+            creation_timestamp=self.creation_timestamp,
+        )
+
     def __repr__(self):
-        if self.loc_type == LocType.R2LOC:
-            return f'Request(request_id={dereference(self._ureq._req_r2loc).request_id},' \
-                   f'creation_timestamp={dereference(self._ureq._req_r2loc).creation_timestamp)}))'
-        elif self.loc_type == LocType.INT:
-            return f'Request(request_id={dereference(self._ureq._req_int).request_id},' \
-                   f'creation_timestamp={dereference(self._ureq._req_int).creation_timestamp}))'
-        else:
-            raise ValueError("This line should never have been reached")
+        return f"{self.__class__.__name__}(" + ", ".join(f"{k}={v}" for k, v in self.asdict().items()) + ")"
 
     property request_id:
         def __get__(self):
@@ -140,26 +139,7 @@ cdef class TransportationRequest(Request):
             and self.delivery_timewindow_max == other.delivery_timewindow_max
 
     def __repr__(self):
-        if self.loc_type == LocType.R2LOC:
-            return f'TransportationRequest(request_id={dereference(self._utranspreq._req_r2loc).request_id}, ' \
-                   f'creation_timestamp={dereference(self._utranspreq._req_r2loc).creation_timestamp}, ' \
-                   f'origin={dereference(self._utranspreq._req_r2loc).origin}, ' \
-                   f'destination={dereference(self._utranspreq._req_r2loc).destination}, ' \
-                   f'pickup_timewindow_min={dereference(self._utranspreq._req_r2loc).pickup_timewindow_min}, ' \
-                   f'pickup_timewindow_max={dereference(self._utranspreq._req_r2loc).pickup_timewindow_max}, ' \
-                   f'delivery_timewindow_min={dereference(self._utranspreq._req_r2loc).delivery_timewindow_min}, ' \
-                   f'delivery_timewindow_max={dereference(self._utranspreq._req_r2loc).delivery_timewindow_max})'
-        elif self.loc_type == LocType.INT:
-            return f'TransportationRequest(request_id={dereference(self._utranspreq._req_int).request_id}, ' \
-                   f'creation_timestamp={dereference(self._utranspreq._req_int).creation_timestamp}, ' \
-                   f'origin={dereference(self._utranspreq._req_int).origin}, ' \
-                   f'destination={dereference(self._utranspreq._req_int).destination}, ' \
-                   f'pickup_timewindow_min={dereference(self._utranspreq._req_int).pickup_timewindow_min}, ' \
-                   f'pickup_timewindow_max={dereference(self._utranspreq._req_int).pickup_timewindow_max}, ' \
-                   f'delivery_timewindow_min={dereference(self._utranspreq._req_int).delivery_timewindow_min}, ' \
-                   f'delivery_timewindow_max={dereference(self._utranspreq._req_int).delivery_timewindow_max})'
-        else:
-            raise ValueError("This line should never have been reached")
+        return f"{self.__class__.__name__}(" + ", ".join(f"{k}={v}" for k, v in self.asdict().items()) + ")"
 
 
     property origin:
@@ -322,17 +302,7 @@ cdef class InternalRequest(Request):
             and self.location == other.location
 
     def __repr__(self):
-        if self.loc_type == LocType.R2LOC:
-            return f'InternalRequest(request_id={dereference(self._uinternreq._req_r2loc).request_id}, ' \
-                   f'creation_timestamp={dereference(self._uinternreq._req_r2loc).creation_timestamp}, ' \
-                   f'location={dereference(self._uinternreq._req_r2loc).location})'
-        elif self.loc_type == LocType.INT:
-            return f'InternalRequest(request_id={dereference(self._uinternreq._req_int).request_id}, ' \
-                   f'creation_timestamp={dereference(self._uinternreq._req_int).creation_timestamp}, ' \
-                   f'location={dereference(self._uinternreq._req_int).location})'
-        else:
-            raise ValueError("This line should never have been reached")
-
+        return f"{self.__class__.__name__}(" + ", ".join(f"{k}={v}" for k, v in self.asdict().items()) + ")"
 
     def asdict(self):
         return dict(
@@ -427,25 +397,7 @@ cdef class Stop:
 
 
     def __repr__(self):
-        # TODO: should also show the CPAT, EAST and LAST and Action
-        if self.loc_type == LocType.R2LOC:
-            return f'Stop(location={dereference(self.ustop._stop_r2loc).location}, '\
-                   f'request={self.request}, ' \
-                   f'estimated_arrival_time={dereference(self.ustop._stop_r2loc).estimated_arrival_time}, ' \
-                   f'action={StopAction(dereference(self.ustop._stop_r2loc).action).name}, ' \
-                   f'time_window_min={dereference(self.ustop._stop_r2loc).time_window_min}, '\
-                   f'time_window_max={dereference(self.ustop._stop_r2loc).time_window_max}, '\
-                   f'occupancy_after_servicing={dereference(self.ustop._stop_r2loc).occupancy_after_servicing})'
-        elif self.loc_type == LocType.INT:
-            return f'Stop(location={dereference(self.ustop._stop_int).location}, '\
-                   f'request={self.request}, ' \
-                   f'estimated_arrival_time={dereference(self.ustop._stop_int).estimated_arrival_time}, ' \
-                   f'action={StopAction(dereference(self.ustop._stop_int).action).name}, ' \
-                   f'time_window_min={dereference(self.ustop._stop_int).time_window_min}, '\
-                   f'time_window_max={dereference(self.ustop._stop_int).time_window_max}, '\
-                   f'occupancy_after_servicing={dereference(self.ustop._stop_int).occupancy_after_servicing})'
-        else:
-            raise ValueError("This line should never have been reached")
+        return f"{self.__class__.__name__}(" + ", ".join(f"{k}={v}" for k, v in self.asdict().items()) + ")"
 
 
     def asdict(self):
@@ -655,6 +607,6 @@ cdef class Stoplist:
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f"[{','.join(repr(Stop.from_c_r2loc(&s)) for s in self.ustoplist._stoplist_r2loc)}]"
+            return f"[{', '.join(repr(Stop.from_c_r2loc(&s)) for s in self.ustoplist._stoplist_r2loc)}]"
         elif self.loc_type == LocType.INT:
-            return f"[{','.join(repr(Stop.from_c_int(&s)) for s in self.ustoplist._stoplist_int)}]"
+            return f"[{', '.join(repr(Stop.from_c_int(&s)) for s in self.ustoplist._stoplist_int)}]"
