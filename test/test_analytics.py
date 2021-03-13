@@ -13,9 +13,10 @@ from thesimulator.data_structures import (
     DeliveryEvent,
     RequestRejectionEvent,
 )
-from thesimulator.cdata_structures import (
-    TransportationRequest as cTransportationRequest,
+from thesimulator.data_structures_cython import (
+    TransportationRequest as cyTransportationRequest,
 )
+from thesimulator.util.spaces_cython import Euclidean2D as cyEuclidean2D
 from thesimulator.fleet_state import SlowSimpleFleetState
 from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
 from thesimulator.util.request_generators import RandomRequestGenerator
@@ -26,13 +27,12 @@ from thesimulator.util.analytics.plotting import plot_occupancy_hist
 
 @pytest.mark.n_buses(3)
 def test_get_stops_and_requests(initial_stoplists):
-    space = Euclidean1D()
     make_transportation_requests = lambda transp_req_class: [
         transp_req_class(
             request_id=0,
             creation_timestamp=0,
-            origin=0.0,
-            destination=0.3,
+            origin=(0, 0.0),
+            destination=(0, 0.3),
             pickup_timewindow_min=0,
             pickup_timewindow_max=np.inf,
             delivery_timewindow_min=0,
@@ -41,8 +41,8 @@ def test_get_stops_and_requests(initial_stoplists):
         transp_req_class(
             request_id=1,
             creation_timestamp=0,
-            origin=0.1,
-            destination=0.2,
+            origin=(0, 0.1),
+            destination=(0, 0.2),
             pickup_timewindow_min=0,
             pickup_timewindow_max=np.inf,
             delivery_timewindow_min=0,
@@ -51,8 +51,8 @@ def test_get_stops_and_requests(initial_stoplists):
         transp_req_class(
             request_id=2,
             creation_timestamp=1,
-            origin=1,
-            destination=0,
+            origin=(0, 1),
+            destination=(0, 0),
             pickup_timewindow_min=0,
             pickup_timewindow_max=np.inf,
             delivery_timewindow_min=0,
@@ -61,8 +61,8 @@ def test_get_stops_and_requests(initial_stoplists):
         transp_req_class(
             request_id=3,
             creation_timestamp=2,
-            origin=0,
-            destination=1,
+            origin=(0, 0),
+            destination=(0, 1),
             pickup_timewindow_min=0,
             pickup_timewindow_max=0,
             delivery_timewindow_min=0,
@@ -70,8 +70,12 @@ def test_get_stops_and_requests(initial_stoplists):
         ),
     ]
 
-    for transportation_requests in map(
-        make_transportation_requests, [TransportationRequest, cTransportationRequest]
+    for transportation_requests, space in zip(
+        map(
+            make_transportation_requests,
+            [TransportationRequest, cyTransportationRequest],
+        ),
+        [Euclidean2D(), cyEuclidean2D()],
     ):
         events = [
             RequestAcceptanceEvent(
@@ -249,8 +253,13 @@ def test_get_stops_and_requests(initial_stoplists):
                     2: 0.0,
                     3: nan,
                 },
-                ("accepted", "destination"): {0: 0.3, 1: 0.2, 2: 0.0, 3: nan},
-                ("accepted", "origin"): {0: 0.0, 1: 0.1, 2: 1.0, 3: nan},
+                ("accepted", "destination"): {
+                    0: (0, 0.3),
+                    1: (0, 0.2),
+                    2: (0, 0.0),
+                    3: nan,
+                },
+                ("accepted", "origin"): {0: (0, 0.0), 1: (0, 0.1), 2: (0, 1.0), 3: nan},
                 ("accepted", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: nan},
                 ("accepted", "pickup_timewindow_min"): {0: 0.0, 1: 0.0, 2: 0.0, 3: nan},
                 ("accepted", "timestamp"): {0: 0.0, 1: 0.0, 2: 0.0, 3: nan},
@@ -262,7 +271,12 @@ def test_get_stops_and_requests(initial_stoplists):
                 ("serviced", "vehicle_id"): {0: 0.0, 1: 0.0, 2: 1.0, 3: nan},
                 ("supplied", "delivery_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
                 ("supplied", "delivery_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
-                ("supplied", "destination"): {0: 0.3, 1: 0.2, 2: 0.0, 3: 1},
+                ("supplied", "destination"): {
+                    0: (0, 0.3),
+                    1: (0, 0.2),
+                    2: (0, 0.0),
+                    3: (0, 1),
+                },
                 ("supplied", "direct_travel_distance"): {
                     0: 0.3,
                     1: 0.1,
@@ -270,7 +284,12 @@ def test_get_stops_and_requests(initial_stoplists):
                     3: 1.0,
                 },
                 ("supplied", "direct_travel_time"): {0: 0.3, 1: 0.1, 2: 1.0, 3: 1.0},
-                ("supplied", "origin"): {0: 0.0, 1: 0.1, 2: 1.0, 3: 0},
+                ("supplied", "origin"): {
+                    0: (0, 0.0),
+                    1: (0, 0.1),
+                    2: (0, 1.0),
+                    3: (0, 0),
+                },
                 ("supplied", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
                 ("supplied", "pickup_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
                 ("supplied", "timestamp"): {0: 0, 1: 0, 2: 1, 3: 2},
