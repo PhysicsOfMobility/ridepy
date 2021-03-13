@@ -5,7 +5,6 @@ from typing import List, Tuple, Union, Any, Iterator
 import numpy as np
 import operator as op
 import math as m
-import pandas as pd
 import networkx as nx
 import itertools as it
 from scipy.spatial import distance as spd
@@ -153,7 +152,7 @@ class Graph(TransportSpace):
 
     @classmethod
     def create_random(cls):
-        ...
+        raise NotImplementedError
 
     @classmethod
     def create_grid(
@@ -265,6 +264,9 @@ class Graph(TransportSpace):
 
 
 class ContinuousGraph(Graph):
+    def __init__(self):
+        raise NotImplementedError
+
     @smartVectorize
     def d(self, u, v):
         """coordinates shall consist of triples (u, v, dist_to_dest)"""
