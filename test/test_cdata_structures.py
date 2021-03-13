@@ -404,3 +404,10 @@ def test_stoplist_generation_performs_deepcopy_of_stops(r0, r1, r2):
 
     s1.estimated_arrival_time = 97
     assert_array_almost_equal(sl[1].estimated_arrival_time, 2.51)
+
+
+def test_repr(r0, s0, stoplist):
+    assert (
+        repr(stoplist)
+        == "[Stop(location=(1.0, 3.0), request={'request_id': 999, 'creation_timestamp': 7.889999866485596, 'location': (1.0, 3.0)}, estimated_arrival_time=3.67, action=2, time_window_min=9.12, time_window_max=inf, occupancy_after_servicing=0), Stop(location=(3.0, 7.0), request={'request_id': 7, 'creation_timestamp': 1.7999999523162842, 'origin': (3.0, 7.0), 'destination': (2.0, 1.0), 'pickup_timewindow_min': 2.13, 'pickup_timewindow_max': inf, 'delivery_timewindow_min': 4.24, 'delivery_timewindow_max': inf}, estimated_arrival_time=2.51, action=0, time_window_min=inf, time_window_max=9.13, occupancy_after_servicing=1), Stop(location=(4.0, 1.0), request={'request_id': 8, 'creation_timestamp': 2.0, 'origin': (4.0, 1.0), 'destination': (3.0, 7.0), 'pickup_timewindow_min': 0.0, 'pickup_timewindow_max': inf, 'delivery_timewindow_min': 0.0, 'delivery_timewindow_max': inf}, estimated_arrival_time=3.86, action=0, time_window_min=1.0, time_window_max=inf, occupancy_after_servicing=2), Stop(location=(2.0, 1.0), request={'request_id': 7, 'creation_timestamp': 1.7999999523162842, 'origin': (3.0, 7.0), 'destination': (2.0, 1.0), 'pickup_timewindow_min': 2.13, 'pickup_timewindow_max': inf, 'delivery_timewindow_min': 4.24, 'delivery_timewindow_max': inf}, estimated_arrival_time=2.17, action=1, time_window_min=1.0, time_window_max=inf, occupancy_after_servicing=1), Stop(location=(3.0, 7.0), request={'request_id': 8, 'creation_timestamp': 2.0, 'origin': (4.0, 1.0), 'destination': (3.0, 7.0), 'pickup_timewindow_min': 0.0, 'pickup_timewindow_max': inf, 'delivery_timewindow_min': 0.0, 'delivery_timewindow_max': inf}, estimated_arrival_time=7.16, action=1, time_window_min=1.0, time_window_max=inf, occupancy_after_servicing=1)]"
+    )
