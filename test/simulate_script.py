@@ -1,4 +1,9 @@
+import itertools as it
+import random
+from time import time
+import numpy as np
 import pandas as pd
+import sys
 
 from thesimulator.data_structures_cython import (
     TransportationRequest,
@@ -18,13 +23,6 @@ from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.analytics.plotting import plot_occupancy_hist
-import itertools as it
-
-import random
-import numpy as np
-
-from time import time
 import logging
 
 sim_logger = logging.getLogger('thesimulator')
@@ -98,8 +96,12 @@ def simulate_on_r2(
 
     return stops, requests
 
+
 if __name__ == "__main__":
-    N = 200
+    if len(sys.argv) == 1:
+        N = 10
+    else:
+        N = int(sys.argv[1])
     stops, requests = simulate_on_r2(
         num_vehicles=N, rate=N*1.5, seat_capacities=4, num_requests=N*1000
     )
