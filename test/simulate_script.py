@@ -1,3 +1,10 @@
+import itertools as it
+import random
+from time import time
+import numpy as np
+import pandas as pd
+import sys
+
 from thesimulator.data_structures_cython import (
     TransportationRequest,
     InternalRequest,
@@ -16,11 +23,11 @@ from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.analytics.plotting import plot_occupancy_hist
-import itertools as it
+import logging
 
-import random
-import numpy as np
+sim_logger = logging.getLogger('thesimulator')
+sim_logger.setLevel(logging.INFO)
+
 
 
 def simulate_on_r2(
@@ -42,7 +49,7 @@ def simulate_on_r2(
         initial_stoplist = [
             Stop(
                 location=initial_location,
-                request=InternalRequest(-1, 0, initial_location),
+                request=InternalRequest(request_id=-1, creation_timestamp=0, location=initial_location),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
                 occupancy_after_servicing=0,
@@ -68,10 +75,11 @@ def simulate_on_r2(
     )
 
     reqs = list(it.islice(rg, num_requests))
+    tick = time()
     events = list(ssfs.simulate(reqs))
+    tock = time()
 
-    for ev in events:
-        print(ev)
+    print(f"Simulating took {tock-tick} seconds")
 
     stops, requests = get_stops_and_requests(
         events=events,
@@ -79,11 +87,21 @@ def simulate_on_r2(
         transportation_requests=reqs,
         space=space,
     )
+    del events
+
+    num_requests = len(requests)
+    num_requests_delivered = pd.notna(requests.loc[:, ('serviced', 'timestamp_dropoff')]).sum()
+
+    print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
 
     return stops, requests
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        N = 10
+    else:
+        N = int(sys.argv[1])
     stops, requests = simulate_on_r2(
-        num_vehicles=10, rate=13, seat_capacities=2, num_requests=100
+        num_vehicles=N, rate=N*1.5, seat_capacities=4, num_requests=N*1000
     )

@@ -127,8 +127,9 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     Tests that the simulation runs with pure pythonic and cythonic brute force dispatcher produces identical events.
     """
     n_reqs = 100
-    ir = pyds.InternalRequest(999, 0, (0, 0))
-    s0 = pyds.Stop((0, 0), ir, pyds.StopAction.internal, 0, 0, 0, 0)
+    ir = pyds.InternalRequest(request_id=999, creation_timestamp=0, location=(0, 0))
+    s0 = pyds.Stop(location=(0, 0), request=ir, action=pyds.StopAction.internal, estimated_arrival_time=0,
+                   occupancy_after_servicing=0, time_window_min=0, time_window_max=0)
     sl = [s0]
 
     ssfs = SlowSimpleFleetState(
@@ -145,8 +146,9 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     reqs = list(it.islice(rg, n_reqs))
     py_events = list(ssfs.simulate(reqs))
 
-    ir = cyds.InternalRequest(999, 0, (0, 0))
-    s0 = cyds.Stop((0, 0), ir, cyds.StopAction.internal, 0, 0, 0, 0)
+    ir = cyds.InternalRequest(request_id=999, creation_timestamp=0, location=(0, 0))
+    s0 = cyds.Stop(location=(0, 0), request=ir, action=cyds.StopAction.internal, estimated_arrival_time=0,
+                   occupancy_after_servicing=0, time_window_min=0, time_window_max=0)
     sl = [s0]
 
     ssfs = SlowSimpleFleetState(

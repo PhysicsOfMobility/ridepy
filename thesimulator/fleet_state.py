@@ -10,6 +10,10 @@ from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from .data_structures import (
     Stoplist,
     Request,
@@ -210,7 +214,7 @@ class FleetState(ABC):
 
         self.t = 0
 
-        for request in requests:
+        for n_req, request in enumerate(requests):
             req_epoch = request.creation_timestamp
 
             # advance clock to req_epoch
@@ -226,7 +230,7 @@ class FleetState(ABC):
                 yield self.handle_internal_request(request)
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
-
+            logger.info(f"Handled request # {n_req}")
             if self.t >= t_cutoff:
                 return
 

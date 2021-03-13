@@ -19,8 +19,9 @@ def test_attr_not_none():
     Test added to check for problems with creating cython
     objects from existing pointers and garbage collection.
     """
-    ir = InternalRequest(999, 0, (0, 0))
-    s0 = Stop((0, 0), ir, StopAction.internal, 0, 0, 0, 0)
+    ir = InternalRequest(request_id=999, creation_timestamp=0, location=(0, 0))
+    s0 = Stop(location=(0, 0), request=ir, action=StopAction.internal, estimated_arrival_time=0,
+              occupancy_after_servicing=0, time_window_min=0, time_window_max=0)
     sl = Stoplist([s0], LocType.R2LOC)
     assert sl[0].request is not None
 
