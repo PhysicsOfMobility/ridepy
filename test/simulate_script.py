@@ -1,3 +1,5 @@
+import pandas as pd
+
 from thesimulator.data_structures_cython import (
     TransportationRequest,
     InternalRequest,
@@ -21,6 +23,13 @@ import itertools as it
 
 import random
 import numpy as np
+
+from time import time
+import logging
+
+sim_logger = logging.getLogger('thesimulator')
+sim_logger.setLevel(logging.INFO)
+
 
 
 def simulate_on_r2(
@@ -68,10 +77,11 @@ def simulate_on_r2(
     )
 
     reqs = list(it.islice(rg, num_requests))
+    tick = time()
     events = list(ssfs.simulate(reqs))
+    tock = time()
 
-    for ev in events:
-        print(ev)
+    print(f"Simulating took {tock-tick} seconds")
 
     stops, requests = get_stops_and_requests(
         events=events,
@@ -79,11 +89,17 @@ def simulate_on_r2(
         transportation_requests=reqs,
         space=space,
     )
+    del events
+
+    num_requests = len(requests)
+    num_requests_delivered = pd.notna(requests.loc[:, ('serviced', 'timestamp_dropoff')]).sum()
+
+    print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
 
     return stops, requests
 
-
 if __name__ == "__main__":
+    N = 200
     stops, requests = simulate_on_r2(
-        num_vehicles=10, rate=13, seat_capacities=2, num_requests=100
+        num_vehicles=N, rate=N*1.5, seat_capacities=4, num_requests=N*1000
     )
