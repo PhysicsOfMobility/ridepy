@@ -49,7 +49,7 @@ def simulate_on_r2(
         initial_stoplist = [
             Stop(
                 location=initial_location,
-                request=InternalRequest(-1, 0, initial_location),
+                request=InternalRequest(request_id=-1, creation_timestamp=0, location=initial_location),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
                 occupancy_after_servicing=0,
