@@ -20,6 +20,11 @@ from thesimulator.util.dispatchers_cython.dispatchers cimport (
 from typing import Optional, SupportsFloat, List
 from copy import deepcopy
 
+import logging
+logger = logging.getLogger(__name__)
+
+
+
 cdef extern from "limits.h":
     cdef int INT_MAX
 
@@ -59,7 +64,7 @@ cdef class VehicleState:
         if seat_capacity > INT_MAX:
             raise ValueError("Cannot use seat_capacity bigger that c++'s INT_MAX")
         self.seat_capacity = seat_capacity
-        print(f"Created VehicleState with space of type {type(self.space)}")
+        logger.debug(f"Created VehicleState with space of type {type(self.space)}")
 
     property stoplist:
         def __get__(self):
