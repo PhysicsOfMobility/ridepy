@@ -21,6 +21,8 @@ from thesimulator.util.spaces_cython import (
     Graph as CyGraph,
 )
 
+from thesimulator.util.convenience.spaces import make_nx_cycle_graph, make_nx_grid
+
 
 def test_Euclidean():
     space = Euclidean(n_dim=1)
@@ -46,33 +48,32 @@ def test_Euclidean2D():
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
 
 
+# @pytest.mark.skip
 def test_grid():
-    space = Graph.create_grid()
+    space = Graph.from_nx(make_nx_grid())
 
-    assert space.d((0, 0), (0, 0)) == 0
-    assert space.d((0, 0), (0, 1)) == 1
-    assert space.d((0, 1), (0, 2)) == 1
-    assert space.d((0, 0), (0, 2)) == 2
-    assert space.d((0, 0), (1, 2)) == 3
-    assert space.d((0, 0), (2, 2)) == 4
+    assert space.d(0, 0) == 0
+    assert space.d(0, 1) == 1
+    assert space.d(1, 2) == 1
+    assert space.d(0, 2) == 2
+    assert space.d(0, 5) == 3
+    assert space.d(0, 8) == 4
     with pytest.raises(KeyError):
-        assert space.d((0, -1), (2, 2)) == 4
+        assert space.d(-1, 8) == 4
 
     for dist_to_dest, (next_node, jump_time) in zip(
         [2, 1.1, 1, 0.1, 0],
-        [((0, 0), 0), ((0, 1), 0.1), ((0, 1), 0), ((0, 2), 0.1), ((0, 2), 0)],
+        [(0, 0), (1, 0.1), (1, 0), (2, 0.1), (2, 0)],
     ):
-        next_node_interp, jump_time_interp = space.interp_dist(
-            (0, 0), (0, 2), dist_to_dest
-        )
+        next_node_interp, jump_time_interp = space.interp_dist(0, 2, dist_to_dest)
         assert next_node_interp == next_node
         assert np.isclose(jump_time_interp, jump_time)
 
-    assert space.interp_dist((0, 0), (0, 0), 0) == ((0, 0), 0)
+    assert space.interp_dist(0, 0, 0) == (0, 0)
 
 
 def test_cyclic_graph():
-    space = Graph.create_cycle_graph(n_nodes=4)
+    space = Graph.from_nx(make_nx_cycle_graph(n_nodes=4))
 
     assert space.d(0, 0) == 0
     assert space.d(0, 1) == 1
@@ -107,7 +108,7 @@ def test_cyGraph_distance(edge_weight):
     velocity = 0.17
     for u, v in G.edges():
         G[u][v]["distance"] = edge_weight
-    pyG = Graph(G, distance_attribute="distance", velocity=velocity)
+    pyG = Graph.from_nx(G, velocity=velocity)
 
     vertices = list(G.nodes())
     edges = list(G.edges())
@@ -226,26 +227,71 @@ def test_repr():
     assert repr(R2L2) == f"Euclidean2D(velocity={float(velocity)})"
 
 
-def test_from_nx():
+def test_py_cy_init():
     velocity = 42
 
     G = nx.cycle_graph(10)
-
     for u, v in G.edges():
         G[u][v]["weight"] = np.random.random()
 
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
+    const_weight = 13.37
 
-    cy_graph = CyGraph(
-        vertices=vertices, edges=edges, weights=weights, velocity=velocity
-    )
+    for kwargs in [
+        dict(
+            vertices=vertices,
+            edges=edges,
+            velocity=velocity,
+        ),
+        dict(
+            vertices=vertices,
+            edges=edges,
+            weights=const_weight,
+            velocity=velocity,
+        ),
+        dict(
+            vertices=vertices,
+            edges=edges,
+            weights=weights,
+            velocity=velocity,
+        ),
+    ]:
 
-    nx_cy_graph = CyGraph.from_nx(G, velocity=velocity, distance_attribute="weight")
+        cy_graph = CyGraph(**kwargs)
+        py_graph = Graph(**kwargs)
+
+        assert cy_graph.velocity == py_graph.velocity
+
+        for u in G.nodes():
+            for v in G.nodes():
+                if u >= v:
+                    assert cy_graph.d(u, v) == pytest.approx(py_graph.d(u, v))
+                    assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
+
+
+def test_py_cy_from_nx():
+    velocity = 42
+
+    G = nx.cycle_graph(10)
+    for u, v in G.edges():
+        G[u][v]["weight"] = np.random.random()
+
+    kwargs = dict(G=G, velocity=velocity, make_attribute_distance="weight")
+
+    cy_graph = CyGraph.from_nx(**kwargs)
+    py_graph = Graph.from_nx(**kwargs)
+
+    assert cy_graph.velocity == py_graph.velocity
 
     for u in G.nodes():
         for v in G.nodes():
             if u >= v:
-                assert cy_graph.d(u, v) == nx_cy_graph.d(u, v)
-                assert cy_graph.t(u, v) == nx_cy_graph.t(u, v)
+                assert cy_graph.d(u, v) == pytest.approx(py_graph.d(u, v))
+                assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
+
+
+@pytest.mark.xfail("to be implemented")
+def test_digraph():
+    assert False

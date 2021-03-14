@@ -1,4 +1,6 @@
 # distutils: language = c++
+import itertools as it
+
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
@@ -153,15 +155,24 @@ cdef class Graph(TransportSpace):
     """
     Weighted directed graph with integer node labels
     """
-    def __cinit__(self, *, vertices, edges, weights, double velocity=1):
+    def __cinit__(self, *, vertices, edges, weights=None, double velocity=1):
         self.loc_type = LocType.INT
-        self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
-            velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges, <vector[double]>weights
-        )
+
+        if weights is None:
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
+                velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges
+            )
+        else:
+            if isinstance(weights, (int, float)):
+                weights = it.repeat(float(weights), len(edges))
+
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
+                velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges, <vector[double]>weights
+            )
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
-        Weighted directed graph with integer vertex labels
+        Weighted undirected graph with integer vertex labels
 
         Parameters
         ----------
@@ -184,16 +195,18 @@ cdef class Graph(TransportSpace):
 
     @classmethod
     def from_nx(
-            cls, G, velocity: float = 1.0, distance_attribute: str = "distance"
+            cls, G, velocity: float = 1.0, make_attribute_distance: str = "distance"
     ):
         """
-        Create a Graph from a networkx.DiGraph with a mandatory distance edge attribute.
+        Create a Graph from a networkx.Graph with a mandatory distance edge attribute.
 
         Parameters
         ----------
+        G : networkx.Graph
+            networkx graph
         velocity
             velocity used for travel time computation
-        distance_attribute
+        make_attribute_distance
             name of the nx.DiGraph edge attribute used as distance between nodes
 
         Returns
@@ -203,7 +216,7 @@ cdef class Graph(TransportSpace):
         return cls(
             vertices=list(G.nodes()),
             edges=list(G.edges()),
-            weights=[G[u][v][distance_attribute] for u, v in G.edges()],
+            weights=[G[u][v][make_attribute_distance] for u, v in G.edges()],
             velocity=velocity
         )
 
