@@ -215,11 +215,7 @@ def test_repr():
     for u, v in G.edges():
         G[u][v]["weight"] = np.random.random()
 
-    vertices = list(G.nodes())
-    edges = list(G.edges())
-    weights = [G[u][v]["weight"] for u, v in G.edges()]
-
-    graph = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
+    graph = CyGraph.from_nx(G, velocity=velocity, make_attribute_distance="weight")
     R2L1 = CyManhattan2D(velocity=velocity)
     R2L2 = CyEuclidean2D(velocity=velocity)
 

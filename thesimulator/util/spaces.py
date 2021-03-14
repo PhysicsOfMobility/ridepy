@@ -147,7 +147,7 @@ class Graph(TransportSpace):
         self,
         vertices: Sequence[int],
         edges: Sequence[Tuple[int, int]],
-        weights: Union[None, float, Sequence[float]],
+        weights: Union[None, float, Sequence[float]] = None,
         velocity: float = 1,
     ):
         """
@@ -314,6 +314,9 @@ class Graph(TransportSpace):
     def random_point(self):
         return random.choice(list(self.G.nodes))
 
+    def __repr__(self):
+        return f"DiGraph(velocity={self.velocity})"
+
 
 class DiGraph(Graph):
     def __init__(
@@ -379,6 +382,9 @@ class DiGraph(Graph):
         self.velocity = velocity
         self._update_distance_cache()
         return self
+
+    def __repr__(self):
+        return f"DiGraph(velocity={self.velocity})"
 
 
 class ContinuousGraph(Graph):
