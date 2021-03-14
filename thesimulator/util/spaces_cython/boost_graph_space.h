@@ -73,7 +73,7 @@ namespace cstuff {
         }
 
         GraphSpace(double velocity, vector <vertex_t> vertex_vec, vector <Edge> edge_vec)
-                : GraphSpace(velocity, vertex_vec, edge_vec, vector <double> {static_cast<int>(edge_vec.size()), 1}) {}
+                : GraphSpace(velocity, vertex_vec, edge_vec, vector <double> (static_cast<int>(edge_vec.size()), 1)) {}
 
         GraphSpace(double velocity, vector <vertex_t> vertex_vec, vector <Edge> edge_vec, vector<double> weight_vec)
                 : TransportSpace<vertex_t>{velocity}, _g{vertex_vec.size()}, vertex2label{get(vertex_name, _g)},
