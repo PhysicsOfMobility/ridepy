@@ -147,7 +147,7 @@ class Graph(TransportSpace):
         self,
         vertices: Sequence[int],
         edges: Sequence[Tuple[int, int]],
-        weights: Sequence[float] = None,
+        weights: Union[None, float, Sequence[float]],
         velocity: float = 1,
     ):
         """
@@ -160,7 +160,10 @@ class Graph(TransportSpace):
         edges
             sequence of edge tuples
         weights
-            sequence of edge weights
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
         velocity
             constant velocity to compute travel time, optional.
         """
@@ -190,7 +193,9 @@ class Graph(TransportSpace):
             raise TypeError(f"Must supply {graph_class.__name__}, not {type(G)}")
 
         # making another attribute the distance
-        if make_attribute_distance != "distance":
+        if make_attribute_distance is None:
+            nx.set_edge_attributes(G, 1, name="distance")
+        elif make_attribute_distance != "distance":
             # if 'distance' already exists, we raise
             if nx.get_edge_attributes(G, "distance"):
                 raise ValueError(
@@ -223,6 +228,7 @@ class Graph(TransportSpace):
             velocity to use for travel time computation
         make_attribute_distance
             attribute to rename to "distance" and use as such
+            If None is supplied, the resulting graph is unweighted (unit edge length).
 
         Returns
         -------
@@ -314,7 +320,7 @@ class DiGraph(Graph):
         self,
         vertices: Sequence[int],
         edges: Sequence[Tuple[int, int]],
-        weights: Sequence[float],
+        weights: Union[None, float, Sequence[float]],
         velocity: float = 1,
     ):
         """
@@ -327,7 +333,10 @@ class DiGraph(Graph):
         edges
             sequence of edge tuples
         weights
-            sequence of edge weights
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
         velocity
             constant velocity to compute travel time, optional.
         """
@@ -357,6 +366,7 @@ class DiGraph(Graph):
             velocity to use for travel time computation
         make_attribute_distance
             attribute to rename to "distance" and use as such
+            If None is supplied, the resulting graph is unweighted (unit edge length).
 
         Returns
         -------

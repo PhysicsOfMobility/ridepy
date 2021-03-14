@@ -12,7 +12,7 @@ from .cspaces cimport(
     GraphSpace as CGraphSpace
 )
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from thesimulator.data_structures_cython.data_structures cimport LocType, R2loc
 from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
@@ -180,8 +180,11 @@ cdef class Graph(TransportSpace):
             sequence of vertices
         edges : Sequence[Tuple[int, int]]
             sequence of edge tuples
-        weights : Sequence[float]
-            sequence of edge weights
+        weights : Union[None, float, Sequence[float]]
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
         velocity
             constant velocity to compute travel time, optional. default: 1
         """
@@ -195,7 +198,7 @@ cdef class Graph(TransportSpace):
 
     @classmethod
     def from_nx(
-            cls, G, velocity: float = 1.0, make_attribute_distance: str = "distance"
+            cls, G, velocity: float = 1.0, make_attribute_distance: Optional[str] = "distance"
     ):
         """
         Create a Graph from a networkx.Graph with a mandatory distance edge attribute.
@@ -207,16 +210,22 @@ cdef class Graph(TransportSpace):
         velocity
             velocity used for travel time computation
         make_attribute_distance
-            name of the nx.DiGraph edge attribute used as distance between nodes
+            name of the nx.DiGraph edge attribute used as distance between nodes.
+            If None is supplied, the resulting graph is unweighted (unit edge length).
 
         Returns
         -------
         Graph instance
         """
+        if make_attribute_distance is None:
+            weights = None
+        else:
+            weights = [G[u][v][make_attribute_distance] for u, v in G.edges()]
+
         return cls(
             vertices=list(G.nodes()),
             edges=list(G.edges()),
-            weights=[G[u][v][make_attribute_distance] for u, v in G.edges()],
+            weights=weights,
             velocity=velocity
         )
 

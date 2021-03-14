@@ -13,6 +13,7 @@ from thesimulator.util.spaces import (
     Euclidean1D,
     Euclidean2D,
     Graph,
+    DiGraph,
     ContinuousGraph,
 )
 from thesimulator.util.spaces_cython import (
@@ -262,7 +263,7 @@ def test_py_cy_init():
         cy_graph = CyGraph(**kwargs)
         py_graph = Graph(**kwargs)
 
-        assert cy_graph.velocity == py_graph.velocity
+        assert cy_graph.velocity == py_graph.velocity == velocity
 
         for u in G.nodes():
             for v in G.nodes():
@@ -278,20 +279,37 @@ def test_py_cy_from_nx():
     for u, v in G.edges():
         G[u][v]["weight"] = np.random.random()
 
-    kwargs = dict(G=G, velocity=velocity, make_attribute_distance="weight")
+    for kwargs in [
+        dict(G=G, velocity=velocity, make_attribute_distance=None),
+        dict(G=G, velocity=velocity, make_attribute_distance="weight"),
+    ]:
+        cy_graph = CyGraph.from_nx(**kwargs)
+        py_graph = Graph.from_nx(**kwargs)
 
-    cy_graph = CyGraph.from_nx(**kwargs)
-    py_graph = Graph.from_nx(**kwargs)
+        assert cy_graph.velocity == py_graph.velocity == velocity
 
-    assert cy_graph.velocity == py_graph.velocity
+        for u in G.nodes():
+            for v in G.nodes():
+                if u >= v:
+                    assert cy_graph.d(u, v) == pytest.approx(py_graph.d(u, v))
+                    assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
 
+
+def test_digraph():
+    velocity = 42
+
+    G = nx.cycle_graph(10, create_using=nx.DiGraph)
+    G_u = G.to_undirected()
+
+    get_kwargs = lambda graph: dict(G=graph, velocity=velocity)
+
+    py_graph = Graph.from_nx(**get_kwargs(G_u))
+    py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    assert py_graph.velocity == py_digraph.velocity == velocity
+    # breakpoint()
     for u in G.nodes():
         for v in G.nodes():
             if u >= v:
-                assert cy_graph.d(u, v) == pytest.approx(py_graph.d(u, v))
-                assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
-
-
-@pytest.mark.xfail("to be implemented")
-def test_digraph():
-    assert False
+                assert py_graph.d(u, v) == nx.shortest_path_length(G_u, u, v)
+                assert py_digraph.d(u, v) == nx.shortest_path_length(G, u, v)
