@@ -23,6 +23,10 @@ from thesimulator.util.dispatchers_cython import (
 from random import randint
 
 from thesimulator.vehicle_state_cython import VehicleState
+import logging
+
+sim_logger = logging.getLogger('thesimulator')
+sim_logger.setLevel(logging.DEBUG)
 
 
 def stoplist_from_properties(stoplist_properties):

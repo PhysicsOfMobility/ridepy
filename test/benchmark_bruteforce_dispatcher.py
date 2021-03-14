@@ -14,6 +14,10 @@ from thesimulator.util.spaces import Euclidean2D
 from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
 from thesimulator.util.testing_utils import stoplist_from_properties
 
+import logging
+sim_logger = logging.getLogger('thesimulator')
+sim_logger.setLevel(logging.DEBUG)
+
 
 def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D()
