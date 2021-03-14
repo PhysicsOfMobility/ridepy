@@ -1,6 +1,6 @@
 import random
 
-from typing import List, Tuple, Union, Any, Iterator
+from typing import List, Tuple, Union, Any, Iterator, Sequence
 
 import numpy as np
 import operator as op
@@ -134,21 +134,72 @@ class Graph(TransportSpace):
     A location is identified with a one-dimensional coordinate, namely the node index.
     """
 
-    def __init__(
-        self,
-        graph: nx.Graph,
-        distance_attribute="distance",
-        velocity: float = 1,
-        n_dim=1,
-    ):
-        self.G = graph
-        self.distance_attribute = distance_attribute
+    n_dim = 1
+
+    def _update_distance_cache(self):
         (
             self._predecessors,
             self._distances,
-        ) = nx.floyd_warshall_predecessor_and_distance(self.G, self.distance_attribute)
+        ) = nx.floyd_warshall_predecessor_and_distance(self.G, "distance")
+
+    def __init__(
+        self,
+        vertices: Sequence[int],
+        edges: Sequence[Tuple[int, int]],
+        weights: Sequence[float],
+        velocity: float = 1,
+    ):
+        """
+        Weighted directed graph with integer vertex labels
+
+        Parameters
+        ----------
+        vertices
+            sequence of vertices
+        edges
+            sequence of edge tuples
+        weights
+            sequence of edge weights
+        velocity
+            constant velocity to compute travel time, optional.
+        """
+        self.G = nx.DiGraph()
+        self.G.add_nodes_from(vertices)
+        self.G.add_edges_from(
+            (u, v, {"distance": w}) for (u, v), w in zip(edges, weights)
+        )
+
         self.velocity = velocity
-        self.n_dim = n_dim
+        self._update_distance_cache()
+
+    def from_nx(
+        self,
+        G: nx.Graph,
+        velocity: float = 1,
+        make_attribute_distance: str = "distance",
+    ):
+        # as we are keeping the graph instance, make sure it's right
+        if not isinstance(G, (nx.Graph, nx.DiGraph)):
+            raise TypeError(f"Must supply nx.Graph or nx.DiGraph, not {type(G)}")
+
+        # making another attribute the distance
+        if make_attribute_distance != "distance":
+            # if 'distance' already exists, we raise
+            if nx.get_edge_attributes(G, "distance"):
+                raise ValueError(
+                    "'distance' already exists as edge attribute, won't overwrite"
+                )
+            # otherwise rename
+            else:
+                nx.set_edge_attributes(
+                    G,
+                    nx.get_edge_attributes(G, make_attribute_distance),
+                    name="distance",
+                )
+
+        self.G = G
+        self.velocity = velocity
+        self._update_distance_cache()
 
     @classmethod
     def create_random(cls):
