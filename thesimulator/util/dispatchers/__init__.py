@@ -18,6 +18,8 @@ from thesimulator.util.dispatchers.helper_functions import (
     insert_request_to_stoplist_drive_first,
 )
 
+import logging
+logger = logging.getLogger(__name__)
 
 def taxicab_dispatcher_drive_first(
     request: TransportationRequest,
@@ -223,6 +225,10 @@ def brute_force_distance_minimizing_dispatcher(
 
     if min_cost < np.inf:
         best_pickup_idx, best_dropoff_idx = best_insertion
+
+        logger.info(f"Best insertion: {best_insertion}")
+        logger.info(f"Min cost: {min_cost}")
+
         new_stoplist = insert_request_to_stoplist_drive_first(
             stoplist=stoplist,
             request=request,

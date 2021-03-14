@@ -26,7 +26,7 @@ from thesimulator.util.analytics import get_stops_and_requests
 import logging
 
 sim_logger = logging.getLogger('thesimulator')
-sim_logger.setLevel(logging.INFO)
+sim_logger.setLevel(logging.DEBUG)
 
 
 

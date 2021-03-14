@@ -20,6 +20,7 @@ from thesimulator.util.dispatchers_cython.dispatchers cimport (
 from typing import Optional, SupportsFloat, List
 from copy import deepcopy
 
+from wurlitzer import pipes
 import logging
 logger = logging.getLogger(__name__)
 
@@ -168,7 +169,18 @@ cdef class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-        return self.vehicle_id, *self.dispatcher(
-            request,
-            self.stoplist,
-            self.space, self.seat_capacity)
+
+        with pipes() as (out, err):
+            ret = self.vehicle_id, *self.dispatcher(
+                request,
+                self.stoplist,
+                self.space, self.seat_capacity)
+        #TODO: when cython supports walrus operator, change to more readable
+        # if (msg:=out.read().strip()):
+        msg = out.read().strip()
+        if msg:
+            logger.info(msg)
+        msg = err.read().strip()
+        if msg:
+            logger.critical(msg)
+        return ret
