@@ -40,22 +40,19 @@ if dark:
 # -
 
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.data_structures import (
+from thesimulator.vehicle_state_cython import VehicleState
+from thesimulator.data_structures_cython import (
     Stop,
     InternalRequest,
     StopAction,
-    StopEvent,
     TransportationRequest,
-    RequestAcceptanceEvent,
-    PickupEvent,
-    DeliveryEvent,
 )
-from thesimulator.util.dispatchers import (
-    taxicab_dispatcher_drive_first,
+from thesimulator.util.dispatchers_cython import (
     brute_force_distance_minimizing_dispatcher,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
+from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
+from thesimulator.util.spaces_cython import Euclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
 from thesimulator.util.analytics.plotting import plot_occupancy_hist
 
@@ -73,18 +70,16 @@ evf = lambda S, f, **arg: (S, f(S, **arg))
 n_buses = 50
 """number of vehicles to simulate"""
 
-initial_location = (0, 0)
-"""initial location of all vehicles"""
-
 initial_stoplists = {
     vehicle_id: [
         Stop(
-            location=initial_location,
+            location=pyEuclidean2D().random_point(),
             request=InternalRequest(
-                request_id="CPE", creation_timestamp=0, location=initial_location
+                request_id=-1, creation_timestamp=0, location=initial_location
             ),
             action=StopAction.internal,
             estimated_arrival_time=0,
+            occupancy_after_servicing=0,
             time_window_min=0,
             time_window_max=np.inf,
         )
@@ -97,22 +92,25 @@ initial_stoplists = {
 # ## define simulation environment
 
 # +
-# space
-space = Euclidean2D()
-"""transport space to operate on"""
-
-rg = RandomRequestGenerator(rate=10, space=space)
+rg = RandomRequestGenerator(
+    rate=10,
+    max_pickup_delay=3,
+    max_delivery_delay_rel=1.9,
+    space=pyEuclidean2D(),
+    request_class=TransportationRequest,
+)
 """request generator"""
 
 # generate 1000 random requests
-transportation_requests = list(it.islice(rg, 100))
+transportation_requests = list(it.islice(rg, 50000))
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
     initial_stoplists=initial_stoplists,
-    space=space,
+    space=Euclidean2D(),
     dispatcher=brute_force_distance_minimizing_dispatcher,
     seat_capacities=8,
+    vehicle_state_class=VehicleState,
 )
 # -
 
@@ -123,11 +121,12 @@ fs = SlowSimpleFleetState(
 
 # ## process the results
 
+
 stops, reqs = get_stops_and_requests(
     events=events,
     initial_stoplists=initial_stoplists,
     transportation_requests=transportation_requests,
-    space=space,
+    space=pyEuclidean2D(),
 )
 
 # # some distributions
@@ -145,7 +144,7 @@ reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 
 # ## direct travel times
 
-reqs[("supplied", "direct_travel_time")].hist(bins=np.r_[0:1:30j])
+reqs[("supplied", "direct_travel_time")].hist(bins=np.r_[0:1.5:30j])
 
 
 # ## occupancies
