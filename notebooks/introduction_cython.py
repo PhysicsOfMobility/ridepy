@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -70,10 +71,12 @@ evf = lambda S, f, **arg: (S, f(S, **arg))
 n_buses = 50
 """number of vehicles to simulate"""
 
+initial_location = (0, 0)
+
 initial_stoplists = {
     vehicle_id: [
         Stop(
-            location=pyEuclidean2D().random_point(),
+            location=initial_location,
             request=InternalRequest(
                 request_id=-1, creation_timestamp=0, location=initial_location
             ),
@@ -88,6 +91,7 @@ initial_stoplists = {
 }
 """initial stoplists, containing only cpe"""
 # -
+
 
 # ## define simulation environment
 
