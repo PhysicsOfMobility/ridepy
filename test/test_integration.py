@@ -28,7 +28,7 @@ def test_notebooks(tmp_path):
         # - ipython will understand magics, but only accept them in files ending with `.ipy`
         # - jupytext will not store anything to files ending with `.ipy`
         # - we only want to keep `.py` files in the notebooks directory (apart from `.ipynb` files, locally)
-        # this leaves us with the this garbage.
+        # this leaves us with this garbage.
         jupytext.write(
             jupytext.read(fpath, fmt="py"),
             tmp_py_path,
