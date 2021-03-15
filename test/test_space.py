@@ -1,4 +1,6 @@
 import pytest
+
+import itertools as it
 import math as m
 import numpy as np
 import networkx as nx
@@ -22,7 +24,11 @@ from thesimulator.util.spaces_cython import (
     Graph as CyGraph,
 )
 
-from thesimulator.util.convenience.spaces import make_nx_cycle_graph, make_nx_grid
+from thesimulator.util.convenience.spaces import (
+    make_nx_cycle_graph,
+    make_nx_grid,
+    make_nx_star_graph,
+)
 
 
 def test_Euclidean():
@@ -74,7 +80,7 @@ def test_grid():
 
 
 def test_cyclic_graph():
-    space = Graph.from_nx(make_nx_cycle_graph(n_nodes=4))
+    space = Graph.from_nx(make_nx_cycle_graph(order=4))
 
     assert space.d(0, 0) == 0
     assert space.d(0, 1) == 1
@@ -87,6 +93,26 @@ def test_cyclic_graph():
     d = space.d(x, y)
 
     assert d.equals(pd.Series([0, 1, 2, 1, np.inf]))
+
+
+def test_star_graph():
+    space = Graph.from_nx(make_nx_star_graph(order=5))
+
+    for u in range(5):
+        assert space.d(u, u) == 0
+
+    for u, v in it.product([0], range(1, 5)):
+        assert space.d(u, v) == 1
+        assert space.d(v, u) == 1
+
+    for u, v in it.permutations(range(1, 5), 2):
+        assert space.d(u, v) == 2
+
+    x = pd.Series(np.zeros(5, dtype="i8"))
+    y = pd.Series(np.arange(5, dtype="i8"))
+    d = space.d(x, y)
+
+    assert d.equals(pd.Series([0, 1, 1, 1, 1]))
 
 
 def test_CyEuclidean2D():
