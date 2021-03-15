@@ -220,6 +220,11 @@ cdef class Graph(TransportSpace):
         -------
         Graph instance
         """
+        if not isinstance(G, nx.Graph):
+            raise TypeError(f"Must supply nx.Graph, not {type(G)}")
+        elif G.is_directed():
+            raise TypeError(f"Must supply undirected graph")
+
         if not all(isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))):
             warnings.warn("Heuristic determined non-int node labels. Converting to int", UserWarning)
             G = nx.relabel.convert_node_labels_to_integers(G)

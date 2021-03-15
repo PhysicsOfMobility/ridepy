@@ -291,6 +291,24 @@ def test_py_cy_from_nx():
                     assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
 
 
+def test_py_cy_from_nx_graph_type():
+    G_u = nx.cycle_graph(10, create_using=nx.Graph)
+    G = nx.cycle_graph(10, create_using=nx.DiGraph)
+
+    CyGraph.from_nx(G=G_u, make_attribute_distance=None)
+    Graph.from_nx(G=G_u, make_attribute_distance=None)
+    DiGraph.from_nx(G=G, make_attribute_distance=None)
+
+    with pytest.raises(TypeError, match=" undirected "):
+        CyGraph.from_nx(G=G, make_attribute_distance=None)
+
+    with pytest.raises(TypeError, match=" undirected "):
+        Graph.from_nx(G=G, make_attribute_distance=None)
+
+    with pytest.raises(TypeError, match=" supply DiGraph"):
+        DiGraph.from_nx(G=G_u, make_attribute_distance=None)
+
+
 def test_digraph():
     velocity = 42
 
@@ -339,8 +357,14 @@ def test_graph_relabeling_deepcopy():
     G = G_u.to_directed()
     get_kwargs = lambda graph: dict(G=graph, velocity=42, make_attribute_distance=None)
 
-    py_graph = Graph.from_nx(**get_kwargs(G_u))
-    py_digraph = DiGraph.from_nx(**get_kwargs(G))
+    with pytest.warns(UserWarning, match="non-int node labels"):
+        py_graph = Graph.from_nx(**get_kwargs(G_u))
+
+    with pytest.warns(UserWarning, match="non-int node labels"):
+        py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    with pytest.warns(UserWarning, match="non-int node labels"):
+        CyGraph.from_nx(**get_kwargs(G_u))
 
     G_u.nodes[(0, 0)]["garbl"] = 42
     G.nodes[(0, 0)]["garbl"] = 42

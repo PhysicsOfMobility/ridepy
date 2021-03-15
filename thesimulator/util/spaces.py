@@ -185,7 +185,12 @@ class Graph(TransportSpace):
         self._update_distance_cache()
 
     @staticmethod
-    def _prepare_copy_of_nx_graph(*, G, make_attribute_distance, graph_class):
+    def _prepare_copy_of_nx_graph(*, G, make_attribute_distance, directed=False):
+        if not directed:
+            graph_class = nx.Graph
+        else:
+            graph_class = nx.DiGraph
+
         if not all(
             isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))
         ):
@@ -205,6 +210,8 @@ class Graph(TransportSpace):
         # as we are keeping the graph instance, make sure it's right
         if not isinstance(G, graph_class):
             raise TypeError(f"Must supply {graph_class.__name__}, not {type(G)}")
+        elif (directed and not G.is_directed()) or (not directed and G.is_directed()):
+            raise TypeError(f"Must supply {'' if directed else 'un'}directed graph")
 
         # making another attribute the distance
         if make_attribute_distance is None:
@@ -256,7 +263,7 @@ class Graph(TransportSpace):
         """
         self = cls.__new__(cls)
         self.G = cls._prepare_copy_of_nx_graph(
-            G=G, make_attribute_distance=make_attribute_distance, graph_class=nx.Graph
+            G=G, make_attribute_distance=make_attribute_distance, directed=False
         )
         self.velocity = velocity
         self._update_distance_cache()
@@ -397,7 +404,7 @@ class DiGraph(Graph):
         """
         self = cls.__new__(cls)
         self.G = cls._prepare_copy_of_nx_graph(
-            G=G, make_attribute_distance=make_attribute_distance, graph_class=nx.DiGraph
+            G=G, make_attribute_distance=make_attribute_distance, directed=True
         )
         self.velocity = velocity
         self._update_distance_cache()
