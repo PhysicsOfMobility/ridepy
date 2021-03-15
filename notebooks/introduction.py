@@ -105,7 +105,7 @@ space = Euclidean2D()
 rg = RandomRequestGenerator(rate=10, space=space)
 """request generator"""
 
-# generate 1000 random requests
+# generate 100 random requests
 transportation_requests = list(it.islice(rg, 100))
 
 # initialize the simulator

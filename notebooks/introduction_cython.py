@@ -105,8 +105,8 @@ rg = RandomRequestGenerator(
 )
 """request generator"""
 
-# generate 1000 random requests
-transportation_requests = list(it.islice(rg, 50000))
+# generate 100 random requests
+transportation_requests = list(it.islice(rg, 100))
 
 # initialize the simulator
 fs = SlowSimpleFleetState(

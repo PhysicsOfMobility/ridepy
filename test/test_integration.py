@@ -40,6 +40,7 @@ def test_notebooks(tmp_path):
         assert tmp_ipy_path.exists()
 
         # TODO: substitute this with something along these lines
+        # see also issue https://github.com/PhysicsOfMobility/theSimulator/issues/97
         # IPython.get_ipython().safe_execfile(fname, shell_futures=False, raise_exceptions=True)
         res = subprocess.run(["ipython", str(tmp_ipy_path)], capture_output=True)
 
@@ -47,3 +48,4 @@ def test_notebooks(tmp_path):
         stderr = res.stderr.decode()
         assert not "WARNING" in stderr
         assert not "Error" in stdout
+        assert not res.returncode
