@@ -8,7 +8,12 @@ def make_nx_grid(
     edge_distance: float = 1,
 ) -> nx.Graph:
     """
-    Return a lattice nx.Graph
+    Return a lattice `nx.Graph`
+
+    Use in conjunction with `spaces.Graph` or `spaces_cython.Graph` like
+    ```py
+    Graph.from_nx(make_nx_grid())
+    ```
 
     Parameters
     ----------
@@ -36,7 +41,12 @@ def make_nx_cycle_graph(
     edge_distance: float = 1,
 ) -> nx.Graph:
     """
-    Return a cyclic nx.Graph
+    Return a cyclic `nx.Graph`
+
+    Use in conjunction with `spaces.Graph` or `spaces_cython.Graph` like
+    ```py
+    Graph.from_nx(make_nx_cycle_graph())
+    ```
 
     Parameters
     ----------
