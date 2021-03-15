@@ -1,5 +1,8 @@
 # distutils: language = c++
+import random
+import warnings
 import itertools as it
+import networkx as nx
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
@@ -217,6 +220,10 @@ cdef class Graph(TransportSpace):
         -------
         Graph instance
         """
+        if not all(isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))):
+            warnings.warn("Heuristic determined non-int node labels. Converting to int", UserWarning)
+            G = nx.relabel.convert_node_labels_to_integers(G)
+
         if make_attribute_distance is None:
             weights = None
         else:

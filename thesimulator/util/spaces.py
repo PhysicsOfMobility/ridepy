@@ -1,5 +1,6 @@
 import random
 import copy
+import warnings
 
 from typing import List, Tuple, Union, Any, Iterator, Sequence
 
@@ -185,8 +186,21 @@ class Graph(TransportSpace):
 
     @staticmethod
     def _prepare_copy_of_nx_graph(*, G, make_attribute_distance, graph_class):
-        # create a copy as we don't want to modify the original graph
-        G = copy.deepcopy(G)
+        if not all(
+            isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))
+        ):
+            warnings.warn(
+                "Heuristic determined non-int node labels. Converting to int, "
+                "keeping original labels as attribute.",
+                UserWarning,
+            )
+
+            G = nx.relabel.convert_node_labels_to_integers(
+                G, label_attribute="original_label"
+            )
+        else:
+            # create a copy as we don't want to modify the original graph
+            G = copy.deepcopy(G)
 
         # as we are keeping the graph instance, make sure it's right
         if not isinstance(G, graph_class):
@@ -207,6 +221,12 @@ class Graph(TransportSpace):
                     G,
                     nx.get_edge_attributes(G, make_attribute_distance),
                     name="distance",
+                )
+        else:
+            if len(nx.get_edge_attributes(G, "distance")) != G.number_of_edges():
+                raise ValueError(
+                    "Was told to use 'distance' as distance edge attribute. "
+                    "All edges must have the distance weight specified."
                 )
 
         return G

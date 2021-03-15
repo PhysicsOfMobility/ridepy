@@ -297,15 +297,60 @@ def test_digraph():
     G = nx.cycle_graph(10, create_using=nx.DiGraph)
     G_u = G.to_undirected()
 
-    get_kwargs = lambda graph: dict(G=graph, velocity=velocity)
+    get_kwargs = lambda graph: dict(
+        G=graph, velocity=velocity, make_attribute_distance=None
+    )
 
     py_graph = Graph.from_nx(**get_kwargs(G_u))
     py_digraph = DiGraph.from_nx(**get_kwargs(G))
 
     assert py_graph.velocity == py_digraph.velocity == velocity
-    # breakpoint()
+
     for u in G.nodes():
         for v in G.nodes():
             if u >= v:
                 assert py_graph.d(u, v) == nx.shortest_path_length(G_u, u, v)
                 assert py_digraph.d(u, v) == nx.shortest_path_length(G, u, v)
+
+
+def test_graph_relabeling_deepcopy():
+
+    # without relabeling
+    G = nx.cycle_graph(10, create_using=nx.DiGraph)
+    G_u = G.to_undirected()
+    get_kwargs = lambda graph: dict(G=graph, velocity=42, make_attribute_distance=None)
+
+    py_graph = Graph.from_nx(**get_kwargs(G_u))
+    py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    G_u.nodes[0]["garbl"] = 42
+    G.nodes[0]["garbl"] = 42
+
+    assert G_u.nodes[0]["garbl"] == 42
+    assert G.nodes[0]["garbl"] == 42
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_graph.G.nodes[0]["garbl"]
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_digraph.G.nodes[0]["garbl"]
+
+    # with relabeling
+    G_u = nx.grid_graph((10, 10))
+    G = G_u.to_directed()
+    get_kwargs = lambda graph: dict(G=graph, velocity=42, make_attribute_distance=None)
+
+    py_graph = Graph.from_nx(**get_kwargs(G_u))
+    py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    G_u.nodes[(0, 0)]["garbl"] = 42
+    G.nodes[(0, 0)]["garbl"] = 42
+
+    assert G_u.nodes[(0, 0)]["garbl"] == 42
+    assert G.nodes[(0, 0)]["garbl"] == 42
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_graph.G.nodes[0]["garbl"]
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_digraph.G.nodes[0]["garbl"]
