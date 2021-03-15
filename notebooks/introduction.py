@@ -57,13 +57,13 @@ pd.set_option("display.width", 1000)
 evf = lambda S, f, **arg: (S, f(S, **arg))
 # -
 
-# ## configure the simulation and supply initial values
+# # configure the simulation and supply initial values
 
 # +
 n_buses = 50
 """number of vehicles to simulate"""
 
-initial_location = 0
+initial_location = (0, 0)
 """initial location of all vehicles"""
 
 initial_stoplists = {
@@ -88,21 +88,21 @@ initial_stoplists = {
 
 # +
 # space
-space = Euclidean1D()
+space = Euclidean2D()
 """transport space to operate on"""
 
 rg = RandomRequestGenerator(rate=10, space=space)
 """request generator"""
 
 # generate 1000 random requests
-transportation_requests = list(it.islice(rg, 1000))
+transportation_requests = list(it.islice(rg, 100))
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
     initial_stoplists=initial_stoplists,
     space=space,
-    #         dispatcher=taxicab_dispatcher_drive_first,
     dispatcher=brute_force_distance_minimizing_dispatcher,
+    seat_capacities=8,
 )
 # -
 
