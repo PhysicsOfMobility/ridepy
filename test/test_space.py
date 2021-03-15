@@ -314,7 +314,6 @@ def test_digraph():
 
 
 def test_graph_relabeling_deepcopy():
-
     # without relabeling
     G = nx.cycle_graph(10, create_using=nx.DiGraph)
     G_u = G.to_undirected()
