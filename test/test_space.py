@@ -1,4 +1,6 @@
 import pytest
+
+import itertools as it
 import math as m
 import numpy as np
 import networkx as nx
@@ -13,12 +15,19 @@ from thesimulator.util.spaces import (
     Euclidean1D,
     Euclidean2D,
     Graph,
+    DiGraph,
     ContinuousGraph,
 )
 from thesimulator.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Manhattan2D as CyManhattan2D,
     Graph as CyGraph,
+)
+
+from thesimulator.util.convenience.spaces import (
+    make_nx_cycle_graph,
+    make_nx_grid,
+    make_nx_star_graph,
 )
 
 
@@ -46,33 +55,32 @@ def test_Euclidean2D():
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
 
 
+# @pytest.mark.skip
 def test_grid():
-    space = Graph.create_grid()
+    space = Graph.from_nx(make_nx_grid())
 
-    assert space.d((0, 0), (0, 0)) == 0
-    assert space.d((0, 0), (0, 1)) == 1
-    assert space.d((0, 1), (0, 2)) == 1
-    assert space.d((0, 0), (0, 2)) == 2
-    assert space.d((0, 0), (1, 2)) == 3
-    assert space.d((0, 0), (2, 2)) == 4
+    assert space.d(0, 0) == 0
+    assert space.d(0, 1) == 1
+    assert space.d(1, 2) == 1
+    assert space.d(0, 2) == 2
+    assert space.d(0, 5) == 3
+    assert space.d(0, 8) == 4
     with pytest.raises(KeyError):
-        assert space.d((0, -1), (2, 2)) == 4
+        assert space.d(-1, 8) == 4
 
     for dist_to_dest, (next_node, jump_time) in zip(
         [2, 1.1, 1, 0.1, 0],
-        [((0, 0), 0), ((0, 1), 0.1), ((0, 1), 0), ((0, 2), 0.1), ((0, 2), 0)],
+        [(0, 0), (1, 0.1), (1, 0), (2, 0.1), (2, 0)],
     ):
-        next_node_interp, jump_time_interp = space.interp_dist(
-            (0, 0), (0, 2), dist_to_dest
-        )
+        next_node_interp, jump_time_interp = space.interp_dist(0, 2, dist_to_dest)
         assert next_node_interp == next_node
         assert np.isclose(jump_time_interp, jump_time)
 
-    assert space.interp_dist((0, 0), (0, 0), 0) == ((0, 0), 0)
+    assert space.interp_dist(0, 0, 0) == (0, 0)
 
 
 def test_cyclic_graph():
-    space = Graph.create_cycle_graph(n_nodes=4)
+    space = Graph.from_nx(make_nx_cycle_graph(order=4))
 
     assert space.d(0, 0) == 0
     assert space.d(0, 1) == 1
@@ -85,6 +93,26 @@ def test_cyclic_graph():
     d = space.d(x, y)
 
     assert d.equals(pd.Series([0, 1, 2, 1, np.inf]))
+
+
+def test_star_graph():
+    space = Graph.from_nx(make_nx_star_graph(order=5))
+
+    for u in range(5):
+        assert space.d(u, u) == 0
+
+    for u, v in it.product([0], range(1, 5)):
+        assert space.d(u, v) == 1
+        assert space.d(v, u) == 1
+
+    for u, v in it.permutations(range(1, 5), 2):
+        assert space.d(u, v) == 2
+
+    x = pd.Series(np.zeros(5, dtype="i8"))
+    y = pd.Series(np.arange(5, dtype="i8"))
+    d = space.d(x, y)
+
+    assert d.equals(pd.Series([0, 1, 1, 1, 1]))
 
 
 def test_CyEuclidean2D():
@@ -107,12 +135,12 @@ def test_cyGraph_distance(edge_weight):
     velocity = 0.17
     for u, v in G.edges():
         G[u][v]["distance"] = edge_weight
-    pyG = Graph(G, distance_attribute="distance", velocity=velocity)
+    pyG = Graph.from_nx(G, velocity=velocity)
 
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [edge_weight] * len(edges)
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
 
     for u in G.nodes():
         for v in G.nodes():
@@ -129,7 +157,7 @@ def test_cyGraph_interpolate():
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
 
     def true_interp_1_to_3(dist_to_dest):
         """
@@ -165,7 +193,7 @@ def test_cyGraph_interp_d_vs_t(velocity):
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
     for d in np.linspace(0.001, 13.999, 100):
         v1, dist = cyG.interp_dist(1, 3, d)
         v2, time = cyG.interp_time(1, 3, d / velocity)
@@ -184,7 +212,7 @@ def test_cyGraph_d_vs_t(velocity):
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices, edges, weights, velocity=velocity)
+    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
     ds = np.array([cyG.d(u, v) for u in G.nodes() for v in G.nodes()])
     ts = np.array([cyG.t(u, v) for u in G.nodes() for v in G.nodes()])
 
@@ -203,3 +231,175 @@ def test_interpolation_in_2D_continuous_spaces(rest_frac):
         interpolated_pt, jump_time = space.interp_dist(u, v, rest_dist)
         assert jump_time == 0
         assert np.isclose(space.d(interpolated_pt, v), rest_dist)
+
+
+def test_repr():
+    velocity = 42
+
+    G = nx.cycle_graph(10)
+
+    for u, v in G.edges():
+        G[u][v]["weight"] = np.random.random()
+
+    graph = CyGraph.from_nx(G, velocity=velocity, make_attribute_distance="weight")
+    R2L1 = CyManhattan2D(velocity=velocity)
+    R2L2 = CyEuclidean2D(velocity=velocity)
+
+    assert repr(graph) == f"Graph(velocity={float(velocity)})"
+    assert repr(R2L1) == f"Manhattan2D(velocity={float(velocity)})"
+    assert repr(R2L2) == f"Euclidean2D(velocity={float(velocity)})"
+
+
+def test_py_cy_init():
+    velocity = 42
+
+    G = nx.cycle_graph(10)
+    for u, v in G.edges():
+        G[u][v]["weight"] = np.random.random()
+
+    vertices = list(G.nodes())
+    edges = list(G.edges())
+    weights = [G[u][v]["weight"] for u, v in G.edges()]
+    const_weight = 13.37
+
+    for kwargs in [
+        dict(
+            vertices=vertices,
+            edges=edges,
+            velocity=velocity,
+        ),
+        dict(
+            vertices=vertices,
+            edges=edges,
+            weights=const_weight,
+            velocity=velocity,
+        ),
+        dict(
+            vertices=vertices,
+            edges=edges,
+            weights=weights,
+            velocity=velocity,
+        ),
+    ]:
+
+        cy_graph = CyGraph(**kwargs)
+        py_graph = Graph(**kwargs)
+
+        assert cy_graph.velocity == py_graph.velocity == velocity
+
+        for u in G.nodes():
+            for v in G.nodes():
+                if u >= v:
+                    assert cy_graph.d(u, v) == pytest.approx(py_graph.d(u, v))
+                    assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
+
+
+def test_py_cy_from_nx():
+    velocity = 42
+
+    G = nx.cycle_graph(10)
+    for u, v in G.edges():
+        G[u][v]["weight"] = np.random.random()
+
+    for kwargs in [
+        dict(G=G, velocity=velocity, make_attribute_distance=None),
+        dict(G=G, velocity=velocity, make_attribute_distance="weight"),
+    ]:
+        cy_graph = CyGraph.from_nx(**kwargs)
+        py_graph = Graph.from_nx(**kwargs)
+
+        assert cy_graph.velocity == py_graph.velocity == velocity
+
+        for u in G.nodes():
+            for v in G.nodes():
+                if u >= v:
+                    assert cy_graph.d(u, v) == pytest.approx(py_graph.d(u, v))
+                    assert cy_graph.t(u, v) == pytest.approx(py_graph.t(u, v))
+
+
+def test_py_cy_from_nx_graph_type():
+    G_u = nx.cycle_graph(10, create_using=nx.Graph)
+    G = nx.cycle_graph(10, create_using=nx.DiGraph)
+
+    CyGraph.from_nx(G=G_u, make_attribute_distance=None)
+    Graph.from_nx(G=G_u, make_attribute_distance=None)
+    DiGraph.from_nx(G=G, make_attribute_distance=None)
+
+    with pytest.raises(TypeError, match=" undirected "):
+        CyGraph.from_nx(G=G, make_attribute_distance=None)
+
+    with pytest.raises(TypeError, match=" undirected "):
+        Graph.from_nx(G=G, make_attribute_distance=None)
+
+    with pytest.raises(TypeError, match=" supply DiGraph"):
+        DiGraph.from_nx(G=G_u, make_attribute_distance=None)
+
+
+def test_digraph():
+    velocity = 42
+
+    G = nx.cycle_graph(10, create_using=nx.DiGraph)
+    G_u = G.to_undirected()
+
+    get_kwargs = lambda graph: dict(
+        G=graph, velocity=velocity, make_attribute_distance=None
+    )
+
+    py_graph = Graph.from_nx(**get_kwargs(G_u))
+    py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    assert py_graph.velocity == py_digraph.velocity == velocity
+
+    for u in G.nodes():
+        for v in G.nodes():
+            if u >= v:
+                assert py_graph.d(u, v) == nx.shortest_path_length(G_u, u, v)
+                assert py_digraph.d(u, v) == nx.shortest_path_length(G, u, v)
+
+
+def test_graph_relabeling_deepcopy():
+    # without relabeling
+    G = nx.cycle_graph(10, create_using=nx.DiGraph)
+    G_u = G.to_undirected()
+    get_kwargs = lambda graph: dict(G=graph, velocity=42, make_attribute_distance=None)
+
+    py_graph = Graph.from_nx(**get_kwargs(G_u))
+    py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    G_u.nodes[0]["garbl"] = 42
+    G.nodes[0]["garbl"] = 42
+
+    assert G_u.nodes[0]["garbl"] == 42
+    assert G.nodes[0]["garbl"] == 42
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_graph.G.nodes[0]["garbl"]
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_digraph.G.nodes[0]["garbl"]
+
+    # with relabeling
+    G_u = nx.grid_graph((10, 10))
+    G = G_u.to_directed()
+    get_kwargs = lambda graph: dict(G=graph, velocity=42, make_attribute_distance=None)
+
+    with pytest.warns(UserWarning, match="non-int node labels"):
+        py_graph = Graph.from_nx(**get_kwargs(G_u))
+
+    with pytest.warns(UserWarning, match="non-int node labels"):
+        py_digraph = DiGraph.from_nx(**get_kwargs(G))
+
+    with pytest.warns(UserWarning, match="non-int node labels"):
+        CyGraph.from_nx(**get_kwargs(G_u))
+
+    G_u.nodes[(0, 0)]["garbl"] = 42
+    G.nodes[(0, 0)]["garbl"] = 42
+
+    assert G_u.nodes[(0, 0)]["garbl"] == 42
+    assert G.nodes[(0, 0)]["garbl"] == 42
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_graph.G.nodes[0]["garbl"]
+
+    with pytest.raises(KeyError, match="garbl"):
+        py_digraph.G.nodes[0]["garbl"]

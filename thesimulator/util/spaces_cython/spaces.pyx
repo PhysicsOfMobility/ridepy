@@ -1,4 +1,9 @@
 # distutils: language = c++
+import random
+import warnings
+import itertools as it
+import networkx as nx
+
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
@@ -10,9 +15,10 @@ from .cspaces cimport(
     GraphSpace as CGraphSpace
 )
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from thesimulator.data_structures_cython.data_structures cimport LocType, R2loc
+from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 
 from cython.operator cimport dereference
 
@@ -56,7 +62,7 @@ cdef class TransportSpace:
         else:
             raise ValueError("This line should never have been reached")
 
-    @smartVectorize # TODO: check if the smartvectorize works for this cdef class
+    @smartVectorize # TODO: check if the smartVectorize works for this cdef class
     def t(self, u, v):
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).t(<R2loc>u, <R2loc>v)
@@ -79,6 +85,16 @@ cdef class TransportSpace:
         else:
             raise ValueError("This line should never have been reached")
 
+
+    @property
+    def velocity(self):
+        if self.loc_type == LocType.R2LOC:
+            return dereference(self.u_space.space_r2loc_ptr).velocity
+        elif self.loc_type == LocType.INT:
+            return dereference(self.u_space.space_int_ptr).velocity
+        else:
+            raise ValueError("This line should never have been reached")
+
     def __dealloc__(self):
         """
         Since this is a base class that will never be instantiated, we do not need to free any pointer here.
@@ -88,39 +104,140 @@ cdef class TransportSpace:
 
 
 cdef class Euclidean2D(TransportSpace):
+    """
+    R2 with L2-induced metric (Euclidean)
+    """
     def __cinit__(self, double velocity=1):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+        """
+        R2 with L2-induced metric (Euclidean)
+
+        Parameters
+        ----------
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
 
     def __dealloc__(self):
         del self.derived_ptr
 
+    def __repr__(self):
+        return f"Euclidean2D(velocity={self.velocity})"
+
 
 cdef class Manhattan2D(TransportSpace):
+    """
+    R2 with L1-induced metric (Manhattan)
+    """
     def __cinit__(self, double velocity=1):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+        """
+        R2 with L1-induced metric (Manhattan)
+
+        Parameters
+        ----------
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
 
     def __dealloc__(self):
         del self.derived_ptr
 
+    def __repr__(self):
+        return f"Manhattan2D(velocity={self.velocity})"
 
 cdef class Graph(TransportSpace):
-    def __cinit__(self, vertex_vec, edge_vec, weight_vec, double velocity=1):
+    """
+    Weighted directed graph with integer node labels
+    """
+    def __cinit__(self, *, vertices, edges, weights=None, double velocity=1):
         self.loc_type = LocType.INT
-        self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
-            velocity, <vector[int]>vertex_vec, <vector[pair[int, int]]>edge_vec, <vector[double]>weight_vec
-        )
+
+        if weights is None:
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
+                velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges
+            )
+        else:
+            if isinstance(weights, (int, float)):
+                weights = it.repeat(float(weights), len(edges))
+
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
+                velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges, <vector[double]>weights
+            )
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+        """
+        Weighted undirected graph with integer vertex labels
+
+        Parameters
+        ----------
+        vertices : Sequence[int]
+            sequence of vertices
+        edges : Sequence[Tuple[int, int]]
+            sequence of edge tuples
+        weights : Union[None, float, Sequence[float]]
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
         TransportSpace.__init__(self, loc_type=LocType.INT)
 
     def __dealloc__(self):
         del self.derived_ptr
+
+    def __repr__(self):
+        return f"Graph(velocity={self.velocity})"
+
+    @classmethod
+    def from_nx(
+            cls, G, velocity: float = 1.0, make_attribute_distance: Optional[str] = "distance"
+    ):
+        """
+        Create a Graph from a networkx.Graph with a mandatory distance edge attribute.
+
+        Parameters
+        ----------
+        G : networkx.Graph
+            networkx graph
+        velocity
+            velocity used for travel time computation
+        make_attribute_distance
+            name of the nx.DiGraph edge attribute used as distance between nodes.
+            If None is supplied, the resulting graph is unweighted (unit edge length).
+
+        Returns
+        -------
+        Graph instance
+        """
+        if not isinstance(G, nx.Graph):
+            raise TypeError(f"Must supply nx.Graph, not {type(G)}")
+        elif G.is_directed():
+            raise TypeError(f"Must supply undirected graph")
+
+        if not all(isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))):
+            warnings.warn("Heuristic determined non-int node labels. Converting to int", UserWarning)
+            G = nx.relabel.convert_node_labels_to_integers(G)
+
+        if make_attribute_distance is None:
+            weights = None
+        else:
+            weights = [G[u][v][make_attribute_distance] for u, v in G.edges()]
+
+        return cls(
+            vertices=list(G.nodes()),
+            edges=list(G.edges()),
+            weights=weights,
+            velocity=velocity
+        )
 

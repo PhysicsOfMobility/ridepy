@@ -1,11 +1,12 @@
 import random
+import copy
+import warnings
 
-from typing import List, Tuple, Union, Any, Iterator
+from typing import List, Tuple, Union, Any, Iterator, Sequence
 
 import numpy as np
 import operator as op
 import math as m
-import pandas as pd
 import networkx as nx
 import itertools as it
 from scipy.spatial import distance as spd
@@ -135,61 +136,138 @@ class Graph(TransportSpace):
     A location is identified with a one-dimensional coordinate, namely the node index.
     """
 
-    def __init__(
-        self,
-        graph: nx.Graph,
-        distance_attribute="distance",
-        velocity: float = 1,
-        n_dim=1,
-    ):
-        self.G = graph
-        self.distance_attribute = distance_attribute
+    n_dim = 1
+
+    def _update_distance_cache(self):
         (
             self._predecessors,
             self._distances,
-        ) = nx.floyd_warshall_predecessor_and_distance(self.G, self.distance_attribute)
+        ) = nx.floyd_warshall_predecessor_and_distance(self.G, "distance")
+
+    def __init__(
+        self,
+        vertices: Sequence[int],
+        edges: Sequence[Tuple[int, int]],
+        weights: Union[None, float, Sequence[float]] = None,
+        velocity: float = 1,
+    ):
+        """
+        Weighted undirected graph with integer vertex labels
+
+        Parameters
+        ----------
+        vertices
+            sequence of vertices
+        edges
+            sequence of edge tuples
+        weights
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
+        velocity
+            constant velocity to compute travel time, optional.
+        """
+        self.G = nx.Graph()
+        self.G.add_nodes_from(vertices)
+
+        if weights is None:
+            weights = 1
+
+        if isinstance(weights, (int, float)):
+            weights = it.repeat(float(weights))
+
+        self.G.add_edges_from(
+            (u, v, {"distance": w}) for (u, v), w in zip(edges, weights)
+        )
+
         self.velocity = velocity
-        self.n_dim = n_dim
+        self._update_distance_cache()
+
+    @staticmethod
+    def _prepare_copy_of_nx_graph(*, G, make_attribute_distance, directed=False):
+        if not directed:
+            graph_class = nx.Graph
+        else:
+            graph_class = nx.DiGraph
+
+        if not all(
+            isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))
+        ):
+            warnings.warn(
+                "Heuristic determined non-int node labels. Converting to int, "
+                "keeping original labels as attribute.",
+                UserWarning,
+            )
+
+            G = nx.relabel.convert_node_labels_to_integers(
+                G, label_attribute="original_label"
+            )
+        else:
+            # create a copy as we don't want to modify the original graph
+            G = copy.deepcopy(G)
+
+        # as we are keeping the graph instance, make sure it's right
+        if not isinstance(G, graph_class):
+            raise TypeError(f"Must supply {graph_class.__name__}, not {type(G)}")
+        elif (directed and not G.is_directed()) or (not directed and G.is_directed()):
+            raise TypeError(f"Must supply {'' if directed else 'un'}directed graph")
+
+        # making another attribute the distance
+        if make_attribute_distance is None:
+            nx.set_edge_attributes(G, 1, name="distance")
+        elif make_attribute_distance != "distance":
+            # if 'distance' already exists, we raise
+            if nx.get_edge_attributes(G, "distance"):
+                raise ValueError(
+                    "'distance' already exists as edge attribute, won't overwrite"
+                )
+            # otherwise rename
+            else:
+                nx.set_edge_attributes(
+                    G,
+                    nx.get_edge_attributes(G, make_attribute_distance),
+                    name="distance",
+                )
+        else:
+            if len(nx.get_edge_attributes(G, "distance")) != G.number_of_edges():
+                raise ValueError(
+                    "Was told to use 'distance' as distance edge attribute. "
+                    "All edges must have the distance weight specified."
+                )
+
+        return G
 
     @classmethod
-    def create_random(cls):
-        ...
-
-    @classmethod
-    def create_grid(
+    def from_nx(
         cls,
-        dim=(3, 3),
-        periodic=False,
+        G: nx.Graph,
         velocity: float = 1,
-        edge_distance=1,
-        distance_attribute="distance",
+        make_attribute_distance: str = "distance",
     ):
-        graph = nx.grid_graph(dim=dim, periodic=periodic)
-        nx.set_edge_attributes(graph, edge_distance, distance_attribute)
+        """
+        Create a graph space from networkx graph
+        Parameters
+        ----------
+        G
+            the networkx.Graph instance, will be deepcopied
+        velocity
+            velocity to use for travel time computation
+        make_attribute_distance
+            attribute to rename to "distance" and use as such
+            If None is supplied, the resulting graph is unweighted (unit edge length).
 
-        return Graph(
-            graph=graph,
-            velocity=velocity,
-            distance_attribute=distance_attribute,
-            n_dim=2,
+        Returns
+        -------
+        graph space instance
+        """
+        self = cls.__new__(cls)
+        self.G = cls._prepare_copy_of_nx_graph(
+            G=G, make_attribute_distance=make_attribute_distance, directed=False
         )
-
-    @classmethod
-    def create_cycle_graph(
-        cls,
-        n_nodes=10,
-        velocity: float = 1,
-        edge_distance=1,
-        distance_attribute="distance",
-    ):
-        graph = nx.generators.classic.cycle_graph(n=n_nodes)
-        nx.set_edge_attributes(graph, edge_distance, distance_attribute)
-
-        return Graph(
-            graph=graph,
-            velocity=velocity,
-            distance_attribute=distance_attribute,
-        )
+        self.velocity = velocity
+        self._update_distance_cache()
+        return self
 
     @smartVectorize
     def d(self, u, v):
@@ -263,8 +341,83 @@ class Graph(TransportSpace):
     def random_point(self):
         return random.choice(list(self.G.nodes))
 
+    def __repr__(self):
+        return f"DiGraph(velocity={self.velocity})"
+
+
+class DiGraph(Graph):
+    def __init__(
+        self,
+        vertices: Sequence[int],
+        edges: Sequence[Tuple[int, int]],
+        weights: Union[None, float, Sequence[float]],
+        velocity: float = 1,
+    ):
+        """
+        Weighted directed graph with integer vertex labels
+
+        Parameters
+        ----------
+        vertices
+            sequence of vertices
+        edges
+            sequence of edge tuples
+        weights
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
+        velocity
+            constant velocity to compute travel time, optional.
+        """
+        self.G = nx.DiGraph()
+        self.G.add_nodes_from(vertices)
+        self.G.add_edges_from(
+            (u, v, {"distance": w}) for (u, v), w in zip(edges, weights)
+        )
+
+        self.velocity = velocity
+        self._update_distance_cache()
+
+    @classmethod
+    def from_nx(
+        cls,
+        G: nx.Graph,
+        velocity: float = 1,
+        make_attribute_distance: str = "distance",
+    ):
+        """
+        Create a graph space from networkx directed graph
+        Parameters
+        ----------
+        G
+            the networkx.DiGraph instance, will be deepcopied
+        velocity
+            velocity to use for travel time computation
+        make_attribute_distance
+            attribute to rename to "distance" and use as such
+            If None is supplied, the resulting graph is unweighted (unit edge length).
+
+        Returns
+        -------
+        graph space instance
+        """
+        self = cls.__new__(cls)
+        self.G = cls._prepare_copy_of_nx_graph(
+            G=G, make_attribute_distance=make_attribute_distance, directed=True
+        )
+        self.velocity = velocity
+        self._update_distance_cache()
+        return self
+
+    def __repr__(self):
+        return f"DiGraph(velocity={self.velocity})"
+
 
 class ContinuousGraph(Graph):
+    def __init__(self):
+        raise NotImplementedError
+
     @smartVectorize
     def d(self, u, v):
         """coordinates shall consist of triples (u, v, dist_to_dest)"""
