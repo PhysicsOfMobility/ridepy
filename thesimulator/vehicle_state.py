@@ -20,6 +20,10 @@ from .data_structures import (
 
 from thesimulator.util import MAX_SEAT_CAPACITY
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class VehicleState:
     """
@@ -62,6 +66,8 @@ class VehicleState:
         self.space = space
         self.dispatcher = dispatcher
         self.seat_capacity = seat_capacity
+
+        logger.info(f"Created VehicleState with space of type {type(self.space)}")
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """

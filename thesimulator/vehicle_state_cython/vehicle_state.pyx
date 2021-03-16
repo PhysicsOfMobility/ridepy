@@ -65,7 +65,7 @@ cdef class VehicleState:
         if seat_capacity > INT_MAX:
             raise ValueError("Cannot use seat_capacity bigger that c++'s INT_MAX")
         self.seat_capacity = seat_capacity
-        logger.debug(f"Created VehicleState with space of type {type(self.space)}")
+        logger.info(f"Created VehicleState with space of type {type(self.space)}")
 
     property stoplist:
         def __get__(self):
