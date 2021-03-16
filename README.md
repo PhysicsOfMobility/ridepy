@@ -25,8 +25,8 @@ pytest
 ## First Steps
 - Start `jupyter notebook` or `jupyter lab`
 - Open one of the introductory notebooks in the `notebooks` subdirectory, either just by
-  clicking on it (`jupyter notebook`) or right-clicking and chosing `Open With >
-  Notebook`.
+  clicking on it (`jupyter notebook`) or right-clicking and chosing *Open With >
+  Notebook* (`jupyter lab`).
 - Run the notebook and play around :)
 
 ## Contributing
