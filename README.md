@@ -21,6 +21,14 @@ cd theSimulator
 pre-commit install
 pytest
 ```
+
+## First Steps
+- Start `jupyter notebook` or `jupyter lab`
+- Open one of the introductory notebooks in the `notebooks` subdirectory, either just by
+  clicking on it (`jupyter notebook`) or right-clicking and chosing `Open With >
+  Notebook`.
+- Run the notebook and play around :)
+
 ## Contributing
 Generally branch from `master`, implement stuff® and file a pull request back to
 `master`. Feel free to do the latter at an early stage, prefixing the pull request with
