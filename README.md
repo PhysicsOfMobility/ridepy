@@ -19,6 +19,7 @@ conda activate the_simulator
 git clone git@github.com:PhysicsOfMobility/theSimulator.git
 cd theSimulator
 pre-commit install
+python setup.py develop
 pytest
 ```
 
