@@ -5,7 +5,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <boost/foreach.hpp>
 
 #include "cspaces.h"
 
@@ -125,7 +124,7 @@ namespace cstuff {
         void print_vertices_and_edges() {
             // print the vertices
             for (auto vp = vertices(this->_g); vp.first != vp.second; ++vp.first) {
-                cout << "vertex: " << *(vp.first) << ", label:" << this->vertex2label[*(vp.first)] << endl;
+                cout << "vertex: " << *vp.first << ", label:" << this->vertex2label[*vp.first] << endl;
             }
             // print the edge_vec
             for (auto[first, last] = edges(this->_g); first != last; ++first) {
@@ -136,7 +135,8 @@ namespace cstuff {
 
         vector<vertex_t> get_vertices() {
             vector<vertex_t> v;
-            BOOST_FOREACH(vertex_t vv, vertices(this->_g)) v.push_back(this->vertex2label[vv]);
+            for (auto vp = vertices(this->_g); vp.first != vp.second; ++vp.first)
+                v.push_back(this->vertex2label[*vp.first]);
             return v;
         }
 
