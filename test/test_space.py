@@ -423,10 +423,8 @@ def test_random_point_generation():
     ### GENERATE ###
     random.seed(42)
     py_graph_loc = py_graph.random_point()
-
     random.seed(42)
     cy_graph_loc = cy_graph.random_point()
-
     assert py_graph_loc == cy_graph_loc
 
     random.seed(42)
@@ -434,7 +432,6 @@ def test_random_point_generation():
 
     random.seed(42)
     py_R2L2_loc = py_R2L2.random_point()
-
     random.seed(42)
     cy_R2L2_loc = cy_R2L2.random_point()
     assert py_R2L2_loc == cy_R2L2_loc
