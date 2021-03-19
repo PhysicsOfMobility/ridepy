@@ -19,7 +19,9 @@ from thesimulator.util.dispatchers.helper_functions import (
 )
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def taxicab_dispatcher_drive_first(
     request: TransportationRequest,

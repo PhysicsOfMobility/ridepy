@@ -15,7 +15,8 @@ from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispat
 from thesimulator.util.testing_utils import stoplist_from_properties
 
 import logging
-sim_logger = logging.getLogger('thesimulator')
+
+sim_logger = logging.getLogger("thesimulator")
 sim_logger.setLevel(logging.DEBUG)
 
 

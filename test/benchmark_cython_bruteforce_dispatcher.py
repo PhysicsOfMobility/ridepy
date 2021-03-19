@@ -25,7 +25,7 @@ from random import randint
 from thesimulator.vehicle_state_cython import VehicleState
 import logging
 
-sim_logger = logging.getLogger('thesimulator')
+sim_logger = logging.getLogger("thesimulator")
 sim_logger.setLevel(logging.DEBUG)
 
 
