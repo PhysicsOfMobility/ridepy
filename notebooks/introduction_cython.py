@@ -96,11 +96,14 @@ initial_stoplists = {
 # ## define simulation environment
 
 # +
+space = Euclidean2D()
+"""transport space"""
+
 rg = RandomRequestGenerator(
     rate=10,
     max_pickup_delay=3,
     max_delivery_delay_rel=1.9,
-    space=pyEuclidean2D(),
+    space=space,
     request_class=TransportationRequest,
 )
 """request generator"""
@@ -111,7 +114,7 @@ transportation_requests = list(it.islice(rg, 100))
 # initialize the simulator
 fs = SlowSimpleFleetState(
     initial_stoplists=initial_stoplists,
-    space=Euclidean2D(),
+    space=space,
     dispatcher=brute_force_distance_minimizing_dispatcher,
     seat_capacities=8,
     vehicle_state_class=VehicleState,
