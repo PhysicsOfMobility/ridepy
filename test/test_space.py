@@ -418,6 +418,8 @@ def test_random_point_generation():
 
     cy_R2L1 = CyManhattan2D()
 
+    py_R3L2 = Euclidean(n_dim=3)
+
     ### GENERATE ###
     random.seed(42)
     py_graph_loc = py_graph.random_point()
@@ -429,6 +431,8 @@ def test_random_point_generation():
     # cy_R2L2_loc = cy_R2L2.random_point()
 
     # cy_R2L1_loc = cy_R2L1.random_point()
+
+    py_R3L2_loc = py_R3L2.random_point()
 
     ### TEST FORMAT ###
     assert isinstance(py_graph_loc, int)
@@ -444,6 +448,9 @@ def test_random_point_generation():
     # assert np.shape(cy_R2L1_loc) == (2,)
     # assert all(isinstance(x, float) for x in cy_R2L1_loc)
 
+    assert np.shape(py_R3L2_loc) == (3,)
+    assert all(isinstance(x, float) for x in py_R3L2_loc)
+
     ### TEST SEED ###
     random.seed(42)
     assert py_graph_loc == py_graph.random_point()
@@ -455,3 +462,5 @@ def test_random_point_generation():
     # assert cy_R2L2_loc == cy_R2L2.random_point()
 
     # assert cy_R2L1_loc == cy_R2L1.random_point()
+
+    assert py_R3L2_loc == py_R3L2.random_point()
