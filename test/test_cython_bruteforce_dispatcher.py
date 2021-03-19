@@ -165,19 +165,15 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     )
     sl = [s0]
 
+    space = cyspaces.Euclidean2D()
     ssfs = SlowSimpleFleetState(
         initial_stoplists={7: sl},
         seat_capacities=[10],
-        space=cyspaces.Euclidean2D(),
+        space=space,
         dispatcher=cy_brute_force_distance_minimizing_dispatcher,
         vehicle_state_class=cy_VehicleState,
     )
-    # So far, cyspaces.Euclidean2D doesn't support random point generation. So we are using the hack of
-    # Asking RandomRequestGenerator to use the python space to generate random points, but return cython
-    # objects. This should be changed when the cython spaces support random sampling.
-    rg = RandomRequestGenerator(
-        space=pyspaces.Euclidean2D(), request_class=cyds.TransportationRequest
-    )
+    rg = RandomRequestGenerator(space=space, request_class=cyds.TransportationRequest)
     reqs = list(it.islice(rg, n_reqs))
     cy_events = list(ssfs.simulate(reqs))
 
