@@ -5,6 +5,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/foreach.hpp>
 
 #include "cspaces.h"
 
@@ -132,6 +133,13 @@ namespace cstuff {
                      << this->vertex2label[target(*first, this->_g)] << ")" << endl;
             }
         }
+
+        vector<vertex_t> get_vertices() {
+            vector<vertex_t> v;
+            BOOST_FOREACH(vertex_t vv, vertices(this->_g)) v.push_back(this->vertex2label[vv]);
+            return v;
+        }
+
     };
 }
 #endif

@@ -6,6 +6,7 @@ import networkx as nx
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
+from libcpp.memory cimport dynamic_pointer_cast
 
 from thesimulator.util import smartVectorize
 from .cspaces cimport(
@@ -121,12 +122,25 @@ cdef class Euclidean2D(TransportSpace):
             constant velocity to compute travel time, optional. default: 1
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+        coord_range = kwargs.get('coord_range')
+
+        if coord_range is not None:
+            assert len(coord_range) == self.n_dim, (
+                "Number of desired dimensions must "
+                "match the number of coord range pairs given"
+            )
+            self.coord_range = coord_range
+        else:
+            self.coord_range = [(0, 1)] * self.n_dim
 
     def __dealloc__(self):
         del self.derived_ptr
 
     def __repr__(self):
         return f"Euclidean2D(velocity={self.velocity})"
+
+    def random_point(self):
+        return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
 
 cdef class Manhattan2D(TransportSpace):
@@ -148,11 +162,24 @@ cdef class Manhattan2D(TransportSpace):
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
 
+        coord_range = kwargs.get('coord_range')
+        if coord_range is not None:
+            assert len(coord_range) == self.n_dim, (
+                "Number of desired dimensions must "
+                "match the number of coord range pairs given"
+            )
+            self.coord_range = coord_range
+        else:
+            self.coord_range = [(0, 1)] * self.n_dim
+
     def __dealloc__(self):
         del self.derived_ptr
 
     def __repr__(self):
         return f"Manhattan2D(velocity={self.velocity})"
+
+    def random_point(self):
+        return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
 cdef class Graph(TransportSpace):
     """
@@ -241,3 +268,5 @@ cdef class Graph(TransportSpace):
             velocity=velocity
         )
 
+    def random_point(self):
+        return random.choice(dereference(self.derived_ptr).get_vertices())
