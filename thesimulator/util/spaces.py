@@ -87,7 +87,7 @@ class Euclidean(TransportSpace):
         )
 
     def random_point(self):
-        return np.random.uniform(*zip(*self.coord_range))
+        return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
 
 class Euclidean1D(Euclidean):
@@ -109,7 +109,7 @@ class Euclidean1D(Euclidean):
         return abs(v - u)
 
     def random_point(self):
-        return random.uniform(*self.coord_range[0])
+        return random.uniform(self.coord_range[0][0], self.coord_range[0][1])
 
 
 class Euclidean2D(Euclidean):

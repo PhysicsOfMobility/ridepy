@@ -124,7 +124,7 @@ namespace cstuff {
         void print_vertices_and_edges() {
             // print the vertices
             for (auto vp = vertices(this->_g); vp.first != vp.second; ++vp.first) {
-                cout << "vertex: " << *(vp.first) << ", label:" << this->vertex2label[*(vp.first)] << endl;
+                cout << "vertex: " << *vp.first << ", label:" << this->vertex2label[*vp.first] << endl;
             }
             // print the edge_vec
             for (auto[first, last] = edges(this->_g); first != last; ++first) {
@@ -132,6 +132,14 @@ namespace cstuff {
                      << this->vertex2label[target(*first, this->_g)] << ")" << endl;
             }
         }
+
+        vector<vertex_t> get_vertices() {
+            vector<vertex_t> v;
+            for (auto vp = vertices(this->_g); vp.first != vp.second; ++vp.first)
+                v.push_back(this->vertex2label[*vp.first]);
+            return v;
+        }
+
     };
 }
 #endif

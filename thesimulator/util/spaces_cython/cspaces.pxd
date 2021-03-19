@@ -19,31 +19,28 @@ cdef extern from "cspaces.h" namespace 'cstuff':
     ctypedef pair[double, double] R2loc
     cdef cppclass TransportSpace[Loc]:
         double velocity
-        TransportSpace();
-        TransportSpace(double);
+        TransportSpace()
+        TransportSpace(double)
         double d(Loc u, Loc v)
         double t(Loc u, Loc v)
-        pair[Loc, double] interp_dist(Loc u, Loc v, double dist_to_dest);
-        pair[Loc, double] interp_time(Loc u, Loc v, double time_to_dest);
+        pair[Loc, double] interp_dist(Loc u, Loc v, double dist_to_dest)
+        pair[Loc, double] interp_time(Loc u, Loc v, double time_to_dest)
 
     cdef cppclass Euclidean2D(TransportSpace[R2loc]):
-        double velocity
-
-        Euclidean2D();
-        Euclidean2D(double);
+        Euclidean2D()
+        Euclidean2D(double)
 
     cdef cppclass Manhattan2D(TransportSpace[R2loc]):
-        double velocity
-
-        Manhattan2D();
-        Manhattan2D(double);
-
+        Manhattan2D()
+        Manhattan2D(double)
 
 
 cdef extern from "boost_graph_space.h" namespace 'cstuff':
     cdef cppclass GraphSpace[Loc](TransportSpace[Loc]):
         ctypedef pair[Loc, Loc] Edge
-        double velocity
 
         GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec, vector[double] weight_vec)
         GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec)
+
+        vector[Loc] get_vertices()
+

@@ -1,4 +1,5 @@
 import pytest
+import random
 
 import itertools as it
 import math as m
@@ -403,3 +404,77 @@ def test_graph_relabeling_deepcopy():
 
     with pytest.raises(KeyError, match="garbl"):
         py_digraph.G.nodes[0]["garbl"]
+
+
+def test_random_point_generation():
+    ### DEFINE SPACES ###
+    py_graph = Graph.from_nx(make_nx_star_graph())
+    cy_graph = CyGraph.from_nx(make_nx_star_graph())
+
+    py_R1L2 = Euclidean1D()
+
+    py_R2L2 = Euclidean2D()
+    cy_R2L2 = CyEuclidean2D()
+
+    cy_R2L1 = CyManhattan2D()
+
+    py_R3L2 = Euclidean(n_dim=3)
+
+    ### GENERATE ###
+    random.seed(42)
+    py_graph_loc = py_graph.random_point()
+    random.seed(42)
+    cy_graph_loc = cy_graph.random_point()
+    assert py_graph_loc == cy_graph_loc
+
+    random.seed(42)
+    py_R1L2_loc = py_R1L2.random_point()
+
+    random.seed(42)
+    py_R2L2_loc = py_R2L2.random_point()
+    random.seed(42)
+    cy_R2L2_loc = cy_R2L2.random_point()
+    assert py_R2L2_loc == cy_R2L2_loc
+
+    random.seed(42)
+    cy_R2L1_loc = cy_R2L1.random_point()
+
+    random.seed(42)
+    py_R3L2_loc = py_R3L2.random_point()
+
+    ### TEST FORMAT ###
+    assert isinstance(py_graph_loc, int)
+    assert isinstance(cy_graph_loc, int)
+
+    assert isinstance(py_R1L2_loc, float)
+
+    assert np.shape(py_R2L2_loc) == (2,)
+    assert all(isinstance(x, float) for x in cy_R2L2_loc)
+
+    assert np.shape(cy_R2L1_loc) == (2,)
+    assert all(isinstance(x, float) for x in cy_R2L1_loc)
+
+    assert np.shape(py_R3L2_loc) == (3,)
+    assert all(isinstance(x, float) for x in py_R3L2_loc)
+
+    ### TEST SEED ###
+    random.seed(42)
+    assert py_graph_loc == py_graph.random_point()
+
+    random.seed(42)
+    assert cy_graph_loc == cy_graph.random_point()
+
+    random.seed(42)
+    assert py_R1L2_loc == py_R1L2.random_point()
+
+    random.seed(42)
+    assert py_R2L2_loc == py_R2L2.random_point()
+
+    random.seed(42)
+    assert cy_R2L2_loc == cy_R2L2.random_point()
+
+    random.seed(42)
+    assert cy_R2L1_loc == cy_R2L1.random_point()
+
+    random.seed(42)
+    assert py_R3L2_loc == py_R3L2.random_point()

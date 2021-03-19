@@ -25,9 +25,8 @@ from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
 import logging
 
-sim_logger = logging.getLogger('thesimulator')
+sim_logger = logging.getLogger("thesimulator")
 sim_logger.setLevel(logging.DEBUG)
-
 
 
 def simulate_on_r2(
@@ -49,7 +48,9 @@ def simulate_on_r2(
         initial_stoplist = [
             Stop(
                 location=initial_location,
-                request=InternalRequest(request_id=-1, creation_timestamp=0, location=initial_location),
+                request=InternalRequest(
+                    request_id=-1, creation_timestamp=0, location=initial_location
+                ),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
                 occupancy_after_servicing=0,
@@ -90,7 +91,9 @@ def simulate_on_r2(
     del events
 
     num_requests = len(requests)
-    num_requests_delivered = pd.notna(requests.loc[:, ('serviced', 'timestamp_dropoff')]).sum()
+    num_requests_delivered = pd.notna(
+        requests.loc[:, ("serviced", "timestamp_dropoff")]
+    ).sum()
 
     print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
 
@@ -103,5 +106,5 @@ if __name__ == "__main__":
     else:
         N = int(sys.argv[1])
     stops, requests = simulate_on_r2(
-        num_vehicles=N, rate=N*1.5, seat_capacities=4, num_requests=N*1000
+        num_vehicles=N, rate=N * 1.5, seat_capacities=4, num_requests=N * 1000
     )

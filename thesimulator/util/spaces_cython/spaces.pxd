@@ -1,4 +1,6 @@
 # distutils: language = c++
+from libcpp.vector cimport vector
+from libcpp.pair cimport pair
 
 from .cspaces cimport (
     Euclidean2D as CEuclidean2D,
@@ -23,10 +25,12 @@ cdef class TransportSpace:
 
 cdef class Euclidean2D(TransportSpace):
     cdef CEuclidean2D *derived_ptr
+    cdef readonly vector[pair[float, float]] coord_range
 
 
 cdef class Manhattan2D(TransportSpace):
     cdef CManhattan2D *derived_ptr
+    cdef readonly vector[pair[float, float]] coord_range
 
 
 cdef class Graph(TransportSpace):
