@@ -1,3 +1,4 @@
+import uuid
 import random
 import string
 import sys
@@ -11,8 +12,12 @@ from typing import Dict
 MAX_SEAT_CAPACITY = sys.maxsize  # A very large int, because np.inf is a float
 
 
-def short_uuid():
+def get_short_uuid():
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+
+
+def get_uuid():
+    return uuid.uuid4().hex
 
 
 class smartVectorize:
@@ -158,13 +163,15 @@ class smartVectorize:
         return self
 
 
-def make_dict(item) -> Dict:
+def make_dict(item, raise_errors: bool = True) -> Dict:
     """
     Convert data structure object to dict
     Parameters
     ----------
     item
         the object to convert
+    raise_errors
+        If true, raise TypeError
 
     Returns
     -------
@@ -175,5 +182,5 @@ def make_dict(item) -> Dict:
         return dataclasses.asdict(item)
     elif hasattr(item, "asdict"):
         return item.asdict()
-    else:
+    elif raise_errors:
         raise TypeError(f"Cannot convert object of type {type(item)} to dict")
