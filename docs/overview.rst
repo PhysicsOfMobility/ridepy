@@ -75,9 +75,9 @@ generate some requests with random origins and destinations:
     >>> space = pyEuclidean2D()
     >>> request_rate = 1
     >>> rg = RandomRequestGenerator(
-                space=Euclidean2D(),
-                rate=request_rate,
-                )
+    ...            space=Euclidean2D(),
+    ...            rate=request_rate,
+    ...            )
     >>> num_requests = 2
     >>> reqs = list(it.islice(rg, num_requests))
 
@@ -88,7 +88,7 @@ will be run.
 
 
 Create a ``FleetState`` with a single vehicle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We will now create a :class:`FleetState <fleet_state.FleetState>` with the
 desired number of vehicles, the initian positions of the vehicles, and a
 ``dispatcher`` that matches a request to a vehicle.
@@ -99,24 +99,24 @@ desired number of vehicles, the initian positions of the vehicles, and a
     >>> initial_location = (0, 0)
     >>> seat_capacity = 4
     >>> initial_stoplist = [Stop(
-                    location=initial_location,
-                    request=InternalRequest(
-                        request_id=-1, creation_timestamp=0, location=initial_location
-                    ),
-                    action=StopAction.internal,
-                    estimated_arrival_time=0,
-                    occupancy_after_servicing=0,
-                    time_window_min=0,
-                    time_window_max=0,
-                )
-            ]
+    ...            location=initial_location,
+    ...            request=InternalRequest(
+    ...                request_id=-1, creation_timestamp=0, location=initial_location
+    ...            ),
+    ...            action=StopAction.internal,
+    ...            estimated_arrival_time=0,
+    ...            occupancy_after_servicing=0,
+    ...            time_window_min=0,
+    ...            time_window_max=0,
+    ...        )
+    ...    ]
     >>> initial_stoplists = {vehicle_id: initial_stoplist}
     >>> fleet_state = SlowSimpleFleetState(
-            initial_stoplists=initial_stoplists,
-            space=Euclidean2D(),
-            seat_capacities=seat_capacity,
-            dispatcher=brute_force_distance_minimizing_dispatcher,
-        )
+    ...    initial_stoplists=initial_stoplists,
+    ...    space=Euclidean2D(),
+    ...    seat_capacities=seat_capacity,
+    ...    dispatcher=brute_force_distance_minimizing_dispatcher,
+    ...    )
 
 
 We have chosen one of the dispatchers provided in the :mod:`dispatchers

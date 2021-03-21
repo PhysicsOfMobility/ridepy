@@ -37,6 +37,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
+    'sphinx_toggleprompt',
     'sphinx.ext.viewcode',
     "sphinx_rtd_theme",
     'sphinxcontrib.napoleon', #for sane autodoc
