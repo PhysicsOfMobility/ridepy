@@ -13,9 +13,7 @@ Welcome to theSimulator's documentation!
    :caption: Contents:
 
    overview
-   fleet_state
-   data_structures
-   utils
+   reference
 
 Indices and tables
 ==================

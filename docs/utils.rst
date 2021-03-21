@@ -1,12 +1,19 @@
 Module ``util``
---------------------------
+===============
 The module contains some utility functions and classes.
 
-.. automodule:: thesimulator.util.dispatchers
-    :members:
 
-.. automodule:: thesimulator.util.spaces
-    :members:
+..
+    TODO More manual docs in between the autodocs
+
+
+
+.. include:: ./dispatchers.rst
+
+.. include:: ./spaces.rst
+
+The request generators
+----------------------
 
 .. automodule:: thesimulator.util.request_generators
     :members:

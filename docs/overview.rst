@@ -18,7 +18,9 @@ transported from A to B within specified time windows), and a *dispatcher* (an
 an algorithm that determines which vehicle should service which requests and in which
 order). Then it simply simulates these requests arriving in the system, being
 picked up and delivered. Requests that cannot be delivered within the specified
-time windows are *rejected*. theSimulator makes it easy to experiment with
+time windows are *rejected*. 
+
+theSimulator makes it easy to experiment with
 different dispatching algorithms, spatiotemporal request densities, fleet sizes
 and transport spaces (2-D plane, different graphs). It comes with an `analytics`
 module that computes from the simulation output various metrics like the
@@ -35,10 +37,9 @@ provides two parallel ways of computing it, out of the box:
 
   - ``multiprocessing``,
   - ``OpenMPI``.
-
 2. Using `cython <https://cython.readthedocs.io/en/latest/>`_. We provide, out of
 the box, the ability to choose either pure pythonic or cythonic data structures
-and algorithms for running the simulations. See :doc:`/developers/cython` for
+and algorithms for running the simulations. See :ref:`using_cython` for
 details.
 
 
@@ -86,7 +87,7 @@ Note that the ``origin`` and
 will be run.
 
 
-Create a `FleetState` with a single vehicle
+Create a ``FleetState`` with a single vehicle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We will now create a :class:`FleetState <fleet_state.FleetState>` with the
 desired number of vehicles, the initian positions of the vehicles, and a
@@ -165,6 +166,7 @@ Running theSimulator in a multi-node OpenMPI cluster is as simple as replacing
     >>> events = list(fs.simulate(reqs, t_cutoff=20))
 
 
+.. _using_cython:
 
 Using cythonized data structures and algorithms
 -----------------------------------------------
@@ -174,55 +176,51 @@ of the dispatcher. We will also need to use cythonized versions of
 
 
 .. code-block:: python
-   :emphasize-lines: 4
+   :emphasize-lines: 4,6,7,39
+   :dedent: 1
 
-    >>> import itertools as it
-    >>> from thesimulator.util.cspaces import Euclidean2D
-    >>> from thesimulator.fleet_state import SlowSimpleFleetState
-    >>> from thesimulator.cdata_structures import Stop, InternalRequest, TransportationRequest, StopAction
-    >>> from thesimulator.util.request_generators import RandomRequestGenerator
-    >>> from thesimulator.util.cdispatchers import brute_force_distance_minimizing_dispatcher
-    >>> from thesimulator.util.analytics import get_stops_and_requests
-    >>> space = Euclidean2D()
-    >>> request_rate = 1
-    >>> rg = RandomRequestGenerator(
-                space=pyEuclidean2D(),
-                rate=request_rate,
-                request_class=TransportationRequest
-                )
-    >>> num_requests = 2
-    >>> reqs = list(it.islice(rg, num_requests))
-    >>> vehicle_id = 1
-    >>> initial_location = (0, 0)
-    >>> seat_capacity = 4
-    >>> initial_stoplist = [Stop(
-                    location=initial_location,
-                    request=InternalRequest(
-                        request_id=-1, creation_timestamp=0, location=initial_location
-                    ),
-                    action=StopAction.internal,
-                    estimated_arrival_time=0,
-                    occupancy_after_servicing=0,
-                    time_window_min=0,
-                    time_window_max=0,
-                )
-            ]
-    >>> initial_stoplists = {vehicle_id: initial_stoplist}
-    >>> fleet_state = SlowSimpleFleetState(
-            initial_stoplists=initial_stoplists,
-            space=pyEuclidean2D(),
-            seat_capacities=seat_capacity,
-            dispatcher=brute_force_distance_minimizing_dispatcher,
-        )
-    >>> events = list(fleet_state.simulate(reqs))
-    >>> events
-    [RequestAcceptanceEvent(request_id=0, timestamp=0.4692680899768591, origin=(0.6394267984578837, 0.025010755222666936), destination=(0.27502931836911926, 0.22321073814882275), pickup_timewindow_min=0.4692680899768591, pickup_timewindow_max=inf, delivery_timewindow_min=0.4692680899768591, delivery_timewindow_max=inf),
-     PickupEvent(request_id=0, timestamp=1.1091838410432844, vehicle_id=1),
-     DeliveryEvent(request_id=0, timestamp=1.5239955534224914, vehicle_id=1),
-     RequestAcceptanceEvent(request_id=1, timestamp=3.4793895208943804, origin=(0.7364712141640124, 0.6766994874229113), destination=(0.8921795677048454, 0.08693883262941615), pickup_timewindow_min=3.4793895208943804, pickup_timewindow_max=inf, delivery_timewindow_min=3.4793895208943804, delivery_timewindow_max=inf),
-     PickupEvent(request_id=1, timestamp=4.4795455315100465, vehicle_id=1),
-     DeliveryEvent(request_id=1, timestamp=5.08951497443719, vehicle_id=1)]
+    import itertools as it
+    from thesimulator.util.spaces_cython import Euclidean2D
+    from thesimulator.fleet_state import SlowSimpleFleetState
+    from thesimulator.data_structures_cython import Stop, InternalRequest, TransportationRequest, StopAction
+    from thesimulator.util.request_generators import RandomRequestGenerator
+    from thesimulator.util.dispatchers_cython import brute_force_distance_minimizing_dispatcher
+    from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
 
+    space = Euclidean2D()
+    request_rate = 1
+    rg = RandomRequestGenerator(
+        space=Euclidean2D(),
+        rate=request_rate,
+        request_class=TransportationRequest
+    )
+    num_requests = 2
+    reqs = list(it.islice(rg, num_requests))
+    vehicle_id = 1
+    initial_location = (0, 0)
+    seat_capacity = 4
+    initial_stoplist = [Stop(
+        location=initial_location,
+        request=InternalRequest(
+            request_id=-1, creation_timestamp=0, location=initial_location
+        ),
+        action=StopAction.internal,
+        estimated_arrival_time=0,
+        occupancy_after_servicing=0,
+        time_window_min=0,
+        time_window_max=0,
+    )
+    ]
+    initial_stoplists = {vehicle_id: initial_stoplist}
+    fleet_state = SlowSimpleFleetState(
+        initial_stoplists=initial_stoplists,
+        space=Euclidean2D(),
+        seat_capacities=seat_capacity,
+        dispatcher=brute_force_distance_minimizing_dispatcher,
+        vehicle_state_class=cy_VehicleState
+    )
+    events = list(fleet_state.simulate(reqs))
+    print(events)
 
 
 How to create your own dispatcher
