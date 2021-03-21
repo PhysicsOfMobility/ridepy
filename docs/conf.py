@@ -13,13 +13,16 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../'))
-
+import thesimulator
 
 # -- Project information -----------------------------------------------------
 
 project = 'theSimulator'
 copyright = '2021, Felix Jung and Debsankha Manik'
 author = 'Felix Jung and Debsankha Manik'
+
+# Aesthetics
+add_function_parentheses = True
 
 
 # -- General configuration ---------------------------------------------------
@@ -57,6 +60,14 @@ napoleon_use_rtype = True
 # Control the order in which the members of a module are shown.
 # see https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_member_order
 autodoc_member_order = 'bysource'
+
+
+
+# Intersphinx mapping
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+}
 
 
 # Add any paths that contain templates here, relative to this directory.
