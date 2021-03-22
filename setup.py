@@ -4,7 +4,6 @@ import setuptools
 from Cython.Build import cythonize
 from setuptools import Extension
 
-
 with open("requirements.txt", "r") as f:
     reqs = f.readlines()
 
@@ -23,6 +22,7 @@ extensions = [
 setuptools.setup(
     name="thesimulator",
     version="0.1",
+    python_requires=">3.9",
     zip_safe=False,
     packages=setuptools.find_packages(),
     # ext_modules=cythonize("thesimulator/**/*.pyx", language='c++',),
