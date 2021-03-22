@@ -22,7 +22,7 @@ extensions = [
 setuptools.setup(
     name="thesimulator",
     version="0.1",
-    python_requires=">3.9",
+    python_requires=">=3.9",
     zip_safe=False,
     packages=setuptools.find_packages(),
     # ext_modules=cythonize("thesimulator/**/*.pyx", language='c++',),
