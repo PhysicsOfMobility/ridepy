@@ -5,7 +5,7 @@ Simulates a dispatching algorithm serving exogeneous transportation requests wit
 
 ## Instructions
 ### Prerequisites
-* Python 3.8
+* Python 3.9
 * git
 
 You should probably use an environment. For example, using [conda](https://www.anaconda.com/):
