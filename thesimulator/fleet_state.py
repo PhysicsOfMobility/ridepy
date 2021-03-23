@@ -44,6 +44,7 @@ class FleetState(ABC):
     Exposes the methods fast_forward, handle_request and simulate.
 
     To gain maximum computational efficiency, one can:
+
     * Subclass VehicleState and implement the main methods in Cython.
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
@@ -58,13 +59,29 @@ class FleetState(ABC):
         vehicle_state_class=VehicleState,
     ):
         """
+        
         Parameters
         ----------
-        initial_stoplists:
-            Dictionary with vehicle ids as keys and initial stoplists as values.
-            The initial stoplists *must* contain current position element (CPE) stops as their first entry.
+        initial_stoplists
+            Dictionary with vehicle ids as keys and initial stoplists as values. The initial stoplists *must* contain
+            the current position element (CPE) stops as their first entry. TODO: Define CPE.
+        seat_capacities
+            Integers denoting the maximum number of persons a vehicle can hold. Either a dictionary with vehicle ids as
+            keys or a positive integer (Cause each vehicle to have the same capacity).
+        space
+            The `.data_structures.TransportSpace` (e.g. Euclidean2D, Graph) in which the simulation will be run.
+        dispatcher
+            The dispatching algorithm that maps a (stoplist, TransportationRequest) pair into a cost and new stoplist.
+            See :doc:`bla` for more details.
+            TODO describe stoplist
+        vehicle_state_class
+            The vehicle state class to be used. Can be either `vehicle_state.VehicleState` (pure pythonic) or
+            `vehicle_state_cython.VehicleState` (implemented in cython).
+        loc_type
+            The data type of location objects (e.g. request origins, destination). Can be `data_structures.R2loc` (Euclidean2D) or `int` (Graph)
+            TODO: Explain the graph nodes have in notes and why.
+            TODO: define LocType in a central place and motivate why we have it.
         """
-
         self.space = space
         self.dispatcher = dispatcher
         self.vehicle_state_class = vehicle_state_class

@@ -61,8 +61,10 @@ napoleon_use_rtype = True
 # Control the order in which the members of a module are shown.
 # see https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_member_order
 autodoc_member_order = 'bysource'
-
-
+# Force the __init__ docstring to be part of the autodoc, as per
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autoclass_content
+autoclass_content = 'both'
+default_role = 'py:obj'
 
 # Intersphinx mapping
 intersphinx_mapping = {
