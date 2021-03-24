@@ -100,7 +100,7 @@ desired number of vehicles, the initian positions of the vehicles, and a
     >>> seat_capacity = 4
     >>> initial_stoplist = [Stop(
     ...            location=initial_location,
-    ...            request=InternalRequest(
+    ...            request=InternalRequest( #TODO Explain why the request_id should be -1
     ...                request_id=-1, creation_timestamp=0, location=initial_location
     ...            ),
     ...            action=StopAction.internal,
