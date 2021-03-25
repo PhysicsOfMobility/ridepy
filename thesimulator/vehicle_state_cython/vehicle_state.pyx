@@ -2,7 +2,13 @@
 
 from thesimulator.util import MAX_SEAT_CAPACITY
 
-from thesimulator.data_structures import (PickupEvent, DeliveryEvent, InternalStopEvent)
+from thesimulator.data_structures import (
+    PickupEvent,
+    DeliveryEvent,
+    InternalStopEvent,
+    StopEvent,
+    Dispatcher
+)
 from thesimulator.data_structures_cython.data_structures cimport (
     TransportationRequest,
     Stop,
@@ -52,14 +58,13 @@ cdef class VehicleState:
         vehicle_id,
         initial_stoplist: List[Stop],
         space: TransportSpace,
-        loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
         seat_capacity: int,
     ):
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
-        self.stoplist = Stoplist(initial_stoplist, loc_type)
+        self.stoplist = Stoplist(initial_stoplist, space.loc_type)
         self.space = space
         self.dispatcher = dispatcher
         if seat_capacity > INT_MAX:
