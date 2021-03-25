@@ -47,6 +47,7 @@ from thesimulator.data_structures_cython import (
     InternalRequest,
     StopAction,
     TransportationRequest,
+    LocType,
 )
 from thesimulator.util.dispatchers_cython import (
     brute_force_distance_minimizing_dispatcher,
@@ -72,7 +73,7 @@ evf = lambda S, f, **arg: (S, f(S, **arg))
 n_buses = 50
 """number of vehicles to simulate"""
 
-initial_location = (0, 0)
+initial_location = 0
 
 initial_stoplists = {
     vehicle_id: [
@@ -125,37 +126,52 @@ fs = SlowSimpleFleetState(
 
 # ## perform the simulation
 
+# + tags=[]
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
+# -
 
 # ## process the results
 
 
+# + tags=[]
 stops, reqs = get_stops_and_requests(
     events=events,
     initial_stoplists=initial_stoplists,
     transportation_requests=transportation_requests,
-    space=pyEuclidean2D(),
+    space=space,
 )
+# -
 
 # # some distributions
 # ## relative travel times
 
+# + tags=[]
 reqs[("inferred", "relative_travel_time")].hist(bins=np.r_[1:5:20j])
 plt.gca().set_yscale("log")
+# -
 
 
 # ## waiting times
 
+# + tags=[]
 reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 # plt.gca().set_yscale('log')
+# -
 
 
 # ## direct travel times
 
-reqs[("supplied", "direct_travel_time")].hist(bins=np.r_[0:1.5:30j])
+# + tags=[]
+reqs[("supplied", "direct_travel_time")].hist(bins=np.r_[-0.5:5.5:7j])
+# -
 
 
 # ## occupancies
 
+# + tags=[]
 plot_occupancy_hist(stops)
+
+# + tags=[]
+stops
+# -
