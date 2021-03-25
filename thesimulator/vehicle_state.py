@@ -44,7 +44,6 @@ class VehicleState:
         vehicle_id,
         initial_stoplist: Stoplist,
         space: TransportSpace,
-        loc_type: Optional[LocType] = None,
         dispatcher: Dispatcher,
         seat_capacity: int,
     ):
@@ -156,7 +155,6 @@ class VehicleState:
         -------
         This returns the single best solution for the respective vehicle.
         """
-
         return self.vehicle_id, *self.dispatcher(
             request=request,
             stoplist=self.stoplist,

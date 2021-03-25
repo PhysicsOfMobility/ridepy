@@ -56,7 +56,6 @@ class FleetState(ABC):
         space: TransportSpace,
         dispatcher: Dispatcher,
         vehicle_state_class=VehicleState,
-        loc_type: LocType = LocType.R2LOC,
     ):
         """
         Parameters
@@ -83,7 +82,6 @@ class FleetState(ABC):
                 initial_stoplist=stoplist,
                 space=self.space,
                 dispatcher=self.dispatcher,
-                loc_type=loc_type,
                 seat_capacity=seat_capacity,
             )
             for seat_capacity, (vehicle_id, stoplist) in zip(

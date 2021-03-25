@@ -19,7 +19,7 @@ cdef union USpace:
 
 cdef class TransportSpace:
     cdef USpace u_space
-    cdef LocType loc_type
+    cdef readonly LocType loc_type
     cdef readonly int n_dim
 
 
