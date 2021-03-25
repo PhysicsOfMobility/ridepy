@@ -213,5 +213,16 @@ def test_stoplist_not_modified_inplace():
     assert stoplist[1].estimated_arrival_time == 3
 
 
+def test_sanity_in_graph():
+    """
+    Insert a request, note delivery time.
+    Handle more requests so that there's no pooling.
+    Assert that the delivery time is not changed.
+
+    Or more simply, assert that the vehicle moves at either the space's velocity or 0.
+    """
+    ...
+
+
 if __name__ == "__main__":
     pytest.main(args=[__file__])
