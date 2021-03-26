@@ -216,3 +216,59 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
                 list(flatten(list(pev.__dict__.values()))),
                 list(flatten(list(cev.__dict__.values()))),
             )
+
+
+@pytest.mark.n_buses(50)
+@pytest.mark.initial_location(0)
+@pytest.mark.cython
+def test_sanity_in_graph(initial_stoplists):
+    """
+    Insert a request, note delivery time.
+    Handle more requests so that there's no pooling.
+    Assert that the delivery time is not changed.
+
+    Or more simply, assert that the vehicle moves at either the space's velocity or 0.
+    """
+
+    space = cyspaces.Graph.from_nx(make_nx_grid())
+
+    rg = RandomRequestGenerator(
+        rate=10,
+        space=space,
+        max_pickup_delay=0,
+        max_delivery_delay_abs=0,
+    )
+
+    transportation_requests = list(it.islice(rg, 1000))
+
+    fs = SlowSimpleFleetState(
+        initial_stoplists=initial_stoplists,
+        seat_capacities=[10] * len(initial_stoplists),
+        space=space,
+        dispatcher=cy_brute_force_distance_minimizing_dispatcher,
+        vehicle_state_class=cy_VehicleState,
+    )
+
+    events = list(fs.simulate(transportation_requests))
+
+    pickup_times = {
+        ev.request_id: ev.timestamp for ev in events if isinstance(ev, pyds.PickupEvent)
+    }
+    delivery_times = {
+        ev.request_id: ev.timestamp
+        for ev in events
+        if isinstance(ev, pyds.DeliveryEvent)
+    }
+    rejections = set(
+        ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
+    )
+
+    for req in transportation_requests:
+        if req.request_id not in rejections:
+            assert (
+                req.pickup_timewindow_min
+                == req.pickup_timewindow_max
+                == req.delivery_timewindow_min
+                == pickup_times[req.request_id]
+            )
+            assert req.delivery_timewindow_max == delivery_times[req.request_id]
