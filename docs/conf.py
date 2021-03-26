@@ -32,6 +32,7 @@ add_function_parentheses = True
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -39,6 +40,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx_toggleprompt',
     'sphinx.ext.viewcode',
+    'sphinx.ext.mathjax',
     "sphinx_rtd_theme",
     'sphinxcontrib.napoleon', #for sane autodoc
     'alabaster' #theme
