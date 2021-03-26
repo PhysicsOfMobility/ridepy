@@ -140,7 +140,6 @@ class VehicleState:
 
         return event_cache
 
-
     def handle_transportation_request_single_vehicle(
         self, request: TransportationRequest
     ) -> SingleVehicleSolution:

@@ -82,8 +82,6 @@ def test_events_sorted(initial_stoplists):
 @pytest.mark.n_buses(50)
 @pytest.mark.initial_location((0, 0))
 def test_brute_force_dispatcher_2d(initial_stoplists):
-    # failing as of 2011301826,
-    # see https://github.com/PhysicsOfMobility/theSimulator/issues/39
     space = Euclidean2D()
     rg = RandomRequestGenerator(
         rate=10,
