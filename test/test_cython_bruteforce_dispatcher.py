@@ -2,7 +2,7 @@ import random
 
 import pytest
 import numpy as np
-from numpy import inf
+from numpy import inf, isclose
 from functools import reduce
 from time import time
 import itertools as it
@@ -171,9 +171,10 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         rg = RandomRequestGenerator(
             space=py_space,
             request_class=pyds.TransportationRequest,
+            seed=seed
         )
-        reqs = list(it.islice(rg, n_reqs))
-        py_events = list(ssfs.simulate(reqs))
+        py_reqs = list(it.islice(rg, n_reqs))
+        py_events = list(ssfs.simulate(py_reqs))
 
         ######################################################
         # CYTHON
@@ -200,10 +201,10 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(
-            space=cy_space, request_class=cyds.TransportationRequest
+            space=cy_space, request_class=cyds.TransportationRequest, seed=seed
         )
-        reqs = list(it.islice(rg, n_reqs))
-        cy_events = list(ssfs.simulate(reqs))
+        cy_reqs = list(it.islice(rg, n_reqs))
+        cy_events = list(ssfs.simulate(cy_reqs))
 
         ######################################################
         # COMPARE
@@ -212,7 +213,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         assert len(cy_events) == len(py_events)
         for num, (cev, pev) in enumerate(zip(cy_events, py_events)):
             assert type(cev) == type(pev)
-            np.allclose(
+            assert np.allclose(
                 list(flatten(list(pev.__dict__.values()))),
                 list(flatten(list(cev.__dict__.values()))),
             )
@@ -262,4 +263,4 @@ def test_sanity_in_graph(initial_stoplists):
 
     for req in transportation_requests:
         if req.request_id not in rejections:
-            assert req.delivery_timewindow_max == delivery_times[req.request_id]
+            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])

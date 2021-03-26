@@ -2,7 +2,7 @@ import pytest
 
 import itertools as it
 
-from numpy import inf
+from numpy import inf, isclose
 
 from thesimulator.data_structures import (
     Stop,
@@ -263,7 +263,7 @@ def test_sanity_in_graph(initial_stoplists):
 
     for req in transportation_requests:
         if req.request_id not in rejections:
-            assert req.delivery_timewindow_max == delivery_times[req.request_id]
+            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])
 
 
 if __name__ == "__main__":
