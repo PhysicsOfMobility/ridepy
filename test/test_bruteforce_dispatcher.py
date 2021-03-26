@@ -240,7 +240,6 @@ def test_sanity_in_graph(initial_stoplists):
     rg = RandomRequestGenerator(
         rate=10,
         space=space,
-        max_pickup_delay=0,
         max_delivery_delay_abs=0,
     )
 
@@ -255,24 +254,15 @@ def test_sanity_in_graph(initial_stoplists):
 
     events = list(fs.simulate(transportation_requests))
 
-    pickup_times = {
-        ev.request_id: ev.timestamp for ev in events if isinstance(ev, PickupEvent)
-    }
-    delivery_times = {
-        ev.request_id: ev.timestamp for ev in events if isinstance(ev, DeliveryEvent)
-    }
     rejections = set(
         ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
     )
+    delivery_times = {
+        ev.request_id: ev.timestamp for ev in events if isinstance(ev, DeliveryEvent)
+    }
 
     for req in transportation_requests:
         if req.request_id not in rejections:
-            assert (
-                req.pickup_timewindow_min
-                == req.pickup_timewindow_max
-                == req.delivery_timewindow_min
-                == pickup_times[req.request_id]
-            )
             assert req.delivery_timewindow_max == delivery_times[req.request_id]
 
 

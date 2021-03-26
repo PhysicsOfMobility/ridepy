@@ -55,6 +55,7 @@ def initial_stoplists(request):
                 ),
                 action=StopActionCls.internal,
                 estimated_arrival_time=0,
+                occupancy_after_servicing=0,
                 time_window_min=0,
                 time_window_max=np.inf,
             )
