@@ -34,7 +34,7 @@ def initial_stoplists(request):
             Stop(
                 location=initial_location,
                 request=InternalRequest(
-                    request_id="CPE", creation_timestamp=0, location=initial_location
+                    request_id=-1, creation_timestamp=0, location=initial_location
                 ),
                 action=StopAction.internal,
                 estimated_arrival_time=0,
