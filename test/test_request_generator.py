@@ -1,7 +1,5 @@
 import itertools as it
 
-from timeit import default_timer as timer
-
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
 from thesimulator.util.convenience.spaces import make_nx_grid
@@ -25,9 +23,6 @@ def test_random_request_generator():
 
 
 def test_random_request_generator_no_trivial():
-    start = timer()
     for space in [Graph.from_nx(make_nx_grid()), Euclidean1D(), Euclidean2D()]:
         rg = RandomRequestGenerator(space=space)
         assert all(req.origin != req.destination for req in it.islice(rg, 10000))
-    end = timer()
-    print(end - start)
