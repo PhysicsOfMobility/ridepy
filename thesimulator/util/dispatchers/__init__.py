@@ -12,8 +12,8 @@ from thesimulator.data_structures import (
 )
 from thesimulator.util.dispatchers.helper_functions import (
     cpat_of_inserted_stop,
-    distance_to_stop_after_insertion,
-    distance_from_current_stop_to_next,
+    time_to_stop_after_insertion,
+    time_from_current_stop_to_next,
     is_timewindow_violated_or_violation_worsened_due_to_insertion,
     insert_request_to_stoplist_drive_first,
 )
@@ -57,10 +57,10 @@ def taxicab_dispatcher_drive_first(
             if stoplist[-1].time_window_min is not None
             else 0,
         )
-        + space.d(stoplist[-1].location, request.origin)
+        + space.t(stoplist[-1].location, request.origin)
     )
     EAST_pu = request.pickup_timewindow_min
-    CPAT_do = max(EAST_pu, CPAT_pu) + space.d(request.origin, request.destination)
+    CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request.origin, request.destination)
     LAST_pu = (
         CPAT_pu + request.delivery_timewindow_max
         if request.delivery_timewindow_max is not None
@@ -114,15 +114,14 @@ def brute_force_distance_minimizing_dispatcher(
 
     Returns:
     """
-    # TODO: Fix the d()/t() dichotomy
     min_cost = np.inf
     best_insertion = None
     for i, stop_before_pickup in enumerate(stoplist):
         if stop_before_pickup.occupancy_after_servicing == seat_capacity:
             # inserting here will violate capacity constraint
             continue
-        distance_to_pickup = space.d(stop_before_pickup.location, request.origin)
-        CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, distance_to_pickup)
+        time_to_pickup = space.t(stop_before_pickup.location, request.origin)
+        CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup)
         # check for request's pickup timewindow violation
         if CPAT_pu > request.pickup_timewindow_max:
             continue
@@ -131,23 +130,23 @@ def brute_force_distance_minimizing_dispatcher(
         ######################
         # ADJACENT INSERTION #
         ######################
-        CPAT_do = max(EAST_pu, CPAT_pu) + space.d(request.origin, request.destination)
+        CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request.origin, request.destination)
         # check for request's dropoff timewindow violation
         if CPAT_do > request.delivery_timewindow_max:
             continue
 
         # compute the cost function
-        distance_to_dropoff = space.d(request.origin, request.destination)
-        distance_from_dropoff = distance_to_stop_after_insertion(
+        time_to_dropoff = space.t(request.origin, request.destination)
+        distance_from_dropoff = time_to_stop_after_insertion(
             stoplist, request.destination, i, space
         )
 
-        original_pickup_edge_length = distance_from_current_stop_to_next(
+        original_pickup_edge_length = time_from_current_stop_to_next(
             stoplist, i, space
         )
         total_cost = (
-            distance_to_pickup
-            + distance_to_dropoff
+            time_to_pickup
+            + time_to_dropoff
             + distance_from_dropoff
             - original_pickup_edge_length
         )
@@ -165,7 +164,7 @@ def brute_force_distance_minimizing_dispatcher(
         ##########################
         # NON-ADJACENT INSERTION #
         ##########################
-        distance_from_pickup = distance_to_stop_after_insertion(
+        distance_from_pickup = time_to_stop_after_insertion(
             stoplist, request.origin, i, space
         )
         cpat_at_next_stop = (
@@ -176,7 +175,7 @@ def brute_force_distance_minimizing_dispatcher(
         ):
             continue
         pickup_cost = (
-            distance_to_pickup + distance_from_pickup - original_pickup_edge_length
+            time_to_pickup + distance_from_pickup - original_pickup_edge_length
         )
 
         for j, stop_before_dropoff in enumerate(stoplist[i + 1 :], start=i + 1):
@@ -187,25 +186,25 @@ def brute_force_distance_minimizing_dispatcher(
                 # Capacity is violated. We need to break off this loop because no insertion either here or at a later
                 # stop is permitted
                 break
-            distance_to_dropoff = space.d(
+            time_to_dropoff = space.t(
                 stop_before_dropoff.location, request.destination
             )
             CPAT_do = cpat_of_inserted_stop(
                 stop_before_dropoff,
-                distance_to_dropoff,
+                time_to_dropoff,
             )
             # check for request's dropoff timewindow violation
             if CPAT_do > request.delivery_timewindow_max:
                 continue
 
-            distance_from_dropoff = distance_to_stop_after_insertion(
+            distance_from_dropoff = time_to_stop_after_insertion(
                 stoplist, request.destination, j, space
             )
-            original_dropoff_edge_length = distance_from_current_stop_to_next(
+            original_dropoff_edge_length = time_from_current_stop_to_next(
                 stoplist, j, space
             )
             dropoff_cost = (
-                distance_to_dropoff
+                time_to_dropoff
                 + distance_from_dropoff
                 - original_dropoff_edge_length
             )
