@@ -58,7 +58,7 @@ napoleon_use_admonition_for_notes = False
 napoleon_use_admonition_for_references = False
 napoleon_use_ivar = False
 napoleon_use_param = True
-napoleon_use_rtype = True
+napoleon_use_rtype = False
 
 # Control the order in which the members of a module are shown.
 # see https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_member_order
@@ -67,6 +67,14 @@ autodoc_member_order = 'bysource'
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autoclass_content
 autoclass_content = 'both'
 default_role = 'py:obj'
+
+autodoc_typehints = 'description'
+autodoc_type_aliases = {
+        'RequestEvent': 'thesimulator.events.RequestEvent',
+        'StopEvent': 'thesimulator.events.StopEvent',
+        'SingleVehicleSolution': 'thesimulator.data_structures.SingleVehicleSolution'
+}
+
 
 # Intersphinx mapping
 intersphinx_mapping = {

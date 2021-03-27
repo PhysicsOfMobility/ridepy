@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from typing import Optional, SupportsFloat, List
@@ -49,12 +51,12 @@ class VehicleState:
 
         Parameters
         ----------
-        vehicle_id:
-            id of the vehicle to be created
+        vehicle_id
+            id of the vehicle to be created.
         initial_stoplist
-            stoplist to start out with, MUST contain CPE as first element
+            stoplist to start out with, MUST contain CPE as first element.
         space
-            transport space the vehicle is operating on
+            Transport space the vehicle is operating in.
         """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
@@ -72,12 +74,11 @@ class VehicleState:
         Parameters
         ----------
         t
-            time to be updated to
+            time to be updated to.
 
         Returns
         -------
-        events
-            List of stop events emitted through servicing stops
+            List of stop events emitted through servicing stops.
         """
 
         # TODO assert that the CPATs are updated and the stops sorted accordingly
@@ -147,17 +148,18 @@ class VehicleState:
     ) -> SingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could do the following:
+
         1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
-        2. Implement as a c extension. The args and the return value are all basic c data types,
-           so this should also be easy.
+        2. Implement as a c extension. The args and the return value are all basic c data types, so this should also be easy.
 
         Parameters
         ----------
         request
+            Request to be handled.
 
         Returns
         -------
-        This returns the single best solution for the respective vehicle.
+            The single best solution for the respective vehicle.
         """
         return self.vehicle_id, *self.dispatcher(
             request=request,

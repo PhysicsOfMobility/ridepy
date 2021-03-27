@@ -55,7 +55,8 @@ class StopAction(Enum):
 
 class LocType(Enum):
     """
-    Representing the kind of location objects the simulator supports.
+    Representing the kind of location objects the simulator supports. Either of:
+    `R2LOC` (for points in :math:`\mathbb{R}^2`) or `INT` (for e.g. graphs).
     """
 
     R2LOC = 1  # points in R^2

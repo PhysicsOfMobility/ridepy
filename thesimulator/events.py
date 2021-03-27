@@ -84,13 +84,10 @@ class InternalStopEvent(Event):
 
 
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
+"""Emitted when a `.TransportationRequest` is handled."""
+
 StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+"""Emitted when a `.Stop` is serviced."""
+
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[
-    RequestAcceptanceEvent,
-    RequestRejectionEvent,
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
-    RequestAssignEvent,
-]
+"""Emitted when a `.TransportationRequest` is handled."""

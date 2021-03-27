@@ -6,10 +6,10 @@ The ``FleetState`` class is the core component that an user needs in order to
 setting up and running a simulation using theSimulator, as we described in
 :doc:`overview`. Once the user creates a ``FleetState`` with the desired
 number of vehicles of appropriate capacities and initial positions, a
-simulation can be run by calling `.FleetState.simulate(req_gen)` with an
+simulation can be run by calling `FleetState.simulate()`, supplying
 iterator or requests. The ``FleetState`` advances the simulator "clock",
 processes the `.TransportationRequest` s one by one, "moves" the vehicles so
-that they pickup and deliver the requests. It yields a sequence of `Event`
+that they pickup and deliver the requests. It yields a sequence of `.Event`
 objects describing what happened during the simulation.
 
 The `FleetState` interface
@@ -22,6 +22,7 @@ computations.
 
 .. autoclass:: FleetState
     :members:
+    :private-members:
 
 Different implementations of the `FleetState` interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
