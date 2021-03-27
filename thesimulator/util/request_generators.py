@@ -80,6 +80,7 @@ class RandomRequestGenerator:
             destination = self.transport_space.random_point()
             if origin != destination:
                 break
+
         direct_travel_time = self.transport_space.d(origin, destination)
         pickup_lbound = self.now + self.pickup_timewindow_offset
         pickup_ubound = pickup_lbound + self.max_pickup_delay

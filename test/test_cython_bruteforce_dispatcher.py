@@ -169,9 +169,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             vehicle_state_class=py_VehicleState,
         )
         rg = RandomRequestGenerator(
-            space=py_space,
-            request_class=pyds.TransportationRequest,
-            seed=seed
+            space=py_space, request_class=pyds.TransportationRequest, seed=seed
         )
         py_reqs = list(it.islice(rg, n_reqs))
         py_events = list(ssfs.simulate(py_reqs))
@@ -251,14 +249,15 @@ def test_sanity_in_graph(initial_stoplists):
         vehicle_state_class=cy_VehicleState,
     )
 
-
     events = list(fs.simulate(transportation_requests))
 
     rejections = set(
         ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
     )
     delivery_times = {
-        ev.request_id: ev.timestamp for ev in events if isinstance(ev, pyds.DeliveryEvent)
+        ev.request_id: ev.timestamp
+        for ev in events
+        if isinstance(ev, pyds.DeliveryEvent)
     }
 
     for req in transportation_requests:
