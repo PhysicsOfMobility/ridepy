@@ -342,7 +342,7 @@ class Graph(TransportSpace):
         return random.choice(list(self.G.nodes))
 
     def __repr__(self):
-        return f"DiGraph(velocity={self.velocity})"
+        return f"Graph(velocity={self.velocity})"
 
 
 class DiGraph(Graph):

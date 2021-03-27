@@ -1,15 +1,26 @@
 import pytest
-from numpy import inf
+
+import itertools as it
+
+from numpy import inf, isclose
+
 from thesimulator.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
     TransportationRequest,
+    RequestRejectionEvent,
+    RequestAcceptanceEvent,
+    PickupEvent,
+    DeliveryEvent,
 )
-from thesimulator.util.spaces import Euclidean2D
-
+from thesimulator.util.analytics import get_stops_and_requests
 from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
 from thesimulator.util.testing_utils import stoplist_from_properties
+from thesimulator.util.convenience.spaces import make_nx_grid
+from thesimulator.util.request_generators import RandomRequestGenerator
+from thesimulator.util.spaces import Euclidean2D, Graph
+from thesimulator.fleet_state import SlowSimpleFleetState
 
 
 def test_append_to_empty_stoplist():
@@ -211,6 +222,48 @@ def test_stoplist_not_modified_inplace():
     assert new_stoplist[2].location == request.destination
     assert new_stoplist[3].estimated_arrival_time == 3 + 2 * eps
     assert stoplist[1].estimated_arrival_time == 3
+
+
+@pytest.mark.n_buses(50)
+@pytest.mark.initial_location(0)
+def test_sanity_in_graph(initial_stoplists):
+    """
+    Insert a request, note delivery time.
+    Handle more requests so that there's no pooling.
+    Assert that the delivery time is not changed.
+
+    Or more simply, assert that the vehicle moves at either the space's velocity or 0.
+    """
+
+    space = Graph.from_nx(make_nx_grid())
+
+    rg = RandomRequestGenerator(
+        rate=10,
+        space=space,
+        max_delivery_delay_abs=0,
+    )
+
+    transportation_requests = list(it.islice(rg, 1000))
+
+    fs = SlowSimpleFleetState(
+        initial_stoplists=initial_stoplists,
+        seat_capacities=[10] * len(initial_stoplists),
+        space=space,
+        dispatcher=brute_force_distance_minimizing_dispatcher,
+    )
+
+    events = list(fs.simulate(transportation_requests))
+
+    rejections = set(
+        ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
+    )
+    delivery_times = {
+        ev.request_id: ev.timestamp for ev in events if isinstance(ev, DeliveryEvent)
+    }
+
+    for req in transportation_requests:
+        if req.request_id not in rejections:
+            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])
 
 
 if __name__ == "__main__":

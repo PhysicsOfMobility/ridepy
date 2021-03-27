@@ -1,6 +1,8 @@
+import random
+
 import pytest
 import numpy as np
-from numpy import inf
+from numpy import inf, isclose
 from functools import reduce
 from time import time
 import itertools as it
@@ -25,6 +27,7 @@ from thesimulator.vehicle_state import VehicleState as py_VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
 
 from thesimulator.fleet_state import SlowSimpleFleetState
+from thesimulator.util.convenience.spaces import make_nx_grid
 
 
 def stoplist_from_properties(stoplist_properties, data_structure_module):
@@ -126,62 +129,137 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
     """
     Tests that the simulation runs with pure pythonic and cythonic brute force dispatcher produces identical events.
     """
-    n_reqs = 100
-    ir = pyds.InternalRequest(request_id=999, creation_timestamp=0, location=(0, 0))
-    s0 = pyds.Stop(
-        location=(0, 0),
-        request=ir,
-        action=pyds.StopAction.internal,
-        estimated_arrival_time=0,
-        occupancy_after_servicing=0,
-        time_window_min=0,
-        time_window_max=0,
-    )
-    sl = [s0]
+    for py_space, cy_space in (
+        (pyspaces.Euclidean2D(), cyspaces.Euclidean2D()),
+        (
+            pyspaces.Graph.from_nx(make_nx_grid()),
+            cyspaces.Graph.from_nx(make_nx_grid()),
+        ),
+    ):
 
-    ssfs = SlowSimpleFleetState(
-        initial_stoplists={7: sl},
-        seat_capacities=[10],
-        space=pyspaces.Euclidean2D(),
-        dispatcher=py_brute_force_distance_minimizing_dispatcher,
-        vehicle_state_class=py_VehicleState,
-    )
+        n_reqs = 100
+
+        random.seed(seed)
+        init_loc = py_space.random_point()
+        random.seed(seed)
+        assert init_loc == cy_space.random_point()
+
+        ######################################################
+        # PYTHON
+        ######################################################
+        ir = pyds.InternalRequest(
+            request_id=999, creation_timestamp=0, location=init_loc
+        )
+        s0 = pyds.Stop(
+            location=init_loc,
+            request=ir,
+            action=pyds.StopAction.internal,
+            estimated_arrival_time=0,
+            occupancy_after_servicing=0,
+            time_window_min=0,
+            time_window_max=0,
+        )
+        sl = [s0]
+
+        ssfs = SlowSimpleFleetState(
+            initial_stoplists={7: sl},
+            seat_capacities=[10],
+            space=py_space,
+            dispatcher=py_brute_force_distance_minimizing_dispatcher,
+            vehicle_state_class=py_VehicleState,
+        )
+        rg = RandomRequestGenerator(
+            space=py_space, request_class=pyds.TransportationRequest, seed=seed
+        )
+        py_reqs = list(it.islice(rg, n_reqs))
+        py_events = list(ssfs.simulate(py_reqs))
+
+        ######################################################
+        # CYTHON
+        ######################################################
+        ir = cyds.InternalRequest(
+            request_id=999, creation_timestamp=0, location=init_loc
+        )
+        s0 = cyds.Stop(
+            location=init_loc,
+            request=ir,
+            action=cyds.StopAction.internal,
+            estimated_arrival_time=0,
+            occupancy_after_servicing=0,
+            time_window_min=0,
+            time_window_max=0,
+        )
+        sl = [s0]
+
+        ssfs = SlowSimpleFleetState(
+            initial_stoplists={7: sl},
+            seat_capacities=[10],
+            space=cy_space,
+            dispatcher=cy_brute_force_distance_minimizing_dispatcher,
+            vehicle_state_class=cy_VehicleState,
+        )
+        rg = RandomRequestGenerator(
+            space=cy_space, request_class=cyds.TransportationRequest, seed=seed
+        )
+        cy_reqs = list(it.islice(rg, n_reqs))
+        cy_events = list(ssfs.simulate(cy_reqs))
+
+        ######################################################
+        # COMPARE
+        ######################################################
+        # assert that the returned events are the same
+        assert len(cy_events) == len(py_events)
+        for num, (cev, pev) in enumerate(zip(cy_events, py_events)):
+            assert type(cev) == type(pev)
+            assert np.allclose(
+                list(flatten(list(pev.__dict__.values()))),
+                list(flatten(list(cev.__dict__.values()))),
+            )
+
+
+@pytest.mark.n_buses(50)
+@pytest.mark.initial_location(0)
+@pytest.mark.cython
+def test_sanity_in_graph(initial_stoplists):
+    """
+    Insert a request, note delivery time.
+    Handle more requests so that there's no pooling.
+    Assert that the delivery time is not changed.
+
+    Or more simply, assert that the vehicle moves at either the space's velocity or 0.
+    """
+
+    space = cyspaces.Graph.from_nx(make_nx_grid())
+
     rg = RandomRequestGenerator(
-        space=pyspaces.Euclidean2D(),
-        request_class=pyds.TransportationRequest,
+        rate=10,
+        space=space,
+        max_pickup_delay=0,
+        max_delivery_delay_abs=0,
+        request_class=cyds.TransportationRequest,
     )
-    reqs = list(it.islice(rg, n_reqs))
-    py_events = list(ssfs.simulate(reqs))
 
-    ir = cyds.InternalRequest(request_id=999, creation_timestamp=0, location=(0, 0))
-    s0 = cyds.Stop(
-        location=(0, 0),
-        request=ir,
-        action=cyds.StopAction.internal,
-        estimated_arrival_time=0,
-        occupancy_after_servicing=0,
-        time_window_min=0,
-        time_window_max=0,
-    )
-    sl = [s0]
+    transportation_requests = list(it.islice(rg, 1000))
 
-    space = cyspaces.Euclidean2D()
-    ssfs = SlowSimpleFleetState(
-        initial_stoplists={7: sl},
-        seat_capacities=[10],
+    fs = SlowSimpleFleetState(
+        initial_stoplists=initial_stoplists,
+        seat_capacities=[10] * len(initial_stoplists),
         space=space,
         dispatcher=cy_brute_force_distance_minimizing_dispatcher,
         vehicle_state_class=cy_VehicleState,
     )
-    rg = RandomRequestGenerator(space=space, request_class=cyds.TransportationRequest)
-    reqs = list(it.islice(rg, n_reqs))
-    cy_events = list(ssfs.simulate(reqs))
 
-    # assert that the returned events are the same
-    assert len(cy_events) == len(py_events)
-    for num, (cev, pev) in enumerate(zip(cy_events, py_events)):
-        assert type(cev) == type(pev)
-        np.allclose(
-            list(flatten(list(pev.__dict__.values()))),
-            list(flatten(list(cev.__dict__.values()))),
-        )
+    events = list(fs.simulate(transportation_requests))
+
+    rejections = set(
+        ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
+    )
+    delivery_times = {
+        ev.request_id: ev.timestamp
+        for ev in events
+        if isinstance(ev, pyds.DeliveryEvent)
+    }
+
+    for req in transportation_requests:
+        if req.request_id not in rejections:
+            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])

@@ -8,6 +8,12 @@ from thesimulator.data_structures import (
     StopAction,
 )
 
+from thesimulator.data_structures_cython import (
+    Stop as CyStop,
+    InternalRequest as CyInternalRequest,
+    StopAction as CyStopAction,
+)
+
 
 @pytest.fixture
 def initial_stoplists(request):
@@ -17,6 +23,7 @@ def initial_stoplists(request):
     ```py
     @pytest.mark.n_buses(10)
     @pytest.mark.initial_location((0, 0))
+    @pytest.mark.cython
     ```
     """
     n_buses = (
@@ -29,15 +36,26 @@ def initial_stoplists(request):
         if request.node.get_closest_marker("initial_location") is not None
         else 0
     )
+    if request.node.get_closest_marker("cython"):
+        StopCls = CyStop
+        InternalRequestCls = CyInternalRequest
+        StopActionCls = CyStopAction
+
+    else:
+        StopCls = Stop
+        InternalRequestCls = InternalRequest
+        StopActionCls = StopAction
+
     return {
         vehicle_id: [
-            Stop(
+            StopCls(
                 location=initial_location,
-                request=InternalRequest(
-                    request_id="CPE", creation_timestamp=0, location=initial_location
+                request=InternalRequestCls(
+                    request_id=-1, creation_timestamp=0, location=initial_location
                 ),
-                action=StopAction.internal,
+                action=StopActionCls.internal,
                 estimated_arrival_time=0,
+                occupancy_after_servicing=0,
                 time_window_min=0,
                 time_window_max=np.inf,
             )

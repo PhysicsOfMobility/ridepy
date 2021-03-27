@@ -140,21 +140,27 @@ cdef class VehicleState:
         if last_stop is None:
             last_stop = self.stoplist[0]
 
-        # set CPE time to current time
-        self.stoplist[0].estimated_arrival_time = t
+        # set the occupancy at CPE
         self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-
         if len(self.stoplist) > 1:
-            self.stoplist[0].location, _ = self.space.interp_time(
-                u=last_stop.location,
-                v=self.stoplist[1].location,
-                time_to_dest=self.stoplist[1].estimated_arrival_time - t,
-            )
+            if last_stop.estimated_arrival_time > t:
+                # still mid-jump from last interpolation, no need to interpolate
+                # again
+                pass
+            else:
+                self.stoplist[0].location, jump_time = self.space.interp_time(
+                    u=last_stop.location,
+                    v=self.stoplist[1].location,
+                    time_to_dest=self.stoplist[1].estimated_arrival_time - t,
+                )
+                # set CPE time
+                self.stoplist[0].estimated_arrival_time = t + jump_time
         else:
-            # stoplist is empty, only CPE is there. Therefore we just stick around...
-            pass
+            # stoplist is empty, only CPE is there. set CPE time to current time
+            self.stoplist[0].estimated_arrival_time = t
+
         return event_cache
 
     def handle_transportation_request_single_vehicle(

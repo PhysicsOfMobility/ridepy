@@ -2,7 +2,6 @@ import pytest
 
 import pandas as pd
 import itertools as it
-import collections as cl
 import operator as op
 import numpy as np
 
@@ -10,11 +9,7 @@ from tabulate import tabulate
 
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.data_structures import (
-    Stop,
-    InternalRequest,
-    StopAction,
     PickupEvent,
-    StopEvent,
     DeliveryEvent,
     TransportationRequest,
 )
@@ -23,24 +18,7 @@ from thesimulator.util.dispatchers import (
     brute_force_distance_minimizing_dispatcher,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
-
-
-def test_random_request_generator():
-    rg = RandomRequestGenerator(space=Euclidean2D())
-    reqs = list(it.islice(rg, 10))
-    assert len(reqs) == 10
-    assert all(
-        reqs[i + 1].creation_timestamp > reqs[i].creation_timestamp for i in range(9)
-    )
-    for r in reqs:
-        assert r.request_id is not None
-        assert len(r.origin) == 2
-        assert len(r.destination) == 2
-        assert 0 <= r.origin[0] <= 1
-        assert 0 <= r.origin[1] <= 1
-        assert 0 <= r.destination[0] <= 1
-        assert 0 <= r.destination[1] <= 1
+from thesimulator.util.spaces import Euclidean1D, Euclidean2D
 
 
 @pytest.mark.n_buses(10)
@@ -82,8 +60,6 @@ def test_events_sorted(initial_stoplists):
 @pytest.mark.n_buses(50)
 @pytest.mark.initial_location((0, 0))
 def test_brute_force_dispatcher_2d(initial_stoplists):
-    # failing as of 2011301826,
-    # see https://github.com/PhysicsOfMobility/theSimulator/issues/39
     space = Euclidean2D()
     rg = RandomRequestGenerator(
         rate=10,

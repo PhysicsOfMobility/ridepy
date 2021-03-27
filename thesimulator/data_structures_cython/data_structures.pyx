@@ -341,7 +341,7 @@ cdef class InternalRequest(Request):
         cdef InternalRequest req = InternalRequest.__new__(InternalRequest)
         req._uinternreq._req_int = creq
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CInternalRequest[int]](creq)
-        req.loc_type = LocType.R2LOC
+        req.loc_type = LocType.INT
         return req
 
 
