@@ -91,14 +91,21 @@ class Stop:
 
 
 @dataclass
-class RequestAcceptanceEvent:
+class Event:
+    """
+    The base event class. Must hold a timestamp.
+    """
+
+    timestamp: float
+
+@dataclass
+class RequestAcceptanceEvent(Event):
     """
     Commitment of the system to fulfil a request given
     the returned spatio-temporal constraints.
     """
 
     request_id: ID
-    timestamp: float
     origin: Any
     destination: Any
     pickup_timewindow_min: float
@@ -108,14 +115,13 @@ class RequestAcceptanceEvent:
 
 
 @dataclass
-class RequestAssignEvent:
+class RequestAssignEvent(Event):
     """
     Commitment of the system to fulfil a request given
     the returned spatio-temporal constraints.
     """
 
     request_id: ID
-    timestamp: float
     origin: Any
     destination: Any
     pickup_timewindow_min: float
@@ -125,44 +131,40 @@ class RequestAssignEvent:
 
 
 @dataclass
-class RequestRejectionEvent:
+class RequestRejectionEvent(Event):
     """
     Inability of the system to fulfil a request.
     """
 
     request_id: ID
-    timestamp: float
 
 
 @dataclass
-class PickupEvent:
+class PickupEvent(Event):
     """
     Successful pick-up action
     """
 
     request_id: ID
-    timestamp: float
     vehicle_id: ID
 
 
 @dataclass
-class DeliveryEvent:
+class DeliveryEvent(Event):
     """
     Successful drop-off action
     """
 
     request_id: ID
-    timestamp: float
     vehicle_id: ID
 
 
 @dataclass
-class InternalStopEvent:
+class InternalStopEvent(Event):
     """
     Successful internal action
     """
 
-    timestamp: float
     vehicle_id: ID
 
 

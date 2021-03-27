@@ -1,6 +1,5 @@
 Introduction
 ============
-
 theSimulator lets a user specify a `.FleetState` of :math:`n` vehicles with desired
 passenger capacities, as well as an ``iterator`` of `.TransportationRequest`
 objects, each containing:
@@ -24,7 +23,6 @@ optionally using the `.util.analytics` module.
 
 The stoplist
 ------------
-
 `FleetState` contains a dictionary `.fleet`, which maps a ``vehicle_id`` to a
 `.VehicleState`. A `VehicleState`, in turn holds the future trajectory of the
 vehicle in the form of a `Stoplist`: a list of `.Stop` objects containing:
@@ -44,7 +42,6 @@ meantime).
 
 The CPE Stop
 ~~~~~~~~~~~~
-
 The first element of any vehicle's `Stoplist` is a `Stop`  object that is
 called the "CPE stop" (*current position element*), signifying the immediate
 position of the vehicle. It is not associated with any `TransportationRequest`.
@@ -80,10 +77,8 @@ When the simulation is run,
    exhausted or a time cutoff is reached.
 
 
-
 The dispatcher
-~~~~~~~~~~~~~~
-
+--------------
 The dispatcher determines which vehicle should service a certain request, and
 in which order it should service the requests assigned to it. theSimulator
 defines a clean interface enabling the users to create their own dispatchers. A
@@ -123,7 +118,6 @@ travel time on the transport space.
 
 The Transport Space
 -------------------
-
 The transport space defines the space that stops and requests live on. This has
 primarily three implications:
 

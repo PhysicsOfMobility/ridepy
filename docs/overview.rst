@@ -30,17 +30,20 @@ Since the ability to simulate to simulate many *requests* and many *vehicles*
 are important for any quantitative study, we include two powerful ways of
 speeding up the simulation:
 
-1. Using parallelism. The dispatcher interface prescribes computing a *cost* for
-serving a request with a certain vehicle. Then the vehicle with the minimum cost
-is chosen. Since this is an "embarassingly paralizable" operation, theSimulator
-provides two parallel ways of computing it, out of the box:
+Using parallelism:
+   The dispatcher interface prescribes computing a *cost* for
+   serving a request with a certain vehicle. Then the vehicle with the minimum cost
+   is chosen. Since this is an "embarassingly paralizable" operation, theSimulator
+   provides two parallel ways of computing it, out of the box:
 
-  - ``multiprocessing``,
-  - ``OpenMPI``.
-2. Using `cython <https://cython.readthedocs.io/en/latest/>`_. We provide, out of
-the box, the ability to choose either pure pythonic or cythonic data structures
-and algorithms for running the simulations. See :ref:`using_cython` for
-details.
+   - ``multiprocessing``,
+   - ``OpenMPI``.
+
+Using `cython <https://cython.readthedocs.io/en/latest/>`_:
+   We provide, out of
+   the box, the ability to choose either pure pythonic or cythonic data structures
+   and algorithms for running the simulations. See :ref:`using_cython` for
+   details.
 
 
 Quickstart

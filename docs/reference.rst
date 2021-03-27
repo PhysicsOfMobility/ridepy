@@ -9,5 +9,6 @@ Reference
    fleet_state
    vehicle_state
    data_structures
+   events
    utils
    cythonic_stuff
