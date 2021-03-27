@@ -93,7 +93,7 @@ def taxicab_dispatcher_drive_first(
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
 
 
-def brute_force_distance_minimizing_dispatcher(
+def brute_force_time_minimizing_dispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
@@ -101,7 +101,7 @@ def brute_force_distance_minimizing_dispatcher(
 ) -> SingleVehicleSolution:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
-    by minimizing the total driving distance.
+    by minimizing the total driving time.
 
     Parameters
     ----------
@@ -137,7 +137,7 @@ def brute_force_distance_minimizing_dispatcher(
 
         # compute the cost function
         time_to_dropoff = space.t(request.origin, request.destination)
-        distance_from_dropoff = time_to_stop_after_insertion(
+        time_from_dropoff = time_to_stop_after_insertion(
             stoplist, request.destination, i, space
         )
 
@@ -147,13 +147,13 @@ def brute_force_distance_minimizing_dispatcher(
         total_cost = (
             time_to_pickup
             + time_to_dropoff
-            + distance_from_dropoff
+            + time_from_dropoff
             - original_pickup_edge_length
         )
         if total_cost < min_cost:
             # check for constraint violations at later points
             cpat_at_next_stop = (
-                max(CPAT_do, request.delivery_timewindow_min) + distance_from_dropoff
+                max(CPAT_do, request.delivery_timewindow_min) + time_from_dropoff
             )
             if not is_timewindow_violated_or_violation_worsened_due_to_insertion(
                 stoplist, i, cpat_at_next_stop
@@ -164,18 +164,18 @@ def brute_force_distance_minimizing_dispatcher(
         ##########################
         # NON-ADJACENT INSERTION #
         ##########################
-        distance_from_pickup = time_to_stop_after_insertion(
+        time_from_pickup = time_to_stop_after_insertion(
             stoplist, request.origin, i, space
         )
         cpat_at_next_stop = (
-            max(CPAT_pu, request.pickup_timewindow_min) + distance_from_pickup
+            max(CPAT_pu, request.pickup_timewindow_min) + time_from_pickup
         )
         if is_timewindow_violated_or_violation_worsened_due_to_insertion(
             stoplist, i, cpat_at_next_stop
         ):
             continue
         pickup_cost = (
-            time_to_pickup + distance_from_pickup - original_pickup_edge_length
+            time_to_pickup + time_from_pickup - original_pickup_edge_length
         )
 
         for j, stop_before_dropoff in enumerate(stoplist[i + 1 :], start=i + 1):
@@ -197,7 +197,7 @@ def brute_force_distance_minimizing_dispatcher(
             if CPAT_do > request.delivery_timewindow_max:
                 continue
 
-            distance_from_dropoff = time_to_stop_after_insertion(
+            time_from_dropoff = time_to_stop_after_insertion(
                 stoplist, request.destination, j, space
             )
             original_dropoff_edge_length = time_from_current_stop_to_next(
@@ -205,7 +205,7 @@ def brute_force_distance_minimizing_dispatcher(
             )
             dropoff_cost = (
                 time_to_dropoff
-                + distance_from_dropoff
+                + time_from_dropoff
                 - original_dropoff_edge_length
             )
             total_cost = pickup_cost + dropoff_cost
@@ -216,7 +216,7 @@ def brute_force_distance_minimizing_dispatcher(
                 # cost has decreased. check for constraint violations at later stops
                 cpat_at_next_stop = (
                     max(CPAT_do, request.delivery_timewindow_min)
-                    + distance_from_dropoff
+                    + time_from_dropoff
                 )
                 if not is_timewindow_violated_or_violation_worsened_due_to_insertion(
                     stoplist, j, cpat_at_next_stop

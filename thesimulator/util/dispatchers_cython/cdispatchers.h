@@ -13,7 +13,7 @@
 using namespace std;
 namespace cstuff {
     template<typename Loc>
-    InsertionResult<Loc> brute_force_distance_minimizing_dispatcher(
+    InsertionResult<Loc> brute_force_time_minimizing_dispatcher(
             std::shared_ptr<TransportationRequest<Loc>> request,
             vector<Stop<Loc>> &stoplist,
             TransportSpace<Loc> &space,
@@ -21,7 +21,7 @@ namespace cstuff {
     ) {
         /*
         Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
-        by minimizing the total driving distance.
+        by minimizing the total driving time.
 
         Parameters
         ----------
@@ -49,36 +49,36 @@ namespace cstuff {
                 continue;
             }
             // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
-            auto distance_to_pickup = space.d(stop_before_pickup.location, request->origin);
-            auto CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, distance_to_pickup);
+            auto time_to_pickup = space.t(stop_before_pickup.location, request->origin);
+            auto CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup);
             // check for request's pickup timewindow violation
             if (CPAT_pu > request->pickup_timewindow_max) continue;
             auto EAST_pu = request->pickup_timewindow_min;
 
             // dropoff immediately
-            auto CPAT_do = max(EAST_pu, CPAT_pu) + space.d(request->origin, request->destination);
+            auto CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request->origin, request->destination);
             auto EAST_do = request->delivery_timewindow_min;
             // check for request's dropoff timewindow violation
             if (CPAT_do > request->delivery_timewindow_max) continue;
             // compute the cost function
-            auto distance_to_dropoff = space.d(request->origin, request->destination);
-            auto distance_from_dropoff = distance_to_stop_after_insertion(
+            auto time_to_dropoff = space.t(request->origin, request->destination);
+            auto time_from_dropoff = time_to_stop_after_insertion(
                     stoplist, request->destination, i, space
             );
 
-            auto original_pickup_edge_length = distance_from_current_stop_to_next(
+            auto original_pickup_edge_length = time_from_current_stop_to_next(
                     stoplist, i, space
             );
             auto total_cost = (
-                    distance_to_pickup
-                    + distance_to_dropoff
-                    + distance_from_dropoff
+                    time_to_pickup
+                    + time_to_dropoff
+                    + time_from_dropoff
                     - original_pickup_edge_length
             );
             if (total_cost < min_cost) {
                 // check for constraint violations at later points
                 auto cpat_at_next_stop =
-                        max(CPAT_do, request->delivery_timewindow_min) + distance_from_dropoff;
+                        max(CPAT_do, request->delivery_timewindow_min) + time_from_dropoff;
                 if (~is_timewindow_violated_dueto_insertion(
                         stoplist, i, cpat_at_next_stop)) {
                     best_insertion = {i, i};
@@ -86,14 +86,14 @@ namespace cstuff {
                 }
             }
             // Try dropoff not immediately after pickup
-            auto distance_from_pickup = distance_to_stop_after_insertion(
+            auto time_from_pickup = time_to_stop_after_insertion(
                     stoplist, request->origin, i, space);
             auto cpat_at_next_stop = (
-                    max(CPAT_pu, request->pickup_timewindow_min) + distance_from_pickup
+                    max(CPAT_pu, request->pickup_timewindow_min) + time_from_pickup
             );
             if (is_timewindow_violated_dueto_insertion(stoplist, i, cpat_at_next_stop)) continue;
             auto pickup_cost = (
-                    distance_to_pickup + distance_from_pickup - original_pickup_edge_length
+                    time_to_pickup + time_from_pickup - original_pickup_edge_length
             );
             int j = i;
 //        BOOST_FOREACH(auto stop_before_dropoff, boost::make_iterator_range(stoplist.begin()+i, stoplist.end()))
@@ -108,23 +108,23 @@ namespace cstuff {
                     // stop is permitted
                     break;
                 }
-                distance_to_dropoff = space.d(
+                time_to_dropoff = space.t(
                         stop_before_dropoff->location, request->destination
                 );
                 CPAT_do = cpat_of_inserted_stop(
                         *stop_before_dropoff,
-                        +distance_to_dropoff
+                        +time_to_dropoff
                 );
                 if (CPAT_do > request->delivery_timewindow_max) continue;
-                distance_from_dropoff = distance_to_stop_after_insertion(
+                time_from_dropoff = time_to_stop_after_insertion(
                         stoplist, request->destination, j, space
                 );
-                auto original_dropoff_edge_length = distance_from_current_stop_to_next(
+                auto original_dropoff_edge_length = time_from_current_stop_to_next(
                         stoplist, j, space
                 );
                 auto dropoff_cost = (
-                        distance_to_dropoff
-                        + distance_from_dropoff
+                        time_to_dropoff
+                        + time_from_dropoff
                         - original_dropoff_edge_length
                 );
 
@@ -135,7 +135,7 @@ namespace cstuff {
                     // cost has decreased. check for constraint violations at later stops
                     cpat_at_next_stop = (
                             max(CPAT_do, request->delivery_timewindow_min)
-                            + distance_from_dropoff
+                            + time_from_dropoff
                     );
                     if (~is_timewindow_violated_dueto_insertion(
                             stoplist, j, cpat_at_next_stop)) {

@@ -18,7 +18,7 @@ from thesimulator.util.spaces_cython import spaces as cyspaces
 from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.dispatchers import (
-    brute_force_distance_minimizing_dispatcher as py_brute_force_distance_minimizing_dispatcher,
+    brute_force_time_minimizing_dispatcher as py_brute_force_distance_minimizing_dispatcher,
 )
 from thesimulator.util.dispatchers_cython import (
     brute_force_distance_minimizing_dispatcher as cy_brute_force_distance_minimizing_dispatcher,

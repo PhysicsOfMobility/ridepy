@@ -122,7 +122,7 @@ def time_to_stop_after_insertion(
     stoplist: Stoplist, location, index: int, space: TransportSpace
 ) -> float:
     """
-    If a stop with `location` will have been inserted at `index`, computes the distance
+    If a stop with `location` will have been inserted at `index`, computes the time
     from `location` to the stop after the insertion.
 
     Note: If the insertion is at the end of the stoplist, returns 0. Insertion at idx means after the idx'th stop.
@@ -139,7 +139,7 @@ def time_from_current_stop_to_next(
     stoplist: Stoplist, i: int, space: TransportSpace
 ) -> float:
     """
-    Returns the distance from the i'th stop in `stoplist` to the next stop.
+    Returns the time from the i'th stop in `stoplist` to the next stop.
 
     Note: If the insertion is at the end of the stoplist, returns 0
     """

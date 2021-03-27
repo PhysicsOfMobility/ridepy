@@ -53,7 +53,7 @@ from thesimulator.data_structures import (
 )
 from thesimulator.util.dispatchers import (
     taxicab_dispatcher_drive_first,
-    brute_force_distance_minimizing_dispatcher,
+    brute_force_time_minimizing_dispatcher,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
@@ -112,7 +112,7 @@ transportation_requests = list(it.islice(rg, 100))
 fs = SlowSimpleFleetState(
     initial_stoplists=initial_stoplists,
     space=space,
-    dispatcher=brute_force_distance_minimizing_dispatcher,
+    dispatcher=brute_force_time_minimizing_dispatcher,
     seat_capacities=8,
 )
 # -

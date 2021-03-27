@@ -9,24 +9,24 @@ from thesimulator.data_structures_cython.cdata_structures cimport InsertionResul
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
 from thesimulator.util.dispatchers_cython.cdispatchers cimport \
-    brute_force_distance_minimizing_dispatcher as c_brute_force_distance_minimizing_dispatcher
+    brute_force_time_minimizing_dispatcher as c_brute_force_time_minimizing_dispatcher
 
 # Just like we did in data_structures_cython.Stop, we would have liked to have an union holding
-# InsertionResult[R2loc] and InsertionResult[int] inside brute_force_distance_minimizing_dispatcher. However,
+# InsertionResult[R2loc] and InsertionResult[int] inside brute_force_time_minimizing_dispatcher. However,
 # that is nontrivial because any non-POD union member needs to have explicitly defined constructor and copy constructor
 # (https://en.wikipedia.org/wiki/C%2B%2B11#Unrestricted_unions). Hence, the following union does *not* work, and we
-# need to store two InsertionResult objects (one for each type) inside brute_force_distance_minimizing_dispatcher
+# need to store two InsertionResult objects (one for each type) inside brute_force_time_minimizing_dispatcher
 #cdef union _UInsertionResult:
 #     InsertionResult[R2loc] insertion_result_r2loc
 #     InsertionResult[int] insertion_result_int
 
 # This cpdef is crucial, otherwise we can't use this function from both python  and cython
-cpdef brute_force_distance_minimizing_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
+cpdef brute_force_time_minimizing_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
                                                TransportSpace space, int seat_capacity):
     cdef InsertionResult[R2loc] insertion_result_r2loc
     cdef InsertionResult[int] insertion_result_int
     if cy_request.loc_type == LocType.R2LOC:
-        insertion_result_r2loc = c_brute_force_distance_minimizing_dispatcher[R2loc](
+        insertion_result_r2loc = c_brute_force_time_minimizing_dispatcher[R2loc](
             dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](cy_request._ureq._req_r2loc),
             stoplist.ustoplist._stoplist_r2loc,
             dereference(space.u_space.space_r2loc_ptr), seat_capacity
@@ -35,7 +35,7 @@ cpdef brute_force_distance_minimizing_dispatcher(TransportationRequest cy_reques
                (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
                 insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
     elif cy_request.loc_type == LocType.INT:
-        insertion_result_int = c_brute_force_distance_minimizing_dispatcher[int](
+        insertion_result_int = c_brute_force_time_minimizing_dispatcher[int](
             dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
             stoplist.ustoplist._stoplist_int,
             dereference(space.u_space.space_int_ptr), seat_capacity

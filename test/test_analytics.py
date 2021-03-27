@@ -18,7 +18,7 @@ from thesimulator.data_structures_cython import (
 )
 from thesimulator.util.spaces_cython import Euclidean2D as cyEuclidean2D
 from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
+from thesimulator.util.dispatchers import brute_force_time_minimizing_dispatcher
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
@@ -331,7 +331,7 @@ def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
         initial_stoplists=initial_stoplists,
         seat_capacities=[10] * (len(initial_stoplists)),
         space=space,
-        dispatcher=brute_force_distance_minimizing_dispatcher,
+        dispatcher=brute_force_time_minimizing_dispatcher,
     )
 
     events = list(fs.simulate(transportation_requests))
