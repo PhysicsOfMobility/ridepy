@@ -229,37 +229,48 @@ def test_sanity_in_graph(initial_stoplists):
     Or more simply, assert that the vehicle moves at either the space's velocity or 0.
     """
 
-    space = cyspaces.Graph.from_nx(make_nx_grid())
+    for velocity in [0.9, 1, 1.1]:
+        space = cyspaces.Graph.from_nx(make_nx_grid(), velocity=velocity)
 
-    rg = RandomRequestGenerator(
-        rate=10,
-        space=space,
-        max_pickup_delay=0,
-        max_delivery_delay_abs=0,
-        request_class=cyds.TransportationRequest,
-    )
+        rg = RandomRequestGenerator(
+            rate=10,
+            space=space,
+            max_pickup_delay=0,
+            max_delivery_delay_abs=0,
+            request_class=cyds.TransportationRequest,
+        )
 
-    transportation_requests = list(it.islice(rg, 1000))
+        transportation_requests = list(it.islice(rg, 1000))
 
-    fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[10] * len(initial_stoplists),
-        space=space,
-        dispatcher=cy_brute_force_distance_minimizing_dispatcher,
-        vehicle_state_class=cy_VehicleState,
-    )
+        fs = SlowSimpleFleetState(
+            initial_stoplists=initial_stoplists,
+            seat_capacities=[10] * len(initial_stoplists),
+            space=space,
+            dispatcher=cy_brute_force_distance_minimizing_dispatcher,
+            vehicle_state_class=cy_VehicleState,
+        )
 
-    events = list(fs.simulate(transportation_requests))
+        events = list(fs.simulate(transportation_requests))
 
-    rejections = set(
-        ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
-    )
-    delivery_times = {
-        ev.request_id: ev.timestamp
-        for ev in events
-        if isinstance(ev, pyds.DeliveryEvent)
-    }
+        rejections = set(
+            ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
+        )
+        pickup_times = {
+            ev.request_id: ev.timestamp
+            for ev in events
+            if isinstance(ev, pyds.PickupEvent)
+        }
+        delivery_times = {
+            ev.request_id: ev.timestamp
+            for ev in events
+            if isinstance(ev, pyds.DeliveryEvent)
+        }
 
-    for req in transportation_requests:
-        if req.request_id not in rejections:
-            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])
+        for req in transportation_requests:
+
+            if (rid := req.request_id) not in rejections:
+                assert isclose(req.delivery_timewindow_max, delivery_times[rid])
+                assert isclose(
+                    delivery_times[rid] - pickup_times[rid],
+                    space.t(req.origin, req.destination),
+                )
