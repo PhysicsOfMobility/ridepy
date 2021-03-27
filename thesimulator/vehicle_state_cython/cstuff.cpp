@@ -52,7 +52,7 @@ int main()
     auto request_ptr = make_shared<TransportationRequest<R2loc>>(42, 1, req_origin, req_dest, 0, INFINITY, 0, INFINITY);
 
     auto start = std::chrono::system_clock::now();
-    auto x = brute_force_distance_minimizing_dispatcher(request_ptr, stoplist, space);
+    auto x = brute_force_time_minimizing_dispatcher(request_ptr, stoplist, space);
     auto end = std::chrono::system_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;

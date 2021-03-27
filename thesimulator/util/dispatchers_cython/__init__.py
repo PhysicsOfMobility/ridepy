@@ -1,1 +1,1 @@
-from .dispatchers import brute_force_distance_minimizing_dispatcher
+from .dispatchers import brute_force_total_traveltime_minimizing_dispatcher

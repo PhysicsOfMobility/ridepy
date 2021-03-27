@@ -17,7 +17,7 @@ from thesimulator.data_structures_cython import (
 
 from thesimulator.util.spaces_cython import Euclidean2D, Manhattan2D
 from thesimulator.util.dispatchers_cython import (
-    brute_force_distance_minimizing_dispatcher,
+    brute_force_total_traveltime_minimizing_dispatcher,
 )
 
 from random import randint
@@ -67,7 +67,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         initial_stoplist=stoplist,
         space=space,
         loc_type=LocType.R2LOC,
-        dispatcher=brute_force_distance_minimizing_dispatcher,
+        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
         seat_capacity=1000,
     )
     request = TransportationRequest(

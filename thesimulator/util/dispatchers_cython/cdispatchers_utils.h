@@ -27,16 +27,16 @@ namespace cstuff {
     );
 
     template<typename Loc>
-    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double distance_from_stop_before);
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before);
 
     template<typename Loc>
-    double distance_to_stop_after_insertion(
+    double time_to_stop_after_insertion(
             const std::vector<Stop<Loc>> &stoplist, const Loc location, int index,
             TransportSpace<Loc> &space
     );
 
     template<typename Loc>
-    double distance_from_current_stop_to_next(
+    double time_from_current_stop_to_next(
             const std::vector<Stop<Loc>> &stoplist, int i, TransportSpace<Loc> &space
     );
 
@@ -64,7 +64,7 @@ namespace cstuff {
         std::vector<Stop<Loc>> new_stoplist{stoplist}; // TODO: NEED TO copy?
         // Handle the pickup
         auto &stop_before_pickup = new_stoplist[pickup_idx];
-        auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.d(
+        auto cpat_at_pu = stop_before_pickup.estimated_departure_time() + space.t(
                 stop_before_pickup.location, request->origin
         );
         Stop<Loc> pickup_stop(request->origin, request, StopAction::pickup, cpat_at_pu,
@@ -83,7 +83,7 @@ namespace cstuff {
         // Handle the dropoff
         dropoff_idx += 1;
         auto &stop_before_dropoff = new_stoplist[dropoff_idx];
-        auto cpat_at_do = stop_before_dropoff.estimated_departure_time() + space.d(
+        auto cpat_at_do = stop_before_dropoff.estimated_departure_time() + space.t(
                 stop_before_dropoff.location, request->destination
         );
         Stop<Loc> dropoff_stop(
@@ -118,16 +118,16 @@ namespace cstuff {
         auto &stop_before_insertion = stoplist[idx];
         // Stop later_stop
         // cdef double departure_previous_stop, cpat_next_stop,  delta_cpat_next_stop, old_departure, new_departure
-        double distance_to_new_stop = space.d(stop_before_insertion.location, stop.location);
+        double time_to_new_stop = space.t(stop_before_insertion.location, stop.location);
         double cpat_new_stop = cpat_of_inserted_stop(
                 stop_before_insertion,
-                distance_to_new_stop
+                time_to_new_stop
         );
         stop.estimated_arrival_time = cpat_new_stop;
         if (idx < static_cast<int>(stoplist.size() - 1)) {
             // update cpats of later stops
             auto departure_previous_stop = stop.estimated_departure_time();
-            auto cpat_next_stop = departure_previous_stop + space.d(
+            auto cpat_next_stop = departure_previous_stop + space.t(
                     stop.location, stoplist[idx + 1].location
             );
             auto delta_cpat_next_stop = cpat_next_stop - stoplist[idx + 1].estimated_arrival_time;
@@ -145,32 +145,32 @@ namespace cstuff {
     }
 
     template<typename Loc>
-    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double distance_from_stop_before) {
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before) {
         /*
         Note: Assumes drive first strategy.
         Args:
             stop_before:
-            distance_from_stop_before:
+            time_from_stop_before:
 
         Returns:
 
         */
-        return stop_before.estimated_departure_time() + distance_from_stop_before;
+        return stop_before.estimated_departure_time() + time_from_stop_before;
     }
 
     template<typename Loc>
-    double distance_to_stop_after_insertion(
+    double time_to_stop_after_insertion(
             const std::vector<Stop<Loc>> &stoplist, const Loc location, int index,
             TransportSpace<Loc> &space
     ) {
         // note that index is *after which* the new stop will be inserted.
         // So index+1 is where the next stop is
-        if (index < static_cast<int>(stoplist.size() - 1)) return space.d(location, stoplist[index + 1].location);
+        if (index < static_cast<int>(stoplist.size() - 1)) return space.t(location, stoplist[index + 1].location);
         else return 0;
     }
 
     template<typename Loc>
-    double distance_from_current_stop_to_next(
+    double time_from_current_stop_to_next(
             const std::vector<Stop<Loc>> &stoplist, int i, TransportSpace<Loc> &space
     ) {
         if (i < static_cast<int>(stoplist.size() - 1)) return space.d(stoplist[i].location, stoplist[i + 1].location);

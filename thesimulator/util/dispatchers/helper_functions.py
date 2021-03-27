@@ -26,7 +26,7 @@ def insert_request_to_stoplist_drive_first(
 
     # Handle the pickup
     stop_before_pickup = new_stoplist[pickup_idx]
-    cpat_at_pu = stop_before_pickup.estimated_departure_time + space.d(
+    cpat_at_pu = stop_before_pickup.estimated_departure_time + space.t(
         stop_before_pickup.location, request.origin
     )
     pickup_stop = Stop(
@@ -50,7 +50,7 @@ def insert_request_to_stoplist_drive_first(
     # Handle the dropoff
     dropoff_idx += 1
     stop_before_dropoff = new_stoplist[dropoff_idx]
-    cpat_at_do = stop_before_dropoff.estimated_departure_time + space.d(
+    cpat_at_do = stop_before_dropoff.estimated_departure_time + space.t(
         stop_before_dropoff.location, request.destination
     )
     dropoff_stop = Stop(
@@ -87,7 +87,7 @@ def insert_stop_to_stoplist_drive_first(
     stop_before_insertion = stoplist[idx]
     stop.estimated_arrival_time = cpat_of_inserted_stop(
         stop_before=stop_before_insertion,
-        distance_from_stop_before=space.d(
+        time_from_stop_before=space.t(
             stop_before_insertion.location, stop.location
         ),
     )
@@ -96,7 +96,7 @@ def insert_stop_to_stoplist_drive_first(
         # update CPATs of later stops
         delta_CPAT_next_stop = (
             stop.estimated_departure_time
-            + space.d(stop.location, stoplist[idx + 1].location)
+            + space.t(stop.location, stoplist[idx + 1].location)
             - stoplist[idx + 1].estimated_arrival_time
         )
 
@@ -111,40 +111,40 @@ def insert_stop_to_stoplist_drive_first(
     stoplist.insert(idx + 1, stop)
 
 
-def cpat_of_inserted_stop(stop_before: Stop, distance_from_stop_before: float) -> float:
+def cpat_of_inserted_stop(stop_before: Stop, time_from_stop_before: float) -> float:
     """
     Computes the cpat of the inserted stop, assuming drive first strategy.
     """
-    return stop_before.estimated_departure_time + distance_from_stop_before
+    return stop_before.estimated_departure_time + time_from_stop_before
 
 
-def distance_to_stop_after_insertion(
+def time_to_stop_after_insertion(
     stoplist: Stoplist, location, index: int, space: TransportSpace
 ) -> float:
     """
-    If a stop with `location` will have been inserted at `index`, computes the distance
+    If a stop with `location` will have been inserted at `index`, computes the time
     from `location` to the stop after the insertion.
 
     Note: If the insertion is at the end of the stoplist, returns 0. Insertion at idx means after the idx'th stop.
     """
 
     return (
-        space.d(location, stoplist[index + 1].location)
+        space.t(location, stoplist[index + 1].location)
         if index < len(stoplist) - 1
         else 0
     )
 
 
-def distance_from_current_stop_to_next(
+def time_from_current_stop_to_next(
     stoplist: Stoplist, i: int, space: TransportSpace
 ) -> float:
     """
-    Returns the distance from the i'th stop in `stoplist` to the next stop.
+    Returns the time from the i'th stop in `stoplist` to the next stop.
 
     Note: If the insertion is at the end of the stoplist, returns 0
     """
     return (
-        space.d(stoplist[i].location, stoplist[i + 1].location)
+        space.t(stoplist[i].location, stoplist[i + 1].location)
         if i < len(stoplist) - 1
         else 0
     )

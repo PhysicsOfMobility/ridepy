@@ -21,7 +21,7 @@ from thesimulator.data_structures_cython.data_structures import StopAction  as p
 from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
 
 from thesimulator.util.dispatchers_cython.dispatchers cimport (
-    brute_force_distance_minimizing_dispatcher as c_disp,
+    brute_force_total_traveltime_minimizing_dispatcher as c_disp,
 )
 from typing import Optional, SupportsFloat, List
 from copy import deepcopy

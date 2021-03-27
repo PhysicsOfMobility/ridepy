@@ -18,10 +18,10 @@ from thesimulator.util.spaces_cython import spaces as cyspaces
 from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.dispatchers import (
-    brute_force_distance_minimizing_dispatcher as py_brute_force_distance_minimizing_dispatcher,
+    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from thesimulator.util.dispatchers_cython import (
-    brute_force_distance_minimizing_dispatcher as cy_brute_force_distance_minimizing_dispatcher,
+    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from thesimulator.vehicle_state import VehicleState as py_VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
@@ -83,7 +83,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
-    pythonic_solution = py_brute_force_distance_minimizing_dispatcher(
+    pythonic_solution = py_brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, pyspaces.Euclidean2D(), seat_capacity
     )
     py_min_cost, _, py_timewindows = pythonic_solution
@@ -104,7 +104,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
         delivery_timewindow_max=inf,
     )
 
-    # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_distance_minimizing_dispatcher
+    # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_total_traveltime_minimizing_dispatcher
     stoplist = cyStoplist(
         stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
         loc_type=LocType.R2LOC,
@@ -112,7 +112,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = cy_brute_force_distance_minimizing_dispatcher(
+    cythonic_solution = cy_brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, cyspaces.Euclidean2D(1), seat_capacity
     )
     cy_min_cost, _, cy_timewindows = cythonic_solution
@@ -165,7 +165,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             initial_stoplists={7: sl},
             seat_capacities=[10],
             space=py_space,
-            dispatcher=py_brute_force_distance_minimizing_dispatcher,
+            dispatcher=py_brute_force_total_traveltime_minimizing_dispatcher,
             vehicle_state_class=py_VehicleState,
         )
         rg = RandomRequestGenerator(
@@ -195,7 +195,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             initial_stoplists={7: sl},
             seat_capacities=[10],
             space=cy_space,
-            dispatcher=cy_brute_force_distance_minimizing_dispatcher,
+            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(
@@ -229,37 +229,48 @@ def test_sanity_in_graph(initial_stoplists):
     Or more simply, assert that the vehicle moves at either the space's velocity or 0.
     """
 
-    space = cyspaces.Graph.from_nx(make_nx_grid())
+    for velocity in [0.9, 1, 1.1]:
+        space = cyspaces.Graph.from_nx(make_nx_grid(), velocity=velocity)
 
-    rg = RandomRequestGenerator(
-        rate=10,
-        space=space,
-        max_pickup_delay=0,
-        max_delivery_delay_abs=0,
-        request_class=cyds.TransportationRequest,
-    )
+        rg = RandomRequestGenerator(
+            rate=10,
+            space=space,
+            max_pickup_delay=0,
+            max_delivery_delay_abs=0,
+            request_class=cyds.TransportationRequest,
+        )
 
-    transportation_requests = list(it.islice(rg, 1000))
+        transportation_requests = list(it.islice(rg, 1000))
 
-    fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[10] * len(initial_stoplists),
-        space=space,
-        dispatcher=cy_brute_force_distance_minimizing_dispatcher,
-        vehicle_state_class=cy_VehicleState,
-    )
+        fs = SlowSimpleFleetState(
+            initial_stoplists=initial_stoplists,
+            seat_capacities=[10] * len(initial_stoplists),
+            space=space,
+            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
+            vehicle_state_class=cy_VehicleState,
+        )
 
-    events = list(fs.simulate(transportation_requests))
+        events = list(fs.simulate(transportation_requests))
 
-    rejections = set(
-        ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
-    )
-    delivery_times = {
-        ev.request_id: ev.timestamp
-        for ev in events
-        if isinstance(ev, pyds.DeliveryEvent)
-    }
+        rejections = set(
+            ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
+        )
+        pickup_times = {
+            ev.request_id: ev.timestamp
+            for ev in events
+            if isinstance(ev, pyds.PickupEvent)
+        }
+        delivery_times = {
+            ev.request_id: ev.timestamp
+            for ev in events
+            if isinstance(ev, pyds.DeliveryEvent)
+        }
 
-    for req in transportation_requests:
-        if req.request_id not in rejections:
-            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])
+        for req in transportation_requests:
+
+            if (rid := req.request_id) not in rejections:
+                assert isclose(req.delivery_timewindow_max, delivery_times[rid])
+                assert isclose(
+                    delivery_times[rid] - pickup_times[rid],
+                    space.t(req.origin, req.destination),
+                )
