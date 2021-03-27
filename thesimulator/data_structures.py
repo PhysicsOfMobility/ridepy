@@ -1,7 +1,7 @@
 from numpy import inf
 from abc import ABC, abstractmethod
-from enum import Enum, auto
-from dataclasses import dataclass, asdict
+from enum import Enum
+from dataclasses import dataclass
 from typing import Any, Optional, Union, Tuple, List, Callable
 
 ID = Union[str, int]
@@ -88,84 +88,6 @@ class Stop:
             self.estimated_arrival_time,
             self.time_window_min if self.time_window_min else 0,
         )
-
-
-@dataclass
-class Event:
-    """
-    The base event class. Must hold a timestamp.
-    """
-
-    timestamp: float
-
-@dataclass
-class RequestAcceptanceEvent(Event):
-    """
-    Commitment of the system to fulfil a request given
-    the returned spatio-temporal constraints.
-    """
-
-    request_id: ID
-    origin: Any
-    destination: Any
-    pickup_timewindow_min: float
-    pickup_timewindow_max: float
-    delivery_timewindow_min: float
-    delivery_timewindow_max: float
-
-
-@dataclass
-class RequestAssignEvent(Event):
-    """
-    Commitment of the system to fulfil a request given
-    the returned spatio-temporal constraints.
-    """
-
-    request_id: ID
-    origin: Any
-    destination: Any
-    pickup_timewindow_min: float
-    pickup_timewindow_max: float
-    delivery_timewindow_min: float
-    delivery_timewindow_max: float
-
-
-@dataclass
-class RequestRejectionEvent(Event):
-    """
-    Inability of the system to fulfil a request.
-    """
-
-    request_id: ID
-
-
-@dataclass
-class PickupEvent(Event):
-    """
-    Successful pick-up action
-    """
-
-    request_id: ID
-    vehicle_id: ID
-
-
-@dataclass
-class DeliveryEvent(Event):
-    """
-    Successful drop-off action
-    """
-
-    request_id: ID
-    vehicle_id: ID
-
-
-@dataclass
-class InternalStopEvent(Event):
-    """
-    Successful internal action
-    """
-
-    vehicle_id: ID
 
 
 class TransportSpace(ABC):
@@ -274,22 +196,11 @@ class TransportSpace(ABC):
         ...
 
 
-RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[
-    RequestAcceptanceEvent,
-    RequestRejectionEvent,
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
-    RequestAssignEvent,
-]
 Stoplist = List[Stop]
 SingleVehicleSolution = Tuple[
     float, Optional[Stoplist], Tuple[float, float, float, float]
 ]
 """vehicle_id, cost, new_stop_list"""
-RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
 Dispatcher = Callable[
     [
         TransportationRequest,

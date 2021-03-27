@@ -6,17 +6,14 @@ from .data_structures import (
     Request,
     Stoplist,
     SingleVehicleSolution,
-    StopEvent,
     StopAction,
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
     Stop,
     TransportationRequest,
     TransportSpace,
     Dispatcher,
     LocType,
 )
+from .events import PickupEvent, DeliveryEvent, InternalStopEvent, StopEvent
 
 from thesimulator.util import MAX_SEAT_CAPACITY
 

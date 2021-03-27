@@ -17,17 +17,13 @@ logger = logging.getLogger(__name__)
 from .data_structures import (
     Stoplist,
     Request,
-    Event,
-    RequestRejectionEvent,
-    RequestAcceptanceEvent,
-    RequestEvent,
-    StopEvent,
     TransportationRequest as pyTransportationRequest,
     InternalRequest as pyInternalRequest,
     TransportSpace,
     SingleVehicleSolution,
     Dispatcher,
 )
+from .events import Event, RequestAcceptanceEvent, RequestRejectionEvent, RequestEvent, StopEvent
 from .data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
     InternalRequest as cyInternalRequest,

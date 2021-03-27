@@ -8,11 +8,8 @@ from numpy import nan, inf
 
 from thesimulator.data_structures import (
     TransportationRequest,
-    RequestAcceptanceEvent,
-    PickupEvent,
-    DeliveryEvent,
-    RequestRejectionEvent,
 )
+from thesimulator.events import RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent
 from thesimulator.data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
 )

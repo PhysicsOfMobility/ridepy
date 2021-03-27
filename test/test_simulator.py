@@ -9,10 +9,9 @@ from tabulate import tabulate
 
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.data_structures import (
-    PickupEvent,
-    DeliveryEvent,
     TransportationRequest,
 )
+from thesimulator.events import PickupEvent, DeliveryEvent
 from thesimulator.util.dispatchers import (
     taxicab_dispatcher_drive_first,
     brute_force_total_traveltime_minimizing_dispatcher,
