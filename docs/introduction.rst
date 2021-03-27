@@ -143,12 +143,3 @@ primarily three implications:
    remaining `time_to_dest = next_stop.estimated_arrival_time - current_time`.
 
 
-.. toctree::
-   :maxdepth: 5
-   :caption: Contents:
-
-   fleet_state
-   vehicle_state
-   data_structures
-   utils
-   cythonic_stuff
