@@ -235,35 +235,46 @@ def test_sanity_in_graph(initial_stoplists):
     Or more simply, assert that the vehicle moves at either the space's velocity or 0.
     """
 
-    space = Graph.from_nx(make_nx_grid())
+    for velocity in [0.9, 1, 1.1]:
+        space = Graph.from_nx(make_nx_grid(), velocity=velocity)
 
-    rg = RandomRequestGenerator(
-        rate=10,
-        space=space,
-        max_delivery_delay_abs=0,
-    )
+        rg = RandomRequestGenerator(
+            rate=10,
+            space=space,
+            max_delivery_delay_abs=0,
+        )
 
-    transportation_requests = list(it.islice(rg, 1000))
+        transportation_requests = list(it.islice(rg, 1000))
 
-    fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[10] * len(initial_stoplists),
-        space=space,
-        dispatcher=brute_force_distance_minimizing_dispatcher,
-    )
+        fs = SlowSimpleFleetState(
+            initial_stoplists=initial_stoplists,
+            seat_capacities=[10] * len(initial_stoplists),
+            space=space,
+            dispatcher=brute_force_distance_minimizing_dispatcher,
+        )
 
-    events = list(fs.simulate(transportation_requests))
+        events = list(fs.simulate(transportation_requests))
 
-    rejections = set(
-        ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
-    )
-    delivery_times = {
-        ev.request_id: ev.timestamp for ev in events if isinstance(ev, DeliveryEvent)
-    }
+        rejections = set(
+            ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
+        )
+        pickup_times = {
+            ev.request_id: ev.timestamp for ev in events if isinstance(ev, PickupEvent)
+        }
+        delivery_times = {
+            ev.request_id: ev.timestamp
+            for ev in events
+            if isinstance(ev, DeliveryEvent)
+        }
 
-    for req in transportation_requests:
-        if req.request_id not in rejections:
-            assert isclose(req.delivery_timewindow_max, delivery_times[req.request_id])
+        assert len(transportation_requests) > len(rejections)
+        for req in transportation_requests:
+            if (rid := req.request_id) not in rejections:
+                assert isclose(req.delivery_timewindow_max, delivery_times[rid])
+                assert isclose(
+                    delivery_times[rid] - pickup_times[rid],
+                    space.t(req.origin, req.destination),
+                )
 
 
 if __name__ == "__main__":
