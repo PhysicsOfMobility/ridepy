@@ -21,6 +21,9 @@ Calling `.FleetState.simulate()` then executes the simulation, which outputs a
 sequence of `Event` objects (add link here), from which the user can compute various metrics,
 optionally using the `.util.analytics` module. 
 
+
+.. _desc_stoplist:
+
 The stoplist
 ------------
 `FleetState` contains a dictionary `.fleet`, which maps a ``vehicle_id`` to a
@@ -39,6 +42,8 @@ Therefore, a `Stoplist` contains all the information on where the vehicle will
 go and what it will do in future (if the stoplist does not change in the
 meantime).
 
+
+.. _desc_cpestop:
 
 The CPE Stop
 ~~~~~~~~~~~~
@@ -76,6 +81,7 @@ When the simulation is run,
 4. The previous steps are repeated until either the request iterator is
    exhausted or a time cutoff is reached.
 
+.. _desc_dispatcher:
 
 The dispatcher
 --------------
@@ -115,6 +121,9 @@ valid state, as the one with minimal cost substitutes the original one for the
 respective vehicle. Constraints are not checked again elsewhere. This
 incorporates in particular estimated arrival times which are constrained by the
 travel time on the transport space.
+
+
+.. _desc_space:
 
 The Transport Space
 -------------------

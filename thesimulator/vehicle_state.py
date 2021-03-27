@@ -55,8 +55,13 @@ class VehicleState:
             id of the vehicle to be created.
         initial_stoplist
             stoplist to start out with, MUST contain CPE as first element.
+        seat_capacity
+            the maximum number of `.TransportationRequest` s
+             that can be in a vehicle at the same time.
         space
-            Transport space the vehicle is operating in.
+        loc_type
+        dispatcher
+            see the docstring of `.FleetState`.
         """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing

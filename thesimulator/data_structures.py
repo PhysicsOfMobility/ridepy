@@ -201,12 +201,14 @@ Stoplist = List[Stop]
 SingleVehicleSolution = Tuple[
     float, Optional[Stoplist], Tuple[float, float, float, float]
 ]
-"""vehicle_id, cost, new_stop_list"""
+"""cost, new_stoplist, (pickup_timewindow_min, pickup_timewindow_max, delivery_timewindow_min, 
+delivery_timewindow_max) """
+
 Dispatcher = Callable[
     [
         TransportationRequest,
         Stoplist,
         TransportSpace,
     ],
-    Tuple[float, Stoplist, Tuple[float, float, float, float]],
+    SingleVehicleSolution
 ]
