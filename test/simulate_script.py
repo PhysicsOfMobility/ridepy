@@ -16,7 +16,7 @@ from thesimulator.data_structures_cython import (
 from thesimulator.fleet_state import SlowSimpleFleetState
 from thesimulator.vehicle_state_cython import VehicleState
 from thesimulator.util.dispatchers_cython import (
-    brute_force_time_minimizing_dispatcher,
+    brute_force_total_traveltime_minimizing_dispatcher,
 )
 from thesimulator.util.spaces_cython import Euclidean2D
 from thesimulator.util.request_generators import RandomRequestGenerator
@@ -64,7 +64,7 @@ def simulate_on_r2(
         initial_stoplists=initial_stoplists,
         space=Euclidean2D(),
         seat_capacities=seat_capacities,
-        dispatcher=brute_force_time_minimizing_dispatcher,
+        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
         vehicle_state_class=VehicleState,
     )
 

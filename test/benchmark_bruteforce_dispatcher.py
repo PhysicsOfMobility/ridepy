@@ -11,7 +11,7 @@ from thesimulator.data_structures import (
     TransportationRequest,
 )
 from thesimulator.util.spaces import Euclidean2D
-from thesimulator.util.dispatchers import brute_force_time_minimizing_dispatcher
+from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
 from thesimulator.util.testing_utils import stoplist_from_properties
 
 import logging
@@ -46,7 +46,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_max=inf,
     )
     tick = time()
-    brute_force_time_minimizing_dispatcher(
+    brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     tock = time()

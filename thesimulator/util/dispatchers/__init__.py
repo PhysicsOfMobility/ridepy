@@ -93,7 +93,7 @@ def taxicab_dispatcher_drive_first(
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
 
 
-def brute_force_time_minimizing_dispatcher(
+def brute_force_total_traveltime_minimizing_dispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,

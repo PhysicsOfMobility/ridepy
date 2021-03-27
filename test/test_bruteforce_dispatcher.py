@@ -15,7 +15,7 @@ from thesimulator.data_structures import (
     DeliveryEvent,
 )
 from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.dispatchers import brute_force_time_minimizing_dispatcher
+from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
 from thesimulator.util.testing_utils import stoplist_from_properties
 from thesimulator.util.convenience.spaces import make_nx_grid
 from thesimulator.util.request_generators import RandomRequestGenerator
@@ -46,7 +46,7 @@ def test_append_to_empty_stoplist():
         time_window_max=inf,
     )
     stoplist = [cpestop]
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
@@ -74,7 +74,7 @@ def test_append_due_to_timewindow():
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
@@ -104,7 +104,7 @@ def test_inserted_at_the_middle():
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -135,7 +135,7 @@ def test_inserted_separately():
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -174,7 +174,7 @@ def test_not_inserted_separately_dueto_capacity_constraint():
     for s, cap in zip(stoplist, [0, 1, 0, 1]):
         s.occupancy_after_servicing = cap
 
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=1
     )
     assert new_stoplist[1].location == request.origin
@@ -186,7 +186,7 @@ def test_not_inserted_separately_dueto_capacity_constraint():
     for s, cap in zip(stoplist, [1, 1, 1, 0]):
         s.occupancy_after_servicing = cap
 
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=1
     )
     assert new_stoplist[4].location == request.origin
@@ -215,7 +215,7 @@ def test_stoplist_not_modified_inplace():
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    min_cost, new_stoplist, *_ = brute_force_time_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -250,7 +250,7 @@ def test_sanity_in_graph(initial_stoplists):
             initial_stoplists=initial_stoplists,
             seat_capacities=[10] * len(initial_stoplists),
             space=space,
-            dispatcher=brute_force_time_minimizing_dispatcher,
+            dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
         )
 
         events = list(fs.simulate(transportation_requests))

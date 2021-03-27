@@ -13,7 +13,7 @@
 using namespace std;
 namespace cstuff {
     template<typename Loc>
-    InsertionResult<Loc> brute_force_time_minimizing_dispatcher(
+    InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
             std::shared_ptr<TransportationRequest<Loc>> request,
             vector<Stop<Loc>> &stoplist,
             TransportSpace<Loc> &space,
