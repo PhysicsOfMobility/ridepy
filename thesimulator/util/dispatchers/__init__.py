@@ -109,6 +109,8 @@ def brute_force_total_traveltime_minimizing_dispatcher(
 
     See the dispatcher interface in :ref:`desc_dispatcher` for details.
 
+    See the dispatcher interface in :ref:`desc_dispatcher` for details.
+
     Parameters
     ----------
     request
