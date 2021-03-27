@@ -50,7 +50,7 @@ from thesimulator.data_structures_cython import (
     LocType,
 )
 from thesimulator.util.dispatchers_cython import (
-    brute_force_distance_minimizing_dispatcher,
+    brute_force_time_minimizing_dispatcher,
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
@@ -118,7 +118,7 @@ transportation_requests = list(it.islice(rg, 100))
 fs = SlowSimpleFleetState(
     initial_stoplists=initial_stoplists,
     space=space,
-    dispatcher=brute_force_distance_minimizing_dispatcher,
+    dispatcher=brute_force_time_minimizing_dispatcher,
     seat_capacities=8,
     vehicle_state_class=VehicleState,
 )
