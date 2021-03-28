@@ -12,45 +12,40 @@ algorithms and new transport spaces.
 
 The setting
 -----------
-theSimulator does *not* do agent-based simulations. Rather, it starts with a set
-of *transportation requests* (denoting the desire of an individual to be
-transported from A to B within specified time windows), and a *dispatcher* (an
-an algorithm that determines which vehicle should service which requests and in which
-order). Then it simply simulates these requests arriving in the system, being
-picked up and delivered. Requests that cannot be delivered within the specified
-time windows are *rejected*. 
+theSimulator does *not* do agent-based simulations. Rather, it starts with a set of
+*transportation requests* (denoting the desire of an individual to be transported from A
+to B within specified time windows), and a *dispatcher* (an algorithm that determines
+which vehicle should service which requests and in which order). Then it simply
+simulates these requests arriving in the system, being picked up and delivered. Requests
+that cannot be delivered within the specified time windows are *rejected*. 
 
-theSimulator makes it easy to experiment with
-different dispatching algorithms, spatiotemporal request densities, fleet sizes
-and transport spaces (2-D plane, different graphs). It comes with an `analytics`
-module that computes from the simulation output various metrics like the
-statistical distributions of occupancies, waiting times and detours.
+theSimulator makes it easy to experiment with different dispatching algorithms,
+spatiotemporal request densities, fleet sizes and transport spaces (2-D plane, different
+graphs). It comes with an `analytics` module that computes from the simulation output
+various metrics like the statistical distributions of occupancies, waiting times and
+detours.
 
-Since the ability to simulate to simulate many *requests* and many *vehicles*
-are important for any quantitative study, we include two powerful ways of
-speeding up the simulation:
+Since the ability to simulate many *requests* and many *vehicles* is important for any
+quantitative study, we include two powerful ways of speeding up the simulation:
 
 Using parallelism:
-   The dispatcher interface prescribes computing a *cost* for
-   serving a request with a certain vehicle. Then the vehicle with the minimum cost
-   is chosen. Since this is an "embarassingly paralizable" operation, theSimulator
-   provides two parallel ways of computing it, out of the box:
+   The dispatcher interface prescribes computing a *cost* for serving a request with a
+   certain vehicle. Then the vehicle with the minimum cost is chosen. Since this is an
+   "embarassingly parallelizable" operation, theSimulator provides two parallel ways of
+   computing it, out of the box:
 
    - ``multiprocessing``,
    - ``OpenMPI``.
 
 Using `cython <https://cython.readthedocs.io/en/latest/>`_:
-   We provide, out of
-   the box, the ability to choose either pure pythonic or cythonic data structures
-   and algorithms for running the simulations. See :ref:`using_cython` for
-   details.
+   We provide, out of the box, the ability to choose either pure pythonic or cythonic
+   data structures and algorithms for running the simulations. This way, dispatchers can
+   be defined in the C++ language. See :ref:`using_cython` for details.
 
 
 Quickstart
 ----------
 Here we will demonstrate how to run a simple simulation.
-
-
 
 Generate requests
 ^^^^^^^^^^^^^^^^^
@@ -128,10 +123,10 @@ own.
 
 Now, simulate
 ^^^^^^^^^^^^^
-By calling the :meth:`FleetState.simulate <fleet_state.FleetState.simulate>` method.
-The output of the simulation run is an :any:`Iterator
-<python:collections.abc.Iterator>` of ``Event``'s, describing when which
-``TransportationRequest`` was picked up and delivered.
+...by calling the :meth:`FleetState.simulate <fleet_state.FleetState.simulate>` method.
+The output of the simulation run is an :any:`Iterator <python:collections.abc.Iterator>`
+of ``Event`` objects, describing when which ``TransportationRequest`` was picked up and
+delivered.
 
 .. code-block:: python
 
@@ -173,9 +168,10 @@ Running theSimulator in a multi-node OpenMPI cluster is as simple as replacing
 
 Using cythonized data structures and algorithms
 -----------------------------------------------
-The simulation we saw can be sped up considerably by using a cythonized version
-of the dispatcher. We will also need to use cythonized versions of
-``TransportationRequest``, ``Stop``, ``VehicleState`` and a ``TransportSpace``:
+The simulation we saw can be sped up considerably by using a cythonized version of the
+dispatcher, with the core logic implemented in C++. We will also need to use cythonized
+versions of ``TransportationRequest``, ``Stop``, ``VehicleState`` and a
+``TransportSpace``:
 
 
 .. code-block:: python
