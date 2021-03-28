@@ -13,7 +13,7 @@ Instructions
 Prerequisites
 ~~~~~~~~~~~~~
 
--  Python 3.8
+-  Python 3.9
 -  git
 
 You should probably use an environment. For example, using
@@ -21,7 +21,7 @@ You should probably use an environment. For example, using
 
 .. code:: sh
 
-   conda create -n the_simulator python=3.8
+   conda create -n the_simulator python=3.9
    conda activate the_simulator
 
 Installation
@@ -41,7 +41,7 @@ First Steps
 -  Start ``jupyter notebook`` or ``jupyter lab``
 -  Open one of the introductory notebooks in the ``notebooks``
    subdirectory, either just by clicking on it (``jupyter notebook``) or
-   right-clicking and chosing *Open With > Notebook* (``jupyter lab``).
+   right-clicking and choosing *Open With > Notebook* (``jupyter lab``).
 -  Run the notebook and play around :)
 
 Contributing
