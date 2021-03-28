@@ -11,7 +11,9 @@ from thesimulator.data_structures import (
     TransportationRequest,
 )
 from thesimulator.util.spaces import Euclidean2D
-from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher,
+)
 from thesimulator.util.testing_utils import stoplist_from_properties
 
 import logging

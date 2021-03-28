@@ -15,7 +15,9 @@ from thesimulator.data_structures import (
     DeliveryEvent,
 )
 from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher,
+)
 from thesimulator.util.testing_utils import stoplist_from_properties
 from thesimulator.util.convenience.spaces import make_nx_grid
 from thesimulator.util.request_generators import RandomRequestGenerator

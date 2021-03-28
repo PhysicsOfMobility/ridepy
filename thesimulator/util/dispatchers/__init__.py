@@ -141,9 +141,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             stoplist, request.destination, i, space
         )
 
-        original_pickup_edge_length = time_from_current_stop_to_next(
-            stoplist, i, space
-        )
+        original_pickup_edge_length = time_from_current_stop_to_next(stoplist, i, space)
         total_cost = (
             time_to_pickup
             + time_to_dropoff
@@ -174,9 +172,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             stoplist, i, cpat_at_next_stop
         ):
             continue
-        pickup_cost = (
-            time_to_pickup + time_from_pickup - original_pickup_edge_length
-        )
+        pickup_cost = time_to_pickup + time_from_pickup - original_pickup_edge_length
 
         for j, stop_before_dropoff in enumerate(stoplist[i + 1 :], start=i + 1):
             # Need to check for seat capacity constraints. Note the loop: the constraint was not violated after
@@ -186,9 +182,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
                 # Capacity is violated. We need to break off this loop because no insertion either here or at a later
                 # stop is permitted
                 break
-            time_to_dropoff = space.t(
-                stop_before_dropoff.location, request.destination
-            )
+            time_to_dropoff = space.t(stop_before_dropoff.location, request.destination)
             CPAT_do = cpat_of_inserted_stop(
                 stop_before_dropoff,
                 time_to_dropoff,
@@ -204,9 +198,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
                 stoplist, j, space
             )
             dropoff_cost = (
-                time_to_dropoff
-                + time_from_dropoff
-                - original_dropoff_edge_length
+                time_to_dropoff + time_from_dropoff - original_dropoff_edge_length
             )
             total_cost = pickup_cost + dropoff_cost
 
@@ -215,8 +207,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             else:
                 # cost has decreased. check for constraint violations at later stops
                 cpat_at_next_stop = (
-                    max(CPAT_do, request.delivery_timewindow_min)
-                    + time_from_dropoff
+                    max(CPAT_do, request.delivery_timewindow_min) + time_from_dropoff
                 )
                 if not is_timewindow_violated_or_violation_worsened_due_to_insertion(
                     stoplist, j, cpat_at_next_stop
