@@ -4,3 +4,5 @@ pdbpp
 pre-commit
 hypothesis
 pytest
+pytest-cov
+coverage-badge
