@@ -1,8 +1,8 @@
 The cythonic components
 =======================
-The module structure of the cythonic components mimic exactly that of their
-pythonic counterparts, so that in most cases an user wishing to switch to a
-cythnic components can just change their import statements from 
+The module structure of the cythonic components mimics exactly that of their pythonic
+counterparts, so that in most cases a user wishing to switch to cythonic components can
+just change their import statements from 
 
 .. code-block:: python
 
