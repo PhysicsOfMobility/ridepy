@@ -16,28 +16,27 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
+
     - name: Install system dependencies using apt
       run: |
         sudo apt-get update && sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev
 
-
     - name: Install Dependencies
       # Somehow the tests fail if we do python setup.py install
       run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
-
 
     - name: Test with pytest
       run: |
         pytest -vvv --junitxml=test-junit-reports/result.xml --cov=thesimulator test
 
     - name: Generate coverage badge
-      run: coverage-badge -fo .coverage.svg
+      run: coverage-badge -fo ${{ github.workspace }}/.coverage.svg
 
     - name: Upload coverage badge
       uses: actions/upload-artifact@v2
       with:
         name: coverage-badge
-        path: .coverage.svg
+        path: ${{ github.workspace }}/.coverage.svg
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1.9
