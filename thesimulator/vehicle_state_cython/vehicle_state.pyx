@@ -2,12 +2,9 @@
 
 from thesimulator.util import MAX_SEAT_CAPACITY
 
+from thesimulator.events import PickupEvent, DeliveryEvent, InternalStopEvent
 from thesimulator.data_structures import (
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
-    StopEvent,
-    Dispatcher
+    Dispatcher,
 )
 from thesimulator.data_structures_cython.data_structures cimport (
     TransportationRequest,

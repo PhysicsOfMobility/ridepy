@@ -9,6 +9,8 @@ from thesimulator.data_structures import (
     InternalRequest,
     StopAction,
     TransportationRequest,
+)
+from thesimulator.events import (
     RequestRejectionEvent,
     RequestAcceptanceEvent,
     PickupEvent,

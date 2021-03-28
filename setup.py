@@ -10,6 +10,9 @@ with open("requirements.txt", "r") as f:
 with open("requirements-dev.txt", "r") as f:
     dev_reqs = f.readlines()
 
+with open("requirements-doc.txt", "r") as f:
+    doc_reqs = f.readlines()
+
 
 extensions = [
     Extension(
@@ -28,6 +31,6 @@ setuptools.setup(
     # ext_modules=cythonize("thesimulator/**/*.pyx", language='c++',),
     ext_modules=cythonize(extensions, compiler_directives={"embedsignature": True}),
     install_requires=reqs,
-    extras_require={"dev": dev_reqs},
+    extras_require={"dev": dev_reqs, "doc": doc_reqs},
     options={"build_ext": {"inplace": True, "parallel": os.cpu_count() - 1}},
 )

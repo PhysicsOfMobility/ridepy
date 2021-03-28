@@ -3,7 +3,6 @@ import random
 import pytest
 import numpy as np
 from numpy import inf, isclose
-from functools import reduce
 from time import time
 import itertools as it
 from pandas.core.common import flatten
@@ -12,6 +11,14 @@ from thesimulator.data_structures_cython import Stoplist as cyStoplist
 
 from thesimulator import data_structures_cython as cyds
 from thesimulator import data_structures as pyds
+
+from thesimulator.events import (
+    RequestRejectionEvent,
+    RequestAcceptanceEvent,
+    PickupEvent,
+    DeliveryEvent,
+)
+
 from thesimulator.data_structures_cython.data_structures import LocType
 from thesimulator.util import spaces as pyspaces
 from thesimulator.util.spaces_cython import spaces as cyspaces
@@ -253,17 +260,15 @@ def test_sanity_in_graph(initial_stoplists):
         events = list(fs.simulate(transportation_requests))
 
         rejections = set(
-            ev.request_id for ev in events if isinstance(ev, pyds.RequestRejectionEvent)
+            ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
         )
         pickup_times = {
-            ev.request_id: ev.timestamp
-            for ev in events
-            if isinstance(ev, pyds.PickupEvent)
+            ev.request_id: ev.timestamp for ev in events if isinstance(ev, PickupEvent)
         }
         delivery_times = {
             ev.request_id: ev.timestamp
             for ev in events
-            if isinstance(ev, pyds.DeliveryEvent)
+            if isinstance(ev, DeliveryEvent)
         }
 
         for req in transportation_requests:

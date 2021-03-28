@@ -4,3 +4,4 @@ pdbpp
 pre-commit
 hypothesis
 pytest
+psutil

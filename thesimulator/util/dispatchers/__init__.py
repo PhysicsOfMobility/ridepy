@@ -28,24 +28,28 @@ def taxicab_dispatcher_drive_first(
     stoplist: Stoplist,
     space: TransportSpace,
     seat_capacity: int,
-) -> Tuple[float, Stoplist, Tuple[float, float, float, float]]:
+) -> SingleVehicleSolution:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by simply appending the necessary stops to the existing stoplist.
 
+    See the dispatcher interface in :ref:`desc_dispatcher` for details.
+
     Parameters
     ----------
     request
-        request to be serviced
+        request to be serviced.
     stoplist
-        stoplist of the vehicle, to be mapped to a new stoplist
+        stoplist of the vehicle, to be mapped to a new stoplist.
     space
-        transport space the vehicle is operating on
+        transport space the vehicle is operating on.
+    seat_capacity
+        the maximum number of `.TransportationRequest` s that can be in a vehicle at the same time.
+
 
     Returns
     -------
-
-
+        The best solution as defined in `.SingleVehicleSolution`.
     """
     # TODO: When we have multi-passenger requests, this dispatcher needs to be changed and
     # include capacity constraints. Currently, taxi := single seat
@@ -103,16 +107,24 @@ def brute_force_total_traveltime_minimizing_dispatcher(
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by minimizing the total driving time.
 
+    See the dispatcher interface in :ref:`desc_dispatcher` for details.
+
+    See the dispatcher interface in :ref:`desc_dispatcher` for details.
+
     Parameters
     ----------
     request
-        request to be serviced
+        request to be serviced.
     stoplist
-        stoplist of the vehicle, to be mapped to a new stoplist
+        stoplist of the vehicle, to be mapped to a new stoplist.
     space
-        transport space the vehicle is operating on
+        transport space the vehicle is operating on.
+    seat_capacity
+            the maximum number of `.TransportationRequest` s that can be in a vehicle at the same time.
 
-    Returns:
+    Returns
+    -------
+        The best solution as defined in `.SingleVehicleSolution`.
     """
     min_cost = np.inf
     best_insertion = None

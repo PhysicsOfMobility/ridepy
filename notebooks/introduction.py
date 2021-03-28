@@ -45,11 +45,13 @@ from thesimulator.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
-    StopEvent,
     TransportationRequest,
+)
+from thesimulator.events import (
     RequestAcceptanceEvent,
     PickupEvent,
     DeliveryEvent,
+    StopEvent,
 )
 from thesimulator.util.dispatchers import (
     taxicab_dispatcher_drive_first,

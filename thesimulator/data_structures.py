@@ -1,7 +1,7 @@
 from numpy import inf
 from abc import ABC, abstractmethod
-from enum import Enum, auto
-from dataclasses import dataclass, asdict
+from enum import Enum
+from dataclasses import dataclass
 from typing import Any, Optional, Union, Tuple, List, Callable
 
 ID = Union[str, int]
@@ -55,7 +55,8 @@ class StopAction(Enum):
 
 class LocType(Enum):
     """
-    Representing the kind of location objects the simulator supports.
+    Representing the kind of location objects the simulator supports. Either of:
+    `R2LOC` (for points in :math:`\mathbb{R}^2`) or `INT` (for e.g. graphs).
     """
 
     R2LOC = 1  # points in R^2
@@ -88,82 +89,6 @@ class Stop:
             self.estimated_arrival_time,
             self.time_window_min if self.time_window_min else 0,
         )
-
-
-@dataclass
-class RequestAcceptanceEvent:
-    """
-    Commitment of the system to fulfil a request given
-    the returned spatio-temporal constraints.
-    """
-
-    request_id: ID
-    timestamp: float
-    origin: Any
-    destination: Any
-    pickup_timewindow_min: float
-    pickup_timewindow_max: float
-    delivery_timewindow_min: float
-    delivery_timewindow_max: float
-
-
-@dataclass
-class RequestAssignEvent:
-    """
-    Commitment of the system to fulfil a request given
-    the returned spatio-temporal constraints.
-    """
-
-    request_id: ID
-    timestamp: float
-    origin: Any
-    destination: Any
-    pickup_timewindow_min: float
-    pickup_timewindow_max: float
-    delivery_timewindow_min: float
-    delivery_timewindow_max: float
-
-
-@dataclass
-class RequestRejectionEvent:
-    """
-    Inability of the system to fulfil a request.
-    """
-
-    request_id: ID
-    timestamp: float
-
-
-@dataclass
-class PickupEvent:
-    """
-    Successful pick-up action
-    """
-
-    request_id: ID
-    timestamp: float
-    vehicle_id: ID
-
-
-@dataclass
-class DeliveryEvent:
-    """
-    Successful drop-off action
-    """
-
-    request_id: ID
-    timestamp: float
-    vehicle_id: ID
-
-
-@dataclass
-class InternalStopEvent:
-    """
-    Successful internal action
-    """
-
-    timestamp: float
-    vehicle_id: ID
 
 
 class TransportSpace(ABC):
@@ -240,6 +165,13 @@ class TransportSpace(ABC):
             interpolated coordinate of the unknown location `x`
         jump_dist
             remaining distance until the returned interpolated coordinate will be reached
+
+        Note
+        ----
+        The notion of `jump_dist` is necessary in transport spaces whose locations are *discrete* (e.g. graphs). There
+        if someone is travelling along a trajectory, at a certain time `t` one may be "in between" two locations `w` \
+        and `x`. Then the "position" at time `t` is ill defined, and we must settle for the fact that its location
+        *will be* `x` at `t+jump_time`.
         """
         ...
 
@@ -266,33 +198,30 @@ class TransportSpace(ABC):
         -------
         x
             interpolated coordinate of the unknown location `x`
-        jump_time
-            remaining time until the returned interpolated coordinate will be reached
+        jump_dist
+            remaining distance until the returned interpolated coordinate will be reached
         """
         ...
 
 
-RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-Event = Union[
-    RequestAcceptanceEvent,
-    RequestRejectionEvent,
-    PickupEvent,
-    DeliveryEvent,
-    InternalStopEvent,
-    RequestAssignEvent,
-]
 Stoplist = List[Stop]
+"""A list of `.Stop` objects. Specifies completely the current position and future actions a vehicle will make."""
+
 SingleVehicleSolution = Tuple[
     float, Optional[Stoplist], Tuple[float, float, float, float]
 ]
-"""vehicle_id, cost, new_stop_list"""
-RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+"""cost, new_stoplist, (pickup_timewindow_min, pickup_timewindow_max, delivery_timewindow_min, 
+delivery_timewindow_max).
+
+This is what the `Dispatcher` returns. In case no solution is found, the cost is :math:`\infty` and the other elements are `None`.
+"""
+
 Dispatcher = Callable[
     [
         TransportationRequest,
         Stoplist,
         TransportSpace,
     ],
-    Tuple[float, Stoplist, Tuple[float, float, float, float]],
+    SingleVehicleSolution,
 ]
+"""Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""

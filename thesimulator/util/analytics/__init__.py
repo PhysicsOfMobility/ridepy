@@ -7,11 +7,11 @@ import pandas as pd
 
 from thesimulator.data_structures import (
     TransportationRequest,
-    Event,
     ID,
     Stop,
     TransportSpace,
 )
+from thesimulator.events import Event
 
 from thesimulator.util import make_dict
 

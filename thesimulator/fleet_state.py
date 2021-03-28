@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools as ft
 import itertools as it
 from collections.abc import Sequence
@@ -17,16 +19,18 @@ logger = logging.getLogger(__name__)
 from .data_structures import (
     Stoplist,
     Request,
-    Event,
-    RequestRejectionEvent,
-    RequestAcceptanceEvent,
-    RequestEvent,
-    StopEvent,
     TransportationRequest as pyTransportationRequest,
     InternalRequest as pyInternalRequest,
     TransportSpace,
     SingleVehicleSolution,
     Dispatcher,
+)
+from .events import (
+    Event,
+    RequestAcceptanceEvent,
+    RequestRejectionEvent,
+    RequestEvent,
+    StopEvent,
 )
 from .data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
@@ -44,6 +48,7 @@ class FleetState(ABC):
     Exposes the methods fast_forward, handle_request and simulate.
 
     To gain maximum computational efficiency, one can:
+
     * Subclass VehicleState and implement the main methods in Cython.
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
@@ -60,11 +65,28 @@ class FleetState(ABC):
         """
         Parameters
         ----------
-        initial_stoplists:
-            Dictionary with vehicle ids as keys and initial stoplists as values.
-            The initial stoplists *must* contain current position element (CPE) stops as their first entry.
-        """
+        initial_stoplists
+            Dictionary with vehicle ids as keys and initial stoplists as values. The initial stoplists *must* contain
+            the current position element (CPE) stops as their first entry.
+        seat_capacities
+            Integers denoting the maximum number of persons a vehicle can hold. Either a dictionary with vehicle ids as
+            keys or a positive integer (Causes each vehicle to have the same capacity).
+        space
+            The `.data_structures.TransportSpace` (e.g. Euclidean2D, Graph) in which the simulation will be run.
+        dispatcher
+            The dispatching algorithm that maps a (stoplist, TransportationRequest) pair into a cost and new stoplist.
+            See :doc:`introduction` for more details.
+        vehicle_state_class
+            The vehicle state class to be used. Can be either `.vehicle_state.VehicleState` (pure pythonic) or
+            `.vehicle_state_cython.VehicleState` (implemented in cython).
+        loc_type
+            The data type of location objects (e.g. request origins, destination). Can be `data_structures.R2loc` (Euclidean2D) or `int` (Graph)
 
+        Note
+        ----
+        * Explain the graph nodes have in notes and why.
+        * define LocType in a central place and motivate why we have it.
+        """
         self.space = space
         self.dispatcher = dispatcher
         self.vehicle_state_class = vehicle_state_class
@@ -88,107 +110,7 @@ class FleetState(ABC):
                 seat_capacities, initial_stoplists.items()
             )
         }
-
-    @abstractmethod
-    def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
-        """
-        Advance the simulator's state in time from the previous time `$t'$` to the new time `$t$`, with `$t >= t'$`.
-        E.g. vehicle locations may change and vehicle stops may be serviced.
-        The latter will emit `StopEvents` which are returned.
-
-        Parameters
-        ----------
-        t
-            Time to advance to.
-
-        Returns
-        -------
-        stop events
-            Iterator of stop events. May be empty if no stop is serviced.
-        """
-        ...
-
-    def handle_transportation_request(
-        self, req: pyTransportationRequest
-    ) -> RequestEvent:
-        """
-        Handle a request by mapping the request and the fleet state onto a request response,
-        modifying the fleet state in-place.
-
-        This is where all sorts of parallelization can be done, by replacing the map with
-        dask.map, multiprocessing.map, ...
-
-        Parameters
-        ----------
-        req
-            request to handle
-
-        Returns
-        -------
-        event
-
-        """
-        ...
-
-    @abstractmethod
-    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
-        """
-
-        Parameters
-        ----------
-        req
-
-        Returns
-        -------
-
-        """
-        ...
-
-    def _apply_request_solution(
-        self, req, all_solutions: Iterable[SingleVehicleSolution]
-    ) -> RequestEvent:
-        """
-        Given a request and a bunch of solutions, pick the one with the minimum cost and apply it,
-        thereby changing the stoplist of the chosen vehicle and emitting an RequestAcceptanceEvent.
-        If the minimum cost is infinite, RequestRejectionEvent is returned.
-
-        Parameters
-        ----------
-        req
-        all_solutions
-
-        Returns
-        -------
-
-        """
-        (
-            best_vehicle,
-            min_cost,
-            new_stoplist,
-            (
-                pickup_timewindow_min,
-                pickup_timewindow_max,
-                dropoff_timewindow_min,
-                dropoff_timewindow_max,
-            ),
-        ) = min(all_solutions, key=op.itemgetter(1))
-        # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
-        if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
-        else:
-            # modify the best vehicle's stoplist
-            # print(f"len of new stoplist={len(new_stoplist)}")
-            self.fleet[best_vehicle].stoplist = new_stoplist
-            return RequestAcceptanceEvent(
-                request_id=req.request_id,
-                timestamp=self.t,
-                origin=req.origin,
-                destination=req.destination,
-                pickup_timewindow_min=pickup_timewindow_min,
-                pickup_timewindow_max=pickup_timewindow_max,
-                delivery_timewindow_min=dropoff_timewindow_min,
-                delivery_timewindow_max=dropoff_timewindow_max,
-            )
+        """A dict whose keys are vehicle_ids and the vakues are `.VehicleState` s."""
 
     def simulate(
         self, requests: Iterator[Request], t_cutoff: float = np.inf
@@ -199,17 +121,18 @@ class FleetState(ABC):
         Parameters
         ----------
         requests
-            iterator that supplies incoming requests
+            `Iterator` that supplies incoming requests.
         t_cutoff
             optional cutoff time after which the simulation is forcefully ended,
             disregarding any remaining stops or requests.
 
         Returns
         -------
-        events
             Iterator of events that have been emitted during the simulation.
-            Because of lazy evaluation the returned iterator *must* be exhausted
-            for the simulation to be actually be performed.
+
+        Note
+        ----
+        Because of lazy evaluation the returned iterator must be exhausted for the simulation to be actually be performed.
         """
 
         self.t = 0
@@ -244,6 +167,113 @@ class FleetState(ABC):
                 ),
             )
         )
+
+    @abstractmethod
+    def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
+        """
+        Advance the simulator's state in time from the previous time :math:`t'` to the new time :math:`t`, with :math:`t >= t'`.
+        E.g. vehicle locations may change and vehicle stops may be serviced.
+        The latter will emit `.StopEvent` s which are returned.
+
+        Parameters
+        ----------
+        t
+            Time to advance to.
+
+        Returns
+        -------
+            Iterator of stop events. May be empty if no stop is serviced.
+        """
+        ...
+
+    def handle_transportation_request(
+        self, req: pyTransportationRequest
+    ) -> RequestEvent:
+        """
+        Handle a request by mapping the request and the fleet state onto a request response,
+        modifying the fleet state in-place.
+
+        This method can be implemented in child classes using various parallelization techniques like
+        `multiprocessing`, `OpenMPI` or `dask`.
+
+        Parameters
+        ----------
+        req
+            Request to handle.
+
+        Returns
+        -------
+            An `.Event`.
+        """
+        ...
+
+    @abstractmethod
+    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
+        """
+
+        Parameters
+        ----------
+        req
+            request to handle.
+
+        Returns
+        -------
+            An `.Event`.
+        """
+        ...
+
+    def _apply_request_solution(
+        self, req, all_solutions: Iterable[SingleVehicleSolution]
+    ) -> RequestEvent:
+        """
+        Given a request and a bunch of solutions, pick the one with the minimum cost and apply it,
+        thereby changing the stoplist of the chosen vehicle and emitting an RequestAcceptanceEvent.
+        If the minimum cost is infinite, RequestRejectionEvent is returned.
+
+        Parameters
+        ----------
+        req
+            request to handle.
+        all_solutions
+            a dictionary mapping a vehicle_id to a `.SingleVehicleSolution`.
+
+        Returns
+        -------
+            Either a `.RequestAcceptanceEvent`, or a `.RequestRejectionEvent` if no suitable vehicle could be found.
+
+        Note
+        ----
+            Modifies the `.VehicleState` of the vehicle with the least cost inplace.
+
+        """
+        (
+            best_vehicle,
+            min_cost,
+            new_stoplist,
+            (
+                pickup_timewindow_min,
+                pickup_timewindow_max,
+                dropoff_timewindow_min,
+                dropoff_timewindow_max,
+            ),
+        ) = min(all_solutions, key=op.itemgetter(1))
+        # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
+        if min_cost == np.inf:  # no solution was found
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+        else:
+            # modify the best vehicle's stoplist
+            # print(f"len of new stoplist={len(new_stoplist)}")
+            self.fleet[best_vehicle].stoplist = new_stoplist
+            return RequestAcceptanceEvent(
+                request_id=req.request_id,
+                timestamp=self.t,
+                origin=req.origin,
+                destination=req.destination,
+                pickup_timewindow_min=pickup_timewindow_min,
+                pickup_timewindow_max=pickup_timewindow_max,
+                delivery_timewindow_min=dropoff_timewindow_min,
+                delivery_timewindow_max=dropoff_timewindow_max,
+            )
 
 
 class SlowSimpleFleetState(FleetState):
