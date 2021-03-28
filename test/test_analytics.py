@@ -27,6 +27,7 @@ from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
 from thesimulator.util.analytics.plotting import plot_occupancy_hist
+from thesimulator.vehicle_state import VehicleState
 
 
 @pytest.mark.n_buses(3)
@@ -332,10 +333,11 @@ def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
     transportation_requests = list(it.islice(rg, 1000))
 
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[10] * (len(initial_stoplists)),
+        initial_locations={k: 0 for k in range(10)},
+        seat_capacities=10,
         space=space,
         dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        vehicle_state_class=VehicleState,
     )
 
     events = list(fs.simulate(transportation_requests))

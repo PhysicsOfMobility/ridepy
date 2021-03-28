@@ -61,7 +61,10 @@ def simulate_on_r2(
         initial_stoplists[vehicle_id] = initial_stoplist
 
     ssfs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
+        initial_locations={
+            vehicle_id: stoplist[0].location
+            for vehicle_id, stoplist in initial_stoplists.items()
+        },
         space=Euclidean2D(),
         seat_capacities=seat_capacities,
         dispatcher=brute_force_total_traveltime_minimizing_dispatcher,

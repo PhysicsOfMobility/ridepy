@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 import functools as ft
 import itertools as it
 from collections.abc import Sequence
@@ -8,15 +10,29 @@ import numpy as np
 
 
 from abc import ABC, abstractmethod
-from typing import Dict, SupportsFloat, Iterator, List, Union, Tuple, Iterable
+from typing import (
+    Dict,
+    SupportsFloat,
+    Iterator,
+    List,
+    Union,
+    Tuple,
+    Iterable,
+    Type,
+    Optional,
+    Any,
+)
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 
 import logging
 
+from thesimulator.util.request_generators import RandomRequestGenerator
+
 logger = logging.getLogger(__name__)
 
-from .data_structures import (
+from thesimulator.data_structures import (
+    Stop,
     Stoplist,
     Request,
     TransportationRequest as pyTransportationRequest,
@@ -24,6 +40,9 @@ from .data_structures import (
     TransportSpace,
     SingleVehicleSolution,
     Dispatcher,
+    StopAction,
+    InternalRequest,
+    TransportationRequest,
 )
 from .events import (
     Event,
@@ -32,13 +51,19 @@ from .events import (
     RequestEvent,
     StopEvent,
 )
-from .data_structures_cython import (
-    TransportationRequest as cyTransportationRequest,
-    InternalRequest as cyInternalRequest,
+from thesimulator.data_structures_cython import (
+    TransportationRequest as CyTransportationRequest,
+    InternalRequest as CyInternalRequest,
     LocType,
+    StopAction as CyStopAction,
+    Stop as CyStop,
 )
 
-from .vehicle_state import VehicleState
+from thesimulator.vehicle_state import VehicleState
+from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
+
+from thesimulator.data_structures import TransportSpace
+from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
 
 
 class FleetState(ABC):
@@ -53,21 +78,43 @@ class FleetState(ABC):
     * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
     """
 
+    def _test_dispatcher(self, TransportationRequestCls):
+        """
+        Internal function used to perform a quick sanity check on whether the dispatcher
+        is behaving well with the types used in the fleet.
+        Raises if this does not seem to be the case.
+        """
+        try:
+            vehicle = next(iter(self.fleet.values()))
+            rg = RandomRequestGenerator(
+                space=self.space, request_class=TransportationRequestCls
+            )
+            req = next(iter(rg))
+            self.dispatcher(
+                req,
+                vehicle.stoplist,
+                self.space,
+                vehicle.seat_capacity,
+            )
+        except Exception as e:
+            raise TypeError(f"unsuitable dispatcher, error was:\n{e}")
+
     def __init__(
         self,
         *,
-        initial_stoplists: Dict[int, Stoplist],
-        seat_capacities: Union[int, List[int]],
-        space: TransportSpace,
+        initial_locations: Union[Dict[int, int], Dict[int, Tuple[float]]],
+        vehicle_state_class: Union[Type[VehicleState], Type[CyVehicleState]],
+        space: Union[TransportSpace, CyTransportSpace],
         dispatcher: Dispatcher,
-        vehicle_state_class=VehicleState,
+        seat_capacities: Union[int, Dict[int, int]],
     ):
         """
+        Create a `FleetState`, holding a number of `VehicleState` objects.
+
         Parameters
         ----------
-        initial_stoplists
-            Dictionary with vehicle ids as keys and initial stoplists as values. The initial stoplists *must* contain
-            the current position element (CPE) stops as their first entry.
+        initial_locations
+            Dictionary with vehicle ids as keys and initial locations as values.
         seat_capacities
             Integers denoting the maximum number of persons a vehicle can hold. Either a dictionary with vehicle ids as
             keys or a positive integer (Causes each vehicle to have the same capacity).
@@ -79,38 +126,144 @@ class FleetState(ABC):
         vehicle_state_class
             The vehicle state class to be used. Can be either `.vehicle_state.VehicleState` (pure pythonic) or
             `.vehicle_state_cython.VehicleState` (implemented in cython).
-        loc_type
-            The data type of location objects (e.g. request origins, destination). Can be `data_structures.R2loc` (Euclidean2D) or `int` (Graph)
 
         Note
         ----
         * Explain the graph nodes have in notes and why.
         * define LocType in a central place and motivate why we have it.
         """
-        self.space = space
-        self.dispatcher = dispatcher
-        self.vehicle_state_class = vehicle_state_class
-
-        if isinstance(seat_capacities, Sequence):
-            assert len(seat_capacities) == len(
-                initial_stoplists
-            ), "seat_capacities and initial_stoplists have unequal lengths"
+        if issubclass(vehicle_state_class, VehicleState):
+            StopCls = Stop
+            StopActionCls = StopAction
+            InternalRequestCls = InternalRequest
+            TransportationRequestCls = TransportationRequest
+            assert isinstance(space, TransportSpace), "unsuitable transport space"
+        elif issubclass(vehicle_state_class, CyVehicleState):
+            StopCls = CyStop
+            StopActionCls = CyStopAction
+            InternalRequestCls = CyInternalRequest
+            TransportationRequestCls = CyTransportationRequest
+            assert isinstance(space, CyTransportSpace), "unsuitable transport space"
         else:
-            seat_capacities = it.repeat(seat_capacities)
+            raise TypeError(f"Unknown VehicleStateCls {type(vehicle_state_class)}")
 
+        if isinstance(seat_capacities, Dict):
+            assert set(initial_locations) == set(
+                seat_capacities
+            ), "vehicle_ids in seat_capacities and initial_stoplists must match"
+        elif isinstance(seat_capacities, int):
+            seat_capacities = defaultdict(lambda x=seat_capacities: x)
+        else:
+            raise TypeError(f"seat_capacities must be either dict or int")
+
+        self.vehicle_state_class = vehicle_state_class
+        self.dispatcher = dispatcher
+        self.space = space
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: vehicle_state_class(
                 vehicle_id=vehicle_id,
-                initial_stoplist=stoplist,
-                space=self.space,
+                initial_stoplist=[
+                    StopCls(
+                        location=initial_locations[vehicle_id],
+                        request=InternalRequestCls(
+                            request_id=-1,
+                            creation_timestamp=0,
+                            location=initial_locations[vehicle_id],
+                        ),
+                        action=StopActionCls.internal,
+                        estimated_arrival_time=0,
+                        occupancy_after_servicing=0,
+                        time_window_min=0,
+                        time_window_max=np.inf,
+                    )
+                ],
+                space=space,
                 dispatcher=self.dispatcher,
-                seat_capacity=seat_capacity,
+                seat_capacity=seat_capacities[vehicle_id],
             )
-            for seat_capacity, (vehicle_id, stoplist) in zip(
-                seat_capacities, initial_stoplists.items()
-            )
+            for vehicle_id in initial_locations.keys()
         }
-        """A dict whose keys are vehicle_ids and the vakues are `.VehicleState` s."""
+
+        self._test_dispatcher(TransportationRequestCls)
+
+    @classmethod
+    def from_fleet(
+        cls,
+        *,
+        fleet: Dict[int, VehicleState],
+        space: Union[TransportSpace, CyTransportSpace],
+        dispatcher: Dispatcher,
+        validate: bool = True,
+    ):
+        """
+        Create a `FleetState` from a dictionary of `VehicleState` objects, keyed by an integer `vehicle_id`.
+
+        Parameters
+        ----------
+        fleet
+            Initial stoplists *must* contain current position element (CPE) stops with
+            `StopAction.internal` and `InternalRequest` with `request_id==-1` as their first entries.
+        space
+            TransportSpace to operate on
+        dispatcher
+            dispatcher to use to assign requests to vehicles or reject them.
+        VehicleStateCls
+            Class to create vehicle_state objects from
+        validate
+            If true, try to figure out whether something is off. If not, raise.
+
+        Returns
+        -------
+
+        """
+        self = super().__new__(cls)
+        self.dispatcher = dispatcher
+        self.fleet = fleet
+        self.space = space
+
+        if validate:
+            VehicleStateCls = type(next(iter(self.fleet.values())))
+            assert all(
+                isinstance(vehicle_state, VehicleStateCls)
+                for vehicle_state in self.fleet.values()
+            ), "fleet inhomogeneous"
+
+            if issubclass(VehicleStateCls, VehicleState):
+                StopCls = Stop
+                StopActionCls = StopAction
+                InternalRequestCls = InternalRequest
+                TransportationRequestCls = TransportationRequest
+                assert isinstance(space, TransportSpace), "unsuitable transport space"
+            elif issubclass(VehicleStateCls, CyVehicleState):
+                StopCls = CyStop
+                StopActionCls = CyStopAction
+                InternalRequestCls = CyInternalRequest
+                TransportationRequestCls = CyTransportationRequest
+                assert isinstance(space, CyTransportSpace), "unsuitable transport space"
+            else:
+                raise TypeError(f"Unknown VehicleStateCls {type(VehicleStateCls)}")
+
+            for vehicle_state in self.fleet.values():
+                assert (
+                    vehicle_state.stoplist[0].request.request_id == -1
+                ), "malformed CPE: request_id must be -1"
+                assert (
+                    vehicle_state.stoplist[0].action == StopActionCls.internal
+                ), "malformed CPE: action must be 'internal'"
+                assert isinstance(
+                    vehicle_state.stoplist[0].request, InternalRequestCls
+                ), "malformed CPE: request type must be 'internal'"
+                assert all(isinstance(stop, StopCls) for stop in vehicle_state.stoplist)
+                assert all(
+                    isinstance(
+                        stop.request, (InternalRequestCls, TransportationRequestCls)
+                    )
+                    for stop in vehicle_state.stoplist
+                )
+
+            self._test_dispatcher(TransportationRequestCls)
+
+        return self
 
     def simulate(
         self, requests: Iterator[Request], t_cutoff: float = np.inf
@@ -147,9 +300,9 @@ class FleetState(ABC):
             yield from self.fast_forward(self.t)
 
             # handle the current request
-            if isinstance(request, (pyTransportationRequest, cyTransportationRequest)):
+            if isinstance(request, (pyTransportationRequest, CyTransportationRequest)):
                 yield self.handle_transportation_request(request)
-            elif isinstance(request, (pyInternalRequest, cyInternalRequest)):
+            elif isinstance(request, (pyInternalRequest, CyInternalRequest)):
                 yield self.handle_internal_request(request)
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")

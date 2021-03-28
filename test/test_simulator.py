@@ -21,36 +21,35 @@ from thesimulator.util.dispatchers import (
 )
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D
+from thesimulator.vehicle_state import VehicleState
 
 
-@pytest.mark.n_buses(10)
-@pytest.mark.initial_location((0, 0))
 def test_slow_simple_fleet_state_simulate(initial_stoplists):
     space = Euclidean2D()
     rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[1] * len(initial_stoplists),
+        initial_locations={k: (0, 0) for k in range(10)},
+        seat_capacities=1,
         space=space,
         dispatcher=taxicab_dispatcher_drive_first,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
 
 
-@pytest.mark.n_buses(10)
-@pytest.mark.initial_location((0, 0))
-def test_events_sorted(initial_stoplists):
+def test_events_sorted():
     space = Euclidean2D()
     rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[1] * len(initial_stoplists),
+        initial_locations={k: (0, 0) for k in range(10)},
+        seat_capacities=1,
         space=space,
         dispatcher=taxicab_dispatcher_drive_first,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
     evs = pd.DataFrame(
@@ -59,9 +58,7 @@ def test_events_sorted(initial_stoplists):
     assert all(evs.sort_values("timestamp").index == evs.index), "events not sorted"
 
 
-@pytest.mark.n_buses(50)
-@pytest.mark.initial_location((0, 0))
-def test_brute_force_dispatcher_2d(initial_stoplists):
+def test_brute_force_dispatcher_2d():
     space = Euclidean2D()
     rg = RandomRequestGenerator(
         rate=10,
@@ -70,33 +67,32 @@ def test_brute_force_dispatcher_2d(initial_stoplists):
     )
     transportation_requests = list(it.islice(rg, 1000))
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[10] * len(initial_stoplists),
+        initial_locations={k: (0, 0) for k in range(50)},
+        seat_capacities=10,
         space=space,
         dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(transportation_requests))
 
 
-@pytest.mark.n_buses(10)
-@pytest.mark.initial_location((0, 0))
 def test_mpi_futures_fleet_state_simulate(initial_stoplists):
     space = Euclidean2D()
     rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
     fs = MPIFuturesFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[1] * len(initial_stoplists),
+        initial_locations={k: (0, 0) for k in range(10)},
+        seat_capacities=1,
         space=space,
         dispatcher=taxicab_dispatcher_drive_first,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
     # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
     # print("\n".join(map(str, events)))
 
 
-@pytest.mark.n_buses(10)
-def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
+def test_with_taxicab_dispatcher_simple_1():
     # rg = RandomRequestGenerator(rate=1)
     reqs = [
         TransportationRequest(
@@ -131,10 +127,11 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
         ),
     ]
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[1] * len(initial_stoplists),
+        initial_locations={k: 0 for k in range(10)},
+        seat_capacities=1,
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
 
@@ -166,9 +163,7 @@ def test_with_taxicab_dispatcher_simple_1(initial_stoplists):
     )
 
 
-@pytest.mark.n_buses(10)
-@pytest.mark.initial_location(0)
-def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
+def test_with_taxicab_everyone_delivered_zero_delay():
     """
     Tests that in a low request frequency regime, all requests are picked up
     and delivered without any delay
@@ -189,10 +184,11 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
         for i in range(n_reqs)
     ]
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[1] * len(initial_stoplists),
+        initial_locations={k: 0 for k in range(10)},
+        seat_capacities=1,
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
 
@@ -214,9 +210,7 @@ def test_with_taxicab_everyone_delivered_zero_delay(initial_stoplists):
     assert actual_req_delivery_times == desired_req_delivery_times
 
 
-@pytest.mark.n_buses(1)
-@pytest.mark.initial_location(0)
-def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
+def test_with_taxicab_one_taxi_delivered_with_delay():
     """
     Tests that in a high request frequency regime, all requests arrive simultaneously,
     but served one after the other, by a single taxi.
@@ -239,10 +233,11 @@ def test_with_taxicab_one_taxi_delivered_with_delay(initial_stoplists):
         for i in range(n_reqs)
     ]
     fs = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        seat_capacities=[1] * len(initial_stoplists),
+        initial_locations={0: 0},
+        seat_capacities=1,
         space=Euclidean1D(),
         dispatcher=taxicab_dispatcher_drive_first,
+        vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
 

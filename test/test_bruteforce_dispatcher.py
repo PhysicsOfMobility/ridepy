@@ -25,6 +25,7 @@ from thesimulator.util.convenience.spaces import make_nx_grid
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean2D, Graph
 from thesimulator.fleet_state import SlowSimpleFleetState
+from thesimulator.vehicle_state import VehicleState
 
 
 def test_append_to_empty_stoplist():
@@ -228,9 +229,7 @@ def test_stoplist_not_modified_inplace():
     assert stoplist[1].estimated_arrival_time == 3
 
 
-@pytest.mark.n_buses(50)
-@pytest.mark.initial_location(0)
-def test_sanity_in_graph(initial_stoplists):
+def test_sanity_in_graph():
     """
     Insert a request, note delivery time.
     Handle more requests so that there's no pooling.
@@ -251,10 +250,11 @@ def test_sanity_in_graph(initial_stoplists):
         transportation_requests = list(it.islice(rg, 1000))
 
         fs = SlowSimpleFleetState(
-            initial_stoplists=initial_stoplists,
-            seat_capacities=[10] * len(initial_stoplists),
+            initial_locations={k: 0 for k in range(50)},
+            seat_capacities=10,
             space=space,
             dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+            vehicle_state_class=VehicleState,
         )
 
         events = list(fs.simulate(transportation_requests))

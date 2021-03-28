@@ -221,6 +221,7 @@ Dispatcher = Callable[
         TransportationRequest,
         Stoplist,
         TransportSpace,
+        int,
     ],
     SingleVehicleSolution,
 ]

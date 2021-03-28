@@ -25,9 +25,6 @@ from random import randint
 from thesimulator.vehicle_state_cython import VehicleState
 import logging
 
-sim_logger = logging.getLogger("thesimulator")
-sim_logger.setLevel(logging.DEBUG)
-
 
 def stoplist_from_properties(stoplist_properties):
     return [
@@ -89,6 +86,9 @@ def benchmark_insertion_into_long_stoplist(seed=0):
 
 if __name__ == "__main__":
     import sys
+
+    sim_logger = logging.getLogger("thesimulator")
+    sim_logger.setLevel(logging.DEBUG)
 
     if len(sys.argv) > 1:
         seed = int(sys.argv[1])
