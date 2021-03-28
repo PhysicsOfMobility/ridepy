@@ -84,8 +84,8 @@ class FleetState(ABC):
 
         Note
         ----
-        TODO: Explain the graph nodes have in notes and why.
-        TODO: define LocType in a central place and motivate why we have it.
+        * Explain the graph nodes have in notes and why.
+        * define LocType in a central place and motivate why we have it.
         """
         self.space = space
         self.dispatcher = dispatcher
@@ -110,6 +110,7 @@ class FleetState(ABC):
                 seat_capacities, initial_stoplists.items()
             )
         }
+        """A dict whose keys are vehicle_ids and the vakues are `.VehicleState` s."""
 
     def simulate(
         self, requests: Iterator[Request], t_cutoff: float = np.inf

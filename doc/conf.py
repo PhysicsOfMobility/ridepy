@@ -67,7 +67,7 @@ autodoc_member_order = "bysource"
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autoclass_content
 autoclass_content = "both"
 default_role = "py:obj"
-
+add_module_names = False
 autodoc_typehints = "description"
 autodoc_type_aliases = {
     "RequestEvent": "thesimulator.events.RequestEvent",

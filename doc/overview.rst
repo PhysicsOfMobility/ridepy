@@ -1,7 +1,6 @@
 Overview
 ========
 
-.. currentmodule:: thesimulator
 .. highlight:: python
 
 Here we describe the design of theSimulator, and how to get started with using
@@ -17,7 +16,7 @@ theSimulator does *not* do agent-based simulations. Rather, it starts with a set
 to B within specified time windows), and a *dispatcher* (an algorithm that determines
 which vehicle should service which requests and in which order). Then it simply
 simulates these requests arriving in the system, being picked up and delivered. Requests
-that cannot be delivered within the specified time windows are *rejected*. 
+that cannot be delivered within the specified time windows are *rejected*.
 
 theSimulator makes it easy to experiment with different dispatching algorithms,
 spatiotemporal request densities, fleet sizes and transport spaces (2-D plane, different
@@ -222,12 +221,12 @@ versions of ``TransportationRequest``, ``Stop``, ``VehicleState`` and a
     print(events)
 
 
-How to create your own dispatcher
+How to write your own dispatcher
 ---------------------------------
 
 
 
-How to create your own ``TransportSpace``
+How to write your own ``TransportSpace``
 -----------------------------------------
 
 

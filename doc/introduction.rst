@@ -1,5 +1,6 @@
 Introduction
 ============
+
 theSimulator lets a user specify a `.FleetState` of :math:`n` vehicles with desired
 passenger capacities, as well as an ``iterator`` of `.TransportationRequest`
 objects, each containing:
@@ -19,28 +20,29 @@ The request iterator must yield requests in increasing order of ``creation_times
 
 Calling `.FleetState.simulate()` then executes the simulation, which outputs a
 sequence of `Event` objects (add link here), from which the user can compute various metrics,
-optionally using the `.util.analytics` module. 
+optionally using the :mod:`.util.analytics` module. 
 
 
 .. _desc_stoplist:
 
 The stoplist
 ------------
-`FleetState` contains a dictionary `.fleet`, which maps a ``vehicle_id`` to a
+`.FleetState` contains a dictionary `.fleet`, which maps a ``vehicle_id`` to a
 `.VehicleState`. A `VehicleState`, in turn holds the future trajectory of the
-vehicle in the form of a `Stoplist`: a list of `.Stop` objects containing:
+vehicle in the form of a `~.vehicleState.Stoplist`: a list of `.Stop` objects containing:
 
 * ``location``,
 * ``request`` to be serviced, 
-* ``action``: one of `pickUp`, `dropoff` or `internal`, 
+* ``action``: one of `pickup`, `dropoff` or `internal`, 
 * ``estimated_arrival_time``,
 * ``occupancy_after_servicing``,
 * ``time_window_min``,
 * ``time_window_max``.
 
 Therefore, a `Stoplist` contains all the information on where the vehicle will
-go and what it will do in future (if the stoplist does not change in the
-meantime).
+go and what it will do in the future (if the stoplist does not change in the
+meantime, by e.g. a `.dispatcher` inserting a new `TransportationRequest` s
+pickup and dropoff in it).
 
 
 .. _desc_cpestop:
@@ -53,14 +55,16 @@ position of the vehicle. It is not associated with any `TransportationRequest`.
 The ``estimated_arrival_time`` of this stop defines the time at which the
 vehicle is at the CPEs location. This is always roughly the *current* location
 and time, though it might be immediate past (before it has been updated to the
-current state) or immediate future (when the vehicle is be in between two nodes
-on a graph).
+current state) or immediate future (when the vehicle is in between two adjacent nodes
+on a graph, see `.TransportSpace.interp_time`).
+
+
 
 
 The Simulation run: advancing the internal clock
 -------------------------------------------------
 
-When a `FleetState` is created, an internal "clock" is started at time :math:`t= 0`.
+When a `.FleetState` is created, an internal "clock" is started at time :math:`t= 0`.
 When the simulation is run,
 
 1. The next request ``r`` is fetched from the request iterator. 
@@ -114,7 +118,7 @@ When a new `TransportationRequest` needs to be processed:
     of :math:`\infty`. 
 2. If more than one vehicle can service the request, then the one with minimum
    cost is chosen. That is, its ``Stoplist`` is changed to the ``new_stoplist``
-   determined by the dispatcher.
+   returned by the dispatcher.
 
 The dispatcher is solely responsible for keeping the stoplist in a internally
 valid state, as the one with minimal cost substitutes the original one for the

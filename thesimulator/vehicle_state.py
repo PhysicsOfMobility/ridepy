@@ -47,8 +47,6 @@ class VehicleState:
         seat_capacity: int,
     ):
         """
-        Create a vehicle.
-
         Parameters
         ----------
         vehicle_id
@@ -65,7 +63,8 @@ class VehicleState:
         """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
-        self.stoplist = initial_stoplist
+        self.stoplist: Stoplist = initial_stoplist
+        """The list of `.Stop` objects specifying the planned future actions to be undertaken by this vehicle."""
         self.space = space
         self.dispatcher = dispatcher
         self.seat_capacity = seat_capacity

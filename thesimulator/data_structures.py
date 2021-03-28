@@ -165,6 +165,13 @@ class TransportSpace(ABC):
             interpolated coordinate of the unknown location `x`
         jump_dist
             remaining distance until the returned interpolated coordinate will be reached
+
+        Note
+        ----
+        The notion of `jump_dist` is necessary in transport spaces whose locations are *discrete* (e.g. graphs). There
+        if someone is travelling along a trajectory, at a certain time `t` one may be "in between" two locations `w` \
+        and `x`. Then the "position" at time `t` is ill defined, and we must settle for the fact that its location
+        *will be* `x` at `t+jump_time`.
         """
         ...
 
@@ -191,8 +198,8 @@ class TransportSpace(ABC):
         -------
         x
             interpolated coordinate of the unknown location `x`
-        jump_time
-            remaining time until the returned interpolated coordinate will be reached
+        jump_dist
+            remaining distance until the returned interpolated coordinate will be reached
         """
         ...
 

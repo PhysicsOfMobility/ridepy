@@ -18,4 +18,10 @@ The request generators
 .. automodule:: thesimulator.util.request_generators
     :members:
 
+The analytics module
+--------------------
+
+.. automodule:: thesimulator.util.analytics
+    :members:
+
 
