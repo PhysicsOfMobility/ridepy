@@ -29,6 +29,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 # +
+from thesimulator.vehicle_state import VehicleState
+
 dark = True
 
 if dark:
@@ -84,10 +86,11 @@ initial_stoplists = {
         Stop(
             location=initial_location,
             request=InternalRequest(
-                request_id="CPE", creation_timestamp=0, location=initial_location
+                request_id=-1, creation_timestamp=0, location=initial_location
             ),
             action=StopAction.internal,
             estimated_arrival_time=0,
+            occupancy_after_servicing=0,
             time_window_min=0,
             time_window_max=np.inf,
         )
@@ -112,10 +115,11 @@ transportation_requests = list(it.islice(rg, 100))
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
-    initial_stoplists=initial_stoplists,
+    initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
+    seat_capacities=8,
     space=space,
     dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
-    seat_capacities=8,
+    vehicle_state_class=VehicleState,
 )
 # -
 

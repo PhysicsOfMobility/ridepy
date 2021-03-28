@@ -42,7 +42,7 @@ def stoplist_from_properties(stoplist_properties, data_structure_module):
         data_structure_module.Stop(
             location=loc,
             request=data_structure_module.InternalRequest(
-                request_id=999, creation_timestamp=0, location=loc
+                request_id=-1, creation_timestamp=0, location=loc
             ),
             action=data_structure_module.StopAction.internal,
             estimated_arrival_time=cpat,
@@ -154,23 +154,10 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         ######################################################
         # PYTHON
         ######################################################
-        ir = pyds.InternalRequest(
-            request_id=999, creation_timestamp=0, location=init_loc
-        )
-        s0 = pyds.Stop(
-            location=init_loc,
-            request=ir,
-            action=pyds.StopAction.internal,
-            estimated_arrival_time=0,
-            occupancy_after_servicing=0,
-            time_window_min=0,
-            time_window_max=0,
-        )
-        sl = [s0]
 
         ssfs = SlowSimpleFleetState(
-            initial_stoplists={7: sl},
-            seat_capacities=[10],
+            initial_locations={7: init_loc},
+            seat_capacities=10,
             space=py_space,
             dispatcher=py_brute_force_total_traveltime_minimizing_dispatcher,
             vehicle_state_class=py_VehicleState,
@@ -184,23 +171,10 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         ######################################################
         # CYTHON
         ######################################################
-        ir = cyds.InternalRequest(
-            request_id=999, creation_timestamp=0, location=init_loc
-        )
-        s0 = cyds.Stop(
-            location=init_loc,
-            request=ir,
-            action=cyds.StopAction.internal,
-            estimated_arrival_time=0,
-            occupancy_after_servicing=0,
-            time_window_min=0,
-            time_window_max=0,
-        )
-        sl = [s0]
 
         ssfs = SlowSimpleFleetState(
-            initial_stoplists={7: sl},
-            seat_capacities=[10],
+            initial_locations={7: init_loc},
+            seat_capacities=10,
             space=cy_space,
             dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
             vehicle_state_class=cy_VehicleState,
@@ -224,10 +198,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             )
 
 
-@pytest.mark.n_buses(50)
-@pytest.mark.initial_location(0)
-@pytest.mark.cython
-def test_sanity_in_graph(initial_stoplists):
+def test_sanity_in_graph():
     """
     Insert a request, note delivery time.
     Handle more requests so that there's no pooling.
@@ -250,8 +221,8 @@ def test_sanity_in_graph(initial_stoplists):
         transportation_requests = list(it.islice(rg, 1000))
 
         fs = SlowSimpleFleetState(
-            initial_stoplists=initial_stoplists,
-            seat_capacities=[10] * len(initial_stoplists),
+            initial_locations={k: 0 for k in range(50)},
+            seat_capacities=10,
             space=space,
             dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
             vehicle_state_class=cy_VehicleState,

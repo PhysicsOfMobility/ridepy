@@ -113,7 +113,7 @@ transportation_requests = list(it.islice(rg, 100))
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
-    initial_stoplists=initial_stoplists,
+    initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     space=space,
     dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
     seat_capacities=8,
