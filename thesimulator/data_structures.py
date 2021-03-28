@@ -215,6 +215,6 @@ Dispatcher = Callable[
         Stoplist,
         TransportSpace,
     ],
-    SingleVehicleSolution
+    SingleVehicleSolution,
 ]
 """Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""

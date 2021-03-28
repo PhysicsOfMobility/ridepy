@@ -87,9 +87,7 @@ def insert_stop_to_stoplist_drive_first(
     stop_before_insertion = stoplist[idx]
     stop.estimated_arrival_time = cpat_of_inserted_stop(
         stop_before=stop_before_insertion,
-        time_from_stop_before=space.t(
-            stop_before_insertion.location, stop.location
-        ),
+        time_from_stop_before=space.t(stop_before_insertion.location, stop.location),
     )
 
     if idx < len(stoplist) - 1:

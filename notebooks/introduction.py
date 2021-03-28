@@ -47,7 +47,12 @@ from thesimulator.data_structures import (
     StopAction,
     TransportationRequest,
 )
-from thesimulator.events import RequestAcceptanceEvent, PickupEvent, DeliveryEvent, StopEvent
+from thesimulator.events import (
+    RequestAcceptanceEvent,
+    PickupEvent,
+    DeliveryEvent,
+    StopEvent,
+)
 from thesimulator.util.dispatchers import (
     taxicab_dispatcher_drive_first,
     brute_force_total_traveltime_minimizing_dispatcher,

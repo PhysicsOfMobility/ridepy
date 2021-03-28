@@ -25,7 +25,13 @@ from .data_structures import (
     SingleVehicleSolution,
     Dispatcher,
 )
-from .events import Event, RequestAcceptanceEvent, RequestRejectionEvent, RequestEvent, StopEvent
+from .events import (
+    Event,
+    RequestAcceptanceEvent,
+    RequestRejectionEvent,
+    RequestEvent,
+    StopEvent,
+)
 from .data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
     InternalRequest as cyInternalRequest,

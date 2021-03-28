@@ -12,14 +12,15 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../'))
+
+sys.path.insert(0, os.path.abspath("../"))
 import thesimulator
 
 # -- Project information -----------------------------------------------------
 
-project = 'theSimulator'
-copyright = '2021, Felix Jung and Debsankha Manik'
-author = 'Felix Jung and Debsankha Manik'
+project = "theSimulator"
+copyright = "2021, Felix Jung and Debsankha Manik"
+author = "Felix Jung and Debsankha Manik"
 
 # Aesthetics
 add_function_parentheses = True
@@ -31,26 +32,25 @@ add_function_parentheses = True
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx_toggleprompt',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.mathjax',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.ifconfig",
+    "sphinx_toggleprompt",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
-    'sphinxcontrib.napoleon', #for sane autodoc
-    'alabaster' #theme
-
+    "sphinxcontrib.napoleon",  # for sane autodoc
+    "alabaster",  # theme
 ]
 
 # Napoleon settings
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False # __init__ docs merged with class doc.
+napoleon_include_init_with_doc = False  # __init__ docs merged with class doc.
 napoleon_include_private_with_doc = True
 napoleon_include_special_with_doc = True
 napoleon_use_admonition_for_examples = False
@@ -62,17 +62,17 @@ napoleon_use_rtype = False
 
 # Control the order in which the members of a module are shown.
 # see https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_member_order
-autodoc_member_order = 'bysource'
+autodoc_member_order = "bysource"
 # Force the __init__ docstring to be part of the autodoc, as per
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autoclass_content
-autoclass_content = 'both'
-default_role = 'py:obj'
+autoclass_content = "both"
+default_role = "py:obj"
 
-autodoc_typehints = 'description'
+autodoc_typehints = "description"
 autodoc_type_aliases = {
-        'RequestEvent': 'thesimulator.events.RequestEvent',
-        'StopEvent': 'thesimulator.events.StopEvent',
-        'SingleVehicleSolution': 'thesimulator.data_structures.SingleVehicleSolution'
+    "RequestEvent": "thesimulator.events.RequestEvent",
+    "StopEvent": "thesimulator.events.StopEvent",
+    "SingleVehicleSolution": "thesimulator.data_structures.SingleVehicleSolution",
 }
 
 
@@ -84,21 +84,21 @@ intersphinx_mapping = {
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
-#source_encoding = 'utf-8-sig'
+# source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -110,5 +110,4 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
-
+html_static_path = ["_static"]

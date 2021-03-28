@@ -14,7 +14,6 @@ with open("requirements-doc.txt", "r") as f:
     doc_reqs = f.readlines()
 
 
-
 extensions = [
     Extension(
         "*",

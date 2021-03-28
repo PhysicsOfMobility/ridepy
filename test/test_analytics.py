@@ -9,13 +9,20 @@ from numpy import nan, inf
 from thesimulator.data_structures import (
     TransportationRequest,
 )
-from thesimulator.events import RequestAcceptanceEvent, RequestRejectionEvent, PickupEvent, DeliveryEvent
+from thesimulator.events import (
+    RequestAcceptanceEvent,
+    RequestRejectionEvent,
+    PickupEvent,
+    DeliveryEvent,
+)
 from thesimulator.data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
 )
 from thesimulator.util.spaces_cython import Euclidean2D as cyEuclidean2D
 from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher,
+)
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean1D, Euclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
