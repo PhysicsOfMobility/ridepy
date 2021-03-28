@@ -6,7 +6,7 @@ Data Structures
 The module contains the data structures `.FleetState` and `.VehicleState` depend on.
 
 ..
-    TODO The automodule leads to avery dense output. We should add more normal docs in between the autodocs.
+    TODO The automodule leads to a very dense output. We should add more normal docs in between the autodocs.
 
 Requests
 ~~~~~~~~
@@ -29,7 +29,7 @@ The `TransportSpace` and `Dispatcher` interfaces
 
 .. note::
    This is only the abstract base class specifying the *interface*. Actual
-   `TransportSpace` s are available in `.util.spaces`.
+   `TransportSpace` classes are available in `.util.spaces`.
 
 .. automodule:: thesimulator.data_structures
     :members: SingleVehicleSolution, Dispatcher
