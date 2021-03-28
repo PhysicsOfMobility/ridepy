@@ -118,7 +118,7 @@ desired number of vehicles, the initian positions of the vehicles, and a
 
 
 We have chosen one of the dispatchers provided in the :mod:`dispatchers
-<util.dispatchers>` module. It is possible (and encouraged) to implement their
+<thesimulator.util.dispatchers>` module. It is possible (and encouraged) to implement their
 own.
 
 Now, simulate
