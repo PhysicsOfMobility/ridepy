@@ -34,7 +34,7 @@ from thesimulator.vehicle_state import VehicleState as py_VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
 
 from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.util.convenience.spaces import make_nx_grid
+from thesimulator.extras.spaces import make_nx_grid
 
 
 def stoplist_from_properties(stoplist_properties, data_structure_module):
