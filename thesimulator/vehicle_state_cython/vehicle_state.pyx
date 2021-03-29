@@ -2,7 +2,7 @@
 
 from thesimulator.util import MAX_SEAT_CAPACITY
 
-from thesimulator.events import PickupEvent, DeliveryEvent, InternalStopEvent
+from thesimulator.events import PickupEvent, DeliveryEvent, InternalEvent
 from thesimulator.data_structures import (
     Dispatcher,
 )
@@ -118,7 +118,7 @@ cdef class VehicleState:
                     {
                         StopAction.pickup: PickupEvent,
                         StopAction.dropoff: DeliveryEvent,
-                        StopAction.internal: InternalStopEvent,
+                        StopAction.internal: InternalEvent,
                     }[stop.action](
                         request_id=stop.request.request_id,
                         vehicle_id=self.vehicle_id,

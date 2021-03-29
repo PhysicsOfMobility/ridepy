@@ -50,6 +50,9 @@ from .events import (
     RequestRejectionEvent,
     RequestEvent,
     StopEvent,
+    InternalEvent,
+    VehicleStateBeginEvent,
+    VehicleStateEndEvent,
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
@@ -290,6 +293,13 @@ class FleetState(ABC):
 
         self.t = 0
 
+        for vehicle_id, fleet_state in self.fleet.items():
+            yield VehicleStateBeginEvent(
+                vehicle_id=vehicle_id,
+                timestamp=self.t,
+                location=fleet_state.stoplist[0].location,
+            )
+
         for n_req, request in enumerate(requests):
             req_epoch = request.creation_timestamp
 
@@ -308,18 +318,25 @@ class FleetState(ABC):
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
             logger.info(f"Handled request # {n_req}")
             if self.t >= t_cutoff:
-                return
+                break
+
+        self.t = min(
+            t_cutoff,
+            max(
+                vehicle.stoplist[-1].estimated_arrival_time
+                for vehicle in self.fleet.values()
+            ),
+        )
 
         # service all remaining stops
-        yield from self.fast_forward(
-            min(
-                t_cutoff,
-                max(
-                    vehicle.stoplist[-1].estimated_arrival_time
-                    for vehicle in self.fleet.values()
-                ),
+        yield from self.fast_forward(self.t)
+
+        for vehicle_id, fleet_state in self.fleet.items():
+            yield VehicleStateEndEvent(
+                vehicle_id=vehicle_id,
+                timestamp=self.t,
+                location=fleet_state.stoplist[0].location,
             )
-        )
 
     @abstractmethod
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:

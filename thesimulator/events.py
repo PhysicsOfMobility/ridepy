@@ -75,7 +75,7 @@ class DeliveryEvent(Event):
 
 
 @dataclass
-class InternalStopEvent(Event):
+class InternalEvent(Event):
     """
     Successful internal action.
     """
@@ -83,10 +83,22 @@ class InternalStopEvent(Event):
     vehicle_id: ID
 
 
+@dataclass
+class VehicleStateBeginEvent(InternalEvent):
+    location: Any
+    request_id: ID = "BEGIN"
+
+
+@dataclass
+class VehicleStateEndEvent(InternalEvent):
+    location: Any
+    request_id: ID = "END"
+
+
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
 """Emitted when a `.TransportationRequest` is handled."""
 
-StopEvent = Union[InternalStopEvent, PickupEvent, DeliveryEvent]
+StopEvent = Union[InternalEvent, PickupEvent, DeliveryEvent]
 """Emitted when a `.Stop` is serviced."""
 
 RequestResponse = Union[RequestAcceptanceEvent, RequestRejectionEvent]

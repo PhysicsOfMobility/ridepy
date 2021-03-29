@@ -53,9 +53,7 @@ def _create_events_dataframe(events: Iterable) -> pd.DataFrame:
     )
 
 
-def _create_stoplist_without_locations_dataframe(
-    *, evs: pd.DataFrame, vehicle_ids: Iterable, end_time=None
-) -> pd.DataFrame:
+def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     """
     Creates a DataFrame containing the stoplists of the transporters
     (though still without the stops' locations attached)
@@ -74,11 +72,6 @@ def _create_stoplist_without_locations_dataframe(
     ----------
     evs
         events DataFrame
-    vehicle_ids
-        List of vehicle IDs
-    end_time
-        Time until which the simulation was run. May be equal or smaller than
-        the last stop's epoch
 
     Returns
     -------
@@ -88,8 +81,11 @@ def _create_stoplist_without_locations_dataframe(
     # `PickupEvent` and `DeliveryEvent`, along with their vehicle_id, timestamp,
     # and request_id
     stops = evs[
-        (evs["event_type"] == "PickupEvent") | (evs["event_type"] == "DeliveryEvent")
-    ][["vehicle_id", "timestamp", "event_type", "request_id"]]
+        (evs["event_type"] == "PickupEvent")
+        | (evs["event_type"] == "DeliveryEvent")
+        | (evs["event_type"] == "VehicleStateBeginEvent")
+        | (evs["event_type"] == "VehicleStateEndEvent")
+    ][["vehicle_id", "timestamp", "event_type", "request_id", "location"]]
 
     # Translate PickupEvent and DeliveryEvent into an occupancy delta.
     # NOTE: This assumes occupancy delta of +1/-1, i.e. only single-customer requests.
@@ -97,61 +93,23 @@ def _create_stoplist_without_locations_dataframe(
     #       this must be changed.
     #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
     stops["delta_occupancy"] = stops.apply(
-        lambda t: {"PickupEvent": 1, "DeliveryEvent": -1}[t["event_type"]], axis=1
+        lambda t: {"PickupEvent": 1, "DeliveryEvent": -1}.get(t["event_type"], 0),
+        axis=1,
     ).astype("f8")
 
     # ... and drop the event_type as pickup/dropoff is now signified through delta_occupancy
     stops.drop("event_type", axis=1, inplace=True)
 
-    # create dummy stops for the initial state of the transporters at simulation begin,
-    # with timestamp and delta_occupancy begin zero.
-    begin_stops = pd.DataFrame(
-        np.r_[
-            "-1,2,0",
-            vehicle_ids,
-            np.zeros(len(vehicle_ids)),
-            np.zeros(len(vehicle_ids)),
-        ],
-        columns=["vehicle_id", "timestamp", "delta_occupancy"],
-    )
-
-    # Similarly, create dummy stops for the end state of the transporters at end
-    # of simulation. Their timestamp is defined either as global maximum of the stop
-    # service epoch, or the value supplied as argument on function call.
-    last_stop_time = stops["timestamp"].max()
-    if end_time is None:
-        end_time = last_stop_time
-    elif end_time < last_stop_time:
-        raise ValueError(
-            f"supplied end_time must not be smaller than the last stop time {last_stop_time}"
-        )
-
-    end_stops = pd.DataFrame(
-        np.r_[
-            "-1,2,0",
-            vehicle_ids,
-            np.full(len(vehicle_ids), end_time),
-            np.zeros(len(vehicle_ids)),
-        ],
-        columns=["vehicle_id", "timestamp", "delta_occupancy"],
-    )
-
-    # Associate the dummy stops with the non-transporter-unique
-    # request IDs "START" and "STOP" and join them to the rest of
-    # the stops (the actual ones)
-    begin_stops["request_id"] = "START"
-    end_stops["request_id"] = "STOP"
-    stops = pd.concat((begin_stops, stops, end_stops), ignore_index=True)
-
     stops.sort_values(["vehicle_id", "timestamp", "request_id"], inplace=True)
+
     # Fix the stop order. The begin and end stops have identical timestamps as
     # other stops, partially on the same vehicle. This is problematic as for
-    # proper computation of the state durations START and STOP **must** be first
+    # proper computation of the state durations BEGIN and END **must** be first
     # and last stops in every stoplist.
     def fix_start_stop_order(df):
-        # get absolute current positions of the START/STOP stops
-        i_start = (df["request_id"] == "START").argmax()
-        i_stop = (df["request_id"] == "STOP").argmax()
+        # get absolute current positions of the BEGIN/END stops
+        i_start = (df["request_id"] == "BEGIN").argmax()
+        i_stop = (df["request_id"] == "END").argmax()
 
         # get dataframe's integer index values for the dummy stops
         idx = df.index.to_list()
@@ -184,7 +142,7 @@ def _create_stoplist_without_locations_dataframe(
     stops["occupancy"] = stops.groupby("vehicle_id")["delta_occupancy"].cumsum()
 
     # and change index to hierarchical (vehicle_id, timestamp). Note that this is
-    # non-unique as multiplie stops on the same vehicle may have identical timestamps.
+    # non-unique as multiply stops on the same vehicle may have identical timestamps.
     stops.set_index(["vehicle_id", "timestamp"], inplace=True)
 
     # check total operational times of all vehicles are identical
@@ -192,7 +150,7 @@ def _create_stoplist_without_locations_dataframe(
     return stops
 
 
-def _create_requests_dataframe(
+def _create_transportation_requests_dataframe(
     *,
     evs: pd.DataFrame,
     stops,
@@ -258,7 +216,7 @@ def _create_requests_dataframe(
             (evs["event_type"] == "RequestAcceptanceEvent")
             | (evs["event_type"] == "RequestRejectionEvent")
         ]
-        .drop(["event_type", "vehicle_id"], axis=1)
+        .drop(["event_type", "vehicle_id", "location"], axis=1)
         .set_index("request_id")
     )
 
@@ -349,25 +307,24 @@ def _create_requests_dataframe(
     # sort columns alphabetically
     # FIXME this is open for debate
     reqs.sort_values(["source", "quantity"], axis=1, inplace=True)
-
     return reqs
 
 
-def _add_locations_to_stoplist_dataframe(
-    *, reqs, stops, initial_stoplists, vehicle_ids
-) -> pd.DataFrame:
+def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
     """
     Add stops' locations to the stoplist DataFrame.
 
     The schema of the returned DataFrame is the following:
     ```
-     #   Column           Dtype
-    ---  ------           -----
-     0   delta_occupancy  float64
-     1   request_id       object
-     2   state_duration   float64
-     3   occupancy        float64
-     4   location         float64
+     #        Column           Dtype
+    ---       ------           -----
+     index_0  vehicle_id       float64
+     index_1  timestamp        float64
+     0        delta_occupancy  float64
+     1        request_id       object
+     2        state_duration   float64
+     3        occupancy        float64
+     4        location         Union[float64, int, Tuple[float64]]
     ```
 
     Parameters
@@ -376,10 +333,6 @@ def _add_locations_to_stoplist_dataframe(
         requests  DataFrame
     stops
         stops DataFrame missing stop locations
-    initial_stoplists
-        initial stoplist as supplied to the simulation
-    vehicle_ids
-        list of vehicle IDs
 
     Returns
     -------
@@ -392,48 +345,29 @@ def _add_locations_to_stoplist_dataframe(
     locations.columns = locations.columns.droplevel(0).rename("delta_occupancy")
     locations = locations.stack().rename("location")
 
+    # NOTE: This assumes occupancy delta of +1/-1, i.e. only single-customer requests.
+    #       If the simulator should allow for multi-customer requests in the future,
+    #       this must be changed.
+    #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
     locations.index.set_levels(
         locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
         1,
         inplace=True,
     )
 
-    # Now they can be joined onto the stops. Note that START and STOP
-    # stops have no location associated to them yet because they are do not
-    # originate through actual requests.
-    # NOTE: This assumes occupancy delta of +1/-1, i.e. only single-customer requests.
-    #       If the simulator should allow for multi-customer requests in the future,
-    #       this must be changed.
-    #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
-    stops = stops.join(locations, on=["request_id", "delta_occupancy"])
-
-    # Now get the START locations from the supplied `initial_stoplists` dict.
-    # The resulting series is indexed by `request_id == "START"` and the `vehicle_id`,
-    # with the initial location as value.
-    begin_locations = pd.Series(
-        [stoplist[0].location for stoplist in initial_stoplists.values()],
-        index=pd.MultiIndex.from_product(
-            [["START"], vehicle_ids], names=["request_id", "vehicle_id"]
-        ),
-        name="location",
-    )
-
-    # Finally join the vehicles' initial location onto the stops dataframe.
-    # This is done the way it's done here because of the duplicate request id ("START").
-    # NOTE: This might be a sensible thing to change in the future.
     stops["location"] = stops["location"].fillna(
-        stops.join(begin_locations, on=["request_id", "vehicle_id"], lsuffix="_")[
-            "location"
-        ]
+        stops.join(locations, on=["request_id", "delta_occupancy"], rsuffix="_tmp")[
+            "location_tmp"
+        ],
     )
-
-    return stops
+    return stops[
+        ["delta_occupancy", "request_id", "state_duration", "occupancy", "location"]
+    ]
 
 
 def get_stops_and_requests(
     *,
     events: List[Event],
-    initial_stoplists: Dict[ID, List[Stop]],
     space: TransportSpace,
     transportation_requests: Optional[List[TransportationRequest]] = None,
     end_time: Optional[float] = None,
@@ -490,8 +424,6 @@ def get_stops_and_requests(
     ----------
     events
         list of all the events returned by the simulation
-    initial_stoplists
-        fleet state dictionary containing the initial stoplists indexed by their vehicle IDs
     transportation_requests
         list of the transportation requests, optional
     space
@@ -512,25 +444,15 @@ def get_stops_and_requests(
         dataframe indexed by `request_id` containing all requests
     """
 
-    vehicle_ids = list(initial_stoplists)
     events_df = _create_events_dataframe(events=events)
-
-    stops = _create_stoplist_without_locations_dataframe(
-        evs=events_df, vehicle_ids=vehicle_ids, end_time=end_time
-    )
-
-    requests = _create_requests_dataframe(
+    stops_df = _create_stoplist_dataframe(evs=events_df)
+    requests_df = _create_transportation_requests_dataframe(
         evs=events_df,
         transportation_requests=transportation_requests,
-        stops=stops,
+        stops=stops_df,
         space=space,
     )
 
-    stops = _add_locations_to_stoplist_dataframe(
-        stops=stops,
-        initial_stoplists=initial_stoplists,
-        reqs=requests,
-        vehicle_ids=vehicle_ids,
-    )
+    stops_df = _add_locations_to_stoplist_dataframe(reqs=requests_df, stops=stops_df)
 
-    return stops, requests
+    return stops_df, requests_df

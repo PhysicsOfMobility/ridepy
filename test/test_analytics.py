@@ -14,6 +14,9 @@ from thesimulator.events import (
     RequestRejectionEvent,
     PickupEvent,
     DeliveryEvent,
+    InternalEvent,
+    VehicleStateEndEvent,
+    VehicleStateBeginEvent,
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
@@ -30,8 +33,7 @@ from thesimulator.util.analytics.plotting import plot_occupancy_hist
 from thesimulator.vehicle_state import VehicleState
 
 
-@pytest.mark.n_buses(3)
-def test_get_stops_and_requests(initial_stoplists):
+def test_get_stops_and_requests():
     make_transportation_requests = lambda transp_req_class: [
         transp_req_class(
             request_id=0,
@@ -83,6 +85,9 @@ def test_get_stops_and_requests(initial_stoplists):
         [Euclidean2D(), cyEuclidean2D()],
     ):
         events = [
+            VehicleStateBeginEvent(vehicle_id=0, timestamp=0, location=(0, 0)),
+            VehicleStateBeginEvent(vehicle_id=1, timestamp=0, location=(0, 0)),
+            VehicleStateBeginEvent(vehicle_id=2, timestamp=0, location=(0, 0)),
             RequestAcceptanceEvent(
                 request_id=0,
                 timestamp=0,
@@ -132,11 +137,21 @@ def test_get_stops_and_requests(initial_stoplists):
             DeliveryEvent(request_id=0, timestamp=0.3, vehicle_id=0),
             PickupEvent(request_id=2, timestamp=1, vehicle_id=1),
             DeliveryEvent(request_id=2, timestamp=2, vehicle_id=1),
+            VehicleStateEndEvent(
+                vehicle_id=0,
+                timestamp=2,
+                location=transportation_requests[0].destination,
+            ),
+            VehicleStateEndEvent(
+                vehicle_id=1,
+                timestamp=2,
+                location=transportation_requests[2].destination,
+            ),
+            VehicleStateEndEvent(vehicle_id=2, timestamp=2, location=(0, 0)),
         ]
 
         stops, requests = get_stops_and_requests(
             events=events,
-            initial_stoplists=initial_stoplists,
             transportation_requests=transportation_requests,
             space=space,
         )
@@ -228,18 +243,18 @@ def test_get_stops_and_requests(initial_stoplists):
                     11: 0.0,
                 },
                 "location": {
-                    0: 0.0,
-                    1: 0.0,
-                    2: 0.1,
-                    3: 0.2,
-                    4: 0.3,
-                    5: nan,
-                    6: 0.0,
-                    7: 1.0,
-                    8: 0.0,
-                    9: nan,
-                    10: 0.0,
-                    11: nan,
+                    0: (0, 0),
+                    1: (0, 0),
+                    2: (0, 0.1),
+                    3: (0, 0.2),
+                    4: (0, 0.3),
+                    5: (0, 0.3),
+                    6: (0, 0),
+                    7: (0, 1.0),
+                    8: (0, 0),
+                    9: (0, 0),
+                    10: (0, 0),
+                    11: (0, 0),
                 },
             }
         )
@@ -306,7 +321,6 @@ def test_get_stops_and_requests(initial_stoplists):
 
         stops_wo_reqs, requests_wo_reqs = get_stops_and_requests(
             events=events,
-            initial_stoplists=initial_stoplists,
             space=space,
         )
 
@@ -326,8 +340,7 @@ def test_get_stops_and_requests(initial_stoplists):
         plot_occupancy_hist(stops)
 
 
-@pytest.mark.n_buses(10)
-def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
+def test_get_stops_and_requests_with_actual_simulation():
     space = Euclidean1D()
     rg = RandomRequestGenerator(rate=10, space=space)
     transportation_requests = list(it.islice(rg, 1000))
@@ -344,7 +357,6 @@ def test_get_stops_and_requests_with_actual_simulation(initial_stoplists):
 
     stops, requests = get_stops_and_requests(
         events=events,
-        initial_stoplists=initial_stoplists,
         transportation_requests=transportation_requests,
         space=space,
     )
