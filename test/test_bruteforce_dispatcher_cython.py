@@ -195,6 +195,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             assert np.allclose(
                 list(flatten(list(pev.__dict__.values()))),
                 list(flatten(list(cev.__dict__.values()))),
+                rtol=1e-4,
             )
 
 

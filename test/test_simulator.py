@@ -55,7 +55,7 @@ def test_events_sorted():
     evs = pd.DataFrame(
         map(lambda ev: dict(ev.__dict__, event_type=ev.__class__.__name__), events)
     )
-    
+
     assert all(
         evs.sort_values(["timestamp", "vehicle_id"]).index == evs.index
     ), "events not sorted"

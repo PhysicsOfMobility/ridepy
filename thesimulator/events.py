@@ -86,13 +86,13 @@ class InternalEvent(Event):
 @dataclass
 class VehicleStateBeginEvent(InternalEvent):
     location: Any
-    request_id: ID = "BEGIN"
+    request_id: ID = -100
 
 
 @dataclass
 class VehicleStateEndEvent(InternalEvent):
     location: Any
-    request_id: ID = "END"
+    request_id: ID = -200
 
 
 RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]

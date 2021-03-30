@@ -11,7 +11,7 @@ from thesimulator.data_structures import (
     Stop,
     TransportSpace,
 )
-from thesimulator.events import Event
+from thesimulator.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
 
 from thesimulator.util import make_dict
 
@@ -108,8 +108,8 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     # and last stops in every stoplist.
     def fix_start_stop_order(df):
         # get absolute current positions of the BEGIN/END stops
-        i_start = (df["request_id"] == "BEGIN").argmax()
-        i_stop = (df["request_id"] == "END").argmax()
+        i_start = (df["request_id"] == VehicleStateBeginEvent.request_id).argmax()
+        i_stop = (df["request_id"] == VehicleStateEndEvent.request_id).argmax()
 
         # get dataframe's integer index values for the dummy stops
         idx = df.index.to_list()

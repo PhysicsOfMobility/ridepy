@@ -81,23 +81,6 @@ n_buses = 50
 initial_location = (0, 0)
 """initial location of all vehicles"""
 
-initial_stoplists = {
-    vehicle_id: [
-        Stop(
-            location=initial_location,
-            request=InternalRequest(
-                request_id=-1, creation_timestamp=0, location=initial_location
-            ),
-            action=StopAction.internal,
-            estimated_arrival_time=0,
-            occupancy_after_servicing=0,
-            time_window_min=0,
-            time_window_max=np.inf,
-        )
-    ]
-    for vehicle_id in range(n_buses)
-}
-"""initial stoplists, containing only cpe"""
 # -
 
 # ## define simulation environment
@@ -132,7 +115,6 @@ fs = SlowSimpleFleetState(
 
 stops, reqs = get_stops_and_requests(
     events=events,
-    initial_stoplists=initial_stoplists,
     transportation_requests=transportation_requests,
     space=space,
 )
