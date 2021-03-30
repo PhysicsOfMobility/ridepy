@@ -306,6 +306,9 @@ class FleetState(ABC):
             # advance clock to req_epoch
             self.t = req_epoch
 
+            if self.t >= t_cutoff:
+                break
+
             # Visit all the stops upto req_epoch
             yield from self.fast_forward(self.t)
 
@@ -317,8 +320,6 @@ class FleetState(ABC):
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
             logger.info(f"Handled request # {n_req}")
-            if self.t >= t_cutoff:
-                break
 
         self.t = min(
             t_cutoff,

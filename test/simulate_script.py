@@ -41,29 +41,10 @@ def simulate_on_r2(
     np.random.seed(seed)
 
     space = pyEuclidean2D()
-    initial_stoplists = dict()
-
-    for vehicle_id in range(num_vehicles):
-        initial_location = space.random_point()
-        initial_stoplist = [
-            Stop(
-                location=initial_location,
-                request=InternalRequest(
-                    request_id=-1, creation_timestamp=0, location=initial_location
-                ),
-                action=StopAction.internal,
-                estimated_arrival_time=0,
-                occupancy_after_servicing=0,
-                time_window_min=0,
-                time_window_max=0,
-            )
-        ]
-        initial_stoplists[vehicle_id] = initial_stoplist
 
     ssfs = SlowSimpleFleetState(
         initial_locations={
-            vehicle_id: stoplist[0].location
-            for vehicle_id, stoplist in initial_stoplists.items()
+            vehicle_id: space.random_point() for vehicle_id in range(num_vehicles)
         },
         space=Euclidean2D(),
         seat_capacities=seat_capacities,
@@ -87,7 +68,6 @@ def simulate_on_r2(
 
     stops, requests = get_stops_and_requests(
         events=events,
-        initial_stoplists=initial_stoplists,
         transportation_requests=reqs,
         space=space,
     )
