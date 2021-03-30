@@ -57,7 +57,7 @@ def test_events_sorted():
     )
 
     assert all(
-        evs.sort_values(["timestamp", "vehicle_id"]).index == evs.index
+        evs.sort_values(["timestamp", "vehicle_id", 'request_id']).index == evs.index
     ), "events not sorted"
 
 

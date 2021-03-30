@@ -14,7 +14,7 @@ class Event:
 
 
 @dataclass
-class RequestAcceptanceEvent(Event):
+class RequestSubmissionEvent(Event):
     """
     Commitment of the system to fulfil a request given
     the returned spatio-temporal constraints.
@@ -30,7 +30,7 @@ class RequestAcceptanceEvent(Event):
 
 
 @dataclass
-class RequestAssignEvent(Event):
+class RequestAcceptanceEvent(Event):
     """
     Commitment of the system to fulfil a request given
     the returned spatio-temporal constraints.
@@ -95,7 +95,9 @@ class VehicleStateEndEvent(InternalEvent):
     request_id: ID = -200
 
 
-RequestEvent = Union[RequestAcceptanceEvent, RequestRejectionEvent]
+RequestEvent = Union[
+    RequestSubmissionEvent, RequestAcceptanceEvent, RequestRejectionEvent
+]
 """Emitted when a `.TransportationRequest` is handled."""
 
 StopEvent = Union[InternalEvent, PickupEvent, DeliveryEvent]

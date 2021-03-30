@@ -94,7 +94,7 @@ rg = RandomRequestGenerator(rate=10, space=space)
 """request generator"""
 
 # generate 100 random requests
-transportation_requests = list(it.islice(rg, 100))
+transportation_requests = it.islice(rg, 100)
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
@@ -113,11 +113,7 @@ fs = SlowSimpleFleetState(
 
 # ## process the results
 
-stops, reqs = get_stops_and_requests(
-    events=events,
-    transportation_requests=transportation_requests,
-    space=space,
-)
+stops, reqs = get_stops_and_requests(events=events, space=space)
 
 # # some distributions
 # ## relative travel times
@@ -134,7 +130,7 @@ reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 
 # ## direct travel times
 
-reqs[("supplied", "direct_travel_time")].hist(bins=np.r_[0:1:30j])
+reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0:1:30j])
 
 
 # ## occupancies

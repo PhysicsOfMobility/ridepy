@@ -66,11 +66,7 @@ def simulate_on_r2(
 
     print(f"Simulating took {tock-tick} seconds")
 
-    stops, requests = get_stops_and_requests(
-        events=events,
-        transportation_requests=reqs,
-        space=space,
-    )
+    stops, requests = get_stops_and_requests(events=events, space=space)
     del events
 
     num_requests = len(requests)

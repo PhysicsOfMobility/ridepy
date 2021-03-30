@@ -17,6 +17,8 @@ from thesimulator.events import (
     InternalEvent,
     VehicleStateEndEvent,
     VehicleStateBeginEvent,
+    RequestEvent,
+    RequestSubmissionEvent,
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as cyTransportationRequest,
@@ -88,6 +90,20 @@ def test_get_stops_and_requests():
             VehicleStateBeginEvent(vehicle_id=0, timestamp=0, location=(0, 0)),
             VehicleStateBeginEvent(vehicle_id=1, timestamp=0, location=(0, 0)),
             VehicleStateBeginEvent(vehicle_id=2, timestamp=0, location=(0, 0)),
+            RequestSubmissionEvent(
+                request_id=0,
+                timestamp=0,
+                origin=transportation_requests[0].origin,
+                destination=transportation_requests[0].destination,
+                pickup_timewindow_min=transportation_requests[0].pickup_timewindow_min,
+                pickup_timewindow_max=transportation_requests[0].pickup_timewindow_max,
+                delivery_timewindow_min=transportation_requests[
+                    0
+                ].delivery_timewindow_min,
+                delivery_timewindow_max=transportation_requests[
+                    0
+                ].delivery_timewindow_max,
+            ),
             RequestAcceptanceEvent(
                 request_id=0,
                 timestamp=0,
@@ -100,6 +116,20 @@ def test_get_stops_and_requests():
                 ].delivery_timewindow_min,
                 delivery_timewindow_max=transportation_requests[
                     0
+                ].delivery_timewindow_max,
+            ),
+            RequestSubmissionEvent(
+                request_id=1,
+                timestamp=0,
+                origin=transportation_requests[1].origin,
+                destination=transportation_requests[1].destination,
+                pickup_timewindow_min=transportation_requests[1].pickup_timewindow_min,
+                pickup_timewindow_max=transportation_requests[1].pickup_timewindow_max,
+                delivery_timewindow_min=transportation_requests[
+                    1
+                ].delivery_timewindow_min,
+                delivery_timewindow_max=transportation_requests[
+                    1
                 ].delivery_timewindow_max,
             ),
             RequestAcceptanceEvent(
@@ -116,6 +146,20 @@ def test_get_stops_and_requests():
                     1
                 ].delivery_timewindow_max,
             ),
+            RequestSubmissionEvent(
+                request_id=2,
+                timestamp=0,
+                origin=transportation_requests[2].origin,
+                destination=transportation_requests[2].destination,
+                pickup_timewindow_min=transportation_requests[2].pickup_timewindow_min,
+                pickup_timewindow_max=transportation_requests[2].pickup_timewindow_max,
+                delivery_timewindow_min=transportation_requests[
+                    2
+                ].delivery_timewindow_min,
+                delivery_timewindow_max=transportation_requests[
+                    2
+                ].delivery_timewindow_max,
+            ),
             RequestAcceptanceEvent(
                 request_id=2,
                 timestamp=0,
@@ -128,6 +172,20 @@ def test_get_stops_and_requests():
                 ].delivery_timewindow_min,
                 delivery_timewindow_max=transportation_requests[
                     2
+                ].delivery_timewindow_max,
+            ),
+            RequestSubmissionEvent(
+                request_id=3,
+                timestamp=2,
+                origin=transportation_requests[3].origin,
+                destination=transportation_requests[3].destination,
+                pickup_timewindow_min=transportation_requests[3].pickup_timewindow_min,
+                pickup_timewindow_max=transportation_requests[3].pickup_timewindow_max,
+                delivery_timewindow_min=transportation_requests[
+                    3
+                ].delivery_timewindow_min,
+                delivery_timewindow_max=transportation_requests[
+                    3
                 ].delivery_timewindow_max,
             ),
             RequestRejectionEvent(request_id=3, timestamp=2),
@@ -150,11 +208,7 @@ def test_get_stops_and_requests():
             VehicleStateEndEvent(vehicle_id=2, timestamp=2, location=(0, 0)),
         ]
 
-        stops, requests = get_stops_and_requests(
-            events=events,
-            transportation_requests=transportation_requests,
-            space=space,
-        )
+        stops, requests = get_stops_and_requests(events=events, space=space)
 
         expected_stops = pd.DataFrame(
             {
@@ -286,56 +340,44 @@ def test_get_stops_and_requests():
                 ("inferred", "relative_travel_time"): {0: 1.0, 1: 1.0, 2: 1.0, 3: nan},
                 ("inferred", "travel_time"): {0: 0.3, 1: 0.1, 2: 1.0, 3: nan},
                 ("inferred", "waiting_time"): {0: 0.0, 1: 0.1, 2: 1.0, 3: nan},
+                ("rejected", "timestamp"): {0: nan, 1: nan, 2: nan, 3: 2.0},
                 ("serviced", "timestamp_dropoff"): {0: 0.3, 1: 0.2, 2: 2.0, 3: nan},
                 ("serviced", "timestamp_pickup"): {0: 0.0, 1: 0.1, 2: 1.0, 3: nan},
                 ("serviced", "vehicle_id"): {0: 0.0, 1: 0.0, 2: 1.0, 3: nan},
-                ("supplied", "delivery_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
-                ("supplied", "delivery_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
-                ("supplied", "destination"): {
+                ("submitted", "delivery_timewindow_max"): {
+                    0: inf,
+                    1: inf,
+                    2: inf,
+                    3: 0,
+                },
+                ("submitted", "delivery_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
+                ("submitted", "destination"): {
                     0: (0, 0.3),
                     1: (0, 0.2),
                     2: (0, 0.0),
                     3: (0, 1),
                 },
-                ("supplied", "direct_travel_distance"): {
+                ("submitted", "direct_travel_distance"): {
                     0: 0.3,
                     1: 0.1,
                     2: 1.0,
                     3: 1.0,
                 },
-                ("supplied", "direct_travel_time"): {0: 0.3, 1: 0.1, 2: 1.0, 3: 1.0},
-                ("supplied", "origin"): {
+                ("submitted", "direct_travel_time"): {0: 0.3, 1: 0.1, 2: 1.0, 3: 1.0},
+                ("submitted", "origin"): {
                     0: (0, 0.0),
                     1: (0, 0.1),
                     2: (0, 1.0),
                     3: (0, 0),
                 },
-                ("supplied", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
-                ("supplied", "pickup_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
-                ("supplied", "timestamp"): {0: 0, 1: 0, 2: 1, 3: 2},
+                ("submitted", "pickup_timewindow_max"): {0: inf, 1: inf, 2: inf, 3: 0},
+                ("submitted", "pickup_timewindow_min"): {0: 0, 1: 0, 2: 0, 3: 0},
+                ("submitted", "timestamp"): {0: 0, 1: 0, 2: 1, 3: 2},
             }
         )
 
         assert all(stops.reset_index() == expected_stops)
         assert all(requests.reset_index() == expected_requests)
-
-        stops_wo_reqs, requests_wo_reqs = get_stops_and_requests(
-            events=events,
-            space=space,
-        )
-
-        assert all(stops_wo_reqs.reset_index() == expected_stops)
-        assert all(
-            requests_wo_reqs.reset_index()
-            == expected_requests.drop(
-                [
-                    "supplied",
-                    ("inferred", "relative_travel_time"),
-                    ("inferred", "waiting_time"),
-                ],
-                axis=1,
-            )
-        )
 
         plot_occupancy_hist(stops)
 
@@ -355,11 +397,7 @@ def test_get_stops_and_requests_with_actual_simulation():
 
     events = list(fs.simulate(transportation_requests))
 
-    stops, requests = get_stops_and_requests(
-        events=events,
-        transportation_requests=transportation_requests,
-        space=space,
-    )
+    stops, requests = get_stops_and_requests(events=events, space=space)
 
     assert len(stops) == 2020
     assert len(requests) == 1000

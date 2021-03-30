@@ -53,6 +53,7 @@ from .events import (
     InternalEvent,
     VehicleStateBeginEvent,
     VehicleStateEndEvent,
+    RequestSubmissionEvent,
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
@@ -301,16 +302,26 @@ class FleetState(ABC):
             )
 
         for n_req, request in enumerate(requests):
-            req_epoch = request.creation_timestamp
-
             # advance clock to req_epoch
-            self.t = req_epoch
+            self.t = request.creation_timestamp
 
-            if self.t >= t_cutoff:
+            if self.t > t_cutoff:
                 break
 
             # Visit all the stops upto req_epoch
             yield from self.fast_forward(self.t)
+
+            if isinstance(request, (TransportationRequest, CyTransportationRequest)):
+                yield RequestSubmissionEvent(
+                    request_id=request.request_id,
+                    timestamp=self.t,
+                    origin=request.origin,
+                    destination=request.destination,
+                    pickup_timewindow_min=request.pickup_timewindow_min,
+                    pickup_timewindow_max=request.pickup_timewindow_max,
+                    delivery_timewindow_min=request.delivery_timewindow_min,
+                    delivery_timewindow_max=request.delivery_timewindow_max,
+                )
 
             # handle the current request
             if isinstance(request, (pyTransportationRequest, CyTransportationRequest)):

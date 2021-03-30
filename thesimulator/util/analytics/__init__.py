@@ -151,16 +151,12 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
 
 
 def _create_transportation_requests_dataframe(
-    *,
-    evs: pd.DataFrame,
-    stops,
-    space,
-    transportation_requests: Optional[List[TransportationRequest]] = None,
+    *, evs: pd.DataFrame, stops, space
 ) -> pd.DataFrame:
     """
     Create DataFrame containing all requests. If desired, the filed
-    requests may be supplied as an optional argument. This allows for treatment
-    of differences in the properties of supplied and logged/accepted/rejected requests,
+    requests may be submitted as an optional argument. This allows for treatment
+    of differences in the properties of submitted and logged/accepted/rejected requests,
     such as modified stop locations etc.
 
     The schema of the returned DataFrame is the following:
@@ -180,17 +176,17 @@ def _create_transportation_requests_dataframe(
      10  (serviced, timestamp_dropoff)        float64
      11  (serviced, timestamp_pickup)         float64
      12  (serviced, vehicle_id)               float64
-     13  (supplied, delivery_timewindow_max)  float64
-     14  (supplied, delivery_timewindow_min)  int64
-     15  (supplied, destination)              float64
-     16  (supplied, direct_travel_distance)   float64
-     17  (supplied, direct_travel_time)       float64
-     18  (supplied, origin)                   float64
-     19  (supplied, pickup_timewindow_max)    float64
-     20  (supplied, pickup_timewindow_min)    int64
-     21  (supplied, timestamp)                int64
+     13  (submitted, delivery_timewindow_max)  float64
+     14  (submitted, delivery_timewindow_min)  int64
+     15  (submitted, destination)              float64
+     16  (submitted, direct_travel_distance)   float64
+     17  (submitted, direct_travel_time)       float64
+     18  (submitted, origin)                   float64
+     19  (submitted, pickup_timewindow_max)    float64
+     20  (submitted, pickup_timewindow_min)    int64
+     21  (submitted, timestamp)                int64
     ```
-    If transportation_requests are not supplied, the (supplied, .*)
+    If transportation_requests are not submitted, the (submitted, .*)
     columns are not present.
 
     Parameters
@@ -201,9 +197,6 @@ def _create_transportation_requests_dataframe(
         stoplists DataFrame
     space
         TransportSpace the simulations were performed on
-    transportation_requests
-        Transportation Requests (optional). If not supplied,
-        infer the requests.
 
     Returns
     -------
@@ -211,35 +204,40 @@ def _create_transportation_requests_dataframe(
     """
 
     # first turn all request acceptance and rejection events into a dataframe
-    reqs_as_logged = (
+    reqs = (
         evs[
-            (evs["event_type"] == "RequestAcceptanceEvent")
+            (evs["event_type"] == "RequestSubmissionEvent")
+            | (evs["event_type"] == "RequestAcceptanceEvent")
             | (evs["event_type"] == "RequestRejectionEvent")
         ]
-        .drop(["event_type", "vehicle_id", "location"], axis=1)
-        .set_index("request_id")
-    )
-
-    if transportation_requests is None:
-        # if no transportation requests are supplied, just use the logged ones.
-        reqs = pd.concat(
-            (reqs_as_logged,), keys=["accepted"], names=["source", "quantity"], axis=1
-        )
-    else:
-        # otherwise, create an additional dataframe containing the supplied requests
-        # which possibly may have different properties and join it to the logged ones.
-        reqs_as_supplied = (
-            pd.DataFrame(map(make_dict, transportation_requests))
-            .set_index("request_id")
-            .rename({"creation_timestamp": "timestamp"}, axis=1)
-        )
-
-        reqs = pd.concat(
-            (reqs_as_supplied, reqs_as_logged),
+        .drop(["vehicle_id", "location"], axis=1)
+        .set_index(["request_id", "event_type"])
+        .unstack(1)
+        .reorder_levels([1, 0], axis=1)
+        .sort_index(axis=1)
+        .drop(
+            [
+                ("RequestRejectionEvent", "pickup_timewindow_min"),
+                ("RequestRejectionEvent", "pickup_timewindow_max"),
+                ("RequestRejectionEvent", "delivery_timewindow_min"),
+                ("RequestRejectionEvent", "delivery_timewindow_max"),
+                ("RequestRejectionEvent", "origin"),
+                ("RequestRejectionEvent", "destination"),
+            ],
             axis=1,
-            keys=["supplied", "accepted"],
-            names=["source", "quantity"],
+            errors="ignore",
         )
+        .rename(
+            {
+                "RequestAcceptanceEvent": "accepted",
+                "RequestSubmissionEvent": "submitted",
+                "RequestRejectionEvent": "rejected",
+            },
+            axis=1,
+            level=0,
+        )
+    )
+    reqs.columns.rename(["source", "quantity"], inplace=True)
 
     # Get properties of serviced requests from the stops dataframe:
     stops_tmp = stops.reset_index()[
@@ -266,40 +264,41 @@ def _create_transportation_requests_dataframe(
         reqs[("serviced", "timestamp_dropoff")] - reqs[("serviced", "timestamp_pickup")]
     )
 
-    if "supplied" in reqs.columns:
-        # If transportation as supplied were supplied, calculate more properties.
+    if "submitted" in reqs.columns:
+        # If transportation as submitted were submitted, calculate more properties.
         # NOTE that these properties might equally well be computed using the
         # inferred requests, but in case of differences between the requests
         # the resulting change in behavior might not intended. Therefore so far
-        # we only compute these quantities if transportation_requests are supplied.
+        # we only compute these quantities if transportation_requests are submitted.
 
         # - direct travel time
         # `to_list()` is necessary as for dimensionality > 1 the `pd.Series` will contain tuples
         # which will not be understood as a dimension by `np.shape(...)` which subsequently confuses smartVectorize
         # see https://github.com/PhysicsOfMobility/theSimulator/issues/85
-        reqs[("supplied", "direct_travel_time")] = space.t(
-            reqs[("supplied", "origin")].to_list(),
-            reqs[("supplied", "destination")].to_list(),
+        reqs[("submitted", "direct_travel_time")] = space.t(
+            reqs[("submitted", "origin")].to_list(),
+            reqs[("submitted", "destination")].to_list(),
         )
 
         # - direct travel distance
         # again: `to_list()` is necessary as for dimensionality > 1 the `pd.Series` will contain tuples
         # which will not be understood as a dimension by `np.shape(...)` which subsequently  confuses smartVectorize
         # see https://github.com/PhysicsOfMobility/theSimulator/issues/85
-        reqs[("supplied", "direct_travel_distance")] = space.d(
-            reqs[("supplied", "origin")].to_list(),
-            reqs[("supplied", "destination")].to_list(),
+        reqs[("submitted", "direct_travel_distance")] = space.d(
+            reqs[("submitted", "origin")].to_list(),
+            reqs[("submitted", "destination")].to_list(),
         )
 
         # - waiting time
         reqs[("inferred", "waiting_time")] = (
             reqs[("serviced", "timestamp_pickup")]
-            - reqs[("supplied", "pickup_timewindow_min")]
+            - reqs[("submitted", "pickup_timewindow_min")]
         )
 
         # - relative travel time
         reqs[("inferred", "relative_travel_time")] = (
-            reqs[("inferred", "travel_time")] / reqs[("supplied", "direct_travel_time")]
+            reqs[("inferred", "travel_time")]
+            / reqs[("submitted", "direct_travel_time")]
         )
 
     # TODO possibly add more properties to compute HERE
@@ -365,13 +364,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
     ]
 
 
-def get_stops_and_requests(
-    *,
-    events: List[Event],
-    space: TransportSpace,
-    transportation_requests: Optional[List[TransportationRequest]] = None,
-    end_time: Optional[float] = None,
-):
+def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
     """
     Prepare two DataFrames, containing stops and requests.
 
@@ -394,47 +387,39 @@ def get_stops_and_requests(
     The `requests` DataFrame returned has the following schema:
 
     ```
-     #   Column                               Dtype
-    ---  ------                               -----
-     0   (accepted, delivery_timewindow_max)  float64
-     1   (accepted, delivery_timewindow_min)  float64
-     2   (accepted, destination)              float64
-     3   (accepted, origin)                   float64
-     4   (accepted, pickup_timewindow_max)    float64
-     5   (accepted, pickup_timewindow_min)    float64
-     6   (accepted, timestamp)                float64
-     7   (inferred, relative_travel_time)     float64
-     8   (inferred, travel_time)              float64
-     9   (inferred, waiting_time)             float64
-     10  (serviced, timestamp_dropoff)        float64
-     11  (serviced, timestamp_pickup)         float64
-     12  (serviced, vehicle_id)               float64
-     13  (supplied, delivery_timewindow_max)  float64
-     14  (supplied, delivery_timewindow_min)  int64
-     15  (supplied, destination)              float64
-     16  (supplied, direct_travel_distance)   float64
-     17  (supplied, direct_travel_time)       float64
-     18  (supplied, origin)                   float64
-     19  (supplied, pickup_timewindow_max)    float64
-     20  (supplied, pickup_timewindow_min)    int64
-     21  (supplied, timestamp)                int64
+    Column                               Dtype
+    ------                               -----
+    (submitted, timestamp)                float64
+    (submitted, origin)                   float64
+    (submitted, destination)              float64
+    (submitted, pickup_timewindow_min)    float64
+    (submitted, pickup_timewindow_max)    float64
+    (submitted, delivery_timewindow_min)  float64
+    (submitted, delivery_timewindow_max)  float64
+    (submitted, direct_travel_distance)   float64
+    (submitted, direct_travel_time)       float64
+    (accepted, timestamp)                 float64
+    (accepted, origin)                    float64
+    (accepted, destination)               float64
+    (accepted, pickup_timewindow_min)     float64
+    (accepted, pickup_timewindow_max)     float64
+    (accepted, delivery_timewindow_min)   float64
+    (accepted, delivery_timewindow_max)   float64
+    (rejected, timestamp)                 float64
+    (inferred, relative_travel_time)      float64
+    (inferred, travel_time)               float64
+    (inferred, waiting_time)              float64
+    (serviced, timestamp_dropoff)         float64
+    (serviced, timestamp_pickup)          float64
+    (serviced, vehicle_id)                float64
     ```
 
     Parameters
     ----------
     events
         list of all the events returned by the simulation
-    transportation_requests
-        list of the transportation requests, optional
     space
         transportation space that was used for the simulations
-    end_time
-        time at which to presume the simulation has ended. currently this must
-        not be smaller than the time at which the last stop was serviced, i.e. all
-        stops and requests that were treated during the simulation are incorporated
-        into the resulting dataframes. In the future there might be an option to discard
-        everything that happened after a certain time, or even to select a specific time
-        interval of the simulations for analytics.
 
     Returns
     -------
@@ -447,10 +432,7 @@ def get_stops_and_requests(
     events_df = _create_events_dataframe(events=events)
     stops_df = _create_stoplist_dataframe(evs=events_df)
     requests_df = _create_transportation_requests_dataframe(
-        evs=events_df,
-        transportation_requests=transportation_requests,
-        stops=stops_df,
-        space=space,
+        evs=events_df, stops=stops_df, space=space
     )
 
     stops_df = _add_locations_to_stoplist_dataframe(reqs=requests_df, stops=stops_df)
