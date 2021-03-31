@@ -21,7 +21,7 @@ from thesimulator.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
 from thesimulator.util.testing_utils import stoplist_from_properties
-from thesimulator.util.convenience.spaces import make_nx_grid
+from thesimulator.extras.spaces import make_nx_grid
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.util.spaces import Euclidean2D, Graph
 from thesimulator.fleet_state import SlowSimpleFleetState

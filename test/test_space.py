@@ -17,7 +17,6 @@ from thesimulator.util.spaces import (
     Euclidean2D,
     Graph,
     DiGraph,
-    ContinuousGraph,
 )
 from thesimulator.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
@@ -25,7 +24,7 @@ from thesimulator.util.spaces_cython import (
     Graph as CyGraph,
 )
 
-from thesimulator.util.convenience.spaces import (
+from thesimulator.extras.spaces import (
     make_nx_cycle_graph,
     make_nx_grid,
     make_nx_star_graph,

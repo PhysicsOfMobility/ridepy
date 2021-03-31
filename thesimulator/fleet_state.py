@@ -50,6 +50,10 @@ from .events import (
     RequestRejectionEvent,
     RequestEvent,
     StopEvent,
+    InternalEvent,
+    VehicleStateBeginEvent,
+    VehicleStateEndEvent,
+    RequestSubmissionEvent,
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
@@ -290,14 +294,34 @@ class FleetState(ABC):
 
         self.t = 0
 
-        for n_req, request in enumerate(requests):
-            req_epoch = request.creation_timestamp
+        for vehicle_id, fleet_state in self.fleet.items():
+            yield VehicleStateBeginEvent(
+                vehicle_id=vehicle_id,
+                timestamp=self.t,
+                location=fleet_state.stoplist[0].location,
+            )
 
+        for n_req, request in enumerate(requests):
             # advance clock to req_epoch
-            self.t = req_epoch
+            self.t = request.creation_timestamp
+
+            if self.t > t_cutoff:
+                break
 
             # Visit all the stops upto req_epoch
             yield from self.fast_forward(self.t)
+
+            if isinstance(request, (TransportationRequest, CyTransportationRequest)):
+                yield RequestSubmissionEvent(
+                    request_id=request.request_id,
+                    timestamp=self.t,
+                    origin=request.origin,
+                    destination=request.destination,
+                    pickup_timewindow_min=request.pickup_timewindow_min,
+                    pickup_timewindow_max=request.pickup_timewindow_max,
+                    delivery_timewindow_min=request.delivery_timewindow_min,
+                    delivery_timewindow_max=request.delivery_timewindow_max,
+                )
 
             # handle the current request
             if isinstance(request, (pyTransportationRequest, CyTransportationRequest)):
@@ -307,19 +331,24 @@ class FleetState(ABC):
             else:
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
             logger.info(f"Handled request # {n_req}")
-            if self.t >= t_cutoff:
-                return
+
+        self.t = min(
+            t_cutoff,
+            max(
+                vehicle.stoplist[-1].estimated_arrival_time
+                for vehicle in self.fleet.values()
+            ),
+        )
 
         # service all remaining stops
-        yield from self.fast_forward(
-            min(
-                t_cutoff,
-                max(
-                    vehicle.stoplist[-1].estimated_arrival_time
-                    for vehicle in self.fleet.values()
-                ),
+        yield from self.fast_forward(self.t)
+
+        for vehicle_id, fleet_state in self.fleet.items():
+            yield VehicleStateEndEvent(
+                vehicle_id=vehicle_id,
+                timestamp=self.t,
+                location=fleet_state.stoplist[0].location,
             )
-        )
 
     @abstractmethod
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:

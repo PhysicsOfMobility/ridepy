@@ -34,7 +34,7 @@ from thesimulator.vehicle_state import VehicleState as py_VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
 
 from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.util.convenience.spaces import make_nx_grid
+from thesimulator.extras.spaces import make_nx_grid
 
 
 def stoplist_from_properties(stoplist_properties, data_structure_module):
@@ -195,6 +195,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             assert np.allclose(
                 list(flatten(list(pev.__dict__.values()))),
                 list(flatten(list(cev.__dict__.values()))),
+                rtol=1e-4,
             )
 
 

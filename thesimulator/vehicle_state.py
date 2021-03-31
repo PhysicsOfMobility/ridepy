@@ -15,7 +15,7 @@ from .data_structures import (
     Dispatcher,
     LocType,
 )
-from .events import PickupEvent, DeliveryEvent, InternalStopEvent, StopEvent
+from .events import PickupEvent, DeliveryEvent, InternalEvent, StopEvent
 
 from thesimulator.util import MAX_SEAT_CAPACITY
 
@@ -95,8 +95,9 @@ class VehicleState:
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
         for i in range(len(self.stoplist) - 1, 0, -1):
             stop = self.stoplist[i]
-            # service the stop at its estimated arrival time
-            if stop.estimated_arrival_time <= t:
+            service_time = max(stop.estimated_arrival_time, stop.time_window_min)
+            # service the stop at the minimum time at which it can leave
+            if service_time <= t:
                 # as we are iterating backwards, the first stop iterated over is the last one serviced
                 if last_stop is None:
                     last_stop = stop
@@ -105,13 +106,11 @@ class VehicleState:
                     {
                         StopAction.pickup: PickupEvent,
                         StopAction.dropoff: DeliveryEvent,
-                        StopAction.internal: InternalStopEvent,
+                        StopAction.internal: InternalEvent,
                     }[stop.action](
                         request_id=stop.request.request_id,
                         vehicle_id=self.vehicle_id,
-                        timestamp=max(
-                            stop.estimated_arrival_time, stop.time_window_min
-                        ),
+                        timestamp=service_time,
                     )
                 )
 

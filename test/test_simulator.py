@@ -24,7 +24,7 @@ from thesimulator.util.spaces import Euclidean1D, Euclidean2D
 from thesimulator.vehicle_state import VehicleState
 
 
-def test_slow_simple_fleet_state_simulate(initial_stoplists):
+def test_slow_simple_fleet_state_simulate():
     space = Euclidean2D()
     rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))
@@ -55,7 +55,10 @@ def test_events_sorted():
     evs = pd.DataFrame(
         map(lambda ev: dict(ev.__dict__, event_type=ev.__class__.__name__), events)
     )
-    assert all(evs.sort_values("timestamp").index == evs.index), "events not sorted"
+
+    assert all(
+        evs.sort_values(["timestamp", "vehicle_id", "request_id"]).index == evs.index
+    ), "events not sorted"
 
 
 def test_brute_force_dispatcher_2d():
@@ -76,7 +79,7 @@ def test_brute_force_dispatcher_2d():
     events = list(fs.simulate(transportation_requests))
 
 
-def test_mpi_futures_fleet_state_simulate(initial_stoplists):
+def test_mpi_futures_fleet_state_simulate():
     space = Euclidean2D()
     rg = RandomRequestGenerator(rate=10, space=space)
     reqs = list(it.islice(rg, 1000))

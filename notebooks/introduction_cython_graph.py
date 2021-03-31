@@ -57,7 +57,7 @@ from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from thesimulator.util.spaces_cython import Euclidean2D, Graph
 from thesimulator.util.analytics import get_stops_and_requests
 from thesimulator.util.analytics.plotting import plot_occupancy_hist
-from thesimulator.util.convenience.spaces import make_nx_grid
+from thesimulator.extras.spaces import make_nx_grid
 
 # + tags=[]
 pd.set_option("display.max_rows", 500)
@@ -75,23 +75,6 @@ n_buses = 50
 
 initial_location = 0
 
-initial_stoplists = {
-    vehicle_id: [
-        Stop(
-            location=initial_location,
-            request=InternalRequest(
-                request_id=-1, creation_timestamp=0, location=initial_location
-            ),
-            action=StopAction.internal,
-            estimated_arrival_time=0,
-            occupancy_after_servicing=0,
-            time_window_min=0,
-            time_window_max=np.inf,
-        )
-    ]
-    for vehicle_id in range(n_buses)
-}
-"""initial stoplists, containing only cpe"""
 # -
 
 
@@ -112,7 +95,7 @@ rg = RandomRequestGenerator(
 """request generator"""
 
 # generate 100 random requests
-transportation_requests = list(it.islice(rg, 100))
+transportation_requests = it.islice(rg, 100)
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
@@ -135,12 +118,7 @@ fs = SlowSimpleFleetState(
 
 
 # + tags=[]
-stops, reqs = get_stops_and_requests(
-    events=events,
-    initial_stoplists=initial_stoplists,
-    transportation_requests=transportation_requests,
-    space=space,
-)
+stops, reqs = get_stops_and_requests(events=events, space=space)
 # -
 
 # # some distributions
@@ -163,7 +141,7 @@ reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 # ## direct travel times
 
 # + tags=[]
-reqs[("supplied", "direct_travel_time")].hist(bins=np.r_[-0.5:5.5:7j])
+reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[-0.5:5.5:7j])
 # -
 
 
