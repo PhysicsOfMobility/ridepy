@@ -1,10 +1,12 @@
-import pytest
-import numpy as np
-from numpy import inf
-from functools import reduce
-from time import time
 import os
 import psutil
+
+import numpy as np
+import functools as ft
+
+from time import time
+from numpy import inf
+from random import randint
 
 from thesimulator.data_structures_cython import (
     Stop,
@@ -19,11 +21,13 @@ from thesimulator.util.spaces_cython import Euclidean2D, Manhattan2D
 from thesimulator.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-
-from random import randint
-
 from thesimulator.vehicle_state_cython import VehicleState
+
 import logging
+
+sim_logger = logging.getLogger("thesimulator")
+sim_logger.setLevel(logging.DEBUG)
+sim_logger.handlers[0].setLevel(logging.DEBUG)
 
 
 def stoplist_from_properties(stoplist_properties):
@@ -63,8 +67,10 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         vehicle_id=12,
         initial_stoplist=stoplist,
         space=space,
-        loc_type=LocType.R2LOC,
-        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        dispatcher=ft.partial(
+            brute_force_total_traveltime_minimizing_dispatcher,
+            debug=sim_logger.getEffectiveLevel() <= logging.INFO,
+        ),
         seat_capacity=1000,
     )
     request = TransportationRequest(
@@ -86,9 +92,6 @@ def benchmark_insertion_into_long_stoplist(seed=0):
 
 if __name__ == "__main__":
     import sys
-
-    sim_logger = logging.getLogger("thesimulator")
-    sim_logger.setLevel(logging.DEBUG)
 
     if len(sys.argv) > 1:
         seed = int(sys.argv[1])
