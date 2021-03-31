@@ -17,7 +17,8 @@ namespace cstuff {
             std::shared_ptr<TransportationRequest<Loc>> request,
             vector<Stop<Loc>> &stoplist,
             TransportSpace<Loc> &space,
-            int seat_capacity
+            int seat_capacity,
+            bool debug=false
     ) {
         /*
         Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
@@ -155,8 +156,10 @@ namespace cstuff {
                 best_dropoff_idx,
                 space
         );
-        std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
-        std::cout << "Min cost: " << min_cost << std::endl;
+        if (debug) {
+            std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
+            std::cout << "Min cost: " << min_cost << std::endl;
+        }
         auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
         auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 

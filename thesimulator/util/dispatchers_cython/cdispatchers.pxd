@@ -11,4 +11,4 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
     InsertionResult[Loc] brute_force_total_traveltime_minimizing_dispatcher[Loc](
           shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
-          const TransportSpace &space, int seat_capacity)
+          const TransportSpace &space, int seat_capacity, bint debug)

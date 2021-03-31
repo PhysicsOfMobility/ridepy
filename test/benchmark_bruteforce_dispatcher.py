@@ -18,6 +18,10 @@ from thesimulator.util.testing_utils import stoplist_from_properties
 
 import logging
 
+sim_logger = logging.getLogger("thesimulator")
+sim_logger.setLevel(logging.DEBUG)
+sim_logger.handlers[0].setLevel(logging.DEBUG)
+
 
 def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D()
@@ -54,9 +58,6 @@ def benchmark_insertion_into_long_stoplist(seed=0):
 
 if __name__ == "__main__":
     import sys
-
-    sim_logger = logging.getLogger("thesimulator")
-    sim_logger.setLevel(logging.DEBUG)
 
     if len(sys.argv) > 1:
         seed = int(sys.argv[1])

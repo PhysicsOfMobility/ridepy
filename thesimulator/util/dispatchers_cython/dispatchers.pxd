@@ -5,4 +5,4 @@ from thesimulator.data_structures_cython.data_structures cimport TransportationR
 
 
 cpdef brute_force_total_traveltime_minimizing_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
-                                              TransportSpace space, int seat_capacity)
+                                              TransportSpace space, int seat_capacity, bint debug=*)
