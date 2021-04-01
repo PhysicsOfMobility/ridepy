@@ -45,3 +45,15 @@ def test_simulate_cy(tmp_path):
     for r in res:
         assert (tmp_path / f"{r}_params.json").exists()
         assert (tmp_path / f"{r}.jsonl").exists()
+
+
+def test_io_events():
+    assert False
+
+
+def test_io_params():
+    assert False
+
+
+def test_io_space():
+    assert False
