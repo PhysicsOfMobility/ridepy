@@ -51,8 +51,9 @@ def test_io_events():
     assert False
 
 
-def test_io_params():
-    assert False
+def test_io_params(tmp_path):
+    param_path = tmp_path / f"params.json"
+    conf = get_default_conf()
 
 
 def test_io_space():
