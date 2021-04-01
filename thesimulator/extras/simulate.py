@@ -35,10 +35,6 @@ from thesimulator.util import get_uuid
 
 from thesimulator.extras.io import save_params_json, save_events_json
 
-get_pscan = lambda conf: map(
-    lambda x: dict(zip(conf[1], x)), it.product(*conf[1].values())
-)
-
 
 def get_default_conf(cython=True):
     """
@@ -127,13 +123,25 @@ def simulate(
     else:
         FleetStateCls = SlowSimpleFleetState
 
-    param_scan = (
-        {k: v for k, v in zip(conf.keys(), x)}
-        for x in it.product(*map(get_pscan, conf.items()))
+    # outer_dict = {outer_key1: inner_dict1, outer_key_2: inner_dict2, ...}
+    # inner_dict1 = {inner_key1: inner_dict_values[1], inner_key2: inner_dict_values[2], ...}
+    param_scan = lambda outer_dict: (
+        {
+            outer_key: inner_dict
+            for outer_key, inner_dict in zip(outer_dict, inner_dicts)
+        }
+        for inner_dicts in it.product(
+            *map(
+                lambda inner_dict: map(
+                    lambda inner_dict_values: dict(zip(inner_dict, inner_dict_values)),
+                    it.product(*inner_dict.values()),
+                ),
+                outer_dict.values(),
+            )
+        )
     )
-
     sim_ids = []
-    for i, params in enumerate(param_scan):
+    for i, params in enumerate(param_scan(conf)):
         space = params.get("general").get("space")
 
         rg = RandomRequestGenerator(
