@@ -1,6 +1,8 @@
 import json
 from typing import Iterable
 
+from thesimulator.data_structures import TransportSpace
+from thesimulator.events import Event
 from thesimulator.util import make_dict
 from pathlib import Path
 
@@ -20,7 +22,7 @@ class CustomJSONEncoder(json.JSONEncoder):
                 return repr(obj)
 
 
-def save_params_json(param_path: Path, params: dict):
+def save_params_json(param_path: Path, params: dict) -> None:
     """
     Save params dictionary to pretty JSON, overwriting existing.
 
@@ -34,7 +36,11 @@ def save_params_json(param_path: Path, params: dict):
     json.dump(params, param_path.open("w"), indent=4, cls=CustomJSONEncoder)
 
 
-def save_events_json(jsonl_path: Path, events: Iterable):
+def read_params_json(param_path: Path) -> dict:
+    raise NotImplementedError
+
+
+def save_events_json(jsonl_path: Path, events: Iterable) -> None:
     """
     Save events iterable to file according to JSONL specs, appending to existing.
 
@@ -48,3 +54,15 @@ def save_events_json(jsonl_path: Path, events: Iterable):
     with jsonl_path.open("a", encoding="utf-8") as f:
         for event in events:
             print(json.dumps(event, cls=CustomJSONEncoder), file=f)
+
+
+def read_events_json(jsonl_path: Path) -> Iterable[Event]:
+    raise NotImplementedError
+
+
+def save_space(jsonl_path: Path, space: TransportSpace) -> None:
+    raise NotImplementedError
+
+
+def read_space(jsonl_path: Path) -> TransportSpace:
+    raise NotImplementedError
