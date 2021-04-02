@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import sys
 
-from thesimulator.data_structures_cython import (
+from thesimulator.data_structures import (
     TransportationRequest,
     InternalRequest,
     Stop,
@@ -13,15 +13,16 @@ from thesimulator.data_structures_cython import (
     Stoplist,
     LocType,
 )
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.vehicle_state_cython import VehicleState
-from thesimulator.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
-from thesimulator.util.spaces_cython import Euclidean2D
-from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.events import PickupEvent
+
+from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from thesimulator.vehicle_state import VehicleState
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher,
+)
+from thesimulator.util.spaces import Euclidean2D
+from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
@@ -45,8 +46,7 @@ def simulate_on_r2(
 
     space = pyEuclidean2D()
 
-    # ssfs = MPIFuturesFleetState(
-    ssfs = SlowSimpleFleetState(
+    ssfs = MPIFuturesFleetState(
         initial_locations={
             vehicle_id: space.random_point() for vehicle_id in range(num_vehicles)
         },
@@ -75,9 +75,16 @@ def simulate_on_r2(
         print(ev)
 
 
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
+
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        N = 2
-    else:
-        N = int(sys.argv[1])
-    simulate_on_r2(num_vehicles=N, rate=N * 1.5, seat_capacities=4, num_requests=5)
+    if rank == 0:
+        if len(sys.argv) == 1:
+            N = 2
+        else:
+            N = int(sys.argv[1])
+        simulate_on_r2(num_vehicles=N, rate=N * 1.5, seat_capacities=4, num_requests=5)

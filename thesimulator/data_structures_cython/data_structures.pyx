@@ -267,6 +267,18 @@ cdef class TransportationRequest(Request):
         # using unique_ptr's so no deletion
         pass
 
+    def __reduce__(self):
+        return self.__class__, \
+            (
+                self.request_id,
+                self.creation_timestamp,
+                self.origin,
+                self.destination,
+                self.pickup_timewindow_min,
+                self.pickup_timewindow_max,
+                self.delivery_timewindow_min,
+                self.delivery_timewindow_max
+            )
 
 cdef class InternalRequest(Request):
     def __init__(
@@ -348,6 +360,15 @@ cdef class InternalRequest(Request):
     def __dealloc__(self):
         # using shared_ptr's so no deletion
         pass
+
+
+    def __reduce__(self):
+        return self.__class__, \
+            (
+                self.request_id,
+                self.creation_timestamp,
+                self.location
+            )
 
 cdef class Stop:
     def __cinit__(self):
@@ -531,6 +552,18 @@ cdef class Stop:
         stop.loc_type = LocType.INT
         return stop
 
+    def __reduce__(self):
+        return self.__class__, \
+            (
+                self.location,
+                self.request,
+                self.action.value,
+                self.estimated_arrival_time,
+                self.occupancy_after_servicing,
+                self.time_window_min,
+                self.time_window_max,
+            )
+
 cdef class Stoplist:
     # TODO: May need to allow nice ways of converting a Stoplist to python lists or similar. Use case: calling code
     # doing post optimization
@@ -610,3 +643,25 @@ cdef class Stoplist:
             return f"[{', '.join(repr(Stop.from_c_r2loc(&s)) for s in self.ustoplist._stoplist_r2loc)}]"
         elif self.loc_type == LocType.INT:
             return f"[{', '.join(repr(Stop.from_c_int(&s)) for s in self.ustoplist._stoplist_int)}]"
+        else:
+            raise ValueError("This line should never have been reached")
+
+
+    def to_pys(self):
+        if self.loc_type == LocType.R2LOC:
+#            return list([Stop.from_c_r2loc(&s) for s in self.ustoplist._stoplist_r2loc])
+            res = []
+            for idx in range(self.ustoplist._stoplist_r2loc.size()):
+                res.append(Stop.from_c_r2loc(&self.ustoplist._stoplist_r2loc[idx]))
+            return res
+        elif self.loc_type == LocType.INT:
+#            return list([Stop.from_c_int(&s) for s in self.ustoplist._stoplist_int])
+            res = []
+            for idx in range(self.ustoplist._stoplist_r2loc.size()):
+                res.append(Stop.from_c_int(&self.ustoplist._stoplist_int[idx]))
+            return res
+        else:
+            raise ValueError("This line should never have been reached")
+
+    def __reduce__(self):
+        return self.__class__, (self.to_pys(), self.loc_type)
