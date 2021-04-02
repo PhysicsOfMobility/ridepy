@@ -439,7 +439,6 @@ class FleetState(ABC):
                 dropoff_timewindow_max,
             ),
         ) = min(all_solutions, key=op.itemgetter(1))
-
         # print(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
         if min_cost == np.inf:  # no solution was found
             return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
@@ -461,38 +460,25 @@ class FleetState(ABC):
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: float):
-        events = []
-        for vehicle_state in self.fleet.values():
-            evs = vehicle_state.fast_forward_time(t)
-            events += evs
-        events = sorted(events, key=op.attrgetter("timestamp"))
-        return events
-        # return sorted(
-        #     it.chain.from_iterable(
-        #         vehicle_state.fast_forward_time(t)
-        #         for vehicle_state in self.fleet.values()
-        #     ),
-        #     key=op.attrgetter("timestamp"),
-        # )
+        events, new_stoplists = zip(
+            *(
+                vehicle_state.fast_forward_time(t)
+                for vehicle_state in self.fleet.values()
+            )
+        )
+        return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
 
     def handle_transportation_request(self, req: pyTransportationRequest):
-        all_solutions = []
-        for vehicle_state in self.fleet.values():
-            solution = vehicle_state.handle_transportation_request_single_vehicle(req)
-            all_solutions.append(solution)
-        event = self._apply_request_solution(req, all_solutions)
-        return event
-
-        # return self._apply_request_solution(
-        #     req,
-        #     map(
-        #         ft.partial(
-        #             self.vehicle_state_class.handle_transportation_request_single_vehicle,
-        #             request=req,
-        #         ),
-        #         self.fleet.values(),
-        #     ),
-        # )
+        return self._apply_request_solution(
+            req,
+            map(
+                ft.partial(
+                    self.vehicle_state_class.handle_transportation_request_single_vehicle,
+                    request=req,
+                ),
+                self.fleet.values(),
+            ),
+        )
 
     def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
         ...
@@ -502,14 +488,18 @@ class MPIFuturesFleetState(FleetState):
     def fast_forward(self, t: float):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
+                events, new_stoplists = zip(
+                    *executor.map(
+                        ft.partial(VehicleState.fast_forward_time, t=t),
+                        self.fleet.values(),
+                    )
+                )
+
+                for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
+                    self.fleet[vehicle_id].stoplist = new_stoplist
+
                 return sorted(
-                    it.chain.from_iterable(
-                        executor.map(
-                            ft.partial(VehicleState.fast_forward_time, t=t),
-                            self.fleet.values(),
-                        )
-                    ),
-                    key=op.attrgetter("timestamp"),
+                    it.chain.from_iterable(events), key=op.attrgetter("timestamp")
                 )
 
     def handle_transportation_request(self, req: pyTransportationRequest):

@@ -149,7 +149,7 @@ class VehicleState:
             # stoplist is empty, only CPE is there. set CPE time to current time
             self.stoplist[0].estimated_arrival_time = t
 
-        return event_cache
+        return event_cache, self.stoplist
 
     def handle_transportation_request_single_vehicle(
         self, request: TransportationRequest
