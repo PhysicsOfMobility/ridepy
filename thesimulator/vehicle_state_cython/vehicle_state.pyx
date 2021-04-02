@@ -14,8 +14,6 @@ from thesimulator.data_structures_cython.data_structures cimport (
     Stoplist,
 )
 
-from thesimulator.data_structures_cython.data_structures import StopAction  as pStopAction # only for a debug print statemnet
-
 from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
 
 from thesimulator.util.dispatchers_cython.dispatchers cimport (
@@ -49,11 +47,11 @@ cdef class VehicleState:
     cdef TransportSpace space
     cdef int vehicle_id
     cdef int seat_capacity
-    cdef dict __dict__
+    cdef dict __dict__  # is necessary, otherwise dispatcher cannot be set in __init__
 
     def __init__(
         self,
-        *,
+        #*,
         vehicle_id,
         initial_stoplist: List[Stop],
         space: TransportSpace,
@@ -83,7 +81,6 @@ cdef class VehicleState:
     property seat_capacity:
         def __get__(self):
             return self.seat_capacity
-
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -163,7 +160,7 @@ cdef class VehicleState:
             # stoplist is empty, only CPE is there. set CPE time to current time
             self.stoplist[0].estimated_arrival_time = t
 
-        return event_cache
+        return event_cache, self.stoplist
 
     def handle_transportation_request_single_vehicle(
             self, TransportationRequest request
@@ -188,3 +185,13 @@ cdef class VehicleState:
                 self.stoplist,
                 self.space, self.seat_capacity)
         return ret
+
+    def __reduce__(self):
+        return self.__class__, \
+            (
+                self.vehicle_id,
+                self.stoplist,
+                self.space,
+                self.dispatcher,
+                self.seat_capacity
+            )

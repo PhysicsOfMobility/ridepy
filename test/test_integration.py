@@ -4,7 +4,7 @@ import jupytext
 
 from pathlib import Path
 
-from .simulate_script import simulate_on_r2
+from .simulate_script_python_wompi import simulate_on_r2
 
 
 def test_simulate_script():

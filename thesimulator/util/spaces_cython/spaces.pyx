@@ -148,6 +148,9 @@ cdef class Euclidean2D(TransportSpace):
     def asdict(self):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
+    def __reduce__(self):
+        return self.__class__, (self.velocity, )
+
 
 cdef class Manhattan2D(TransportSpace):
     """
