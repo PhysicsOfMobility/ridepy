@@ -228,9 +228,13 @@ def _create_transportation_requests_dataframe(
             )
         ]  # select only request events
         .drop(["vehicle_id", "location"], axis=1)  # drop now empty columns
-        .set_index(["request_id", "event_type"])  # set index to be request_id and event_type
+        .set_index(
+            ["request_id", "event_type"]
+        )  # set index to be request_id and event_type
         .unstack()  # unstack so that remaining index is request_id and column index is MultiIndex event_type as level_1
-        .reorder_levels([1, 0], axis=1)  # switch column index order to have event_type as level_0
+        .reorder_levels(
+            [1, 0], axis=1
+        )  # switch column index order to have event_type as level_0
         .sort_index(axis=1)  # sort so that columns are grouped by event_type
         .drop(
             [
@@ -313,8 +317,7 @@ def _create_transportation_requests_dataframe(
 
     # - relative travel time
     reqs[("inferred", "relative_travel_time")] = (
-        reqs[("inferred", "travel_time")]
-        / reqs[("submitted", "direct_travel_time")]
+        reqs[("inferred", "travel_time")] / reqs[("submitted", "direct_travel_time")]
     )
 
     # TODO possibly add more properties to compute HERE

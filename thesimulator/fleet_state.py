@@ -460,13 +460,13 @@ class FleetState(ABC):
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: float):
-        return sorted(
-            it.chain.from_iterable(
+        events, new_stoplists = zip(
+            *(
                 vehicle_state.fast_forward_time(t)
                 for vehicle_state in self.fleet.values()
-            ),
-            key=op.attrgetter("timestamp"),
+            )
         )
+        return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
 
     def handle_transportation_request(self, req: pyTransportationRequest):
         return self._apply_request_solution(
@@ -488,14 +488,18 @@ class MPIFuturesFleetState(FleetState):
     def fast_forward(self, t: float):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             if executor is not None:
+                events, new_stoplists = zip(
+                    *executor.map(
+                        ft.partial(VehicleState.fast_forward_time, t=t),
+                        self.fleet.values(),
+                    )
+                )
+
+                for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
+                    self.fleet[vehicle_id].stoplist = new_stoplist
+
                 return sorted(
-                    it.chain.from_iterable(
-                        executor.map(
-                            ft.partial(VehicleState.fast_forward_time, t=t),
-                            self.fleet.values(),
-                        )
-                    ),
-                    key=op.attrgetter("timestamp"),
+                    it.chain.from_iterable(events), key=op.attrgetter("timestamp")
                 )
 
     def handle_transportation_request(self, req: pyTransportationRequest):
