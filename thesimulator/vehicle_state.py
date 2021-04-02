@@ -17,7 +17,11 @@ from .data_structures import (
 )
 from .events import PickupEvent, DeliveryEvent, InternalEvent, StopEvent
 
-from thesimulator.util import MAX_SEAT_CAPACITY
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
 
 import logging
 
@@ -87,6 +91,7 @@ class VehicleState:
 
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
+        logger.info(f"Rank {rank} fast-forwarding vehicle={self.vehicle_id}")
 
         event_cache = []
 
@@ -164,6 +169,9 @@ class VehicleState:
         -------
             The single best solution for the respective vehicle.
         """
+        logger.info(
+            f"Rank {rank} handling request {request.request_id} with vehicle={self.vehicle_id}"
+        )
         return self.vehicle_id, *self.dispatcher(
             request=request,
             stoplist=self.stoplist,

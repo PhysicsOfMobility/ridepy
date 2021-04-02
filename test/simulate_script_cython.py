@@ -13,7 +13,7 @@ from thesimulator.data_structures_cython import (
     Stoplist,
     LocType,
 )
-from thesimulator.fleet_state import SlowSimpleFleetState
+from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.vehicle_state_cython import VehicleState
 from thesimulator.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher,
@@ -43,7 +43,7 @@ def simulate_on_r2(
 
     space = pyEuclidean2D()
 
-    ssfs = SlowSimpleFleetState(
+    ssfs = MPIFuturesFleetState(
         initial_locations={
             vehicle_id: space.random_point() for vehicle_id in range(num_vehicles)
         },
