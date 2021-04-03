@@ -12,7 +12,7 @@ import itertools as it
 from scipy.spatial import distance as spd
 
 from thesimulator.data_structures import TransportSpace, ID
-from thesimulator.util import smartVectorize
+from thesimulator.util import smartVectorize, make_repr
 
 
 class Euclidean(TransportSpace):
@@ -89,6 +89,14 @@ class Euclidean(TransportSpace):
     def random_point(self):
         return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
+    def asdict(self):
+        return dict(
+            n_dim=self.n_dim, coord_range=self.coord_range, velocity=self.velocity
+        )
+
+    def __repr__(self):
+        return make_repr("Euclidean", self.asdict())
+
 
 class Euclidean1D(Euclidean):
     def __init__(
@@ -111,6 +119,12 @@ class Euclidean1D(Euclidean):
     def random_point(self):
         return random.uniform(self.coord_range[0][0], self.coord_range[0][1])
 
+    def asdict(self):
+        return dict(coord_range=self.coord_range, velocity=self.velocity)
+
+    def __repr__(self):
+        return make_repr("Euclidean1D", self.asdict())
+
 
 class Euclidean2D(Euclidean):
     def __init__(
@@ -129,6 +143,12 @@ class Euclidean2D(Euclidean):
     @smartVectorize
     def d(self, u, v):
         return m.sqrt(m.pow(v[0] - u[0], 2) + m.pow(v[1] - u[1], 2))
+
+    def asdict(self):
+        return dict(coord_range=self.coord_range, velocity=self.velocity)
+
+    def __repr__(self):
+        return make_repr("Euclidean2D", self.asdict())
 
 
 class Graph(TransportSpace):
@@ -342,7 +362,15 @@ class Graph(TransportSpace):
         return random.choice(list(self.G.nodes))
 
     def __repr__(self):
-        return f"Graph(velocity={self.velocity})"
+        return f"Graph(..., velocity={self.velocity})"
+
+    def asdict(self):
+        return dict(
+            vertices=list(self.G.nodes),
+            edges=list(self.G.edges),
+            weights=list(nx.get_edge_attributes(self.G, "distance").values()),
+            velocity=self.velocity,
+        )
 
 
 class DiGraph(Graph):
@@ -411,7 +439,7 @@ class DiGraph(Graph):
         return self
 
     def __repr__(self):
-        return f"DiGraph(velocity={self.velocity})"
+        return f"DiGraph(..., velocity={self.velocity})"
 
 
 class ContinuousGraph(Graph):

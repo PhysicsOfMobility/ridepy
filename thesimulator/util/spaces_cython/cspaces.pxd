@@ -43,4 +43,6 @@ cdef extern from "boost_graph_space.h" namespace 'cstuff':
         GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec)
 
         vector[Loc] get_vertices()
+        vector[pair[Loc, Loc]] get_edges()
+        vector[double] get_weights()
 

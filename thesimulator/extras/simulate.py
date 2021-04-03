@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import itertools as it
 
@@ -12,7 +14,6 @@ from thesimulator.util.dispatchers_cython import (
 from thesimulator.util.spaces import Euclidean2D
 from thesimulator.util.spaces_cython import Euclidean2D as CyEuclidean2D
 from thesimulator.util.request_generators import RandomRequestGenerator
-
 from thesimulator.data_structures import (
     TransportationRequest,
     InternalRequest,
@@ -25,15 +26,14 @@ from thesimulator.data_structures_cython import (
     StopAction as CyStopAction,
     Stop as CyStop,
 )
-
 from thesimulator.vehicle_state import VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
-
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-
 from thesimulator.util import get_uuid
-
 from thesimulator.extras.io import save_params_json, save_events_json
+
+
+logger = logging.getLogger(__name__)
 
 # outer_dict = {outer_key1: inner_dict1, outer_key_2: inner_dict2, ...}
 # inner_dict1 = {inner_key1: inner_dict_values[1], inner_key2: inner_dict_values[2], ...}
@@ -161,7 +161,7 @@ def simulate(
             vehicle_state_class=VehicleStateCls,
         )
 
-        print(f"Simulating run {i} @ {params!r}\n")
+        logger.info(f"Simulating run {i} @ {params!r}\n")
 
         simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
 

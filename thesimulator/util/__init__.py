@@ -184,3 +184,7 @@ def make_dict(item, raise_errors: bool = True) -> Dict:
         return item.asdict()
     elif raise_errors:
         raise TypeError(f"Cannot convert object of type {type(item)} to dict")
+
+
+def make_repr(cls, dct):
+    return f"{cls}(" + ", ".join((map(lambda s: f"{s[0]}={s[1]!r}", dct.items()))) + ")"

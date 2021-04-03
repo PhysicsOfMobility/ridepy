@@ -1,10 +1,20 @@
+import timeit
+import pytest
+
+from thesimulator.extras.io import (
+    save_params_json,
+    read_params_json,
+    read_events_json,
+)
 from thesimulator.extras.spaces import (
     make_nx_cycle_graph,
     make_nx_grid,
     make_nx_star_graph,
 )
 
-from thesimulator.extras.simulate import simulate, get_default_conf
+from thesimulator.extras.simulate import simulate, get_default_conf, param_scan
+from thesimulator.util.analytics import get_stops_and_requests
+from thesimulator.util.spaces import Graph
 
 
 def test_spaces():
@@ -47,14 +57,28 @@ def test_simulate_cy(tmp_path):
         assert (tmp_path / f"{r}.jsonl").exists()
 
 
-def test_io_events():
-    assert False
+def test_io_simulate(tmp_path):
+    conf = get_default_conf(cython=True)
+    conf["general"]["n_reqs"] = [100]
+    res = simulate(data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000)
+    evs = read_events_json(tmp_path / f"{res[0]}.jsonl")
+    params = read_params_json(param_path=tmp_path / f"{res[0]}_params.json")
+    stops, requests = get_stops_and_requests(
+        space=params["general"]["space"], events=evs
+    )
+    print(stops)
 
 
 def test_io_params(tmp_path):
     param_path = tmp_path / f"params.json"
-    conf = get_default_conf()
 
+    for cython in [False, True]:
+        params = next(param_scan(get_default_conf(cython=cython)))
 
-def test_io_space():
-    assert False
+        save_params_json(param_path=param_path, params=params)
+        restored_params = read_params_json(param_path=param_path)
+        print()
+        print(params)
+        print(restored_params)
+
+        assert params == restored_params

@@ -16,7 +16,7 @@ from thesimulator.data_structures import (
 from thesimulator.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
 
 
-def _create_events_dataframe(events: Iterable) -> pd.DataFrame:
+def _create_events_dataframe(events: Iterable[Event]) -> pd.DataFrame:
     """
     Create a DataFrame of all logged events with their properties at columns.
 

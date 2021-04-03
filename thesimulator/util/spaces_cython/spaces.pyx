@@ -96,6 +96,9 @@ cdef class TransportSpace:
         else:
             raise ValueError("This line should never have been reached")
 
+    def asdict(self):
+        return dict(loc_type=self.loc_type)
+
     def __dealloc__(self):
         """
         Since this is a base class that will never be instantiated, we do not need to free any pointer here.
@@ -103,12 +106,15 @@ cdef class TransportSpace:
         """
         ...
 
+    def __eq__(self, other: TransportSpace):
+        return type(self) == type(other) and self.asdict() == other.asdict()
+
 
 cdef class Euclidean2D(TransportSpace):
     """
     R2 with L2-induced metric (Euclidean)
     """
-    def __cinit__(self, double velocity=1):
+    def __cinit__(self, double velocity=1, *args, **kwargs):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
@@ -142,12 +148,15 @@ cdef class Euclidean2D(TransportSpace):
     def random_point(self):
         return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
+    def asdict(self):
+        return dict(velocity=self.velocity, coord_range=self.coord_range)
+
 
 cdef class Manhattan2D(TransportSpace):
     """
     R2 with L1-induced metric (Manhattan)
     """
-    def __cinit__(self, double velocity=1):
+    def __cinit__(self, double velocity=1, *args, **kwargs):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
 
@@ -180,6 +189,10 @@ cdef class Manhattan2D(TransportSpace):
 
     def random_point(self):
         return tuple(random.uniform(a, b) for a, b in self.coord_range)
+
+    def asdict(self):
+        return dict(velocity=self.velocity, coord_range=self.coord_range)
+
 
 cdef class Graph(TransportSpace):
     """
@@ -270,3 +283,11 @@ cdef class Graph(TransportSpace):
 
     def random_point(self):
         return random.choice(dereference(self.derived_ptr).get_vertices())
+
+    def asdict(self):
+        return dict(
+            vertices=dereference(self.derived_ptr).get_vertices(),
+            edges=dereference(self.derived_ptr).get_edges(),
+            weights=dereference(self.derived_ptr).get_weights(),
+            velocity=self.velocity,
+        )
