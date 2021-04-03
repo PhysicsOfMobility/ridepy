@@ -7,7 +7,7 @@ from time import time
 import itertools as it
 from pandas.core.common import flatten
 
-from thesimulator.data_structures_cython import Stoplist as cyStoplist
+from thesimulator.data_structures_cython import Stoplist as CyStoplist
 
 from thesimulator import data_structures_cython as cyds
 from thesimulator import data_structures as pyds
@@ -112,7 +112,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     )
 
     # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_total_traveltime_minimizing_dispatcher
-    stoplist = cyStoplist(
+    stoplist = CyStoplist(
         stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
         loc_type=LocType.R2LOC,
     )

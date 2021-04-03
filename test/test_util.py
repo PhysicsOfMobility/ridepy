@@ -11,10 +11,10 @@ from thesimulator.data_structures import (
 )
 
 from thesimulator.data_structures_cython import (
-    TransportationRequest as cyTransportationRequest,
-    InternalRequest as cyInternalRequest,
-    Stop as cyStop,
-    StopAction as cyStopAction,
+    TransportationRequest as CyTransportationRequest,
+    InternalRequest as CyInternalRequest,
+    Stop as CyStop,
+    StopAction as CyStopAction,
 )
 
 
@@ -140,13 +140,13 @@ def test_make_dict():
     )
 
     py_transreq = pyTransportationRequest(**transreq_dict)
-    cy_transreq = cyTransportationRequest(**transreq_dict)
+    cy_transreq = CyTransportationRequest(**transreq_dict)
 
     py_intreq = pyInternalRequest(**intreq_dict)
-    cy_intreq = cyInternalRequest(**intreq_dict)
+    cy_intreq = CyInternalRequest(**intreq_dict)
 
     py_stop = pyStop(**get_stop_dict(py_transreq, pyStopAction.pickup))
-    cy_stop = cyStop(**get_stop_dict(cy_transreq, cyStopAction.pickup))
+    cy_stop = CyStop(**get_stop_dict(cy_transreq, CyStopAction.pickup))
 
     assert make_dict(py_transreq) == transreq_dict
     assert make_dict(cy_transreq) == transreq_dict
@@ -155,4 +155,4 @@ def test_make_dict():
     assert make_dict(cy_intreq) == intreq_dict
 
     assert make_dict(py_stop) == get_stop_dict(transreq_dict, pyStopAction.pickup)
-    assert make_dict(cy_stop) == get_stop_dict(transreq_dict, cyStopAction.pickup)
+    assert make_dict(cy_stop) == get_stop_dict(transreq_dict, CyStopAction.pickup)
