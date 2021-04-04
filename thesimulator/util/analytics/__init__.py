@@ -369,10 +369,9 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
     #       If the simulator should allow for multi-customer requests in the future,
     #       this must be changed.
     #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
-    locations.index.set_levels(
+    locations.index = locations.index.set_levels(
         locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
         1,
-        inplace=True,
     )
 
     # finally fill the locations missing in the stops dataframe by joining on request_id and delta_occupancy
