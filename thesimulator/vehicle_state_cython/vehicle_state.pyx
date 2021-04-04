@@ -22,6 +22,10 @@ from thesimulator.util.dispatchers_cython.dispatchers cimport (
 from typing import Optional, SupportsFloat, List
 from copy import deepcopy
 
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
 from wurlitzer import pipes
 import logging
 logger = logging.getLogger(__name__)
@@ -58,29 +62,42 @@ cdef class VehicleState:
         dispatcher: Dispatcher,
         seat_capacity: int,
     ):
+        self._vehicle_id = vehicle_id
         """
         See the docstring of `.vehicle_state.VehicleState` for details of the parameters.
         """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
-        self.stoplist = Stoplist(initial_stoplist, space.loc_type)
-        self.space = space
-        self.dispatcher = dispatcher
+        self._stoplist = Stoplist(initial_stoplist, space.loc_type)
+        self._space = space
+        self._dispatcher = dispatcher
         if seat_capacity > INT_MAX:
             raise ValueError("Cannot use seat_capacity bigger that C++'s INT_MAX")
-        self.seat_capacity = seat_capacity
-        logger.info(f"Created VehicleState with space of type {type(self.space)}")
+        self._seat_capacity = seat_capacity
+        logger.info(f"Created VehicleState with space of type {type(self._space)}")
 
     property stoplist:
         def __get__(self):
-            return self.stoplist
+            return self._stoplist
         def __set__(self, new_stoplist):
-            self.stoplist = new_stoplist
+            self._stoplist = new_stoplist
 
     property seat_capacity:
         def __get__(self):
-            return self.seat_capacity
+            return self._seat_capacity
+
+    property vehicle_id:
+        def __get__(self):
+            return self._vehicle_id
+
+    property space:
+        def __get__(self):
+            return self._space
+
+    property dispatcher:
+        def __get__(self):
+            return self._dispatcher
 
     def fast_forward_time(self, t: float) -> List[StopEvent]:
         """
@@ -99,14 +116,14 @@ cdef class VehicleState:
 
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
-
+        logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
         event_cache = []
 
         last_stop = None
 
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
-        for i in range(len(self.stoplist) - 1, 0, -1):
-            stop = self.stoplist[i]
+        for i in range(len(self._stoplist) - 1, 0, -1):
+            stop = self._stoplist[i]
             # service the stop at its estimated arrival time
             if stop.estimated_arrival_time <= t:
                 # as we are iterating backwards, the first stop iterated over is the last one serviced
@@ -123,13 +140,13 @@ cdef class VehicleState:
                         StopAction.internal: InternalEvent,
                     }[stop.action](
                         request_id=stop.request.request_id,
-                        vehicle_id=self.vehicle_id,
+                        vehicle_id=self._vehicle_id,
                         timestamp=max(
                             stop.estimated_arrival_time, stop.time_window_min
                         ),
                     )
                 )
-                self.stoplist.remove_nth_elem(i)
+                self._stoplist.remove_nth_elem(i)
 
 
         # fix event cache order
@@ -137,30 +154,30 @@ cdef class VehicleState:
 
         # if no stop was serviced, the last stop is the outdated CPE
         if last_stop is None:
-            last_stop = self.stoplist[0]
+            last_stop = self._stoplist[0]
 
         # set the occupancy at CPE
-        self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
+        self._stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-        if len(self.stoplist) > 1:
+        if len(self._stoplist) > 1:
             if last_stop.estimated_arrival_time > t:
                 # still mid-jump from last interpolation, no need to interpolate
                 # again
                 pass
             else:
-                self.stoplist[0].location, jump_time = self.space.interp_time(
+                self._stoplist[0].location, jump_time = self._space.interp_time(
                     u=last_stop.location,
-                    v=self.stoplist[1].location,
-                    time_to_dest=self.stoplist[1].estimated_arrival_time - t,
+                    v=self._stoplist[1].location,
+                    time_to_dest=self._stoplist[1].estimated_arrival_time - t,
                 )
                 # set CPE time
-                self.stoplist[0].estimated_arrival_time = t + jump_time
+                self._stoplist[0].estimated_arrival_time = t + jump_time
         else:
             # stoplist is empty, only CPE is there. set CPE time to current time
-            self.stoplist[0].estimated_arrival_time = t
+            self._stoplist[0].estimated_arrival_time = t
 
-        return event_cache, self.stoplist
+        return event_cache, self._stoplist
 
     def handle_transportation_request_single_vehicle(
             self, TransportationRequest request
@@ -179,19 +196,20 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-
-        ret = self.vehicle_id, *self.dispatcher(
+        logger.debug(f"Handling request with vehicle {self._vehicle_id} from MPI rank {rank}")
+        logger.debug(f"calling diaptcher with {request}, {self._stoplist}, {self._space}, {self._seat_capacity}")
+        ret = self._vehicle_id, *self._dispatcher(
                 request,
-                self.stoplist,
-                self.space, self.seat_capacity)
+                self._stoplist,
+                self._space, self._seat_capacity)
         return ret
 
     def __reduce__(self):
         return self.__class__, \
             (
-                self.vehicle_id,
-                self.stoplist,
-                self.space,
-                self.dispatcher,
-                self.seat_capacity
+                self._vehicle_id,
+                self._stoplist.to_pys(),
+                self._space,
+                self._dispatcher,
+                self._seat_capacity
             )

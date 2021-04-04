@@ -142,12 +142,18 @@ class FleetState(ABC):
             InternalRequestCls = InternalRequest
             TransportationRequestCls = TransportationRequest
             assert isinstance(space, TransportSpace), "unsuitable transport space"
+            logger.debug(
+                f"Creating FleetState with vehiucle state class {vehicle_state_class}"
+            )
         elif issubclass(vehicle_state_class, CyVehicleState):
             StopCls = CyStop
             StopActionCls = CyStopAction
             InternalRequestCls = CyInternalRequest
             TransportationRequestCls = CyTransportationRequest
             assert isinstance(space, CyTransportSpace), "unsuitable transport space"
+            logger.debug(
+                f"Creating FleetState with vehiucle state class {vehicle_state_class}"
+            )
         else:
             raise TypeError(f"Unknown VehicleStateCls {type(vehicle_state_class)}")
 
