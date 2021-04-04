@@ -172,7 +172,9 @@ class VehicleState:
             The `SingleVehicleSolution` for the respective vehicle.
         """
         logger.info(
-            f"Rank {rank} handling request {request.request_id} with vehicle={self.vehicle_id}"
+            logger.debug(
+                f"Handling request #{request.request_id} with vehicle {self.vehicle_id} from MPI rank {rank}"
+            )
         )
         return self.vehicle_id, *self.dispatcher(
             request=request,

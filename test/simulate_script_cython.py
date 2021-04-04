@@ -7,11 +7,6 @@ import sys
 
 from thesimulator.data_structures_cython import (
     TransportationRequest,
-    InternalRequest,
-    Stop,
-    StopAction,
-    Stoplist,
-    LocType,
 )
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.vehicle_state_cython import VehicleState

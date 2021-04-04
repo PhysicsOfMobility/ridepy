@@ -199,7 +199,7 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        logger.debug(f"Handling request with vehicle {self._vehicle_id} from MPI rank {rank}")
+        logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
         ret = self._vehicle_id, *self._dispatcher(
                 request,
                 self._stoplist,
