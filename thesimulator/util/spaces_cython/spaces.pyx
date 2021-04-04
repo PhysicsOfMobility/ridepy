@@ -184,6 +184,11 @@ cdef class Manhattan2D(TransportSpace):
     def random_point(self):
         return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
+
+    def __reduce__(self):
+        return self.__class__, (self.velocity, )
+
+
 cdef class Graph(TransportSpace):
     """
     Weighted directed graph with integer node labels
