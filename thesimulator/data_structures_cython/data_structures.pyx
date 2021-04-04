@@ -773,14 +773,16 @@ cdef class Stoplist:
 
 
     def to_pys(self):
+        logger.debug("Converting cython Stoplist to python list")
         if self.loc_type == LocType.R2LOC:
-#            return list([Stop.from_c_r2loc(&s) for s in self.ustoplist._stoplist_r2loc])
+            # According to cython docs, the following should have worked:
+            # return list([Stop.from_c_r2loc(&s) for s in self.ustoplist._stoplist_r2loc])
+            # However, it doesn't. So we need the more verbose loop:
             res = []
             for idx in range(self.ustoplist._stoplist_r2loc.size()):
                 res.append(Stop.from_c_r2loc(&self.ustoplist._stoplist_r2loc[idx]))
             return res
         elif self.loc_type == LocType.INT:
-#            return list([Stop.from_c_int(&s) for s in self.ustoplist._stoplist_int])
             res = []
             for idx in range(self.ustoplist._stoplist_r2loc.size()):
                 res.append(Stop.from_c_int(&self.ustoplist._stoplist_int[idx]))

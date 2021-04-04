@@ -14,22 +14,17 @@ from thesimulator.data_structures_cython.data_structures cimport (
     Stoplist,
 )
 
-from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
+from thesimulator.util.spaces_cython.spaces cimport TransportSpace
 
-from thesimulator.util.dispatchers_cython.dispatchers cimport (
-    brute_force_total_traveltime_minimizing_dispatcher as c_disp,
-)
-from typing import Optional, SupportsFloat, List
+from typing import List, Union
 from copy import deepcopy
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
-from wurlitzer import pipes
 import logging
 logger = logging.getLogger(__name__)
-
 
 
 cdef extern from "limits.h":
@@ -47,17 +42,18 @@ cdef class VehicleState:
     #            stop_j.estimated_arrival_time = max(
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
-    cdef Stoplist stoplist
-    cdef TransportSpace space
-    cdef int vehicle_id
-    cdef int seat_capacity
-    cdef dict __dict__  # is necessary, otherwise dispatcher cannot be set in __init__
+    cdef Stoplist _stoplist
+    cdef TransportSpace _space
+    cdef int _vehicle_id
+    cdef int _seat_capacity
+    cdef object _dispatcher
 
     def __init__(
         self,
-        #*,
+        #*, # haven't figured out yet how to get __reduce__+unpickling to work with keyword-only
+        # arguments, hence we have to support __init__ with positional arguments for the time being
         vehicle_id,
-        initial_stoplist: List[Stop],
+        initial_stoplist: Union[List[Stop], Stoplist],
         space: TransportSpace,
         dispatcher: Dispatcher,
         seat_capacity: int,
@@ -69,7 +65,13 @@ cdef class VehicleState:
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
-        self._stoplist = Stoplist(initial_stoplist, space.loc_type)
+        if isinstance(initial_stoplist, Stoplist):
+            # if a `data_structures_cython.Stoplist` object, no need to re-create the cythonic stoplist
+            self._stoplist = initial_stoplist
+        else:
+            # assume that a python list of `data_structures_cython.Stop` objects are being passed
+            # create a `data_structures_cython.Stoplist` object
+            self._stoplist = Stoplist(initial_stoplist, space.loc_type)
         self._space = space
         self._dispatcher = dispatcher
         if seat_capacity > INT_MAX:
@@ -99,7 +101,7 @@ cdef class VehicleState:
         def __get__(self):
             return self._dispatcher
 
-    def fast_forward_time(self, t: float) -> List[StopEvent]:
+    def fast_forward_time(self, t: float) -> Tuple[List[StopEvent], List[Stop]]:
         """
         Update the vehicle_state to the simulator time `t`.
 
@@ -111,9 +113,10 @@ cdef class VehicleState:
         Returns
         -------
         events
-            List of stop events emitted through servicing stops.
+            List of stop events emitted through servicing stops upto time=t
+        new_stoplist
+            Stoplist remaining after servicing the stops upto time=t
         """
-
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
         logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
@@ -197,7 +200,6 @@ cdef class VehicleState:
             The `SingleVehicleSolution` for the respective vehicle.
         """
         logger.debug(f"Handling request with vehicle {self._vehicle_id} from MPI rank {rank}")
-        logger.debug(f"calling diaptcher with {request}, {self._stoplist}, {self._space}, {self._seat_capacity}")
         ret = self._vehicle_id, *self._dispatcher(
                 request,
                 self._stoplist,

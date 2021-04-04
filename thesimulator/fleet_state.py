@@ -143,7 +143,7 @@ class FleetState(ABC):
             TransportationRequestCls = TransportationRequest
             assert isinstance(space, TransportSpace), "unsuitable transport space"
             logger.debug(
-                f"Creating FleetState with vehiucle state class {vehicle_state_class}"
+                f"Creating FleetState with vehicle state class {vehicle_state_class}"
             )
         elif issubclass(vehicle_state_class, CyVehicleState):
             StopCls = CyStop
@@ -152,7 +152,7 @@ class FleetState(ABC):
             TransportationRequestCls = CyTransportationRequest
             assert isinstance(space, CyTransportSpace), "unsuitable transport space"
             logger.debug(
-                f"Creating FleetState with vehiucle state class {vehicle_state_class}"
+                f"Creating FleetState with vehicle state class {vehicle_state_class}"
             )
         else:
             raise TypeError(f"Unknown VehicleStateCls {type(vehicle_state_class)}")
@@ -472,6 +472,8 @@ class SlowSimpleFleetState(FleetState):
                 for vehicle_state in self.fleet.values()
             )
         )
+        # no need to swap the old stoplists of each vehicle with the new (fast-forwarded)
+        # stoplists, because vehicle_state_class.fast_forward did that already.
         return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
 
     def handle_transportation_request(self, req: pyTransportationRequest):
@@ -496,11 +498,11 @@ class MPIFuturesFleetState(FleetState):
             if executor is not None:
                 events, new_stoplists = zip(
                     *executor.map(
-                        ft.partial(VehicleState.fast_forward_time, t=t),
+                        ft.partial(self.vehicle_state_class.fast_forward_time, t=t),
                         self.fleet.values(),
                     )
                 )
-
+                # swap the old stoplists of each vehicle with the new (fast-forwarded) stoplists
                 for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
                     self.fleet[vehicle_id].stoplist = new_stoplist
 
@@ -510,13 +512,14 @@ class MPIFuturesFleetState(FleetState):
 
     def handle_transportation_request(self, req: pyTransportationRequest):
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
-            # TODO: what happens if executor is not there?
+            # the executor is None in all the worker processes. Hence the following if statement
+            # ensures the .map() is called only from the main process.
             if executor is not None:
                 return self._apply_request_solution(
                     req,
                     executor.map(
                         ft.partial(
-                            VehicleState.handle_transportation_request_single_vehicle,
+                            self.vehicle_state_class.handle_transportation_request_single_vehicle,
                             request=req,
                         ),
                         self.fleet.values(),

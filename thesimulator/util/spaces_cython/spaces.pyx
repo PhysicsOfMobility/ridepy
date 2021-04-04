@@ -39,9 +39,9 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
 cdef class TransportSpace:
     """
     Base class for extension types wrapping C++ TransportSpace class template. Since there's no elegant way of
-    wrapping templates in cython and exposing them to python, we will use the
-    `Explicit Run-Time Dispatch approach <https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating>`_,
-    similar to what we did in the :mod:`.data_structures_cython` module. See :ref:`desc_runtime_dispatch` for more details.
+    wrapping templates in cython and exposing them to python, we will use the [Explicit Run-Time Dispatch approach]
+    (https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/). See the docstring of
+    thesimulator/data_structures_cython/data_structures.pyx for details.
     """
     def __init__(self, loc_type):
         if loc_type == LocType.INT:
@@ -190,6 +190,9 @@ cdef class Manhattan2D(TransportSpace):
 
     def asdict(self):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
+
+    def __reduce__(self):
+        return self.__class__, (self.velocity, )
 
 
 cdef class Graph(TransportSpace):

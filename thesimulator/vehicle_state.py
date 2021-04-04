@@ -75,7 +75,7 @@ class VehicleState:
 
         logger.info(f"Created VehicleState with space of type {type(self.space)}")
 
-    def fast_forward_time(self, t: float) -> List[StopEvent]:
+    def fast_forward_time(self, t: float) -> Tuple[List[StopEvent], List[Stop]]:
         """
         Update the vehicle_state to the simulator time `t`.
 
@@ -86,9 +86,11 @@ class VehicleState:
 
         Returns
         -------
-            List of stop events emitted through servicing stops.
+        events
+            List of stop events emitted through servicing stops upto time=t
+        new_stoplist
+            Stoplist remaining after servicing the stops upto time=t
         """
-
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
         logger.info(f"Rank {rank} fast-forwarding vehicle={self.vehicle_id}")
