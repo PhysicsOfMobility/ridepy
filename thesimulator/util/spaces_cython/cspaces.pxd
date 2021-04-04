@@ -4,6 +4,7 @@
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
+
 cdef extern from "cspaces.cpp":
     pass
 
@@ -43,4 +44,5 @@ cdef extern from "boost_graph_space.h" namespace 'cstuff':
         GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec)
 
         vector[Loc] get_vertices()
-
+        vector[pair[Loc, Loc]] get_edges()
+        vector[double] get_weights()

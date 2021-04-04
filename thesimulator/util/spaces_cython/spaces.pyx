@@ -234,6 +234,15 @@ cdef class Graph(TransportSpace):
     def __repr__(self):
         return f"Graph(velocity={self.velocity})"
 
+    def vertices(self):
+        return dereference(self.derived_ptr).get_vertices()
+
+    def edges(self):
+        return dereference(self.derived_ptr).get_edges()
+
+    def weights(self):
+        return dereference(self.derived_ptr).get_weights()
+
     @classmethod
     def from_nx(
             cls, G, velocity: float = 1.0, make_attribute_distance: Optional[str] = "distance"
@@ -278,3 +287,13 @@ cdef class Graph(TransportSpace):
 
     def random_point(self):
         return random.choice(dereference(self.derived_ptr).get_vertices())
+
+
+    def __reduce__(self):
+        return self.__class__, \
+            (
+                 self.vertices,
+                 self.edges,
+                 self.weights,
+                 self.velocity,
+            )
