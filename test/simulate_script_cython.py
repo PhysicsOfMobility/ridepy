@@ -28,8 +28,8 @@ from thesimulator.util.analytics import get_stops_and_requests
 import logging
 
 sim_logger = logging.getLogger("thesimulator")
-sim_logger.setLevel(logging.CRITICAL)
-sim_logger.handlers[0].setLevel(logging.CRITICAL)
+sim_logger.setLevel(logging.DEBUG)
+sim_logger.handlers[0].setLevel(logging.DEBUG)
 
 
 def simulate_on_r2(
@@ -45,8 +45,8 @@ def simulate_on_r2(
 
     space = pyEuclidean2D()
 
-    # ssfs = MPIFuturesFleetState(
-    ssfs = SlowSimpleFleetState(
+    ssfs = MPIFuturesFleetState(
+        # ssfs = SlowSimpleFleetState(
         initial_locations={
             vehicle_id: space.random_point() for vehicle_id in range(num_vehicles)
         },
