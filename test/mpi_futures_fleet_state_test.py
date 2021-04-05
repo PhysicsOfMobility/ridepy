@@ -68,7 +68,7 @@ def requests_handled_per_mpi_rank(logfile_dir: pathlib.Path):
     return mpi_process_distribution["mpi_rank"].value_counts()
 
 
-def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
+def equivalence_serial_and_mpi_bruteforce_dispatcher_cython_test(seed=42):
     """
     Tests that the simulation runs with slowsimple and mpifutures fleet states with brute force dispatcher produces
     identical events.
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     for item in logfile.parent.glob("*.out"):
         item.unlink()
     try:
-        test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython()
+        equivalence_serial_and_mpi_bruteforce_dispatcher_cython_test()
     finally:
         # remove newly created logfiles
         for item in logfile.parent.glob("*.out"):
