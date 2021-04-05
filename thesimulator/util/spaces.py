@@ -372,6 +372,14 @@ class Graph(TransportSpace):
             velocity=self.velocity,
         )
 
+    def __reduce__(self):
+        return self.__class__, (
+            list(self.G.nodes()),
+            list(self.G.edges()),
+            [data["distance"] for u, v, data in self.G.edges(data=True)],
+            self.velocity,
+        )
+
 
 class DiGraph(Graph):
     def __init__(

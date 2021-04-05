@@ -17,20 +17,21 @@ import logging
 import pathlib
 from mpi4py import MPI
 
+from thesimulator import data_structures as pyds
 from thesimulator import data_structures_cython as cyds
-from thesimulator.util.spaces_cython import spaces as cyspaces
+from thesimulator.util import spaces as pyspaces
+from thesimulator.util import spaces_cython as cyspaces
 from thesimulator.util.request_generators import RandomRequestGenerator
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
+)
 from thesimulator.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
+from thesimulator.vehicle_state import VehicleState as py_VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.extras.spaces import make_nx_grid
-
-
-sim_logger = logging.getLogger("thesimulator")
-sim_logger.setLevel(logging.DEBUG)
-sim_logger.handlers[0].setLevel(logging.DEBUG)
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -40,11 +41,16 @@ rank = comm.Get_rank()
 logfile = pathlib.Path(f".tmp_test_logdir/rank_{rank}.out")
 logfile.parent.mkdir(exist_ok=True)
 
-vehicle_level_logger = logging.getLogger("thesimulator.vehicle_state_cython")
+vehicle_level_logger_cython = logging.getLogger("thesimulator.vehicle_state_cython")
+vehicle_level_logger_cython.handlers = []
+vehicle_level_logger_python = logging.getLogger("thesimulator.vehicle_state")
+vehicle_level_logger_python.handlers = []
 handler = logging.FileHandler(str(logfile))
 handler.setLevel(logging.DEBUG)
-vehicle_level_logger.addHandler(handler)
-vehicle_level_logger.setLevel(logging.DEBUG)
+vehicle_level_logger_cython.addHandler(handler)
+vehicle_level_logger_cython.setLevel(logging.DEBUG)
+vehicle_level_logger_python.addHandler(handler)
+vehicle_level_logger_python.setLevel(logging.DEBUG)
 
 
 def requests_handled_per_mpi_rank(logfile_dir: pathlib.Path):
@@ -67,18 +73,38 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
     Tests that the simulation runs with slowsimple and mpifutures fleet states with brute force dispatcher produces
     identical events.
     """
-    for cy_space in (
+    spaces = [
+        pyspaces.Euclidean2D(),
+        pyspaces.Graph.from_nx(make_nx_grid()),
         cyspaces.Euclidean2D(),
         cyspaces.Graph.from_nx(make_nx_grid()),
+    ]
+    dispatchers = [
+        py_brute_force_total_traveltime_minimizing_dispatcher,
+        py_brute_force_total_traveltime_minimizing_dispatcher,
+        cy_brute_force_total_traveltime_minimizing_dispatcher,
+        cy_brute_force_total_traveltime_minimizing_dispatcher,
+    ]
+    vehicle_state_classes = [
+        py_VehicleState,
+        py_VehicleState,
+        cy_VehicleState,
+        cy_VehicleState,
+    ]
+    ds_modules = [pyds, pyds, cyds, cyds]
+
+    for space, dispatcher, vehicle_state_class, ds_module in zip(
+        spaces, dispatchers, vehicle_state_classes, ds_modules
     ):
+        print(f"trying the combination: {space}, {ds_module}")
         n_reqs = 100
 
         random.seed(seed)
-        init_loc = cy_space.random_point()
+        init_loc = space.random_point()
         random.seed(seed)
-        assert init_loc == cy_space.random_point()
+        assert init_loc == space.random_point()
 
-        initial_locations = {7: cy_space.random_point(), 9: cy_space.random_point()}
+        initial_locations = {7: space.random_point(), 9: space.random_point()}
         ######################################################
         # Without MPI
         ######################################################
@@ -86,20 +112,22 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
         ssfs = SlowSimpleFleetState(
             initial_locations=initial_locations,
             seat_capacities=10,
-            space=cy_space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
-            vehicle_state_class=cy_VehicleState,
+            space=space,
+            dispatcher=dispatcher,
+            vehicle_state_class=vehicle_state_class,
         )
         rg = RandomRequestGenerator(
-            space=cy_space, request_class=cyds.TransportationRequest, seed=seed
+            space=space, request_class=ds_module.TransportationRequest, seed=seed
         )
         serial_reqs = list(it.islice(rg, n_reqs))
         serial_events = list(ssfs.simulate(serial_reqs))
-
+        # count the requests served per MPI rank. we do not check it against anything.
+        # we will subtrace these numbers from the counts for the MPI simulation run
+        # we have to do this because the logger setup need to be done at the beginning and
+        # cannot be turned on only during the MPI simulations
         wo_mpi_request_per_rank = requests_handled_per_mpi_rank(
             logfile_dir=logfile.parent
         )
-        print("Now mpi")
         ######################################################
         # With MPI
         ######################################################
@@ -109,17 +137,17 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
         mffs = MPIFuturesFleetState(
             initial_locations=initial_locations,
             seat_capacities=10,
-            space=cy_space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
-            vehicle_state_class=cy_VehicleState,
+            space=space,
+            dispatcher=dispatcher,
+            vehicle_state_class=vehicle_state_class,
         )
 
         rg = RandomRequestGenerator(
-            space=cy_space, request_class=cyds.TransportationRequest, seed=seed
+            space=space, request_class=ds_module.TransportationRequest, seed=seed
         )
         mpi_reqs = list(it.islice(rg, n_reqs))
         mpi_events = list(mffs.simulate(mpi_reqs))
-
+        # now check that the workload was equally divided between two MPI worker processes
         with_mpi_request_per_rank = requests_handled_per_mpi_rank(
             logfile_dir=logfile.parent
         )
