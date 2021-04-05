@@ -6,7 +6,6 @@ Currently this test cannot be run properly with pytest. Run this with:
 mpirun --host localhost:<num_workers> -n <num_workers>  python -m mpi4py.futures  <name_of_this_file>.py
 ```
 `num_workers` must be at least 2.
-
 """
 import random
 import re
@@ -36,6 +35,8 @@ sim_logger.handlers[0].setLevel(logging.DEBUG)
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
+# we want to inspect the logs of the worker MPI processes. We are going to create one temp file for each process,
+# which will will later read in the test itself.
 logfile = pathlib.Path(f".tmp_test_logdir/rank_{rank}.out")
 logfile.parent.mkdir(exist_ok=True)
 
@@ -68,7 +69,7 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
     """
     for cy_space in (
         cyspaces.Euclidean2D(),
-        # cyspaces.Graph.from_nx(make_nx_grid())
+        cyspaces.Graph.from_nx(make_nx_grid()),
     ):
         n_reqs = 100
 
@@ -78,7 +79,6 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
         assert init_loc == cy_space.random_point()
 
         initial_locations = {7: cy_space.random_point(), 9: cy_space.random_point()}
-
         ######################################################
         # Without MPI
         ######################################################
@@ -99,10 +99,11 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
         wo_mpi_request_per_rank = requests_handled_per_mpi_rank(
             logfile_dir=logfile.parent
         )
+        print("Now mpi")
         ######################################################
         # With MPI
         ######################################################
-        assert comm.size > 1, "This test must be ran with at lest 2 MPI processes"
+        # assert comm.size > 1, "This test must be ran with at lest 2 MPI processes"
 
         # with redirect_stderr(f):
         mffs = MPIFuturesFleetState(
@@ -129,7 +130,6 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
             with_mpi_request_per_rank[with_mpi_request_per_rank > 0].values
             == np.array([n_reqs, n_reqs])
         ).all()
-
         ######################################################
         # COMPARE
         ######################################################
@@ -145,10 +145,12 @@ def test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython(seed=42):
 
 
 if __name__ == "__main__":
+    # remove old logfiles, if any
     for item in logfile.parent.glob("*.out"):
         item.unlink()
     try:
         test_equivalence_serial_and_mpi_bruteforce_dispatcher_cython()
     finally:
+        # remove newly created logfiles
         for item in logfile.parent.glob("*.out"):
             item.unlink()

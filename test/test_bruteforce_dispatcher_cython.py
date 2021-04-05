@@ -111,7 +111,8 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
         delivery_timewindow_max=inf,
     )
 
-    # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to cy_brute_force_total_traveltime_minimizing_dispatcher
+    # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to
+    # cy_brute_force_total_traveltime_minimizing_dispatcher
     stoplist = cyStoplist(
         stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
         loc_type=LocType.R2LOC,

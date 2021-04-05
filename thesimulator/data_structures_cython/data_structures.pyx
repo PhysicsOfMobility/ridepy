@@ -659,7 +659,7 @@ cdef class Stoplist:
             return res
         elif self.loc_type == LocType.INT:
             res = []
-            for idx in range(self.ustoplist._stoplist_r2loc.size()):
+            for idx in range(self.ustoplist._stoplist_int.size()):
                 res.append(Stop.from_c_int(&self.ustoplist._stoplist_int[idx]))
             return res
         else:
