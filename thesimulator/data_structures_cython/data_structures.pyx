@@ -667,3 +667,8 @@ cdef class Stoplist:
 
     def __reduce__(self):
         return self.__class__, (self.to_pys(), self.loc_type)
+
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
+        return all(self[i]==other[i] for i in range(len(self)))
