@@ -5,26 +5,32 @@ import numpy as np
 import pandas as pd
 import sys
 
-from thesimulator.data_structures_cython import (
+from thesimulator.data_structures import (
     TransportationRequest,
+    InternalRequest,
+    Stop,
+    StopAction,
+    Stoplist,
+    LocType,
 )
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.vehicle_state_cython import VehicleState
-from thesimulator.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
-from thesimulator.util.spaces_cython import Euclidean2D
-from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.events import PickupEvent
+
+from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from thesimulator.vehicle_state import VehicleState
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher,
+)
+from thesimulator.util.spaces import Euclidean2D
+from thesimulator.util.request_generators import RandomRequestGenerator
 
 from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from thesimulator.util.analytics import get_stops_and_requests
 import logging
 
 sim_logger = logging.getLogger("thesimulator")
-sim_logger.setLevel(logging.DEBUG)
-sim_logger.handlers[0].setLevel(logging.DEBUG)
+sim_logger.setLevel(logging.CRITICAL)
+sim_logger.handlers[0].setLevel(logging.CRITICAL)
 
 
 def simulate_on_r2(
@@ -41,7 +47,6 @@ def simulate_on_r2(
     space = pyEuclidean2D()
 
     ssfs = MPIFuturesFleetState(
-        # ssfs = SlowSimpleFleetState(
         initial_locations={
             vehicle_id: space.random_point() for vehicle_id in range(num_vehicles)
         },
@@ -64,15 +69,25 @@ def simulate_on_r2(
     tock = time()
 
     print(f"Simulating took {tock-tick} seconds")
-    pickupevents = [ev for ev in events if isinstance(ev, PickupEvent)]
 
-    for ev in pickupevents:
-        print(ev)
+    stops, requests = get_stops_and_requests(events=events, space=space)
+    del events
+
+    num_requests = len(requests)
+    num_requests_delivered = pd.notna(
+        requests.loc[:, ("serviced", "timestamp_dropoff")]
+    ).sum()
+
+    print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
+
+    return stops, requests
 
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        N = 2
+        N = 10
     else:
         N = int(sys.argv[1])
-    simulate_on_r2(num_vehicles=N, rate=N * 1.5, seat_capacities=4, num_requests=5)
+    stops, requests = simulate_on_r2(
+        num_vehicles=N, rate=N * 1.5, seat_capacities=4, num_requests=N * 1000
+    )
