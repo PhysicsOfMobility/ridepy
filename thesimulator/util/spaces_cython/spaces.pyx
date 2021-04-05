@@ -199,7 +199,7 @@ cdef class Graph(TransportSpace):
     """
     Weighted directed graph with integer node labels.
     """
-    def __cinit__(self, *, vertices, edges, weights=None, double velocity=1):
+    def __cinit__(self, vertices, edges, weights=None, double velocity=1):
         self.loc_type = LocType.INT
 
         if weights is None:
@@ -296,9 +296,9 @@ cdef class Graph(TransportSpace):
     def __reduce__(self):
         return self.__class__, \
             (
-                 self.vertices,
-                 self.edges,
-                 self.weights,
+                 self.vertices(),
+                 self.edges(),
+                 self.weights(),
                  self.velocity,
             )
 
