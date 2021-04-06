@@ -384,6 +384,7 @@ cdef class Stop:
             double time_window_min,
             double time_window_max,
     ):
+        self.ptr_owner = True
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
@@ -563,6 +564,17 @@ cdef class Stop:
                 self.time_window_min,
                 self.time_window_max,
             )
+
+    def __dealloc__(self):
+        if self.ptr_owner:
+            if self.loc_type == LocType.R2LOC:
+                del self.ustop._stop_r2loc
+            elif self.loc_type == LocType.INT:
+                del self.ustop._stop_int
+            else:
+                raise ValueError("This line should never have been reached")
+
+
 
 cdef class Stoplist:
     # TODO: May need to allow nice ways of converting a Stoplist to python lists or similar. Use case: calling code

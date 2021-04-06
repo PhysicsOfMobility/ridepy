@@ -1,8 +1,10 @@
 import itertools as it
+import os
 import random
 from time import time
 import numpy as np
 import pandas as pd
+import psutil
 import sys
 import argparse
 
@@ -80,17 +82,17 @@ def simulate_on_r2(
 
     print(f"Simulating took {tock-tick} seconds")
 
-    stops, requests = get_stops_and_requests(events=events, space=space)
-    del events
+    # stops, requests = get_stops_and_requests(events=events, space=space)
+    # del events
 
-    num_requests = len(requests)
-    num_requests_delivered = pd.notna(
-        requests.loc[:, ("serviced", "timestamp_dropoff")]
-    ).sum()
+    # num_requests = len(requests)
+    # num_requests_delivered = pd.notna(
+    #    requests.loc[:, ("serviced", "timestamp_dropoff")]
+    # ).sum()
 
-    print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
+    # print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
 
-    return stops, requests
+    # return stops, requests
 
 
 if __name__ == "__main__":
@@ -102,14 +104,33 @@ if __name__ == "__main__":
         "--cython", action=argparse.BooleanOptionalAction, default=False
     )
     parser.add_argument("--mpi", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--memcheck", action=argparse.BooleanOptionalAction, default=False
+    )
     args = parser.parse_args()
 
     N = args.num_vehicles
-    stops, requests = simulate_on_r2(
-        num_vehicles=N,
-        rate=N * 1.5,
-        seat_capacities=4,
-        num_requests=N * 10,
-        use_cython=args.cython,
-        use_mpi=args.mpi,
-    )
+    if args.memcheck is False:
+        # stops, requests = \
+        simulate_on_r2(
+            num_vehicles=N,
+            rate=N * 1.5,
+            seat_capacities=4,
+            num_requests=N * 100,
+            use_cython=args.cython,
+            use_mpi=args.mpi,
+        )
+    else:
+        for i in range(5):
+            process = psutil.Process(os.getpid())
+            print(f"before run #{i}: {process.memory_info().rss/1024} kB")
+            # stops, requests = \
+            simulate_on_r2(
+                num_vehicles=N,
+                rate=N * 1.5,
+                seat_capacities=4,
+                num_requests=N * 100,
+                use_cython=args.cython,
+                use_mpi=args.mpi,
+            )
+            print(f"after  run #{i}: {process.memory_info().rss / 1024} kB")

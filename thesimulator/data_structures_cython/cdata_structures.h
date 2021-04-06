@@ -105,7 +105,7 @@ namespace cstuff {
             estimated_arrival_time{estimated_arrival_time},
             occupancy_after_servicing{occupancy_after_servicing},
             time_window_min{time_window_min},
-            time_window_max{time_window_max} {}
+            time_window_max{time_window_max} {std::cout<<"use_count: "<<req.use_count()<<std::endl;}
 
         double estimated_departure_time() {
             return max(estimated_arrival_time, time_window_min);
