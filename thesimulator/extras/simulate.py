@@ -44,7 +44,9 @@ def param_scan(outer_dict):
 
     Examples
     --------
+
     .. code-block:: python
+
         >>> conf = {
         >>>     "general": {"parameter_1": [1, 2], "parameter_2": ["a"]},
         >>>     "request_generator": {"parameter_1": [0, 5]},

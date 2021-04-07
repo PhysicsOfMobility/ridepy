@@ -74,6 +74,7 @@ autodoc_type_aliases = {
     "StopEvent": "thesimulator.events.StopEvent",
     "SingleVehicleSolution": "thesimulator.data_structures.SingleVehicleSolution",
 }
+autodoc_inherit_docstrings = False
 
 
 # Intersphinx mapping

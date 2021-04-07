@@ -21,10 +21,13 @@ class ParamsJSONEncoder(json.JSONEncoder):
     JSONEncoder to use when serializing a dictionary containing simulation parameters.
     This is able to serialize `RequestGenerator`, `TransportSpace` and dispatchers.
 
-    Examples
-    --------
+    Example
+    -------
+
     .. code-block:: python
+
         >>> json.dumps(params, cls=ParamsJSONEncoder)
+
     """
 
     def default(self, obj):
@@ -49,10 +52,13 @@ class ParamsJSONDecoder(json.JSONDecoder):
     JSONDecoder to use when deserializing a dictionary containing simulation parameters.
     This is able to deserialize `RequestGenerator`, `TransportSpace` and dispatchers.
 
-    Examples
-    --------
+    Example
+    -------
+
     .. code-block:: python
+
         >>> json.loads(params, cls=ParamsJSONDecoder)
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -86,10 +92,13 @@ class EventsJSONEncoder(json.JSONEncoder):
     """
     JSONEncoder to use when serializing a list containing `Event`.
 
-    Examples
-    --------
+    Example
+    -------
+
     .. code-block:: python
+
         >>> json.dumps(events, cls=EventsJSONEncoder)
+
     """
 
     def default(self, obj):
@@ -104,6 +113,7 @@ class EventsJSONDecoder(json.JSONDecoder):
     JSONDecoder to use when deserializing a list containing `Event`.
 
     This is able to deserialize
+
     * `VehicleStateBeginEvent`
     * `VehicleStateEndEvent`
     * `PickupEvent`
@@ -112,10 +122,13 @@ class EventsJSONDecoder(json.JSONDecoder):
     * `RequestAcceptanceEvent`
     * `RequestRejectionEvent`
 
-    Examples
-    --------
+    Example
+    -------
+
     .. code-block:: python
+
         >>> json.loads(events, cls=EventsJSONDecoder)
+
     """
 
     def __init__(self, *args, **kwargs):

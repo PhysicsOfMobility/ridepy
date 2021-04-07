@@ -41,9 +41,11 @@ def make_nx_cycle_graph(order: int = 10, edge_distance: float = 1) -> nx.Graph:
     Return a cyclic `nx.Graph`
 
     Use in conjunction with `spaces.Graph` or `spaces_cython.Graph` like
-    ```py
-    Graph.from_nx(make_nx_cycle_graph())
-    ```
+
+    .. code-block:: python
+
+        Graph.from_nx(make_nx_cycle_graph())
+
 
     Parameters
     ----------
