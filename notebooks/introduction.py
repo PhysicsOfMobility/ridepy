@@ -7,14 +7,14 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.0
+#       jupytext_version: 1.6.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# + tags=[]
+# +
 # %matplotlib inline
 
 import dataclasses
@@ -27,9 +27,8 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-from fxutil import described_size
 
-# + tags=[]
+# +
 from thesimulator.vehicle_state import VehicleState
 
 dark = True
@@ -86,7 +85,7 @@ initial_location = (0, 0)
 
 # ## define simulation environment
 
-# + tags=[]
+# +
 # space
 space = Euclidean2D()
 """transport space to operate on"""
@@ -95,7 +94,7 @@ rg = RandomRequestGenerator(rate=10, space=space)
 """request generator"""
 
 # generate 100 random requests
-transportation_requests = it.islice(rg, 10000)
+transportation_requests = it.islice(rg, 100)
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
@@ -109,10 +108,8 @@ fs = SlowSimpleFleetState(
 
 # ## perform the simulation
 
-# + tags=[]
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
-# -
 
 # ## process the results
 

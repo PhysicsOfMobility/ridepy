@@ -15,11 +15,6 @@
 # ---
 
 # + tags=[]
-import tracemalloc
-
-tracemalloc.start(10)
-
-# + tags=[]
 # %matplotlib inline
 
 import dataclasses
@@ -32,9 +27,6 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-
-from fxutil import described_size
-
 
 # + tags=[]
 dark = True
@@ -82,6 +74,7 @@ n_buses = 50
 """number of vehicles to simulate"""
 
 initial_location = 0
+
 # -
 
 
@@ -95,19 +88,19 @@ space = Graph.from_nx(make_nx_grid())
 rg = RandomRequestGenerator(
     rate=10,
     max_pickup_delay=3,
-    max_delivery_delay_rel=19,
+    max_delivery_delay_rel=1.9,
     space=space,
     request_class=TransportationRequest,
 )
 """request generator"""
 
 # generate 100 random requests
-transportation_requests = it.islice(rg, 100000)
+transportation_requests = it.islice(rg, 100)
 
 # initialize the simulator
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
-    seat_capacities=0,
+    seat_capacities=8,
     space=space,
     dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
     vehicle_state_class=VehicleState,
@@ -118,29 +111,8 @@ fs = SlowSimpleFleetState(
 
 # + tags=[]
 # exhaust the simulator's iterator
-# # %time
-events = list(fs.simulate(transportation_requests))
-
-# + tags=[]
-snapshot2 = tracemalloc.take_snapshot()
-
-# + tags=[]
-top_stats = snapshot2.compare_to(snapshot, "lineno")
-
-# + tags=[]
-for stat in top_stats[:100]:
-    print(stat)
+# %time events = list(fs.simulate(transportation_requests))
 # -
-
-
-# + tags=[]
-for thing in ["events", "fs", "rg", "space", "transportation_requests"]:
-    print(described_size(f"{thing} = ", locals().get(thing)))
-
-# + tags=[]
-
-# -
-
 
 # ## process the results
 
@@ -180,3 +152,4 @@ plot_occupancy_hist(stops)
 
 # + tags=[]
 stops
+# -
