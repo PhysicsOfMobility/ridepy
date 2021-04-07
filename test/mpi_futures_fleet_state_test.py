@@ -54,10 +54,17 @@ vehicle_level_logger_python.setLevel(logging.DEBUG)
 
 
 def requests_handled_per_mpi_rank(logfile_dir: pathlib.Path):
+    """
+    Reads all the logfiles in `logfile_dir`, where hopefully logs from each MPI worker
+    process were stored. Based on the logs emitted by `VehicleState.handle_transportation_request`
+    counts which MPI rank handled which request for which vehicle.
+    """
     all_mpi_workers_outputs = ""
     for children_log in logfile_dir.glob("*.out"):
         with open(str(children_log), "r") as f:
             all_mpi_workers_outputs += f.read()
+    # The following works only because VehicleState.handle_transportation_request
+    # emits logs in the specific format
     mpi_process_distribution = re.findall(
         "Handling request #(.*) with vehicle (.*) from MPI rank (.*)",
         all_mpi_workers_outputs,
@@ -122,7 +129,7 @@ def equivalence_serial_and_mpi_bruteforce_dispatcher_cython_test(seed=42):
         serial_reqs = list(it.islice(rg, n_reqs))
         serial_events = list(ssfs.simulate(serial_reqs))
         # count the requests served per MPI rank. we do not check it against anything.
-        # we will subtrace these numbers from the counts for the MPI simulation run
+        # we will subtract these numbers from the counts for the MPI simulation run
         # we have to do this because the logger setup need to be done at the beginning and
         # cannot be turned on only during the MPI simulations
         wo_mpi_request_per_rank = requests_handled_per_mpi_rank(
@@ -131,7 +138,7 @@ def equivalence_serial_and_mpi_bruteforce_dispatcher_cython_test(seed=42):
         ######################################################
         # With MPI
         ######################################################
-        # assert comm.size > 1, "This test must be ran with at lest 2 MPI processes"
+        assert comm.size > 1, "This test must be ran with at lest 2 MPI processes"
 
         # with redirect_stderr(f):
         mffs = MPIFuturesFleetState(
@@ -166,8 +173,8 @@ def equivalence_serial_and_mpi_bruteforce_dispatcher_cython_test(seed=42):
         for num, (sev, mev) in enumerate(zip(serial_events, mpi_events)):
             assert type(sev) == type(mev)
             assert np.allclose(
-                list(flatten(list(mev.__dict__.values()))),
-                list(flatten(list(sev.__dict__.values()))),
+                list(flatten(mev.__dict__.values())),
+                list(flatten(sev.__dict__.values())),
                 rtol=1e-4,
             )
 

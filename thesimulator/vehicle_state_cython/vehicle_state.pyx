@@ -199,6 +199,8 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
+        # Logging the folloowing in this specific format is crucial for
+        # `test/mpi_futures_fleet_state_test.py` to pass
         logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
         ret = self._vehicle_id, *self._dispatcher(
                 request,
