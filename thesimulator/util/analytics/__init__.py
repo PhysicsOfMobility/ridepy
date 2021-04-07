@@ -459,6 +459,11 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
         evs=events_df, stops=stops_df, space=space
     )
 
-    stops_df = _add_locations_to_stoplist_dataframe(reqs=requests_df, stops=stops_df)
+    try:
+        stops_df = _add_locations_to_stoplist_dataframe(
+            reqs=requests_df, stops=stops_df
+        )
+    except KeyError:
+        pass
 
     return stops_df, requests_df

@@ -17,6 +17,16 @@ from pathlib import Path
 
 
 class ParamsJSONEncoder(json.JSONEncoder):
+    """
+    JSONEncoder to use when serializing a dictionary containing simulation parameters.
+    This is able to serialize `RequestGenerator`, `TransportSpace` and dispatchers.
+
+    Examples
+    --------
+    .. code-block:: python
+        >>> json.dumps(params, cls=ParamsJSONEncoder)
+    """
+
     def default(self, obj):
         # request generator?
         if isinstance(obj, type) and issubclass(obj, collections.abc.Iterator):
@@ -35,6 +45,16 @@ class ParamsJSONEncoder(json.JSONEncoder):
 
 
 class ParamsJSONDecoder(json.JSONDecoder):
+    """
+    JSONDecoder to use when deserializing a dictionary containing simulation parameters.
+    This is able to deserialize `RequestGenerator`, `TransportSpace` and dispatchers.
+
+    Examples
+    --------
+    .. code-block:: python
+        >>> json.loads(params, cls=ParamsJSONDecoder)
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
@@ -63,6 +83,15 @@ class ParamsJSONDecoder(json.JSONDecoder):
 
 
 class EventsJSONEncoder(json.JSONEncoder):
+    """
+    JSONEncoder to use when serializing a list containing `Event`.
+
+    Examples
+    --------
+    .. code-block:: python
+        >>> json.dumps(events, cls=EventsJSONEncoder)
+    """
+
     def default(self, obj):
         if dataclasses.is_dataclass(obj):
             return {obj.__class__.__name__: dataclasses.asdict(obj)}
@@ -71,6 +100,24 @@ class EventsJSONEncoder(json.JSONEncoder):
 
 
 class EventsJSONDecoder(json.JSONDecoder):
+    """
+    JSONDecoder to use when deserializing a list containing `Event`.
+
+    This is able to deserialize
+    * `VehicleStateBeginEvent`
+    * `VehicleStateEndEvent`
+    * `PickupEvent`
+    * `DeliveryEvent`
+    * `RequestSubmissionEvent`
+    * `RequestAcceptanceEvent`
+    * `RequestRejectionEvent`
+
+    Examples
+    --------
+    .. code-block:: python
+        >>> json.loads(events, cls=EventsJSONDecoder)
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
@@ -96,7 +143,10 @@ class EventsJSONDecoder(json.JSONDecoder):
 
 def save_params_json(*, param_path: Path, params: dict) -> None:
     """
-    Save params dictionary to pretty JSON, overwriting existing.
+    Save a dictionary containing simulation parameters to pretty JSON,
+    overwriting existing. Parameter dictionaries may contain anything that is supported
+    by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
+    `TransportSpace`s and dispatchers.
 
     Parameters
     ----------
@@ -109,12 +159,27 @@ def save_params_json(*, param_path: Path, params: dict) -> None:
 
 
 def read_params_json(param_path: Path) -> dict:
+    """
+    Read a dictionary containing simulation parameters from JSON.
+    Parameter dictionaries may contain anything that is supported
+    by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
+    `TransportSpace`s and dispatchers.
+
+    Parameters
+    ----------
+    param_path
+
+    Returns
+    -------
+    parameter dictionary
+    """
+
     return json.load(param_path.open("r"), cls=ParamsJSONDecoder)
 
 
 def save_events_json(*, jsonl_path: Path, events: Iterable) -> None:
     """
-    Save events iterable to file according to JSONL specs, appending to existing.
+    Save events iterable to a file according to JSONL specs, appending to existing.
 
     Parameters
     ----------

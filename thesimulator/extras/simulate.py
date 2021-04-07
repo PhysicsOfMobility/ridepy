@@ -35,27 +35,87 @@ from thesimulator.extras.io import save_params_json, save_events_json
 
 logger = logging.getLogger(__name__)
 
-# outer_dict = {outer_key1: inner_dict1, outer_key_2: inner_dict2, ...}
-# inner_dict1 = {inner_key1: inner_dict_values[1], inner_key2: inner_dict_values[2], ...}
-param_scan = lambda outer_dict: (
-    {outer_key: inner_dict for outer_key, inner_dict in zip(outer_dict, inner_dicts)}
-    for inner_dicts in it.product(
-        *map(
-            lambda inner_dict: map(
-                lambda inner_dict_values: dict(zip(inner_dict, inner_dict_values)),
-                it.product(*inner_dict.values()),
-            ),
-            outer_dict.values(),
+
+def param_scan(outer_dict):
+    """
+    Return an iterator over all parameter combinations of a configuration parameter dictionary
+    which consists of an outer dictionary indexed by strings and containing inner dictionaries
+    as values which are indexed by strings and contain lists of possible values for each parameter.
+
+    Examples
+    --------
+    .. code-block:: python
+        >>> conf = {
+        >>>     "general": {"parameter_1": [1, 2], "parameter_2": ["a"]},
+        >>>     "request_generator": {"parameter_1": [0, 5]},
+        >>> tuple(param_scan(conf))
+        (
+           {
+               "general": {"parameter_1": 1, "parameter_2": "a"},
+               "request_generator": {"parameter_1": 0},
+           },
+           {
+               "general": {"parameter_1": 2, "parameter_2": "a"},
+               "request_generator": {"parameter_1": 0},
+           },
+           {
+               "general": {"parameter_1": 1, "parameter_2": "a"},
+               "request_generator": {"parameter_1": 5},
+           },
+           {
+               "general": {"parameter_1": 2, "parameter_2": "a"},
+               "request_generator": {"parameter_1": 0},
+           },
+        )
+
+    Parameters
+    ----------
+    outer_dict
+
+    Returns
+    -------
+
+    """
+    # outer_dict = {outer_key1: inner_dict1, outer_key_2: inner_dict2, ...}
+    # inner_dict1 = {inner_key1: inner_dict_values[1], inner_key2: inner_dict_values[2], ...}
+    return (
+        {
+            outer_key: inner_dict
+            for outer_key, inner_dict in zip(outer_dict, inner_dicts)
+        }
+        for inner_dicts in it.product(
+            *map(
+                lambda inner_dict: map(
+                    lambda inner_dict_values: dict(zip(inner_dict, inner_dict_values)),
+                    it.product(*inner_dict.values()),
+                ),
+                outer_dict.values(),
+            )
         )
     )
-)
 
 
 def get_default_conf(cython=True):
     """
     Return default parameter scan configuration as dict.
-    Schema:
+
+    parameter scan dict schema:
     `{'general': {param1: [value1, value2]}, 'request_generator':{param42: [value2]}}`
+
+    Valid Values for `general`:
+    n_reqs: int
+    space: TransportSpace
+    n_vehicles: int
+    initial_location: Location
+    seat_capacity: int
+    dispatcher: Callable
+
+    Values for `request_generator`:
+    request_generator: Type[RequestGenerator]
+    rate: int
+    max_pickup_delay: int
+    max_pickup_delivery_delay_rel: int
+
 
     Parameters
     ----------

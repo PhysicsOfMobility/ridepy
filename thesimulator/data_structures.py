@@ -233,3 +233,5 @@ Dispatcher = Callable[
     SingleVehicleSolution,
 ]
 """Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""
+
+Location = Union[int, float, tuple[float]]
