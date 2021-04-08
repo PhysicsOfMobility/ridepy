@@ -145,7 +145,7 @@ def get_default_conf(cython: bool = True) -> ParamScanConf:
     )
 
 
-def simulate(
+def simulate_parameter_space(
     *,
     data_dir: Path,
     conf: ParamScanConf,
