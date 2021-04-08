@@ -73,11 +73,12 @@ cdef class Request:
 
 
     def __dealloc__(self):
-        """
-        Using smart pointers. Do not need to delete the base pointer.
-        """
-        ...
-
+        if self.loc_type == LocType.R2LOC:
+            del self._ureq._req_r2loc
+        elif self.loc_type == LocType.INT:
+            del self.ustop._stop_int
+        else:
+            raise ValueError("This line should never have been reached")
 
 cdef class TransportationRequest(Request):
     def __init__(
@@ -262,10 +263,6 @@ cdef class TransportationRequest(Request):
         req.loc_type = LocType.INT
         return req
 
-
-    def __dealloc__(self):
-        # using unique_ptr's so no deletion
-        pass
 
     def __reduce__(self):
         return self.__class__, \

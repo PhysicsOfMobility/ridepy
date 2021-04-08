@@ -82,17 +82,17 @@ def simulate_on_r2(
 
     print(f"Simulating took {tock-tick} seconds")
 
-    # stops, requests = get_stops_and_requests(events=events, space=space)
-    # del events
+    stops, requests = get_stops_and_requests(events=events, space=space)
+    del events
 
-    # num_requests = len(requests)
-    # num_requests_delivered = pd.notna(
-    #    requests.loc[:, ("serviced", "timestamp_dropoff")]
-    # ).sum()
+    num_requests = len(requests)
+    num_requests_delivered = pd.notna(
+        requests.loc[:, ("serviced", "timestamp_dropoff")]
+    ).sum()
 
-    # print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
+    print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
 
-    # return stops, requests
+    return stops, requests
 
 
 if __name__ == "__main__":
