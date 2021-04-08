@@ -47,6 +47,8 @@ def param_scan(outer_dict: ParamScanConf) -> Iterator:
     which consists of an outer dictionary indexed by strings and containing inner dictionaries
     as values which are indexed by strings and contain lists of possible values for each parameter.
 
+    For additional detail see :ref:`Parameter Scan Configuration`.
+
     Examples
     --------
 
@@ -105,24 +107,7 @@ def param_scan(outer_dict: ParamScanConf) -> Iterator:
 def get_default_conf(cython: bool = True) -> ParamScanConf:
     """
     Return default parameter scan configuration as dict.
-
-    parameter scan dict schema:
-    `{'general': {param1: [value1, value2]}, 'request_generator':{param42: [value2]}}`
-
-    Valid Values for `general`:
-    n_reqs: int
-    space: TransportSpace
-    n_vehicles: int
-    initial_location: Location
-    seat_capacity: int
-    dispatcher: Callable
-
-    Values for `request_generator`:
-    request_generator: Type[RequestGenerator]
-    rate: int
-    max_pickup_delay: int
-    max_pickup_delivery_delay_rel: int
-
+    For more detail see :ref:`Parameter Scan Configuration`.
 
     Parameters
     ----------
@@ -171,6 +156,7 @@ def simulate(
     """
     Run a parameter scan of simulations and save emitted events to disk in JSON Lines format
     and additional JSON file containing the simulation parameters.
+    For more detail see :ref:`Executing Simulations`.
 
     Parameters
     ----------
@@ -178,8 +164,6 @@ def simulate(
         path to the desired output directory
     conf
         configuration dict for the parameter scan.
-        Schema:
-        `{'general': {param1: [value1, value2]}, 'request_generator':{param42: [value2]}}`
     cython
         If True, use cython.
     mpi
