@@ -159,7 +159,7 @@ def save_params_json(*, param_path: Path, params: dict) -> None:
     Save a dictionary containing simulation parameters to pretty JSON,
     overwriting existing. Parameter dictionaries may contain anything that is supported
     by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
-    `TransportSpace`s and dispatchers.
+    `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
 
     Parameters
     ----------
@@ -176,7 +176,7 @@ def read_params_json(param_path: Path) -> dict:
     Read a dictionary containing simulation parameters from JSON.
     Parameter dictionaries may contain anything that is supported
     by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
-    `TransportSpace`s and dispatchers.
+    `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
 
     Parameters
     ----------
@@ -193,6 +193,7 @@ def read_params_json(param_path: Path) -> dict:
 def save_events_json(*, jsonl_path: Path, events: Iterable) -> None:
     """
     Save events iterable to a file according to JSONL specs, appending to existing.
+    For additional detail, see :ref:`Executing Simulations`.
 
     Parameters
     ----------
@@ -209,6 +210,7 @@ def save_events_json(*, jsonl_path: Path, events: Iterable) -> None:
 def read_events_json(jsonl_path: Path) -> list[Event]:
     """
     Read events from JSON lines file, where each line of the file contains a single event.
+    For additional detail, see :ref:`Executing Simulations`.
 
     Parameters
     ----------
