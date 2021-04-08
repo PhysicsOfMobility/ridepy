@@ -34,6 +34,7 @@ add_function_parentheses = True
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.coverage",
@@ -70,6 +71,7 @@ default_role = "py:obj"
 add_module_names = False
 autodoc_typehints = "description"
 autodoc_type_aliases = {
+    "Event": "thesimulator.events.Event",
     "RequestEvent": "thesimulator.events.RequestEvent",
     "StopEvent": "thesimulator.events.StopEvent",
     "SingleVehicleSolution": "thesimulator.data_structures.SingleVehicleSolution",

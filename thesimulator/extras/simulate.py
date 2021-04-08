@@ -1,3 +1,5 @@
+from typing import Iterator, Any, Literal
+
 import logging
 
 import numpy as np
@@ -35,8 +37,11 @@ from thesimulator.extras.io import save_params_json, save_events_json
 
 logger = logging.getLogger(__name__)
 
+SimConf = dict[Literal["general", "space"], dict[str, Any]]
+ParamScanConf = dict[Literal["general", "space"], dict[str, list[Any]]]
 
-def param_scan(outer_dict):
+
+def param_scan(outer_dict: ParamScanConf) -> Iterator:
     """
     Return an iterator over all parameter combinations of a configuration parameter dictionary
     which consists of an outer dictionary indexed by strings and containing inner dictionaries
@@ -97,7 +102,7 @@ def param_scan(outer_dict):
     )
 
 
-def get_default_conf(cython=True):
+def get_default_conf(cython: bool = True) -> ParamScanConf:
     """
     Return default parameter scan configuration as dict.
 
@@ -158,7 +163,7 @@ def get_default_conf(cython=True):
 def simulate(
     *,
     data_dir: Path,
-    conf: dict[dict],
+    conf: ParamScanConf,
     cython: bool = True,
     mpi: bool = False,
     chunksize: int = 1000,
