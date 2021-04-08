@@ -8,6 +8,7 @@ __pycache__/
 *.ipynb
 .idea
 core
+doc/_build
 
 # C extensions
 *.so

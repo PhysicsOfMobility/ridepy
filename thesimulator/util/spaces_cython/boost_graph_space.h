@@ -140,6 +140,20 @@ namespace cstuff {
             return v;
         }
 
+        vector<pair<vertex_t,vertex_t>> get_edges() {
+            vector<pair<vertex_t,vertex_t>> e;
+            for (auto ep = edges(this->_g); ep.first != ep.second; ++ep.first) {
+                e.push_back(
+                        pair(this->vertex2label[source(*ep.first, this->_g)],
+                             this->vertex2label[target(*ep.first, this->_g)]));
+            }
+            return e;
+        }
+
+        vector<double> get_weights() {
+            return this->_weights;
+        }
+
     };
 }
 #endif

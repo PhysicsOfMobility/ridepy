@@ -21,9 +21,9 @@ from thesimulator.events import (
     RequestSubmissionEvent,
 )
 from thesimulator.data_structures_cython import (
-    TransportationRequest as cyTransportationRequest,
+    TransportationRequest as CyTransportationRequest,
 )
-from thesimulator.util.spaces_cython import Euclidean2D as cyEuclidean2D
+from thesimulator.util.spaces_cython import Euclidean2D as CyEuclidean2D
 from thesimulator.fleet_state import SlowSimpleFleetState
 from thesimulator.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
@@ -82,9 +82,9 @@ def test_get_stops_and_requests():
     for transportation_requests, space in zip(
         map(
             make_transportation_requests,
-            [TransportationRequest, cyTransportationRequest],
+            [TransportationRequest, CyTransportationRequest],
         ),
-        [Euclidean2D(), cyEuclidean2D()],
+        [Euclidean2D(), CyEuclidean2D()],
     ):
         events = [
             VehicleStateBeginEvent(vehicle_id=0, timestamp=0, location=(0, 0)),

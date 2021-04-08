@@ -130,7 +130,7 @@ def test_Manhattan2D():
 
 
 @given(edge_weight=st.floats(0.00001, 10))
-def test_cyGraph_distance(edge_weight):
+def test_CyGraph_distance(edge_weight):
     G = nx.binomial_tree(n=4)
     velocity = 0.17
     for u, v in G.edges():
@@ -140,24 +140,24 @@ def test_cyGraph_distance(edge_weight):
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [edge_weight] * len(edges)
-    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
+    CyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
 
     for u in G.nodes():
         for v in G.nodes():
             if u >= v:
                 py_dist = pyG.d(u, v)
-                cy_dist = cyG.d(u, v)
+                cy_dist = CyG.d(u, v)
                 assert py_dist == cy_dist
 
 
-def test_cyGraph_interpolate():
+def test_CyGraph_interpolate():
     G = nx.Graph()
     G.add_weighted_edges_from([(1, 2, 10.5), (2, 3, 3.5)])
     velocity = 0.17
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
+    CyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
 
     def true_interp_1_to_3(dist_to_dest):
         """
@@ -183,27 +183,27 @@ def test_cyGraph_interpolate():
             return None, None
 
     for d in np.linspace(0.001, 13.999, 100):
-        assert np.allclose(cyG.interp_dist(1, 3, d), true_interp_1_to_3(d))
+        assert np.allclose(CyG.interp_dist(1, 3, d), true_interp_1_to_3(d))
 
 
 @given(velocity=st.floats(0.00001, 10))
-def test_cyGraph_interp_d_vs_t(velocity):
+def test_CyGraph_interp_d_vs_t(velocity):
     G = nx.Graph()
     G.add_weighted_edges_from([(1, 2, 10), (2, 3, 4)])
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
+    CyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
     for d in np.linspace(0.001, 13.999, 100):
-        v1, dist = cyG.interp_dist(1, 3, d)
-        v2, time = cyG.interp_time(1, 3, d / velocity)
+        v1, dist = CyG.interp_dist(1, 3, d)
+        v2, time = CyG.interp_time(1, 3, d / velocity)
 
         assert v1 == v2
         assert np.isclose(dist, time * velocity)
 
 
 @given(velocity=st.floats(0.00001, 10))
-def test_cyGraph_d_vs_t(velocity):
+def test_CyGraph_d_vs_t(velocity):
     G = nx.cycle_graph(10)
 
     for u, v in G.edges():
@@ -212,9 +212,9 @@ def test_cyGraph_d_vs_t(velocity):
     vertices = list(G.nodes())
     edges = list(G.edges())
     weights = [G[u][v]["weight"] for u, v in G.edges()]
-    cyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
-    ds = np.array([cyG.d(u, v) for u in G.nodes() for v in G.nodes()])
-    ts = np.array([cyG.t(u, v) for u in G.nodes() for v in G.nodes()])
+    CyG = CyGraph(vertices=vertices, edges=edges, weights=weights, velocity=velocity)
+    ds = np.array([CyG.d(u, v) for u in G.nodes() for v in G.nodes()])
+    ts = np.array([CyG.t(u, v) for u in G.nodes() for v in G.nodes()])
 
     assert np.allclose(ds, ts * velocity)
 

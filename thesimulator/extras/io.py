@@ -1,0 +1,228 @@
+import dataclasses
+
+import importlib
+
+import collections.abc
+import json
+import operator as op
+import functools as ft
+
+from typing import Iterable
+
+from thesimulator.data_structures import TransportSpace
+from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
+import thesimulator.events
+from thesimulator.events import Event
+from pathlib import Path
+
+
+class ParamsJSONEncoder(json.JSONEncoder):
+    """
+    JSONEncoder to use when serializing a dictionary containing simulation parameters.
+    This is able to serialize `RequestGenerator`, `TransportSpace` and dispatchers.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        >>> json.dumps(params, cls=ParamsJSONEncoder)
+
+    """
+
+    def default(self, obj):
+        # request generator?
+        if isinstance(obj, type) and issubclass(obj, collections.abc.Iterator):
+            return f"{obj.__module__}.{obj.__name__}"
+        # TransportSpace?
+        elif isinstance(obj, (TransportSpace, CyTransportSpace)):
+            # TODO in future, large networks might be saved in another file to be reused
+            return {
+                f"{obj.__class__.__module__}.{obj.__class__.__name__}": obj.asdict()
+            }
+        # dispatcher?
+        elif callable(obj):
+            return f"{obj.__module__}.{obj.__name__}"
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
+class ParamsJSONDecoder(json.JSONDecoder):
+    """
+    JSONDecoder to use when deserializing a dictionary containing simulation parameters.
+    This is able to deserialize `RequestGenerator`, `TransportSpace` and dispatchers.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        >>> json.loads(params, cls=ParamsJSONDecoder)
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, dct):
+        if "coord_range" in dct:
+            dct["coord_range"] = [(a, b) for a, b in dct["coord_range"]]
+        else:
+            if "initial_location" in dct and isinstance(dct["initial_location"], list):
+                dct["initial_location"] = tuple(dct["initial_location"])
+
+            # test for str type because `request_generator` is also an outer key
+            if "request_generator" in dct and isinstance(dct["request_generator"], str):
+                module, cls = dct["request_generator"].rsplit(".", 1)
+                dct["request_generator"] = getattr(importlib.import_module(module), cls)
+
+            if "dispatcher" in dct:
+                module, cls = dct["dispatcher"].rsplit(".", 1)
+                dct["dispatcher"] = getattr(importlib.import_module(module), cls)
+
+            if "space" in dct:
+                path, kwargs = next(iter(dct["space"].items()))
+                module, cls = path.rsplit(".", 1)
+                dct["space"] = getattr(importlib.import_module(module), cls)(**kwargs)
+
+        return dct
+
+
+class EventsJSONEncoder(json.JSONEncoder):
+    """
+    JSONEncoder to use when serializing a list containing `Event`.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        >>> json.dumps(events, cls=EventsJSONEncoder)
+
+    """
+
+    def default(self, obj):
+        if dataclasses.is_dataclass(obj):
+            return {obj.__class__.__name__: dataclasses.asdict(obj)}
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
+class EventsJSONDecoder(json.JSONDecoder):
+    """
+    JSONDecoder to use when deserializing a list containing `Event`.
+
+    This is able to deserialize
+
+    * `VehicleStateBeginEvent`
+    * `VehicleStateEndEvent`
+    * `PickupEvent`
+    * `DeliveryEvent`
+    * `RequestSubmissionEvent`
+    * `RequestAcceptanceEvent`
+    * `RequestRejectionEvent`
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        >>> json.loads(events, cls=EventsJSONDecoder)
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, dct):
+        for location_like in ["origin", "destination", "location"]:
+            if location_like in dct and isinstance(dct[location_like], list):
+                dct[location_like] = tuple(dct[location_like])
+
+        # NOTE: possibly make this call some list-of-events-generating function
+        if (cls := next(iter(dct.keys()))) in [
+            "VehicleStateBeginEvent",
+            "VehicleStateEndEvent",
+            "PickupEvent",
+            "DeliveryEvent",
+            "RequestSubmissionEvent",
+            "RequestAcceptanceEvent",
+            "RequestRejectionEvent",
+        ]:
+            dct = getattr(thesimulator.events, cls)(**dct[cls])
+
+        return dct
+
+
+def save_params_json(*, param_path: Path, params: dict) -> None:
+    """
+    Save a dictionary containing simulation parameters to pretty JSON,
+    overwriting existing. Parameter dictionaries may contain anything that is supported
+    by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
+    `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
+
+    Parameters
+    ----------
+    param_path
+        JSON output file path
+    params
+        dictionary containing the params to save
+    """
+    json.dump(params, param_path.open("w"), indent=4, cls=ParamsJSONEncoder)
+
+
+def read_params_json(param_path: Path) -> dict:
+    """
+    Read a dictionary containing simulation parameters from JSON.
+    Parameter dictionaries may contain anything that is supported
+    by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
+    `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
+
+    Parameters
+    ----------
+    param_path
+
+    Returns
+    -------
+    parameter dictionary
+    """
+
+    return json.load(param_path.open("r"), cls=ParamsJSONDecoder)
+
+
+def save_events_json(*, jsonl_path: Path, events: Iterable) -> None:
+    """
+    Save events iterable to a file according to JSONL specs, appending to existing.
+    For additional detail, see :ref:`Executing Simulations`.
+
+    Parameters
+    ----------
+    jsonl_path
+        JSON Lines output file path
+    events
+        iterable containing the events to save
+    """
+    with jsonl_path.open("a", encoding="utf-8") as f:
+        for event in events:
+            print(json.dumps(event, cls=EventsJSONEncoder), file=f)
+
+
+def read_events_json(jsonl_path: Path) -> list[Event]:
+    """
+    Read events from JSON lines file, where each line of the file contains a single event.
+    For additional detail, see :ref:`Executing Simulations`.
+
+    Parameters
+    ----------
+    jsonl_path
+       JSON Lines input file path
+
+    Returns
+    -------
+    List of events
+    """
+    out = []
+    with jsonl_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            out.append(json.loads(line, cls=EventsJSONDecoder))
+    return out

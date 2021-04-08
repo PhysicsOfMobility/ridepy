@@ -16,7 +16,7 @@ from thesimulator.data_structures import (
 from thesimulator.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
 
 
-def _create_events_dataframe(events: Iterable) -> pd.DataFrame:
+def _create_events_dataframe(events: Iterable[Event]) -> pd.DataFrame:
     """
     Create a DataFrame of all logged events with their properties at columns.
 
@@ -228,9 +228,13 @@ def _create_transportation_requests_dataframe(
             )
         ]  # select only request events
         .drop(["vehicle_id", "location"], axis=1)  # drop now empty columns
-        .set_index(["request_id", "event_type"])  # set index to be request_id and event_type
+        .set_index(
+            ["request_id", "event_type"]
+        )  # set index to be request_id and event_type
         .unstack()  # unstack so that remaining index is request_id and column index is MultiIndex event_type as level_1
-        .reorder_levels([1, 0], axis=1)  # switch column index order to have event_type as level_0
+        .reorder_levels(
+            [1, 0], axis=1
+        )  # switch column index order to have event_type as level_0
         .sort_index(axis=1)  # sort so that columns are grouped by event_type
         .drop(
             [
@@ -313,8 +317,7 @@ def _create_transportation_requests_dataframe(
 
     # - relative travel time
     reqs[("inferred", "relative_travel_time")] = (
-        reqs[("inferred", "travel_time")]
-        / reqs[("submitted", "direct_travel_time")]
+        reqs[("inferred", "travel_time")] / reqs[("submitted", "direct_travel_time")]
     )
 
     # TODO possibly add more properties to compute HERE
@@ -366,10 +369,9 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
     #       If the simulator should allow for multi-customer requests in the future,
     #       this must be changed.
     #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
-    locations.index.set_levels(
+    locations.index = locations.index.set_levels(
         locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
         1,
-        inplace=True,
     )
 
     # finally fill the locations missing in the stops dataframe by joining on request_id and delta_occupancy
@@ -457,6 +459,11 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
         evs=events_df, stops=stops_df, space=space
     )
 
-    stops_df = _add_locations_to_stoplist_dataframe(reqs=requests_df, stops=stops_df)
+    try:
+        stops_df = _add_locations_to_stoplist_dataframe(
+            reqs=requests_df, stops=stops_df
+        )
+    except KeyError:
+        pass
 
     return stops_df, requests_df
