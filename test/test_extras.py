@@ -12,7 +12,11 @@ from thesimulator.extras.spaces import (
     make_nx_star_graph,
 )
 
-from thesimulator.extras.simulate import simulate, get_default_conf, param_scan
+from thesimulator.extras.parameter_spaces import (
+    simulate_parameter_space,
+    get_default_conf,
+    param_scan,
+)
 from thesimulator.util.analytics import get_stops_and_requests
 from thesimulator.util.spaces import Graph
 
@@ -36,7 +40,7 @@ def test_simulate_py(tmp_path):
     conf["general"]["n_reqs"] = [10]
     conf["general"]["n_vehicles"] = [10, 100]
     conf["general"]["seat_capacity"] = [2, 8]
-    res = simulate(
+    res = simulate_parameter_space(
         data_dir=tmp_path, conf=conf, cython=False, mpi=False, chunksize=1000
     )
     assert len(res) == 4
@@ -50,7 +54,9 @@ def test_simulate_cy(tmp_path):
     conf["general"]["n_reqs"] = [10]
     conf["general"]["n_vehicles"] = [10, 100]
     conf["general"]["seat_capacity"] = [2, 8]
-    res = simulate(data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000)
+    res = simulate_parameter_space(
+        data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000
+    )
     assert len(res) == 4
     for r in res:
         assert (tmp_path / f"{r}_params.json").exists()
@@ -60,7 +66,9 @@ def test_simulate_cy(tmp_path):
 def test_io_simulate(tmp_path):
     conf = get_default_conf(cython=True)
     conf["general"]["n_reqs"] = [100]
-    res = simulate(data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000)
+    res = simulate_parameter_space(
+        data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000
+    )
     evs = read_events_json(tmp_path / f"{res[0]}.jsonl")
     params = read_params_json(param_path=tmp_path / f"{res[0]}_params.json")
     stops, requests = get_stops_and_requests(
