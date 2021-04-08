@@ -89,14 +89,14 @@ The values and types allowed as values in the inner dict are again the following
     * ``max_pickup_delivery_delay_rel: int``
 
 
-.. automodule:: thesimulator.extras.simulate_parameter_space
+.. automodule:: thesimulator.extras.parameter_spaces.simulate_parameter_space
     :members:
 
 
 JSON IO
 -------
 
-.. currentmodule:: thesimulator.extras.simulate_parameter_space
+.. currentmodule:: thesimulator.extras.io
 
 This IO module implements functionality for reading and writing to JSON/`JSON Lines`_ format.
 
