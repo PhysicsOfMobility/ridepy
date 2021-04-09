@@ -22,6 +22,7 @@ cpdef enum class LocType:
     R2LOC  = 1
     INT = 2
 
+
 cdef union _URequest:
     shared_ptr[CRequest[R2loc]] _req_r2loc
     shared_ptr[CRequest[int]] _req_int

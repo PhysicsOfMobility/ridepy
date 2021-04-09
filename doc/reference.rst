@@ -11,5 +11,5 @@ Reference
    data_structures
    events
    utils
-   cythonic_stuff
+   cython_reference
    extras

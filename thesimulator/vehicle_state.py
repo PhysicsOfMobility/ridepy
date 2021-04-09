@@ -162,7 +162,7 @@ class VehicleState:
 
         Returns
         -------
-            The single best solution for the respective vehicle.
+            The `SingleVehicleSolution` for the respective vehicle.
         """
         return self.vehicle_id, *self.dispatcher(
             request=request,
