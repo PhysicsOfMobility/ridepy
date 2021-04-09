@@ -5,6 +5,7 @@ from thesimulator.util import MAX_SEAT_CAPACITY
 from thesimulator.events import PickupEvent, DeliveryEvent, InternalEvent
 from thesimulator.data_structures import (
     Dispatcher,
+    SingleVehicleSolution,
 )
 from thesimulator.data_structures_cython.data_structures cimport (
     TransportationRequest,
@@ -34,7 +35,8 @@ cdef extern from "limits.h":
 
 cdef class VehicleState:
     """
-    Single vehicle insertion logic is implemented in Cython here.
+    Single vehicle insertion logic is implemented in Cython here. Can be used interchangeably
+    with its pure-python equivalent `.vehicle_state.VehicleState`.
     """
 
     #    def recompute_arrival_times_drive_first(self):
@@ -58,6 +60,9 @@ cdef class VehicleState:
         dispatcher: Dispatcher,
         seat_capacity: int,
     ):
+        """
+        See the docstring of `.vehicle_state.VehicleState` for details of the parameters.
+        """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
@@ -65,7 +70,7 @@ cdef class VehicleState:
         self.space = space
         self.dispatcher = dispatcher
         if seat_capacity > INT_MAX:
-            raise ValueError("Cannot use seat_capacity bigger that c++'s INT_MAX")
+            raise ValueError("Cannot use seat_capacity bigger that C++'s INT_MAX")
         self.seat_capacity = seat_capacity
         logger.info(f"Created VehicleState with space of type {type(self.space)}")
 
@@ -92,7 +97,7 @@ cdef class VehicleState:
         Returns
         -------
         events
-            List of stop events emitted through servicing stops
+            List of stop events emitted through servicing stops.
         """
 
         # TODO assert that the CPATs are updated and the stops sorted accordingly
@@ -162,20 +167,20 @@ cdef class VehicleState:
 
     def handle_transportation_request_single_vehicle(
             self, TransportationRequest request
-    ):
+    ) -> SingleVehicleSolution:
         """
-        The computational bottleneck. An efficient simulator could do the following:
+        The computational bottleneck. An efficient simulator could:
+
         1. Parallelize this over all vehicles. This function being without any side effects, it should be easy to do.
-        2. Implement as a c extension. The args and the return value are all basic c data types,
-           so this should also be easy.
 
         Parameters
         ----------
         request
+            Request to be handled.
 
         Returns
         -------
-        This returns the single best solution for the respective vehicle.
+            The `SingleVehicleSolution` for the respective vehicle.
         """
 
         ret = self.vehicle_id, *self.dispatcher(

@@ -1,14 +1,14 @@
 # distutils: language = c++
 """
-This cython module wraps the struct templates exposed from c++ by data_structures_cython.pxd into extension types.
+This cython module wraps the struct templates exposed from C++ by data_structures_cython.pxd into extension types.
 However an extension type obviously cannot be templated (at compile time, all possible variations of a template
 must be known). There is no really elegant way of doing it in cython as of v3.0a6. So we will use the [Explicit
 Run-Time Dispatch approach](https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/).
 
 In short, an enum LocType (resides in data_structures.pxd) contains all template types Loc we are likely to need.
-The extension dtype for Request[Loc] then will contain *an union* holding one of the variants (e.g. Request[int],
-Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the method
-call to the appropriate object inside that union.
+The extension dtype for C++ object e.g. CRequest[Loc] then will contain *an union* holding one of the variants (e.g.
+CRequest[int], Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the
+method call to the appropriate object inside that union.
 """
 from cython.operator cimport dereference
 from libcpp.vector cimport vector
@@ -30,6 +30,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 cdef class Request:
+    """
+    The base class, never to be instantiated.
+    """
     def asdict(self):
         return dict(
             request_id=self.request_id,
@@ -80,6 +83,24 @@ cdef class Request:
 
 
 cdef class TransportationRequest(Request):
+    """
+    Cython equivalent of pure python dataclass :class:`.data_structures.TransportationRequest`. See its docstring for
+    details of its attributes.
+
+    .. admonition:: Implementation details for developers
+
+       Wraps the C++ templated struct `data_structures_cython.cdata_structures.pxd::TransportationRequest[Loc]` into a
+       cython extension type. The template parameter `Loc` defines the type of location objects (`Tuple[float, float]`
+       for simulations in :math:`\mathbb{R}^2`), `int` for graphs.
+
+       However a cython extension type obviously cannot be templated (at compile time, all possible variations of a template
+       must be known). So we will use the Explicit Run-Time Dispatch approach, see this module's docstring or :ref:`desc_runtime_dispatch`
+       for details.
+
+       Holds a `shared_ptr` to C++ templated class `TransportationRequest<Loc>`. This class can be instantiated from an
+       existing `shared_ptr` (only from the cython side and not from the calling python code). See the staticmethods
+       `cdef TransportationRequest from_c_r2loc` and `cdef TransportationRequest from_c_int` for details.
+    """
     def __init__(
             self,
             int request_id,
@@ -91,6 +112,12 @@ cdef class TransportationRequest(Request):
             delivery_timewindow_min,
             delivery_timewindow_max,
     ):
+        """
+        Note
+        ----
+        We will try to infer `Loc` from what `origin` contains. The inference can be easily
+        fooled by passing e.g. `origin = 2, destination = (0.3, 1.5)`.
+        """
         if hasattr(origin, '__len__') and len(origin) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
@@ -114,6 +141,9 @@ cdef class TransportationRequest(Request):
             raise TypeError(f"Cannot handle origin of type {type(origin)}")
 
     def asdict(self):
+        """
+        Returns a dict representation of itself.
+        """
         return dict(
             request_id=self.request_id,
             creation_timestamp=self.creation_timestamp,
@@ -269,10 +299,33 @@ cdef class TransportationRequest(Request):
 
 
 cdef class InternalRequest(Request):
+    """
+    Cython equivalent of pure python dataclass :class:`.data_structures.InternalRequest`. See its docstring for details
+    of its attributes.
+
+    .. admonition:: Implementation details for developers
+
+       Wraps the C++ templated struct `data_structures_cython.cdata_structures.pxd::InternalRequest[Loc]` into a cython
+       extension type. The template parameter `Loc` defines the type of location objects (`Tuple[float, float]` for
+       simulations in :math:`\mathbb{R}^2`), `int` for graphs.
+
+       However a cython extension type obviously cannot be templated (at compile time, all possible variations of a template
+       must be known). So we will use the Explicit Run-Time Dispatch approach, see this module's docstring or
+       :ref:`desc_runtime_dispatch` for details.
+
+       Holds a `shared_ptr` to C++ templated class `InternalRequest<Loc>`. This class can be instantiated from an
+       existing `shared_ptr` (only from the cython side and not from the calling python code). See the staticmethods
+       `cdef InternalRequest from_c_r2loc` and `cdef InternalRequest from_c_int` for details.
+    """
     def __init__(
             self, int request_id, float creation_timestamp,
             location
     ):
+        """
+        Note
+        ----
+        We will try to infer `Loc` from what `location` contains.
+        """
         if hasattr(location, '__len__') and len(location) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
@@ -350,6 +403,24 @@ cdef class InternalRequest(Request):
         pass
 
 cdef class Stop:
+    """
+    Cython equivalent of pure python dataclass :class:`.data_structures.Stop`. See its docstring for details
+    of its attributes.
+
+   .. admonition:: Implementation details for developers
+
+    Wraps the C++ templated struct `data_structures_cython.cdata_structures.pxd::Stop[Loc]` into a cython extension type.
+    The template parameter `Loc` defines the type of location objects (`Tuple[float, float]` for simulations in
+    :math:`\mathbb{R}^2`), `int` for graphs.
+
+    However a cython extension type obviously cannot be templated (at compile time, all possible variations of a template
+    must be known). So we will use the Explicit Run-Time Dispatch approach, see this module's docstring or
+    :ref:`desc_runtime_dispatch` for details.
+
+    Holds a pointer to C++ templated class `Stop<Loc>`. This class can be instantiated from an existing pointer (only
+    from the cython side and not from the calling python code). See the staticmethods `cdef Stop from_c_r2loc` and
+    `cdef Stop from_c_int` for details.
+    """
     def __cinit__(self):
         pass
 
@@ -363,6 +434,12 @@ cdef class Stop:
             double time_window_min,
             double time_window_max,
     ):
+        """
+        Note
+        ----
+        We will try to infer the `.LocType` from what `location` contains. Do not pass incompatible combinations like
+        a `Request` with `LocType=R2LOC` and `location` of type `int`.
+        """
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
@@ -532,9 +609,48 @@ cdef class Stop:
         return stop
 
 cdef class Stoplist:
+    """
+    The cythonic equivalent of `.data_structures.Stoplist`, which is just a python list of `.data_structures.Stop`.
+
+    Note
+    ----
+    An instance of this class doies not support most of the functionalities of python lists, e.g. slicing. Please take a
+    look at the available methods. In particular, use `stoplist.remove_nth_elem(int)` instead of `stoplist.pop(int)` or
+    `del stoplist[i]`.
+
+
+    .. admonition:: Implementation details for developers
+
+       Wraps a C++ vector of `data_structures_cython.cdata_structures.pxd::Stop[Loc]` into a cython extension type.
+       The template parameter `Loc` defines the type of location objects (`Tuple[float, float]` for simulations in
+       :math:`\mathbb{R}^2`), `int` for graphs.
+
+       However a cython extension type obviously cannot be templated (at compile time, all possible variations of a template
+       must be known). So we will use the Explicit Run-Time Dispatch approach, see this module's docstring or
+       :ref:`desc_runtime_dispatch` for details.
+
+       This class can be instantiated from an existing C++ `vector<Stop>`, only from the cython side and not from the calling
+       python code. See the staticmethods `Stoplist from_c_r2loc` and `Stoplist from_c_int` for details.
+    """
     # TODO: May need to allow nice ways of converting a Stoplist to python lists or similar. Use case: calling code
     # doing post optimization
     def __init__(self, python_stoplist, loc_type):
+        """
+        Parameters
+        ----------
+        python_stoplist
+            A python list of :class:`Stop` objects
+        loc_type
+            The type of location objects, as defined in the enum `.LocType`
+
+        Note
+        ----
+        Do **not** pass a list of pure pythonic :class:`Stop<.data_structures.Stop>` objects to `__init__`, this will
+        lead to a crash. Only pass a list of cython extension :class:`.Stop` objects.
+
+        The `Stop` objects are **copied** here, therefore the original `Stop` objects can safely be garbage collected/
+        otherwise deleted.
+        """
         self.loc_type = loc_type
 
         if self.loc_type == LocType.R2LOC:
@@ -555,6 +671,9 @@ cdef class Stoplist:
         logger.info("Created Stoplist")
 
     def __getitem__(self, i):
+        """
+        Works like `list.__getitem__`. Allows indexing by negative integers.
+        """
         len_ = self.__len__()
         if 0 <= i < len_:
             i = i
@@ -570,6 +689,9 @@ cdef class Stoplist:
             raise ValueError("This line should never have been reached")
 
     def __len__(self):
+        """
+        Works like `list.__len__`.
+        """
         if self.loc_type == LocType.R2LOC:
             return <int> self.ustoplist._stoplist_r2loc.size()
         elif self.loc_type == LocType.INT:
@@ -578,6 +700,9 @@ cdef class Stoplist:
             raise ValueError("This line should never have been reached")
 
     def remove_nth_elem(self, int n):
+        """
+        Removes the nth element. Does not return anything.
+        """
         if self.loc_type == LocType.R2LOC:
             self.ustoplist._stoplist_r2loc.erase(
                 self.ustoplist._stoplist_r2loc.begin()+n

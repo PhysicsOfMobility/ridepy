@@ -24,7 +24,7 @@ from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
 from cython.operator cimport dereference
 
 """
-Note: We are duplicating the c++ class hierarchy in ./spaces_cython.h. In short, our c++ transport spaces
+Note: We are duplicating the C++ class hierarchy in ./spaces_cython.h. In short, our C++ transport spaces
 all inherit from the abstract base class TransportSpace. Here, we will create a cdef class also called
 TransportSpace and other cdef classes will inherit from that. There are a few caveats, which were described
 in great length at https://stackoverflow.com/a/28727488. Basically:
@@ -38,12 +38,11 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
 """
 cdef class TransportSpace:
     """
-    Base class for extension types wrapping c++ TransportSpace class template. Since there's no elegant way of
-    wrapping templates in cython and exposing them to python, we will use the [Explicit Run-Time Dispatch approach]
-    (https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/). See the docstring of
-    thesimulator/data_structures_cython/data_structures.pyx for details.
+    Base class for extension types wrapping C++ TransportSpace class template. Since there's no elegant way of
+    wrapping templates in cython and exposing them to python, we will use the
+    `Explicit Run-Time Dispatch approach <https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating>`_,
+    similar to what we did in the :mod:`.data_structures_cython` module. See :ref:`desc_runtime_dispatch` for more details.
     """
-
     def __init__(self, loc_type):
         if loc_type == LocType.INT:
             self.loc_type = LocType.INT
@@ -112,7 +111,7 @@ cdef class TransportSpace:
 
 cdef class Euclidean2D(TransportSpace):
     """
-    R2 with L2-induced metric (Euclidean)
+    :math:`\mathbb{R}^2` with :math:`L_2`-induced metric (Euclidean).
     """
     def __cinit__(self, double velocity=1, *args, **kwargs):
         self.loc_type = LocType.R2LOC
@@ -120,8 +119,6 @@ cdef class Euclidean2D(TransportSpace):
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
-        R2 with L2-induced metric (Euclidean)
-
         Parameters
         ----------
         velocity
@@ -154,7 +151,7 @@ cdef class Euclidean2D(TransportSpace):
 
 cdef class Manhattan2D(TransportSpace):
     """
-    R2 with L1-induced metric (Manhattan)
+    :math:`\mathbb{R}^2` with :math:`L_1`-induced metric (Manhattan).
     """
     def __cinit__(self, double velocity=1, *args, **kwargs):
         self.loc_type = LocType.R2LOC
@@ -162,8 +159,6 @@ cdef class Manhattan2D(TransportSpace):
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
-        R2 with L1-induced metric (Manhattan)
-
         Parameters
         ----------
         velocity
@@ -196,7 +191,7 @@ cdef class Manhattan2D(TransportSpace):
 
 cdef class Graph(TransportSpace):
     """
-    Weighted directed graph with integer node labels
+    Weighted directed graph with integer node labels.
     """
     def __cinit__(self, *, vertices, edges, weights=None, double velocity=1):
         self.loc_type = LocType.INT
@@ -215,8 +210,6 @@ cdef class Graph(TransportSpace):
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
-        Weighted undirected graph with integer vertex labels
-
         Parameters
         ----------
         vertices : Sequence[int]

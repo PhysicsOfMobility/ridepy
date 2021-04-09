@@ -67,7 +67,7 @@ generate some requests with random origins and destinations:
     >>> from thesimulator.fleet_state import SlowSimpleFleetState
     >>> from thesimulator.data_structures import Stop, InternalRequest, StopAction
     >>> from thesimulator.util.request_generators import RandomRequestGenerator
-    >>> from thesimulator.util.dispatchers import brute_force_distance_minimizing_dispatcher
+    >>> from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
     >>> from thesimulator.util.analytics import get_stops_and_requests
     >>> space = pyEuclidean2D()
     >>> request_rate = 1
@@ -87,32 +87,19 @@ will be run.
 Create a ``FleetState`` with a single vehicle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We will now create a :class:`FleetState <fleet_state.FleetState>` with the
-desired number of vehicles, the initian positions of the vehicles, and a
+desired number of vehicles, the initial positions of the vehicles, and a
 ``dispatcher`` that matches a request to a vehicle.
 
 .. code-block:: python
 
     >>> vehicle_id = 1
-    >>> initial_location = (0, 0)
+    >>> initial_location = (0.0, 0.0)
     >>> seat_capacity = 4
-    >>> initial_stoplist = [Stop(
-    ...            location=initial_location,
-    ...            request=InternalRequest( #TODO Explain why the request_id should be -1
-    ...                request_id=-1, creation_timestamp=0, location=initial_location
-    ...            ),
-    ...            action=StopAction.internal,
-    ...            estimated_arrival_time=0,
-    ...            occupancy_after_servicing=0,
-    ...            time_window_min=0,
-    ...            time_window_max=0,
-    ...        )
-    ...    ]
-    >>> initial_stoplists = {vehicle_id: initial_stoplist}
     >>> fleet_state = SlowSimpleFleetState(
-    ...    initial_stoplists=initial_stoplists,
+    ...    initial_locations={vehicle_id: initial_location},
     ...    space=Euclidean2D(),
     ...    seat_capacities=seat_capacity,
-    ...    dispatcher=brute_force_distance_minimizing_dispatcher,
+    ...    dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
     ...    )
 
 
@@ -155,8 +142,8 @@ Running theSimulator in a multi-node OpenMPI cluster is as simple as replacing
     >>> rg = RandomRequestGenerator(rate=10, space=space)
     >>> reqs = list(it.islice(rg, 1000))
     >>> fs = MPIFuturesFleetState(
-         initial_stoplists=initial_stoplists,
-         seat_capacities=[1] * len(initial_stoplists),
+         initial_locations=initial_locations,
+         seat_capacities=1
          space=space,
          dispatcher=taxicab_dispatcher_drive_first,
     )
@@ -174,51 +161,46 @@ versions of ``TransportationRequest``, ``Stop``, ``VehicleState`` and a
 
 
 .. code-block:: python
-   :emphasize-lines: 4,6,7,39
-   :dedent: 1
+   :emphasize-lines: 6-15, 33
 
-    import itertools as it
-    from thesimulator.util.spaces_cython import Euclidean2D
-    from thesimulator.fleet_state import SlowSimpleFleetState
-    from thesimulator.data_structures_cython import Stop, InternalRequest, TransportationRequest, StopAction
-    from thesimulator.util.request_generators import RandomRequestGenerator
-    from thesimulator.util.dispatchers_cython import brute_force_distance_minimizing_dispatcher
-    from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
+   import itertools as it
+   from thesimulator.util.spaces_cython import Euclidean2D
+   from thesimulator.fleet_state import SlowSimpleFleetState
+   from thesimulator.util.request_generators import RandomRequestGenerator
 
-    space = Euclidean2D()
-    request_rate = 1
-    rg = RandomRequestGenerator(
-        space=Euclidean2D(),
-        rate=request_rate,
-        request_class=TransportationRequest
-    )
-    num_requests = 2
-    reqs = list(it.islice(rg, num_requests))
-    vehicle_id = 1
-    initial_location = (0, 0)
-    seat_capacity = 4
-    initial_stoplist = [Stop(
-        location=initial_location,
-        request=InternalRequest(
-            request_id=-1, creation_timestamp=0, location=initial_location
-        ),
-        action=StopAction.internal,
-        estimated_arrival_time=0,
-        occupancy_after_servicing=0,
-        time_window_min=0,
-        time_window_max=0,
-    )
-    ]
-    initial_stoplists = {vehicle_id: initial_stoplist}
-    fleet_state = SlowSimpleFleetState(
-        initial_stoplists=initial_stoplists,
-        space=Euclidean2D(),
-        seat_capacities=seat_capacity,
-        dispatcher=brute_force_distance_minimizing_dispatcher,
-        vehicle_state_class=cy_VehicleState
-    )
-    events = list(fleet_state.simulate(reqs))
-    print(events)
+   from thesimulator.data_structures_cython import (
+       Stop,
+       InternalRequest,
+       TransportationRequest,
+       StopAction,
+   )
+   from thesimulator.util.dispatchers_cython import (
+       brute_force_total_traveltime_minimizing_dispatcher,
+   )
+   from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
+
+   space = Euclidean2D()
+   request_rate = 1
+   rg = RandomRequestGenerator(
+       space=Euclidean2D(), rate=request_rate, request_class=TransportationRequest
+   )
+   num_requests = 2
+   reqs = list(it.islice(rg, num_requests))
+   vehicle_id = 1
+   initial_location = (0.0, 0.0)
+   seat_capacity = 4
+
+   fleet_state = SlowSimpleFleetState(
+       initial_locations={vehicle_id: initial_location},
+       space=Euclidean2D(),
+       seat_capacities=seat_capacity,
+       dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+       vehicle_state_class=cy_VehicleState,
+   )
+
+   events = list(fleet_state.simulate(reqs))
+
+   print(events)
 
 
 How to write your own dispatcher

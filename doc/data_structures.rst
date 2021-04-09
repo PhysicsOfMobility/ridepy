@@ -15,11 +15,16 @@ Requests
     :members: Request, TransportationRequest, InternalRequest
 
 
+LocType
+~~~~~~~
+.. automodule:: thesimulator.data_structures
+    :members: LocType
+
 Stop and Stoplist
 ~~~~~~~~~~~~~~~~~
 
 .. automodule:: thesimulator.data_structures
-    :members: Stop, StopAction, LocType
+    :members: Stop, StopAction
 
 The `TransportSpace` and `Dispatcher` interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
