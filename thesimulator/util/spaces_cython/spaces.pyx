@@ -39,9 +39,9 @@ in great length at https://stackoverflow.com/a/28727488. Basically:
 cdef class TransportSpace:
     """
     Base class for extension types wrapping C++ TransportSpace class template. Since there's no elegant way of
-    wrapping templates in cython and exposing them to python, we will use the
-    `Explicit Run-Time Dispatch approach <https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating>`_,
-    similar to what we did in the :mod:`.data_structures_cython` module. See :ref:`desc_runtime_dispatch` for more details.
+    wrapping templates in cython and exposing them to python, we will use the [Explicit Run-Time Dispatch approach]
+    (https://martinralbrecht.wordpress.com/2017/07/23/adventures-in-cython-templating/). See the docstring of
+    thesimulator/data_structures_cython/data_structures.pyx for details.
     """
     def __init__(self, loc_type):
         if loc_type == LocType.INT:
@@ -148,6 +148,9 @@ cdef class Euclidean2D(TransportSpace):
     def asdict(self):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
+    def __reduce__(self):
+        return self.__class__, (self.velocity, )
+
 
 cdef class Manhattan2D(TransportSpace):
     """
@@ -188,12 +191,15 @@ cdef class Manhattan2D(TransportSpace):
     def asdict(self):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
+    def __reduce__(self):
+        return self.__class__, (self.velocity, )
+
 
 cdef class Graph(TransportSpace):
     """
     Weighted directed graph with integer node labels.
     """
-    def __cinit__(self, *, vertices, edges, weights=None, double velocity=1):
+    def __cinit__(self, vertices, edges, weights=None, double velocity=1):
         self.loc_type = LocType.INT
 
         if weights is None:
@@ -231,6 +237,15 @@ cdef class Graph(TransportSpace):
 
     def __repr__(self):
         return f"Graph(velocity={self.velocity})"
+
+    def vertices(self):
+        return dereference(self.derived_ptr).get_vertices()
+
+    def edges(self):
+        return dereference(self.derived_ptr).get_edges()
+
+    def weights(self):
+        return dereference(self.derived_ptr).get_weights()
 
     @classmethod
     def from_nx(
@@ -276,6 +291,16 @@ cdef class Graph(TransportSpace):
 
     def random_point(self):
         return random.choice(dereference(self.derived_ptr).get_vertices())
+
+
+    def __reduce__(self):
+        return self.__class__, \
+            (
+                 self.vertices(),
+                 self.edges(),
+                 self.weights(),
+                 self.velocity,
+            )
 
     def asdict(self):
         return dict(

@@ -17,7 +17,11 @@ from .data_structures import (
 )
 from .events import PickupEvent, DeliveryEvent, InternalEvent, StopEvent
 
-from thesimulator.util import MAX_SEAT_CAPACITY
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
 
 import logging
 
@@ -71,7 +75,7 @@ class VehicleState:
 
         logger.info(f"Created VehicleState with space of type {type(self.space)}")
 
-    def fast_forward_time(self, t: float) -> List[StopEvent]:
+    def fast_forward_time(self, t: float) -> Tuple[List[StopEvent], List[Stop]]:
         """
         Update the vehicle_state to the simulator time `t`.
 
@@ -82,11 +86,14 @@ class VehicleState:
 
         Returns
         -------
-            List of stop events emitted through servicing stops.
+        events
+            List of stop events emitted through servicing stops upto time=t
+        new_stoplist
+            Stoplist remaining after servicing the stops upto time=t
         """
-
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
+        logger.info(f"Rank {rank} fast-forwarding vehicle={self.vehicle_id}")
 
         event_cache = []
 
@@ -144,7 +151,7 @@ class VehicleState:
             # stoplist is empty, only CPE is there. set CPE time to current time
             self.stoplist[0].estimated_arrival_time = t
 
-        return event_cache
+        return event_cache, self.stoplist
 
     def handle_transportation_request_single_vehicle(
         self, request: TransportationRequest
@@ -164,6 +171,13 @@ class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
+        # Logging the folloowing in this specific format is crucial for
+        # `test/mpi_futures_fleet_state_test.py` to pass
+        logger.info(
+            logger.debug(
+                f"Handling request #{request.request_id} with vehicle {self.vehicle_id} from MPI rank {rank}"
+            )
+        )
         return self.vehicle_id, *self.dispatcher(
             request=request,
             stoplist=self.stoplist,

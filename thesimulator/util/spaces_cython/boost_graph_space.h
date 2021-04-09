@@ -139,21 +139,25 @@ namespace cstuff {
                 v.push_back(this->vertex2label[*vp.first]);
             return v;
         }
-
-        vector<pair<vertex_t,vertex_t>> get_edges() {
-            vector<pair<vertex_t,vertex_t>> e;
-            for (auto ep = edges(this->_g); ep.first != ep.second; ++ep.first) {
+        vector<Edge> get_edges() {
+            vector<Edge> e;
+            for (auto[first, last] = edges(this->_g); first != last; ++first) {
                 e.push_back(
-                        pair(this->vertex2label[source(*ep.first, this->_g)],
-                             this->vertex2label[target(*ep.first, this->_g)]));
+                    make_pair(
+                        this->vertex2label[source(*first, this->_g)],
+                        this->vertex2label[target(*first, this->_g)]
+                        )
+                    );
             }
             return e;
         }
-
         vector<double> get_weights() {
-            return this->_weights;
+            vector<double> w;
+            for (auto[first, last] = edges(this->_g); first != last; ++first) {
+                w.push_back(get(this->edge2weight, *first));
+            }
+            return w;
         }
-
     };
 }
 #endif
