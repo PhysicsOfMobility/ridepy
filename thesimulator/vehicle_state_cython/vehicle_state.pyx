@@ -62,7 +62,7 @@ cdef class VehicleState:
         """
         See the docstring of `.vehicle_state.VehicleState` for details of the parameters.
         """
-        self.vehicle_id = vehicle_id
+        self._vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         if isinstance(initial_stoplist, Stoplist):
