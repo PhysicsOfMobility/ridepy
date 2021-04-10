@@ -141,6 +141,11 @@ def test_append_to_empty_stoplist(kind):
     assert new_stoplist[-1].location == request.destination
 
 
+def test_no_solution_found():
+    """Test that if no solution exists, none is returned"""
+    assert False
+
+
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_append_due_to_timewindow(kind):
     # fmt: off

@@ -80,8 +80,8 @@ namespace cstuff {
                 // check for constraint violations at later points
                 auto cpat_at_next_stop =
                         max(CPAT_do, request->delivery_timewindow_min) + time_from_dropoff;
-                if (~is_timewindow_violated_dueto_insertion(
-                        stoplist, i, cpat_at_next_stop)) {
+                if (!(is_timewindow_violated_dueto_insertion(
+                        stoplist, i, cpat_at_next_stop))) {
                     best_insertion = {i, i};
                     min_cost = total_cost;
                 }
@@ -138,8 +138,8 @@ namespace cstuff {
                             max(CPAT_do, request->delivery_timewindow_min)
                             + time_from_dropoff
                     );
-                    if (~is_timewindow_violated_dueto_insertion(
-                            stoplist, j, cpat_at_next_stop)) {
+                    if (!(is_timewindow_violated_dueto_insertion(
+                            stoplist, j, cpat_at_next_stop))) {
                         best_insertion = {i, j};
                         min_cost = total_cost;
                     }
@@ -149,6 +149,7 @@ namespace cstuff {
         int best_pickup_idx = best_insertion.first;
         int best_dropoff_idx = best_insertion.second;
         // TODO: Compute occupancies in both new and old stops
+        // TODO: this inserts stuff even if mincost is infinity!
         auto new_stoplist = insert_request_to_stoplist_drive_first(
                 stoplist,
                 request,

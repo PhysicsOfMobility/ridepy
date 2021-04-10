@@ -41,7 +41,7 @@ namespace cstuff {
     );
 
     template<typename Loc>
-    int is_timewindow_violated_dueto_insertion(
+    bool is_timewindow_violated_dueto_insertion(
             const std::vector<Stop<Loc>> &stoplist, int idx, double est_arrival_first_stop_after_insertion
     );
 
@@ -178,7 +178,7 @@ namespace cstuff {
     }
 
     template<typename Loc>
-    int is_timewindow_violated_dueto_insertion(
+    bool is_timewindow_violated_dueto_insertion(
             const std::vector<Stop<Loc>> &stoplist, int idx, double est_arrival_first_stop_after_insertion
     ) {
         /*
@@ -195,7 +195,7 @@ namespace cstuff {
         if (idx >= static_cast<int>(stoplist.size() - 1)) return false;
         auto delta_cpat = (
                 est_arrival_first_stop_after_insertion
-                - stoplist[idx].estimated_arrival_time
+                - stoplist[idx+1].estimated_arrival_time
         );
 //    BOOST_FOREACH(auto& stop, boost::make_iterator_range(stoplist.begin()+idx, stoplist.end()))
         // Remember that the insertion is *after* idx'th stop. We need to check for violations from
