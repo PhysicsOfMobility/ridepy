@@ -141,9 +141,73 @@ def test_append_to_empty_stoplist(kind):
     assert new_stoplist[-1].location == request.destination
 
 
-def test_no_solution_found():
+@pytest.mark.parametrize("kind", ["python", "cython"])
+def test_no_solution_found(kind):
     """Test that if no solution exists, none is returned"""
-    assert False
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 1, 1],
+        [(0, 3), 3, 3, 3]
+    ]
+    # fmt: on
+    eps = 1e-4
+    request_properties = dict(
+        request_id=42,
+        creation_timestamp=1,
+        origin=(eps, 1),
+        destination=(eps, 2),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=eps / 2,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    (
+        space,
+        request,
+        stoplist,
+        brute_force_total_traveltime_minimizing_dispatcher,
+    ) = _setup_insertion_data_structures_r2loc(
+        stoplist_properties=stoplist_properties,
+        request_properties=request_properties,
+        space_type="Manhattan2D",
+        kind=kind,
+    )
+
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity=10
+    )
+    assert np.isinf(min_cost)
+    # But the same shouldn't occur if the tw_max were higher:
+    stoplist_properties = [
+        [(0, 1), 1, 1, 0],
+        [(0, 3), 3, 3, 3 + 3 * eps],  # tw_max just enough
+    ]
+    request_properties = dict(
+        request_id=42,
+        creation_timestamp=1,
+        origin=(eps, 1),
+        destination=(eps, 2),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=1 + 2 * eps,  # just enough
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    (
+        space,
+        request,
+        stoplist,
+        brute_force_total_traveltime_minimizing_dispatcher,
+    ) = _setup_insertion_data_structures_r2loc(
+        stoplist_properties=stoplist_properties,
+        request_properties=request_properties,
+        space_type="Manhattan2D",
+        kind=kind,
+    )
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity=10
+    )
+    assert not np.isinf(min_cost)
 
 
 @pytest.mark.parametrize("kind", ["python", "cython"])
@@ -199,7 +263,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 2), 2, 2, 4],
-        [(0, 6), 6, 6, 7]
+        [(0, 6), 6, 6, 7] # <-- tw_max here would be violated by the following request
     ]
     # fmt: on
     request_properties = dict(
@@ -228,11 +292,16 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
             request, stoplist, space, seat_capacity=10
         )
-        assert new_stoplist[-2].location == request.origin
-        assert new_stoplist[-1].location == request.destination
+        assert new_stoplist[1].location == request.origin
+        assert new_stoplist[4].location == request.destination
 
     # but the above should not have occured if the tw_max at the last stop were higher:
-    stoplist_properties = [[(0, 1), 1, 0, inf], [(0, 2), 2, 2, 4], [(0, 6), 6, 6, 9]]
+    # fmt: off
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 2), 2, 2, 4],
+        [(0, 6), 6, 6, 9] # <-- tw_max here would no longer violated
+    ]
     # fmt: on
     for kind in ["python", "cython"]:
         (

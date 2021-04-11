@@ -186,6 +186,9 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             continue
         pickup_cost = time_to_pickup + time_from_pickup - original_pickup_edge_length
 
+        if i < len(stoplist) - 1:
+            delta_cpat = cpat_at_next_stop - stoplist[i + 1].estimated_arrival_time
+
         for j, stop_before_dropoff in enumerate(stoplist[i + 1 :], start=i + 1):
             # Need to check for seat capacity constraints. Note the loop: the constraint was not violated after
             # servicing the previous stop (otherwise we wouldn't've reached this line). Need to check that the
@@ -198,10 +201,11 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             CPAT_do = cpat_of_inserted_stop(
                 stop_before_dropoff,
                 time_to_dropoff,
+                delta_cpat=delta_cpat,
             )
             # check for request's dropoff timewindow violation
             if CPAT_do > request.delivery_timewindow_max:
-                continue
+                break
 
             time_from_dropoff = time_to_stop_after_insertion(
                 stoplist, request.destination, j, space
@@ -214,9 +218,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             )
             total_cost = pickup_cost + dropoff_cost
 
-            if total_cost >= min_cost:
-                continue
-            else:
+            if total_cost < min_cost:
                 # cost has decreased. check for constraint violations at later stops
                 cpat_at_next_stop = (
                     max(CPAT_do, request.delivery_timewindow_min) + time_from_dropoff
@@ -226,6 +228,18 @@ def brute_force_total_traveltime_minimizing_dispatcher(
                 ):
                     best_insertion = i, j
                     min_cost = total_cost
+            # we will try inserting the dropoff at a later stop
+            # the delta_cpat is important to compute correctly for the next stop, it may have changed if
+            # we had any slack time at this one
+            new_departure_time = max(
+                stop_before_dropoff.estimated_arrival_time + delta_cpat,
+                stop_before_pickup.time_window_min
+                if stop_before_pickup.time_window_min
+                else 0,
+            )
+            delta_cpat = (
+                new_departure_time - stop_before_dropoff.estimated_departure_time
+            )
 
     if min_cost < np.inf:
         best_pickup_idx, best_dropoff_idx = best_insertion

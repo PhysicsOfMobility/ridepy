@@ -1,3 +1,4 @@
+from typing import Optional
 from copy import deepcopy
 
 from thesimulator.data_structures import (
@@ -109,11 +110,19 @@ def insert_stop_to_stoplist_drive_first(
     stoplist.insert(idx + 1, stop)
 
 
-def cpat_of_inserted_stop(stop_before: Stop, time_from_stop_before: float) -> float:
+def cpat_of_inserted_stop(
+    stop_before: Stop, time_from_stop_before: float, delta_cpat: float = 0
+) -> float:
     """
     Computes the cpat of the inserted stop, assuming drive first strategy.
     """
-    return stop_before.estimated_departure_time + time_from_stop_before
+    return (
+        max(
+            stop_before.estimated_arrival_time + delta_cpat,
+            stop_before.time_window_min if stop_before.time_window_min else 0,
+        )
+        + time_from_stop_before
+    )
 
 
 def time_to_stop_after_insertion(

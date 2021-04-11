@@ -148,7 +148,6 @@ namespace cstuff {
         }
         int best_pickup_idx = best_insertion.first;
         int best_dropoff_idx = best_insertion.second;
-        // TODO: Compute occupancies in both new and old stops
         // TODO: this inserts stuff even if mincost is infinity!
         auto new_stoplist = insert_request_to_stoplist_drive_first(
                 stoplist,
