@@ -166,7 +166,10 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(
-            space=cy_space, request_class=cyds.TransportationRequest, seed=seed
+            space=cy_space,
+            request_class=cyds.TransportationRequest,
+            seed=seed,
+            rate=1.5,
         )
         cy_reqs = list(it.islice(rg, n_reqs))
         cy_events = list(ssfs.simulate(cy_reqs))
