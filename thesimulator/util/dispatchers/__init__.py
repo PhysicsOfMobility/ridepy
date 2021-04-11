@@ -233,8 +233,8 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             # we had any slack time at this one
             new_departure_time = max(
                 stop_before_dropoff.estimated_arrival_time + delta_cpat,
-                stop_before_pickup.time_window_min
-                if stop_before_pickup.time_window_min
+                stop_before_dropoff.time_window_min
+                if stop_before_dropoff.time_window_min
                 else 0,
             )
             delta_cpat = (

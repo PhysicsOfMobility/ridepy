@@ -27,7 +27,7 @@ namespace cstuff {
     );
 
     template<typename Loc>
-    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before);
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before, double delta_cpat=0);
 
     template<typename Loc>
     double time_to_stop_after_insertion(
@@ -145,7 +145,7 @@ namespace cstuff {
     }
 
     template<typename Loc>
-    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before) {
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before, double delta_cpat) {
         /*
         Note: Assumes drive first strategy.
         Args:
@@ -155,7 +155,8 @@ namespace cstuff {
         Returns:
 
         */
-        return stop_before.estimated_departure_time() + time_from_stop_before;
+        return max(stop_before.estimated_arrival_time + delta_cpat, stop_before.time_window_min)
+            + time_from_stop_before;
     }
 
     template<typename Loc>

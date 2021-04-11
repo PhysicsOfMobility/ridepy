@@ -96,6 +96,10 @@ namespace cstuff {
             auto pickup_cost = (
                     time_to_pickup + time_from_pickup - original_pickup_edge_length
             );
+
+            double delta_cpat = 0;
+            if (i < int(stoplist.size()) - 1) delta_cpat = cpat_at_next_stop - stoplist[i + 1].estimated_arrival_time;
+
             int j = i;
 //        BOOST_FOREACH(auto stop_before_dropoff, boost::make_iterator_range(stoplist.begin()+i, stoplist.end()))
             for (auto stop_before_dropoff = stoplist.begin() + i + 1;
@@ -114,9 +118,10 @@ namespace cstuff {
                 );
                 CPAT_do = cpat_of_inserted_stop(
                         *stop_before_dropoff,
-                        +time_to_dropoff
+                        time_to_dropoff,
+                        delta_cpat
                 );
-                if (CPAT_do > request->delivery_timewindow_max) continue;
+                if (CPAT_do > request->delivery_timewindow_max) break;
                 time_from_dropoff = time_to_stop_after_insertion(
                         stoplist, request->destination, j, space
                 );
@@ -131,8 +136,7 @@ namespace cstuff {
 
                 total_cost = pickup_cost + dropoff_cost;
 
-                if (total_cost >= min_cost) continue;
-                else {
+                if (total_cost < min_cost){
                     // cost has decreased. check for constraint violations at later stops
                     cpat_at_next_stop = (
                             max(CPAT_do, request->delivery_timewindow_min)
@@ -144,6 +148,14 @@ namespace cstuff {
                         min_cost = total_cost;
                     }
                 }
+                // we will try inserting the dropoff at a later stop
+                // the delta_cpat is important to compute correctly for the next stop, it may have changed if
+                // we had any slack time at this one
+                auto new_departure_time = max(
+                    stop_before_dropoff->estimated_arrival_time + delta_cpat,
+                    stop_before_dropoff->time_window_min
+                );
+                delta_cpat = new_departure_time - stop_before_dropoff->estimated_departure_time();
             }
         }
         int best_pickup_idx = best_insertion.first;
