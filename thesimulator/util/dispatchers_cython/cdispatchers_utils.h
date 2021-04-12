@@ -208,7 +208,7 @@ namespace cstuff {
             auto old_leeway = stop->time_window_max - stop->estimated_arrival_time;
             auto new_leeway = old_leeway - delta_cpat;
 
-            if (new_leeway < 0 && new_leeway < old_leeway) return true;
+            if ((new_leeway < 0) && (new_leeway < old_leeway)) return true;
             else {
                 auto old_departure = max(stop->time_window_min, stop->estimated_arrival_time);
                 auto new_departure = max(
