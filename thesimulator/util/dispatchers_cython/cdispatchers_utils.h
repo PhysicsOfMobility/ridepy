@@ -27,7 +27,7 @@ namespace cstuff {
     );
 
     template<typename Loc>
-    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before);
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before, double delta_cpat=0);
 
     template<typename Loc>
     double time_to_stop_after_insertion(
@@ -41,7 +41,7 @@ namespace cstuff {
     );
 
     template<typename Loc>
-    int is_timewindow_violated_dueto_insertion(
+    bool is_timewindow_violated_dueto_insertion(
             const std::vector<Stop<Loc>> &stoplist, int idx, double est_arrival_first_stop_after_insertion
     );
 
@@ -145,7 +145,7 @@ namespace cstuff {
     }
 
     template<typename Loc>
-    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before) {
+    double cpat_of_inserted_stop(Stop<Loc> &stop_before, double time_from_stop_before, double delta_cpat) {
         /*
         Note: Assumes drive first strategy.
         Args:
@@ -155,7 +155,8 @@ namespace cstuff {
         Returns:
 
         */
-        return stop_before.estimated_departure_time() + time_from_stop_before;
+        return max(stop_before.estimated_arrival_time + delta_cpat, stop_before.time_window_min)
+            + time_from_stop_before;
     }
 
     template<typename Loc>
@@ -178,7 +179,7 @@ namespace cstuff {
     }
 
     template<typename Loc>
-    int is_timewindow_violated_dueto_insertion(
+    bool is_timewindow_violated_dueto_insertion(
             const std::vector<Stop<Loc>> &stoplist, int idx, double est_arrival_first_stop_after_insertion
     ) {
         /*
@@ -195,7 +196,7 @@ namespace cstuff {
         if (idx >= static_cast<int>(stoplist.size() - 1)) return false;
         auto delta_cpat = (
                 est_arrival_first_stop_after_insertion
-                - stoplist[idx].estimated_arrival_time
+                - stoplist[idx+1].estimated_arrival_time
         );
 //    BOOST_FOREACH(auto& stop, boost::make_iterator_range(stoplist.begin()+idx, stoplist.end()))
         // Remember that the insertion is *after* idx'th stop. We need to check for violations from

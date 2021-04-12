@@ -104,7 +104,7 @@ cdef class TransportationRequest(Request):
     def __init__(
             self,
             int request_id,
-            float creation_timestamp,
+            double creation_timestamp,
             origin,
             destination,
             pickup_timewindow_min,
@@ -330,7 +330,7 @@ cdef class InternalRequest(Request):
        `cdef InternalRequest from_c_r2loc` and `cdef InternalRequest from_c_int` for details.
     """
     def __init__(
-            self, int request_id, float creation_timestamp,
+            self, int request_id, double creation_timestamp,
             location
     ):
         """

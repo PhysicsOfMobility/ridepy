@@ -70,10 +70,13 @@ def simulate_on_r2(
         space=pyEuclidean2D(),
         rate=rate,
         request_class=request_class,
+        seed=seed,
         **request_kwargs,
     )
 
     reqs = list(it.islice(rg, num_requests))
+
+    sim_logger.debug(f"Request 0 from the generator: {reqs[0]}")
     tick = time()
     events = list(ssfs.simulate(reqs))
     tock = time()
@@ -87,7 +90,6 @@ def simulate_on_r2(
     num_requests_delivered = pd.notna(
         requests.loc[:, ("serviced", "timestamp_dropoff")]
     ).sum()
-
     print(f"{num_requests} requests filed, {num_requests_delivered} requests delivered")
 
     return stops, requests
@@ -102,7 +104,12 @@ if __name__ == "__main__":
         "--cython", action=argparse.BooleanOptionalAction, default=False
     )
     parser.add_argument("--mpi", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args()
+
+    if args.debug:
+        sim_logger.setLevel(logging.DEBUG)
+        sim_logger.handlers[0].setLevel(logging.DEBUG)
 
     N = args.num_vehicles
     stops, requests = simulate_on_r2(
