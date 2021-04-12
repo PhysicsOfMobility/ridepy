@@ -67,13 +67,15 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-
-    stoplist = stoplist_from_properties(stoplist_properties, data_structure_module=pyds)
+    space = pyspaces.Euclidean2D()
+    stoplist = stoplist_from_properties(
+        stoplist_properties=stoplist_properties, kind="python", space=space
+    )
 
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
     pythonic_solution = py_brute_force_total_traveltime_minimizing_dispatcher(
-        request, stoplist, pyspaces.Euclidean2D(), seat_capacity
+        request, stoplist, space, seat_capacity
     )
     py_min_cost, _, py_timewindows = pythonic_solution
     tock = time()
@@ -95,15 +97,15 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to
     # cy_brute_force_total_traveltime_minimizing_dispatcher
-    stoplist = CyStoplist(
-        stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
-        loc_type=LocType.R2LOC,
+    space = cyspaces.Euclidean2D()
+    stoplist = stoplist_from_properties(
+        stoplist_properties=stoplist_properties, kind="cython", space=space
     )
 
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
     cythonic_solution = cy_brute_force_total_traveltime_minimizing_dispatcher(
-        request, stoplist, cyspaces.Euclidean2D(1), seat_capacity
+        request, stoplist, space, seat_capacity
     )
     cy_min_cost, _, cy_timewindows = cythonic_solution
     tock = time()

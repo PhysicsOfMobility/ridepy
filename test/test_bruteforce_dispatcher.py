@@ -5,111 +5,24 @@ import itertools as it
 
 from numpy import inf, isclose
 
-from thesimulator.data_structures import (
-    Stop,
-    InternalRequest,
-    StopAction,
-    TransportationRequest,
-)
 from thesimulator.events import (
     RequestRejectionEvent,
-    RequestAcceptanceEvent,
     PickupEvent,
     DeliveryEvent,
 )
-from thesimulator.util.analytics import get_stops_and_requests
 from thesimulator.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.testing_utils import stoplist_from_properties
 from thesimulator.extras.spaces import make_nx_grid
 from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean2D, Manhattan2D, Graph
+from thesimulator.util.spaces import Euclidean2D, Graph
 from thesimulator.fleet_state import SlowSimpleFleetState
+from thesimulator.util.testing_utils import setup_insertion_data_structures
 from thesimulator.vehicle_state import VehicleState
-
-
-from thesimulator import data_structures_cython as cyds
-from thesimulator import data_structures as pyds
-
-from thesimulator.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
-)
-from thesimulator.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
-)
-
-from thesimulator.util import spaces as pyspaces
-from thesimulator.util.spaces_cython import spaces as cyspaces
-
-
-def _setup_insertion_data_structures_r2loc(
-    stoplist_properties, request_properties, space_type, kind
-):
-    """
-
-    Parameters
-    ----------
-    stoplist_properties
-    request_properties
-    kind
-        'cython' or 'python'
-
-    Returns
-    -------
-    """
-    if kind == "python":
-        # set up the space
-        if space_type == "Euclidean2D":
-            space = pyspaces.Euclidean2D()
-        elif space_type == "Manhattan2D":
-            space = pyspaces.Manhattan2D()
-        else:
-            raise ValueError(
-                f"'space_type' must be either 'Euclidean2D' or 'Manhattan2D'"
-            )
-        # set up the request
-        request = pyds.TransportationRequest(**request_properties)
-        # set up the stoplist
-        stoplist = stoplist_from_properties(
-            stoplist_properties, data_structure_module=pyds
-        )
-        return (
-            space,
-            request,
-            stoplist,
-            py_brute_force_total_traveltime_minimizing_dispatcher,
-        )
-    elif kind == "cython":
-        # set up the space
-        if space_type == "Euclidean2D":
-            space = cyspaces.Euclidean2D()
-        elif space_type == "Manhattan2D":
-            space = cyspaces.Manhattan2D()
-        else:
-            raise ValueError(
-                f"'space_type' must be either 'Euclidean2D' or 'Manhattan2D'"
-            )
-        # set up the request
-        request = cyds.TransportationRequest(**request_properties)
-        # set up the stoplist
-        stoplist = cyds.Stoplist(
-            stoplist_from_properties(stoplist_properties, data_structure_module=cyds),
-            cyds.LocType.R2LOC,
-        )
-        return (
-            space,
-            request,
-            stoplist,
-            cy_brute_force_total_traveltime_minimizing_dispatcher,
-        )
-    else:
-        raise ValueError(f"'kind' must be either 'python' or 'cython'")
 
 
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_append_to_empty_stoplist(kind):
-    space = Euclidean2D()
     request_properties = dict(
         request_id=42,
         creation_timestamp=1,
@@ -128,7 +41,7 @@ def test_append_to_empty_stoplist(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -167,7 +80,7 @@ def test_no_solution_found(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -198,7 +111,7 @@ def test_no_solution_found(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -235,7 +148,7 @@ def test_append_due_to_timewindow(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -255,7 +168,7 @@ def test_append_due_to_timewindow(kind):
 def test_timewindow_violation_at_dropoff_checked(kind):
     """
     The least traveltime insertion is not chosen because the delay
-    dueto dropoff+pickup together would violate a tw_max. Although separately, these
+    due to dropoff+pickup together would violate a tw_max. Although separately, these
     delays do not.
     """
     # fmt: off
@@ -276,26 +189,26 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    for kind in ["python", "cython"]:
-        (
-            space,
-            request,
-            stoplist,
-            brute_force_total_traveltime_minimizing_dispatcher,
-        ) = _setup_insertion_data_structures_r2loc(
-            stoplist_properties=stoplist_properties,
-            request_properties=request_properties,
-            space_type="Manhattan2D",
-            kind=kind,
-        )
 
-        min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
-            request, stoplist, space, seat_capacity=10
-        )
-        assert new_stoplist[1].location == request.origin
-        assert new_stoplist[4].location == request.destination
+    (
+        space,
+        request,
+        stoplist,
+        brute_force_total_traveltime_minimizing_dispatcher,
+    ) = setup_insertion_data_structures(
+        stoplist_properties=stoplist_properties,
+        request_properties=request_properties,
+        space_type="Manhattan2D",
+        kind=kind,
+    )
 
-    # but the above should not have occured if the tw_max at the last stop were higher:
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity=10
+    )
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[4].location == request.destination
+
+    # but the above should not have occurred if the tw_max at the last stop were higher:
     # fmt: off
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
@@ -303,24 +216,23 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         [(0, 6), 6, 6, 9] # <-- tw_max here would no longer violated
     ]
     # fmt: on
-    for kind in ["python", "cython"]:
-        (
-            space,
-            request,
-            stoplist,
-            brute_force_total_traveltime_minimizing_dispatcher,
-        ) = _setup_insertion_data_structures_r2loc(
-            stoplist_properties=stoplist_properties,
-            request_properties=request_properties,
-            space_type="Manhattan2D",
-            kind=kind,
-        )
+    (
+        space,
+        request,
+        stoplist,
+        brute_force_total_traveltime_minimizing_dispatcher,
+    ) = setup_insertion_data_structures(
+        stoplist_properties=stoplist_properties,
+        request_properties=request_properties,
+        space_type="Manhattan2D",
+        kind=kind,
+    )
 
-        min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
-            request, stoplist, space, seat_capacity=10
-        )
-        assert new_stoplist[1].location == request.origin
-        assert new_stoplist[3].location == request.destination
+    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity=10
+    )
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[3].location == request.destination
 
 
 @pytest.mark.parametrize("kind", ["python", "cython"])
@@ -348,7 +260,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -361,7 +273,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
     assert new_stoplist[2].location == request.origin
     assert new_stoplist[3].location == request.destination
 
-    # but the above should not have occured if the tw_max at the last stop were higher:
+    # but the above should not have occurred if the tw_max at the last stop were higher:
     stoplist_properties = [[(0, 1), 1, 0, inf], [(0, 2), 2, 2, 4], [(0, 6), 6, 6, 9]]
     # fmt: on
     (
@@ -369,7 +281,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -408,7 +320,7 @@ def test_inserted_at_the_middle(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -450,7 +362,7 @@ def test_inserted_separately(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -496,7 +408,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -518,7 +430,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -562,7 +474,7 @@ def test_stoplist_not_modified_inplace(kind):
         request,
         stoplist,
         brute_force_total_traveltime_minimizing_dispatcher,
-    ) = _setup_insertion_data_structures_r2loc(
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
