@@ -15,8 +15,6 @@
 
 using namespace std;
 
-double inf = numeric_limits<double>::infinity();
-
 namespace cstuff {
     typedef pair<double, double> R2loc;
 
@@ -42,9 +40,9 @@ namespace cstuff {
         Loc origin;
         Loc destination;
         double pickup_timewindow_min = 0;
-        double pickup_timewindow_max = inf;
+        double pickup_timewindow_max = INFINITY;
         double delivery_timewindow_min = 0;
-        double delivery_timewindow_max = inf;
+        double delivery_timewindow_max = INFINITY;
 
         TransportationRequest() = default;
         TransportationRequest(
@@ -53,9 +51,9 @@ namespace cstuff {
             Loc origin,
             Loc destination,
             double pickup_timewindow_min=0,
-            double pickup_timewindow_max=inf,
+            double pickup_timewindow_max=INFINITY,
             double delivery_timewindow_min=0,
-            double delivery_timewindow_max=inf
+            double delivery_timewindow_max=INFINITY
             ) :
             Request<Loc>{request_id, creation_timestamp},
             origin{origin},
@@ -96,12 +94,12 @@ namespace cstuff {
         double estimated_arrival_time;
         int occupancy_after_servicing;
         double time_window_min = 0;
-        double time_window_max = inf;
+        double time_window_max = INFINITY;
 
         Stop() = default;
         Stop(
             Loc loc, const std::shared_ptr<Request<Loc>>& req, StopAction action, double estimated_arrival_time,
-            int occupancy_after_servicing, double time_window_min=0, double time_window_max=inf) :
+            int occupancy_after_servicing, double time_window_min=0, double time_window_max=INFINITY) :
             location{loc},
             request{req},
             action{action},
@@ -121,9 +119,9 @@ namespace cstuff {
         Stoplist new_stoplist=vector<Stop<Loc>>(0) ;
         double min_cost=0;
         double EAST_pu=0;
-        double LAST_pu=inf;
+        double LAST_pu=INFINITY;
         double EAST_do=0;
-        double LAST_do=inf;
+        double LAST_do=INFINITY;
     };
 }
 
