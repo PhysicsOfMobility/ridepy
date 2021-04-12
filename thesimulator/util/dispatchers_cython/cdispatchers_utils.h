@@ -193,11 +193,14 @@ namespace cstuff {
 
         */
         // double delta_cpat, old_leeway, new_leeway, old_departure, new_departure
-        if (idx >= static_cast<int>(stoplist.size() - 1)) return false;
+        if (idx > static_cast<int>(stoplist.size() - 2)) return false;
         auto delta_cpat = (
                 est_arrival_first_stop_after_insertion
                 - stoplist[idx+1].estimated_arrival_time
         );
+
+        if (delta_cpat == 0) return false;
+
 //    BOOST_FOREACH(auto& stop, boost::make_iterator_range(stoplist.begin()+idx, stoplist.end()))
         // Remember that the insertion is *after* idx'th stop. We need to check for violations from
         // idx+1'th stop onwards
@@ -205,7 +208,7 @@ namespace cstuff {
             auto old_leeway = stop->time_window_max - stop->estimated_arrival_time;
             auto new_leeway = old_leeway - delta_cpat;
 
-            if ((new_leeway < 0) && (new_leeway < old_leeway)) return true;
+            if (new_leeway < 0 && new_leeway < old_leeway) return true;
             else {
                 auto old_departure = max(stop->time_window_min, stop->estimated_arrival_time);
                 auto new_departure = max(

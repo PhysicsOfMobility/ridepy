@@ -14,6 +14,9 @@
 #include "../util/spaces_cython/cspaces.h"
 
 using namespace std;
+
+double inf = numeric_limits<double>::infinity();
+
 namespace cstuff {
     typedef pair<double, double> R2loc;
 
@@ -38,10 +41,10 @@ namespace cstuff {
     public:
         Loc origin;
         Loc destination;
-        double pickup_timewindow_min;
-        double pickup_timewindow_max;
-        double delivery_timewindow_min;
-        double delivery_timewindow_max;
+        double pickup_timewindow_min = 0;
+        double pickup_timewindow_max = inf;
+        double delivery_timewindow_min = 0;
+        double delivery_timewindow_max = inf;
 
         TransportationRequest() = default;
         TransportationRequest(
@@ -49,10 +52,10 @@ namespace cstuff {
             double creation_timestamp,
             Loc origin,
             Loc destination,
-            double pickup_timewindow_min,
-            double pickup_timewindow_max,
-            double delivery_timewindow_min,
-            double delivery_timewindow_max
+            double pickup_timewindow_min=0,
+            double pickup_timewindow_max=inf,
+            double delivery_timewindow_min=0,
+            double delivery_timewindow_max=inf
             ) :
             Request<Loc>{request_id, creation_timestamp},
             origin{origin},
@@ -92,13 +95,13 @@ namespace cstuff {
         StopAction action;
         double estimated_arrival_time;
         int occupancy_after_servicing;
-        double time_window_min;
-        double time_window_max;
+        double time_window_min = 0;
+        double time_window_max = inf;
 
         Stop() = default;
         Stop(
             Loc loc, const std::shared_ptr<Request<Loc>>& req, StopAction action, double estimated_arrival_time,
-            int occupancy_after_servicing, double time_window_min, double time_window_max) :
+            int occupancy_after_servicing, double time_window_min=0, double time_window_max=inf) :
             location{loc},
             request{req},
             action{action},
@@ -118,9 +121,9 @@ namespace cstuff {
         Stoplist new_stoplist=vector<Stop<Loc>>(0) ;
         double min_cost=0;
         double EAST_pu=0;
-        double LAST_pu=0;
+        double LAST_pu=inf;
         double EAST_do=0;
-        double LAST_do=0;
+        double LAST_do=inf;
     };
 }
 

@@ -119,7 +119,7 @@ def cpat_of_inserted_stop(
     return (
         max(
             stop_before.estimated_arrival_time + delta_cpat,
-            stop_before.time_window_min if stop_before.time_window_min else 0,
+            stop_before.time_window_min,
         )
         + time_from_stop_before
     )
@@ -161,11 +161,13 @@ def is_timewindow_violated_or_violation_worsened_due_to_insertion(
     stoplist: Stoplist, idx: int, est_arrival_first_stop_after_insertion: float
 ) -> bool:
     """
-    If a stop is inserted at idx, so that the estimated_arrival_time at the stop afterthe inserted stop is
+    If a stop is inserted at idx, so that the estimated_arrival_time at the stop after the inserted stop is
     est_arrival_first_stop_after_insertion, then checks for time window violations in the stoplist.
 
     Note: Assumes drive first strategy. Insertion at idx means after the idx'th stop.
     """
+
+    # we are inserting at the end of the stoplist, nothing to check
     if idx > len(stoplist) - 2:
         return False
 
@@ -174,6 +176,7 @@ def is_timewindow_violated_or_violation_worsened_due_to_insertion(
         - stoplist[idx + 1].estimated_arrival_time
     )
 
+    # inserted stop incurs zero detour and we don't have to wait
     if delta_cpat == 0:
         return False
 
@@ -181,7 +184,7 @@ def is_timewindow_violated_or_violation_worsened_due_to_insertion(
         old_leeway = stop.time_window_max - stop.estimated_arrival_time
         new_leeway = old_leeway - delta_cpat
 
-        if (new_leeway < 0) and (new_leeway < old_leeway):
+        if new_leeway < 0 and new_leeway < old_leeway:
             return True
         else:
             old_departure = stop.estimated_departure_time
@@ -191,6 +194,6 @@ def is_timewindow_violated_or_violation_worsened_due_to_insertion(
             delta_cpat = new_departure - old_departure
             if delta_cpat == 0:
                 # no need to check next stops
-                return False
-    else:
-        return False
+                break
+
+    return False

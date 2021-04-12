@@ -28,10 +28,10 @@ class TransportationRequest(Request):
     origin: Any
     destination: Any
     # pickup_offset: float = 0
-    pickup_timewindow_min: Optional[float]
-    pickup_timewindow_max: Optional[float]
-    delivery_timewindow_min: Optional[float]
-    delivery_timewindow_max: Optional[float]
+    pickup_timewindow_min: float = 0
+    pickup_timewindow_max: float = inf
+    delivery_timewindow_min: float = 0
+    delivery_timewindow_max: float = inf
 
 
 @dataclass
@@ -88,14 +88,14 @@ class Stop:
     action: StopAction
     estimated_arrival_time: float
     occupancy_after_servicing: int = 0
-    time_window_min: Optional[float] = 0
-    time_window_max: Optional[float] = inf
+    time_window_min: float = 0
+    time_window_max: float = inf
 
     @property
     def estimated_departure_time(self):
         return max(
             self.estimated_arrival_time,
-            self.time_window_min if self.time_window_min else 0,
+            self.time_window_min,
         )
 
 

@@ -184,6 +184,7 @@ def brute_force_total_traveltime_minimizing_dispatcher(
             stoplist, i, cpat_at_next_stop
         ):
             continue
+
         pickup_cost = time_to_pickup + time_from_pickup - original_pickup_edge_length
 
         if i < len(stoplist) - 1:
@@ -228,14 +229,13 @@ def brute_force_total_traveltime_minimizing_dispatcher(
                 ):
                     best_insertion = i, j
                     min_cost = total_cost
+
             # we will try inserting the dropoff at a later stop
             # the delta_cpat is important to compute correctly for the next stop, it may have changed if
             # we had any slack time at this one
             new_departure_time = max(
                 stop_before_dropoff.estimated_arrival_time + delta_cpat,
-                stop_before_dropoff.time_window_min
-                if stop_before_dropoff.time_window_min
-                else 0,
+                stop_before_dropoff.time_window_min,
             )
             delta_cpat = (
                 new_departure_time - stop_before_dropoff.estimated_departure_time

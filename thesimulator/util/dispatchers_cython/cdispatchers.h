@@ -148,6 +148,7 @@ namespace cstuff {
                         min_cost = total_cost;
                     }
                 }
+
                 // we will try inserting the dropoff at a later stop
                 // the delta_cpat is important to compute correctly for the next stop, it may have changed if
                 // we had any slack time at this one
