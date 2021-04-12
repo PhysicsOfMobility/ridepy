@@ -184,7 +184,7 @@ class Manhattan2D(TransportSpace):
 
     @smartVectorize
     def d(self, u, v):
-        return sum(abs(i) for i in self._coord_sub(u, v))
+        return abs(u[0] - v[0]) + abs(u[1] - v[1])
 
     def t(self, u, v):
         return self.d(u, v) / self.velocity
