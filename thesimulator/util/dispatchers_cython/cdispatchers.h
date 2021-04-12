@@ -181,7 +181,7 @@ namespace cstuff {
             return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
         }
         else{
-            return InsertionResult<Loc>{std::vector<Stop<Loc>>(0), min_cost, NAN, NAN, NAN, NAN};
+            return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
         }
     }
 }
