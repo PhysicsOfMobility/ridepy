@@ -80,8 +80,8 @@ namespace cstuff {
                 // check for constraint violations at later points
                 auto cpat_at_next_stop =
                         max(CPAT_do, request->delivery_timewindow_min) + time_from_dropoff;
-                if (~is_timewindow_violated_dueto_insertion(
-                        stoplist, i, cpat_at_next_stop)) {
+                if (!(is_timewindow_violated_dueto_insertion(
+                        stoplist, i, cpat_at_next_stop))) {
                     best_insertion = {i, i};
                     min_cost = total_cost;
                 }
@@ -96,6 +96,10 @@ namespace cstuff {
             auto pickup_cost = (
                     time_to_pickup + time_from_pickup - original_pickup_edge_length
             );
+
+            double delta_cpat = 0;
+            if (i < static_cast<int>(stoplist.size() - 1)) delta_cpat = cpat_at_next_stop - stoplist[i + 1].estimated_arrival_time;
+
             int j = i;
 //        BOOST_FOREACH(auto stop_before_dropoff, boost::make_iterator_range(stoplist.begin()+i, stoplist.end()))
             for (auto stop_before_dropoff = stoplist.begin() + i + 1;
@@ -114,9 +118,10 @@ namespace cstuff {
                 );
                 CPAT_do = cpat_of_inserted_stop(
                         *stop_before_dropoff,
-                        +time_to_dropoff
+                        time_to_dropoff,
+                        delta_cpat
                 );
-                if (CPAT_do > request->delivery_timewindow_max) continue;
+                if (CPAT_do > request->delivery_timewindow_max) break;
                 time_from_dropoff = time_to_stop_after_insertion(
                         stoplist, request->destination, j, space
                 );
@@ -131,41 +136,53 @@ namespace cstuff {
 
                 total_cost = pickup_cost + dropoff_cost;
 
-                if (total_cost >= min_cost) continue;
-                else {
+                if (total_cost < min_cost){
                     // cost has decreased. check for constraint violations at later stops
                     cpat_at_next_stop = (
                             max(CPAT_do, request->delivery_timewindow_min)
                             + time_from_dropoff
                     );
-                    if (~is_timewindow_violated_dueto_insertion(
-                            stoplist, j, cpat_at_next_stop)) {
+                    if (!(is_timewindow_violated_dueto_insertion(
+                            stoplist, j, cpat_at_next_stop))) {
                         best_insertion = {i, j};
                         min_cost = total_cost;
                     }
                 }
+
+                // we will try inserting the dropoff at a later stop
+                // the delta_cpat is important to compute correctly for the next stop, it may have changed if
+                // we had any slack time at this one
+                auto new_departure_time = max(
+                    stop_before_dropoff->estimated_arrival_time + delta_cpat,
+                    stop_before_dropoff->time_window_min
+                );
+                delta_cpat = new_departure_time - stop_before_dropoff->estimated_departure_time();
             }
         }
-        int best_pickup_idx = best_insertion.first;
-        int best_dropoff_idx = best_insertion.second;
-        // TODO: Compute occupancies in both new and old stops
-        auto new_stoplist = insert_request_to_stoplist_drive_first(
-                stoplist,
-                request,
-                best_pickup_idx,
-                best_dropoff_idx,
-                space
-        );
-        if (debug) {
-            std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
-            std::cout << "Min cost: " << min_cost << std::endl;
-        }
-        auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
-        auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
+        if (min_cost < INFINITY){
+            int best_pickup_idx = best_insertion.first;
+            int best_dropoff_idx = best_insertion.second;
+            auto new_stoplist = insert_request_to_stoplist_drive_first(
+                    stoplist,
+                    request,
+                    best_pickup_idx,
+                    best_dropoff_idx,
+                    space
+            );
+            if (debug) {
+                std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
+                std::cout << "Min cost: " << min_cost << std::endl;
+            }
+            auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
+            auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 
-        auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
-        auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
-        return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
+            auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
+            auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
+            return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
+        }
+        else{
+            return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
+        }
     }
 }
 #endif //THESIMULATOR_CDISPATCHERS_H

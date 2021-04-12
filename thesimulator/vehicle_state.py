@@ -93,7 +93,7 @@ class VehicleState:
         """
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
-        logger.info(f"Rank {rank} fast-forwarding vehicle={self.vehicle_id}")
+        logger.debug(f"Fast forwarding vehicle {self.vehicle_id} from MPI rank {rank}")
 
         event_cache = []
 
@@ -173,10 +173,8 @@ class VehicleState:
         """
         # Logging the folloowing in this specific format is crucial for
         # `test/mpi_futures_fleet_state_test.py` to pass
-        logger.info(
-            logger.debug(
-                f"Handling request #{request.request_id} with vehicle {self.vehicle_id} from MPI rank {rank}"
-            )
+        logger.debug(
+            f"Handling request #{request.request_id} with vehicle {self.vehicle_id} from MPI rank {rank}"
         )
         return self.vehicle_id, *self.dispatcher(
             request=request,

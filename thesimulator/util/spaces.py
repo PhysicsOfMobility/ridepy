@@ -151,6 +151,76 @@ class Euclidean2D(Euclidean):
         return make_repr("Euclidean2D", self.asdict())
 
 
+class Manhattan2D(TransportSpace):
+    """
+    :math:`\mathbb{R}^2` with :math:`L_1`-induced metric (Manhattan).
+    """
+
+    def __init__(
+        self,
+        coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
+        velocity: float = 1,
+    ):
+        """
+        Parameters
+        ----------
+        coord_range
+            coordinate range of the space as a list of 2-tuples (x_i,min, x_i,max)
+            where x_i represents the ith dimension.
+        velocity
+            constant scaling factor as discriminator between distance and travel time
+        """
+        self.n_dim = 2
+        self.velocity = velocity
+
+        if coord_range is not None:
+            assert len(coord_range) == 2, (
+                "Number of desired dimensions must "
+                "match the number of coord range pairs given"
+            )
+            self.coord_range = coord_range
+        else:
+            self.coord_range = [(0, 1)] * 2
+
+    @smartVectorize
+    def d(self, u, v):
+        return abs(u[0] - v[0]) + abs(u[1] - v[1])
+
+    def t(self, u, v):
+        return self.d(u, v) / self.velocity
+
+    def _coord_sub(self, u, v):
+        return map(op.sub, u, v)
+
+    def _coord_mul(self, u, k):
+        return map(op.mul, u, it.repeat(k))
+
+    def interp_dist(self, u, v, dist_to_dest):
+        return (
+            self._coord_sub(
+                v, self._coord_mul(self._coord_sub(v, u), dist_to_dest / self.d(u, v))
+            ),
+            0,
+        )
+
+    def interp_time(self, u, v, time_to_dest):
+        return (
+            self._coord_sub(
+                v, self._coord_mul(self._coord_sub(v, u), time_to_dest / self.t(u, v))
+            ),
+            0,
+        )
+
+    def random_point(self):
+        return tuple(random.uniform(a, b) for a, b in self.coord_range)
+
+    def asdict(self):
+        return dict(coord_range=self.coord_range, velocity=self.velocity)
+
+    def __repr__(self):
+        return make_repr("Manhattan", self.asdict())
+
+
 class Graph(TransportSpace):
     """
     A location is identified with a one-dimensional coordinate, namely the node index.

@@ -10,6 +10,9 @@ The extension dtype for C++ object e.g. CRequest[Loc] then will contain *an unio
 CRequest[int], Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the
 method call to the appropriate object inside that union.
 """
+
+from numpy import inf
+
 from cython.operator cimport dereference
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr, make_shared
@@ -104,13 +107,13 @@ cdef class TransportationRequest(Request):
     def __init__(
             self,
             int request_id,
-            float creation_timestamp,
+            double creation_timestamp,
             origin,
             destination,
-            pickup_timewindow_min,
-            pickup_timewindow_max,
-            delivery_timewindow_min,
-            delivery_timewindow_max,
+            pickup_timewindow_min=0,
+            pickup_timewindow_max=inf,
+            delivery_timewindow_min=0,
+            delivery_timewindow_max=inf,
     ):
         """
         Note
@@ -330,7 +333,7 @@ cdef class InternalRequest(Request):
        `cdef InternalRequest from_c_r2loc` and `cdef InternalRequest from_c_int` for details.
     """
     def __init__(
-            self, int request_id, float creation_timestamp,
+            self, int request_id, double creation_timestamp,
             location
     ):
         """
@@ -452,8 +455,8 @@ cdef class Stop:
             StopAction action,
             double estimated_arrival_time,
             int occupancy_after_servicing,
-            double time_window_min,
-            double time_window_max,
+            double time_window_min=0,
+            double time_window_max=inf,
     ):
         """
         Note
