@@ -169,6 +169,8 @@ class FleetState(ABC):
         self.vehicle_state_class = vehicle_state_class
         self.dispatcher = dispatcher
         self.space = space
+
+        assert initial_locations, "No initial locations supplied."
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: vehicle_state_class(
                 vehicle_id=vehicle_id,
