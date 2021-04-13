@@ -282,7 +282,7 @@ class Graph(TransportSpace):
             graph_class = nx.DiGraph
 
         if not all(
-            isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))
+            isinstance(u, int) for u in random.sample(list(G.nodes()), k=min(5, len(G)))
         ):
             warnings.warn(
                 "Heuristic determined non-int node labels. Converting to int, "
@@ -428,25 +428,37 @@ class Graph(TransportSpace):
             seq.append(u)
         return seq[::-1]
 
+    @property
+    def vertices(self):
+        return list(self.G.nodes)
+
+    @property
+    def edges(self):
+        return list(self.G.edges)
+
+    @property
+    def weights(self):
+        return list(nx.get_edge_attributes(self.G, "distance").values())
+
     def random_point(self):
-        return random.choice(list(self.G.nodes))
+        return random.choice(self.vertices)
 
     def __repr__(self):
         return f"Graph(..., velocity={self.velocity})"
 
     def asdict(self):
         return dict(
-            vertices=list(self.G.nodes),
-            edges=list(self.G.edges),
-            weights=list(nx.get_edge_attributes(self.G, "distance").values()),
+            vertices=self.vertices,
+            edges=self.edges,
+            weights=self.weights,
             velocity=self.velocity,
         )
 
     def __reduce__(self):
         return self.__class__, (
-            list(self.G.nodes()),
-            list(self.G.edges()),
-            [data["distance"] for u, v, data in self.G.edges(data=True)],
+            self.vertices,
+            self.edges,
+            self.weights,
             self.velocity,
         )
 
