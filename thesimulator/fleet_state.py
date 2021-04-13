@@ -171,6 +171,14 @@ class FleetState(ABC):
         self.space = space
 
         assert initial_locations, "No initial locations supplied."
+        for initial_location in initial_locations.values():
+            # note that numpy's dimensions start from 0
+            assert space.n_dim == np.ndim(initial_location) + 1, (
+                f"Dimension mismatch: Initial location {initial_location} of "
+                f"dimensionality {np.ndim(initial_location) + 1} supplied, "
+                f"but space has {space.n_dim} dimensions."
+            )
+
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: vehicle_state_class(
                 vehicle_id=vehicle_id,
