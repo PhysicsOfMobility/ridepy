@@ -141,6 +141,7 @@ def get_default_conf(cython: bool = True) -> ParamScanConf:
             rate=[10],
             max_pickup_delay=[3],
             max_pickup_delivery_delay_rel=[1.9],
+            seed=[42],
         ),
     )
 
@@ -197,6 +198,7 @@ def simulate_parameter_space(
             rate=params["request_generator"]["rate"],
             max_pickup_delay=params["request_generator"]["max_pickup_delay"],
             max_delivery_delay_rel=params["request_generator"]["max_pickup_delay"],
+            seed=params["request_generator"]["seed"],
             space=space,
             request_class=TransportationRequestCls,
         )

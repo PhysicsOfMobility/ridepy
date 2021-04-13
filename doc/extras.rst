@@ -54,6 +54,7 @@ The values and types allowed as list elements in the inner dict are the followin
     * ``rate: int``
     * ``max_pickup_delay: int``
     * ``max_pickup_delivery_delay_rel: int``
+    * ``seed: int``
 
 Executing Simulations
 ~~~~~~~~~~~~~~~~~~~~~
@@ -87,6 +88,7 @@ The values and types allowed as values in the inner dict are again the following
     * ``rate: int``
     * ``max_pickup_delay: int``
     * ``max_pickup_delivery_delay_rel: int``
+    * ``seed: int``
 
 
 .. automodule:: thesimulator.extras.parameter_spaces.simulate_parameter_space
