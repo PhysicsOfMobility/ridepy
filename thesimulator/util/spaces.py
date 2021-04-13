@@ -282,7 +282,7 @@ class Graph(TransportSpace):
             graph_class = nx.DiGraph
 
         if not all(
-            isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))
+            isinstance(u, int) for u in random.sample(list(G.nodes()), k=min(5, len(G)))
         ):
             warnings.warn(
                 "Heuristic determined non-int node labels. Converting to int, "
