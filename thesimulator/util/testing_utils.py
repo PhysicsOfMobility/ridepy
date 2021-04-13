@@ -1,8 +1,10 @@
+from thesimulator.data_structures import Location, TransportSpace, Stoplist, Dispatcher
+from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
 from thesimulator.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from thesimulator.util.spaces_cython import spaces as cyspaces
-from typing import Literal
+from typing import Literal, Iterable, Union, Callable
 
 from thesimulator import data_structures as pyds, data_structures_cython as cyds
 from thesimulator import data_structures_cython as cyds
@@ -12,7 +14,37 @@ from thesimulator.util.dispatchers import (
 )
 
 
-def stoplist_from_properties(*, stoplist_properties, space, kind):
+def stoplist_from_properties(
+    *,
+    stoplist_properties: Iterable[tuple[Location, float, float, float]],
+    space: Union[TransportSpace, CyTransportSpace],
+    kind: str,
+) -> Union[Stoplist, cyds.Stoplist]:
+    """
+    Generate stoplist from an iterable of stop properties.
+    Format:
+
+    .. code-block:: python
+
+        (
+            (location, CPAT, timewindow_min, timewindow_max),
+            ...,
+        )
+
+    Parameters
+    ----------
+    stoplist_properties
+        Iterable of stop property tuples `(location, CPAT, timewindow_min, timewindow_max)`
+    space
+        Space to place the stops on
+    kind
+        "cython" or "python"
+
+    Returns
+    -------
+
+    """
+
     if kind == "python":
         data_structure_module = pyds
     elif kind == "cython":
@@ -42,17 +74,24 @@ def stoplist_from_properties(*, stoplist_properties, space, kind):
 
 
 def setup_insertion_data_structures(
-    stoplist_properties,
+    *,
+    stoplist_properties: Iterable[tuple[Location, float, float, float]],
     request_properties,
     space_type: str,
-    kind,
-):
+    kind: str,
+) -> tuple[
+    Union[TransportSpace, CyTransportSpace],
+    Union[pyds.TransportationRequest, cyds.TransportationRequest],
+    Union[Stoplist, cyds.Stoplist],
+    Dispatcher,
+]:
     """
 
     Parameters
     ----------
     stoplist_properties
     request_properties
+    space_type
     kind
         'cython' or 'python'
 

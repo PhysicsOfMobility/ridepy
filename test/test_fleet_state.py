@@ -4,12 +4,26 @@ import signal
 import numpy as np
 import itertools as it
 
-from thesimulator.data_structures import Stop, InternalRequest, StopAction
+from numpy import inf
+
+from thesimulator.data_structures import (
+    Stop,
+    InternalRequest,
+    StopAction,
+    TransportationRequest,
+)
 from thesimulator.data_structures_cython import (
     Stop as CyStop,
     InternalRequest as CyInternalRequest,
     StopAction as CyStopAction,
 )
+from thesimulator.events import (
+    VehicleStateBeginEvent,
+    RequestSubmissionEvent,
+    RequestRejectionEvent,
+    VehicleStateEndEvent,
+)
+from thesimulator.util.testing_utils import setup_insertion_data_structures
 from thesimulator.vehicle_state import VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
 
@@ -20,7 +34,7 @@ from thesimulator.util.dispatchers_cython.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 
-from thesimulator.fleet_state import SlowSimpleFleetState
+from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.util.spaces import Euclidean2D
 from thesimulator.util.spaces_cython import Euclidean2D as CyEuclidean2D
 
@@ -136,3 +150,54 @@ def test_slow_simple_fleet_state_from_fleet():
         else:
             with pytest.raises((TypeError, AssertionError)):
                 testable()
+
+
+@pytest.mark.parametrize("kind", ["python", "cython"])
+@pytest.mark.parametrize("FleetStateCls", [SlowSimpleFleetState, MPIFuturesFleetState])
+def test_reject_trivial_requests(kind, FleetStateCls):
+    if kind == "python":
+        space = Euclidean2D()
+        dispatcher = brute_force_total_traveltime_minimizing_dispatcher
+        VehicleStateCls = VehicleState
+    elif kind == "cython":
+        space = CyEuclidean2D()
+        dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+        VehicleStateCls = CyVehicleState
+    else:
+        raise ValueError(f"unknown {kind=}")
+
+    trivial_request = TransportationRequest(
+        request_id=42, creation_timestamp=1337.0, origin=(4, 2), destination=(4, 2)
+    )
+
+    fs = FleetStateCls(
+        initial_locations={0: (0, 0)},
+        seat_capacities=1,
+        space=space,
+        dispatcher=dispatcher,
+        vehicle_state_class=VehicleStateCls,
+    )
+
+    ground_truth = [
+        VehicleStateBeginEvent(
+            timestamp=0, vehicle_id=0, location=(0, 0), request_id=-100
+        ),
+        RequestSubmissionEvent(
+            timestamp=1337.0,
+            request_id=42,
+            origin=(4, 2),
+            destination=(4, 2),
+            pickup_timewindow_min=0,
+            pickup_timewindow_max=inf,
+            delivery_timewindow_min=0,
+            delivery_timewindow_max=inf,
+        ),
+        RequestRejectionEvent(timestamp=1337.0, request_id=42),
+        VehicleStateEndEvent(
+            timestamp=1337.0, vehicle_id=0, location=(0, 0), request_id=-200
+        ),
+    ]
+
+    events = list(fs.simulate([trivial_request]))
+
+    assert events == ground_truth

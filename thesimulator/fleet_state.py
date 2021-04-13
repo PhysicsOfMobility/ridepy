@@ -106,7 +106,7 @@ class FleetState(ABC):
     def __init__(
         self,
         *,
-        initial_locations: Union[Dict[int, int], Dict[int, Tuple[float]]],
+        initial_locations: Union[Dict[int, int], Dict[int, Tuple[float, ...]]],
         vehicle_state_class: Union[Type[VehicleState], Type[CyVehicleState]],
         space: Union[TransportSpace, CyTransportSpace],
         dispatcher: Dispatcher,
@@ -169,6 +169,16 @@ class FleetState(ABC):
         self.vehicle_state_class = vehicle_state_class
         self.dispatcher = dispatcher
         self.space = space
+
+        assert initial_locations, "No initial locations supplied."
+        for initial_location in initial_locations.values():
+            # note that numpy's dimensions start from 0
+            assert space.n_dim == np.ndim(initial_location) + 1, (
+                f"Dimension mismatch: Initial location {initial_location} of "
+                f"dimensionality {np.ndim(initial_location) + 1} supplied, "
+                f"but space has {space.n_dim} dimensions."
+            )
+
         self.fleet: Dict[int, VehicleState] = {
             vehicle_id: vehicle_state_class(
                 vehicle_id=vehicle_id,
@@ -493,8 +503,14 @@ class SlowSimpleFleetState(FleetState):
         # stoplists, because vehicle_state_class.fast_forward did that already.
         return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
 
-    def handle_transportation_request(self, req: pyTransportationRequest):
+    def handle_transportation_request(
+        self, req: pyTransportationRequest
+    ) -> RequestEvent:
         logger.debug(f"Handling Request: {req}")
+
+        if req.origin == req.destination:
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+
         return self._apply_request_solution(
             req,
             map(
@@ -528,7 +544,12 @@ class MPIFuturesFleetState(FleetState):
                     it.chain.from_iterable(events), key=op.attrgetter("timestamp")
                 )
 
-    def handle_transportation_request(self, req: pyTransportationRequest):
+    def handle_transportation_request(
+        self, req: pyTransportationRequest
+    ) -> RequestEvent:
+        if req.origin == req.destination:
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             # the executor is None in all the worker processes. Hence the following if statement
             # ensures the .map() is called only from the main process.
