@@ -238,12 +238,15 @@ cdef class Graph(TransportSpace):
     def __repr__(self):
         return f"Graph(velocity={self.velocity})"
 
+    @property
     def vertices(self):
         return dereference(self.derived_ptr).get_vertices()
 
+    @property
     def edges(self):
         return dereference(self.derived_ptr).get_edges()
 
+    @property
     def weights(self):
         return dereference(self.derived_ptr).get_weights()
 
@@ -273,7 +276,7 @@ cdef class Graph(TransportSpace):
         elif G.is_directed():
             raise TypeError(f"Must supply undirected graph")
 
-        if not all(isinstance(u, int) for u in random.sample(G.nodes(), k=min(5, len(G)))):
+        if not all(isinstance(u, int) for u in random.sample(list(G.nodes()), k=min(5, len(G)))):
             warnings.warn("Heuristic determined non-int node labels. Converting to int", UserWarning)
             G = nx.relabel.convert_node_labels_to_integers(G)
 
@@ -290,7 +293,7 @@ cdef class Graph(TransportSpace):
         )
 
     def random_point(self):
-        return random.choice(dereference(self.derived_ptr).get_vertices())
+        return random.choice(self.weights)
 
 
     def __reduce__(self):
