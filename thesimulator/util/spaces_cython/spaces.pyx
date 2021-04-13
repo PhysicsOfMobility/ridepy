@@ -293,22 +293,22 @@ cdef class Graph(TransportSpace):
         )
 
     def random_point(self):
-        return random.choice(self.weights)
+        return random.choice(self.vertices)
 
 
     def __reduce__(self):
         return self.__class__, \
             (
-                 self.vertices(),
-                 self.edges(),
-                 self.weights(),
+                 self.vertices,
+                 self.edges,
+                 self.weights,
                  self.velocity,
             )
 
     def asdict(self):
         return dict(
-            vertices=dereference(self.derived_ptr).get_vertices(),
-            edges=dereference(self.derived_ptr).get_edges(),
-            weights=dereference(self.derived_ptr).get_weights(),
+            vertices=self.vertices,
+            edges=self.edges,
+            weights=self.weights,
             velocity=self.velocity,
         )
