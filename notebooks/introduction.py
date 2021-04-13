@@ -7,30 +7,38 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.6.0
+#       jupytext_version: 1.11.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# + tags=[]
 # %matplotlib inline
 
-import dataclasses
-
 import itertools as it
-import functools as ft
-import operator as op
 import math as m
 import numpy as np
 import pandas as pd
-import networkx as nx
 import matplotlib.pyplot as plt
 
-# +
+# + tags=[]
+from thesimulator.fleet_state import SlowSimpleFleetState
 from thesimulator.vehicle_state import VehicleState
 
+from thesimulator.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher,
+)
+
+from thesimulator.util.request_generators import RandomRequestGenerator
+from thesimulator.util.spaces import Euclidean2D
+
+from thesimulator.util.analytics import get_stops_and_requests
+from thesimulator.util.analytics.plotting import plot_occupancy_hist
+
+# + tags=[]
+# assume dark background for plots?
 dark = True
 
 if dark:
@@ -40,31 +48,7 @@ if dark:
     plt.rcParams["axes.facecolor"] = (1, 1, 1, 0)
     plt.rcParams["figure.facecolor"] = (1, 1, 1, 0)
 
-# -
-
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.data_structures import (
-    Stop,
-    InternalRequest,
-    StopAction,
-    TransportationRequest,
-)
-from thesimulator.events import (
-    RequestAcceptanceEvent,
-    PickupEvent,
-    DeliveryEvent,
-    StopEvent,
-)
-from thesimulator.util.dispatchers import (
-    taxicab_dispatcher_drive_first,
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
-from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.analytics.plotting import plot_occupancy_hist
-
-# +
+# + tags=[]
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
 pd.set_option("display.width", 1000)
@@ -72,31 +56,30 @@ pd.set_option("display.width", 1000)
 evf = lambda S, f, **arg: (S, f(S, **arg))
 # -
 
-# # configure the simulation and supply initial values
+# # Configure the simulation and supply initial values
 
-# +
+# + tags=[]
 n_buses = 50
-"""number of vehicles to simulate"""
 
 initial_location = (0, 0)
-"""initial location of all vehicles"""
 
+space = Euclidean2D()
+
+rg = RandomRequestGenerator(
+    rate=10,
+    max_pickup_delay=3,
+    max_delivery_delay_rel=1.9,
+    space=space,
+    seed=42,
+)
+
+# create iterator yielding 100 random requests
+transportation_requests = it.islice(rg, 100)
 # -
 
-# ## define simulation environment
+# ## Initialize a `FleetState`
 
-# +
-# space
-space = Euclidean2D()
-"""transport space to operate on"""
-
-rg = RandomRequestGenerator(rate=10, space=space)
-"""request generator"""
-
-# generate 100 random requests
-transportation_requests = it.islice(rg, 100)
-
-# initialize the simulator
+# + tags=[]
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
@@ -106,33 +89,44 @@ fs = SlowSimpleFleetState(
 )
 # -
 
-# ## perform the simulation
+# ## Perform the simulation
 
+# + tags=[]
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
+# -
 
-# ## process the results
+# ## Process the results
 
+# + tags=[]
 stops, reqs = get_stops_and_requests(events=events, space=space)
+# -
 
-# # some distributions
-# ## relative travel times
+# # Some distributions
+# ## Relative travel times
 
+# + tags=[]
 reqs[("inferred", "relative_travel_time")].hist(bins=np.r_[1:5:20j])
 plt.gca().set_yscale("log")
+# -
 
 
-# ## waiting times
+# ## Waiting times
 
+# + tags=[]
 reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
-# plt.gca().set_yscale('log')
+# -
 
 
-# ## direct travel times
+# ## Direct travel times
 
-reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0:1:30j])
+# + tags=[]
+reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
+# -
 
 
-# ## occupancies
+# ## Occupancies
 
+# + tags=[]
 plot_occupancy_hist(stops)
+# -
