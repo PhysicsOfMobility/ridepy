@@ -106,7 +106,7 @@ class FleetState(ABC):
     def __init__(
         self,
         *,
-        initial_locations: Union[Dict[int, int], Dict[int, Tuple[float]]],
+        initial_locations: Union[Dict[int, int], Dict[int, Tuple[float, ...]]],
         vehicle_state_class: Union[Type[VehicleState], Type[CyVehicleState]],
         space: Union[TransportSpace, CyTransportSpace],
         dispatcher: Dispatcher,
@@ -503,8 +503,14 @@ class SlowSimpleFleetState(FleetState):
         # stoplists, because vehicle_state_class.fast_forward did that already.
         return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
 
-    def handle_transportation_request(self, req: pyTransportationRequest):
+    def handle_transportation_request(
+        self, req: pyTransportationRequest
+    ) -> RequestEvent:
         logger.debug(f"Handling Request: {req}")
+
+        if req.origin == req.destination:
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+
         return self._apply_request_solution(
             req,
             map(
@@ -538,7 +544,12 @@ class MPIFuturesFleetState(FleetState):
                     it.chain.from_iterable(events), key=op.attrgetter("timestamp")
                 )
 
-    def handle_transportation_request(self, req: pyTransportationRequest):
+    def handle_transportation_request(
+        self, req: pyTransportationRequest
+    ) -> RequestEvent:
+        if req.origin == req.destination:
+            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+
         with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
             # the executor is None in all the worker processes. Hence the following if statement
             # ensures the .map() is called only from the main process.
