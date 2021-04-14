@@ -37,7 +37,7 @@ For `.simulate_parameter_space()` to work, all parameters in the base parameter 
 must be present. The general schema of the parameter scan configuration dictionary is an outer dictionary
 indexed by specific strings and containing inner dictionaries as values which are indexed by strings
 and contain lists of possible values for each parameter.
-Its type is ``dict[Literal["general", "space"], dict[str, list[Any]]]``,
+Its type is ``dict[Literal["general", "space", "environment"], dict[str, list[Any]]]``,
 for example ``conf = {"general": {"param1": [value1, value2]}, "request_generator": {"param42": [value2]}}``.
 
 The values and types allowed as list elements in the inner dict are the following:
@@ -55,6 +55,13 @@ The values and types allowed as list elements in the inner dict are the followin
     * ``max_pickup_delay: int``
     * ``max_pickup_delivery_delay_rel: int``
     * ``seed: int``
+* Valid Values for ``environment``
+    * ``TransportationRequestCls: Type[TransportationRequest]``
+    * ``VehicleStateCls: Type[VehicleStateCls]``
+    * ``FleetStateCls: Type[FleetStateCls]``
+    * ``data_dir``: PosixPath``
+    * ``chunksize``: int
+
 
 Executing Simulations
 ~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +78,7 @@ The general schema of the (single) simulation configuration dictionary is again 
 indexed by specific strings and containing inner dictionaries as values which are indexed by strings.
 Unlike the parameter scan dictionary the parameter values are now single values, not lists of values.
 
-Its type is ``dict[Literal["general", "space"], dict[str, Any]]``,
+Its type is ``dict[Literal["general", "space", "environment"], dict[str, Any]]``,
 for example ``conf = {"general": {"param1": value1}, "request_generator": {"param42": value2}}``.
 
 The values and types allowed as values in the inner dict are again the following:
@@ -83,12 +90,12 @@ The values and types allowed as values in the inner dict are again the following
     * ``initial_location: Location``
     * ``seat_capacity: int``
     * ``dispatcher: Dispatcher``
-* Valid Values for ``"request_generator"``
-    * ``request_generator: Type[RequestGenerator]``
-    * ``rate: int``
-    * ``max_pickup_delay: int``
-    * ``max_pickup_delivery_delay_rel: int``
-    * ``seed: int``
+* Valid Values for ``environment``
+    * ``TransportationRequestCls: Type[TransportationRequest]``
+    * ``VehicleStateCls: Type[VehicleStateCls]``
+    * ``FleetStateCls: Type[FleetStateCls]``
+    * ``data_dir``: PosixPath``
+    * ``chunksize``: int
 
 
 .. automodule:: thesimulator.extras.parameter_spaces.simulate_parameter_space

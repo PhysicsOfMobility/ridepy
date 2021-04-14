@@ -1,10 +1,11 @@
-from typing import Iterator, Any, Literal
-
 import logging
+import concurrent.futures
+import os
 
 import numpy as np
 import itertools as it
 
+from typing import Iterator, Any, Literal
 from pathlib import Path
 
 from thesimulator.util.dispatchers import (
@@ -37,7 +38,7 @@ from thesimulator.extras.io import save_params_json, save_events_json
 
 logger = logging.getLogger(__name__)
 
-SimConf = dict[Literal["general", "space"], dict[str, Any]]
+SimConf = dict[Literal["general", "space", "environment"], dict[str, Any]]
 ParamScanConf = dict[Literal["general", "space"], dict[str, list[Any]]]
 
 
@@ -104,7 +105,7 @@ def param_scan(outer_dict: ParamScanConf) -> Iterator:
     )
 
 
-def get_default_conf(cython: bool = True) -> ParamScanConf:
+def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
     """
     Return default parameter scan configuration as dict.
     For more detail see :ref:`Parameter Scan Configuration`.
@@ -112,7 +113,9 @@ def get_default_conf(cython: bool = True) -> ParamScanConf:
     Parameters
     ----------
     cython
-        If True, use cython
+        If True, use cython types.
+    mpi
+        If True use MPIFuturesFleetState for parallelization.
 
     Returns
     -------
@@ -121,9 +124,18 @@ def get_default_conf(cython: bool = True) -> ParamScanConf:
     if cython:
         SpaceObj = CyEuclidean2D()
         dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+        TransportationRequestCls = CyTransportationRequest
+        VehicleStateCls = CyVehicleState
     else:
         SpaceObj = Euclidean2D()
         dispatcher = brute_force_total_traveltime_minimizing_dispatcher
+        TransportationRequestCls = TransportationRequest
+        VehicleStateCls = VehicleState
+
+    if mpi:
+        FleetStateCls = MPIFuturesFleetState
+    else:
+        FleetStateCls = SlowSimpleFleetState
 
     RequestGeneratorCls = RandomRequestGenerator
 
@@ -143,16 +155,67 @@ def get_default_conf(cython: bool = True) -> ParamScanConf:
             max_pickup_delivery_delay_rel=[1.9],
             seed=[42],
         ),
+        environment=dict(
+            TransportationRequestCls=[TransportationRequestCls],
+            VehicleStateCls=[VehicleStateCls],
+            FleetStateCls=[FleetStateCls],
+        ),
     )
+
+
+def perform_single_simulation(params):
+    space = params["general"]["space"]
+
+    rg = RandomRequestGenerator(
+        rate=params["request_generator"]["rate"],
+        max_pickup_delay=params["request_generator"]["max_pickup_delay"],
+        max_delivery_delay_rel=params["request_generator"]["max_pickup_delay"],
+        seed=params["request_generator"]["seed"],
+        space=space,
+        request_class=params["environment"]["TransportationRequestCls"],
+    )
+
+    fs = params["environment"]["FleetStateCls"](
+        initial_locations={
+            vehicle_id: params["general"]["initial_location"]
+            for vehicle_id in range(params["general"]["n_vehicles"])
+        },
+        space=space,
+        dispatcher=params["general"]["dispatcher"],
+        seat_capacities=params["general"]["seat_capacity"],
+        vehicle_state_class=params["environment"]["VehicleStateCls"],
+    )
+
+    # NOTE: this string is matched for testing
+    logger.info(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
+
+    simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
+
+    sim_id = get_uuid()
+    data_dir = params["environment"].get("data_dir", Path())
+    jsonl_path = data_dir / f"{sim_id}.jsonl"
+    param_path = data_dir / f"{sim_id}_params.json"
+
+    assert not jsonl_path.exists()
+    assert not param_path.exists()
+
+    save_params_json(param_path=param_path, params=params)
+
+    while chunk := list(
+        it.islice(simulation, params["environment"].get("chunksize", 1000))
+    ):
+        save_events_json(jsonl_path=jsonl_path, events=chunk)
+
+    return sim_id
 
 
 def simulate_parameter_space(
     *,
     data_dir: Path,
     conf: ParamScanConf,
-    cython: bool = True,
-    mpi: bool = False,
     chunksize: int = 1000,
+    process_chunksize: int = 1,
+    max_workers=None,
 ):
     """
     Run a parameter scan of simulations and save emitted events to disk in JSON Lines format
@@ -165,12 +228,12 @@ def simulate_parameter_space(
         path to the desired output directory
     conf
         configuration dict for the parameter scan.
-    cython
-        If True, use cython.
-    mpi
-        If True, use MPI for parallelization
     chunksize
         Maximum number of events to keep in memory before saving to disk
+    process_chunksize
+        Number of simulations to submit to a process in the process pool at a time
+    max_workers
+        Defaults to number of processors on the machine if `None` or not given.
 
     Returns
     -------
@@ -178,57 +241,17 @@ def simulate_parameter_space(
     Results can be accessed by reading `data_dir / f"{sim_uuid}.jsonl"`,
     parameters at `data_dir / f"{sim_uuid}_params.json"`
     """
-    if cython:
-        TransportationRequestCls = CyTransportationRequest
-        VehicleStateCls = CyVehicleState
-    else:
-        TransportationRequestCls = TransportationRequest
-        VehicleStateCls = VehicleState
 
-    if mpi:
-        FleetStateCls = MPIFuturesFleetState
-    else:
-        FleetStateCls = SlowSimpleFleetState
+    conf["environment"]["data_dir"] = [data_dir]
+    conf["environment"]["chunksize"] = [chunksize]
 
-    sim_ids = []
-    for i, params in enumerate(param_scan(conf)):
-        space = params.get("general").get("space")
-
-        rg = RandomRequestGenerator(
-            rate=params["request_generator"]["rate"],
-            max_pickup_delay=params["request_generator"]["max_pickup_delay"],
-            max_delivery_delay_rel=params["request_generator"]["max_pickup_delay"],
-            seed=params["request_generator"]["seed"],
-            space=space,
-            request_class=TransportationRequestCls,
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        sim_ids = list(
+            executor.map(
+                perform_single_simulation,
+                param_scan(conf),
+                chunksize=process_chunksize,
+            )
         )
-
-        fs = FleetStateCls(
-            initial_locations={
-                vehicle_id: params["general"]["initial_location"]
-                for vehicle_id in range(params["general"]["n_vehicles"])
-            },
-            space=space,
-            dispatcher=params["general"]["dispatcher"],
-            seat_capacities=params["general"]["seat_capacity"],
-            vehicle_state_class=VehicleStateCls,
-        )
-
-        logger.info(f"Simulating run {i} @ {params!r}\n")
-
-        simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
-
-        sim_id = get_uuid()
-        jsonl_path = data_dir / f"{sim_id}.jsonl"
-        param_path = data_dir / f"{sim_id}_params.json"
-
-        assert not jsonl_path.exists()
-        assert not param_path.exists()
-
-        save_params_json(param_path=param_path, params=params)
-        sim_ids.append(sim_id)
-
-        while chunk := list(it.islice(simulation, chunksize)):
-            save_events_json(jsonl_path=jsonl_path, events=chunk)
 
     return sim_ids
