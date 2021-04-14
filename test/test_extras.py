@@ -1,5 +1,8 @@
-import timeit
 import pytest
+import os
+import re
+
+import logging
 
 from thesimulator.extras.io import (
     save_params_json,
@@ -18,7 +21,6 @@ from thesimulator.extras.parameter_spaces import (
     param_scan,
 )
 from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.spaces import Graph
 
 
 def test_spaces():
@@ -35,40 +37,32 @@ def test_spaces():
     assert ring.size() == 10
 
 
-def test_simulate_py(tmp_path):
-    conf = get_default_conf(cython=False)
+@pytest.mark.parametrize("cython", [True, False])
+def test_simulate(cython, tmp_path, capfd):
+    conf = get_default_conf(cython=cython)
     conf["general"]["n_reqs"] = [10]
     conf["general"]["n_vehicles"] = [10, 100]
     conf["general"]["seat_capacity"] = [2, 8]
     res = simulate_parameter_space(
-        data_dir=tmp_path, conf=conf, cython=False, mpi=False, chunksize=1000
+        data_dir=tmp_path, conf=conf, chunksize=1000, debug=True
     )
+
+    # evaluate multiprocessing
+    out, _ = capfd.readouterr()
+    pids = re.findall(r"Simulating run on process (\d+) @", out)
+    assert 1 < len(set(pids)) <= os.cpu_count()
+
     assert len(res) == 4
     for r in res:
         assert (tmp_path / f"{r}_params.json").exists()
         assert (tmp_path / f"{r}.jsonl").exists()
 
 
-def test_simulate_cy(tmp_path):
-    conf = get_default_conf(cython=True)
-    conf["general"]["n_reqs"] = [10]
-    conf["general"]["n_vehicles"] = [10, 100]
-    conf["general"]["seat_capacity"] = [2, 8]
-    res = simulate_parameter_space(
-        data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000
-    )
-    assert len(res) == 4
-    for r in res:
-        assert (tmp_path / f"{r}_params.json").exists()
-        assert (tmp_path / f"{r}.jsonl").exists()
-
-
-def test_io_simulate(tmp_path):
+def test_io_simulate(tmp_path, capfd):
     conf = get_default_conf(cython=True)
     conf["general"]["n_reqs"] = [100]
-    res = simulate_parameter_space(
-        data_dir=tmp_path, conf=conf, cython=True, mpi=False, chunksize=1000
-    )
+    res = simulate_parameter_space(data_dir=tmp_path, conf=conf, chunksize=1000)
+
     evs = read_events_json(tmp_path / f"{res[0]}.jsonl")
     params = read_params_json(param_path=tmp_path / f"{res[0]}_params.json")
     stops, requests = get_stops_and_requests(

@@ -13,7 +13,7 @@ from thesimulator.data_structures import TransportSpace
 from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
 import thesimulator.events
 from thesimulator.events import Event
-from pathlib import Path
+from pathlib import Path, PosixPath
 
 
 class ParamsJSONEncoder(json.JSONEncoder):
@@ -32,7 +32,7 @@ class ParamsJSONEncoder(json.JSONEncoder):
 
     def default(self, obj):
         # request generator?
-        if isinstance(obj, type) and issubclass(obj, collections.abc.Iterator):
+        if isinstance(obj, type):
             return f"{obj.__module__}.{obj.__name__}"
         # TransportSpace?
         elif isinstance(obj, (TransportSpace, CyTransportSpace)):
@@ -43,6 +43,8 @@ class ParamsJSONEncoder(json.JSONEncoder):
         # dispatcher?
         elif callable(obj):
             return f"{obj.__module__}.{obj.__name__}"
+        elif isinstance(obj, PosixPath):
+            return str(obj.expanduser().resolve())
         else:
             return json.JSONEncoder.default(self, obj)
 
@@ -76,6 +78,15 @@ class ParamsJSONDecoder(json.JSONDecoder):
                 module, cls = dct["request_generator"].rsplit(".", 1)
                 dct["request_generator"] = getattr(importlib.import_module(module), cls)
 
+            for cls_str in [
+                "TransportationRequestCls",
+                "FleetStateCls",
+                "VehicleStateCls",
+            ]:
+                if cls_str in dct:
+                    module, cls = dct[cls_str].rsplit(".", 1)
+                    dct[cls_str] = getattr(importlib.import_module(module), cls)
+
             if "dispatcher" in dct:
                 module, cls = dct["dispatcher"].rsplit(".", 1)
                 dct["dispatcher"] = getattr(importlib.import_module(module), cls)
@@ -84,6 +95,9 @@ class ParamsJSONDecoder(json.JSONDecoder):
                 path, kwargs = next(iter(dct["space"].items()))
                 module, cls = path.rsplit(".", 1)
                 dct["space"] = getattr(importlib.import_module(module), cls)(**kwargs)
+
+            if "data_dir" in dct:
+                dct["data_dir"] = Path(dct["data_dir"])
 
         return dct
 
