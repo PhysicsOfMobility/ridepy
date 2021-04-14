@@ -1,3 +1,4 @@
+import sys
 import logging
 import concurrent.futures
 import os
@@ -34,7 +35,6 @@ from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.util import get_uuid
 from thesimulator.extras.io import save_params_json, save_events_json
-
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +187,7 @@ def perform_single_simulation(params):
     )
 
     # NOTE: this string is matched for testing
-    logger.info(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
+    print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
     simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
 
