@@ -90,6 +90,12 @@ The values and types allowed as values in the inner dict are again the following
     * ``initial_location: Location``
     * ``seat_capacity: int``
     * ``dispatcher: Dispatcher``
+* Valid Values for ``"request_generator"``
+    * ``request_generator: Type[RequestGenerator]``
+    * ``rate: int``
+    * ``max_pickup_delay: int``
+    * ``max_pickup_delivery_delay_rel: int``
+    * ``seed: int``
 * Valid Values for ``environment``
     * ``TransportationRequestCls: Type[TransportationRequest]``
     * ``VehicleStateCls: Type[VehicleStateCls]``
