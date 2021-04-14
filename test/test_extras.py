@@ -39,15 +39,13 @@ def test_spaces():
 
 @pytest.mark.parametrize("cython", [True, False])
 def test_simulate(cython, tmp_path, capfd):
-    log = logging.getLogger("thesimulator")
-    log.setLevel(logging.INFO)
-    log.handlers[0].setLevel(logging.INFO)
-
     conf = get_default_conf(cython=cython)
     conf["general"]["n_reqs"] = [10]
     conf["general"]["n_vehicles"] = [10, 100]
     conf["general"]["seat_capacity"] = [2, 8]
-    res = simulate_parameter_space(data_dir=tmp_path, conf=conf, chunksize=1000)
+    res = simulate_parameter_space(
+        data_dir=tmp_path, conf=conf, chunksize=1000, debug=True
+    )
 
     # evaluate multiprocessing
     out, _ = capfd.readouterr()

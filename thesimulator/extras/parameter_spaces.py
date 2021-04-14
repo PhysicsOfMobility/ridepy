@@ -3,6 +3,7 @@ import logging
 import concurrent.futures
 import os
 
+import functools as ft
 import numpy as np
 import itertools as it
 
@@ -163,7 +164,7 @@ def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
     )
 
 
-def perform_single_simulation(params):
+def perform_single_simulation(params, debug):
     space = params["general"]["space"]
 
     rg = RandomRequestGenerator(
@@ -187,7 +188,8 @@ def perform_single_simulation(params):
     )
 
     # NOTE: this string is matched for testing
-    print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
+    if debug:
+        print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
     simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
 
@@ -216,11 +218,12 @@ def simulate_parameter_space(
     chunksize: int = 1000,
     process_chunksize: int = 1,
     max_workers=None,
+    debug=False,
 ):
     """
     Run a parameter scan of simulations and save emitted events to disk in JSON Lines format
-    and additional JSON file containing the simulation parameters.
-    For more detail see :ref:`Executing Simulations`.
+    and additional JSON file containing the simulation parameters. Parallelization is accomplished
+    by multiprocessing. For more detail see :ref:`Executing Simulations`.
 
     Parameters
     ----------
@@ -234,6 +237,8 @@ def simulate_parameter_space(
         Number of simulations to submit to a process in the process pool at a time
     max_workers
         Defaults to number of processors on the machine if `None` or not given.
+    debug
+        Print multiprocessing debug info.
 
     Returns
     -------
@@ -248,7 +253,7 @@ def simulate_parameter_space(
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         sim_ids = list(
             executor.map(
-                perform_single_simulation,
+                ft.partial(perform_single_simulation, debug=debug),
                 param_scan(conf),
                 chunksize=process_chunksize,
             )
