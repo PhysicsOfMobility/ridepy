@@ -19,6 +19,7 @@ from thesimulator.extras.parameter_spaces import (
     simulate_parameter_space,
     get_default_conf,
     param_scan,
+    param_scan_cartesian_product,
 )
 from thesimulator.util.analytics import get_stops_and_requests
 
@@ -75,7 +76,7 @@ def test_io_params(tmp_path):
     param_path = tmp_path / f"params.json"
 
     for cython in [False, True]:
-        params = next(param_scan(get_default_conf(cython=cython)))
+        params = next(param_scan_cartesian_product(get_default_conf(cython=cython)))
 
         save_params_json(param_path=param_path, params=params)
         restored_params = read_params_json(param_path=param_path)
@@ -84,3 +85,38 @@ def test_io_params(tmp_path):
         print(restored_params)
 
         assert params == restored_params
+
+
+def test_param_scan_length():
+    params_tozip = {
+        1: {"a": [10, 20, 30], "c": [33, 44, 55]},
+        2: {"z": [100, 200, 300]},
+    }
+    params_toproduct = {
+        1: {"b": [21, 22], "d": [66, 67, 67, 68]},
+        2: {"w": [1000, 2000]},
+    }
+    res = list(
+        param_scan(params_to_zip=params_tozip, params_to_product=params_toproduct)
+    )
+
+    assert len(res) == 3 * 2 * 4 * 2
+    assert len([i for i in res if i[1]["a"] == 10]) == 2 * 4 * 2
+    assert len([i for i in res if i[2]["w"] == 1000]) == 3 * 2 * 4
+
+
+def test_param_scan():
+    params_to_zip = {1: {"a": [8, 9], "b": [88, 99]}}
+    params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
+    assert tuple(
+        param_scan(params_to_zip=params_to_zip, params_to_product=params_to_product)
+    ) == (
+        {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
+        {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
+        {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
+        {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
+        {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
+        {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
+        {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
+        {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
+    )

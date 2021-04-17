@@ -6,6 +6,7 @@ import os
 import functools as ft
 import numpy as np
 import itertools as it
+from collections import defaultdict
 
 from typing import Iterator, Any, Literal
 from pathlib import Path
@@ -40,16 +41,27 @@ from thesimulator.extras.io import save_params_json, save_events_json
 logger = logging.getLogger(__name__)
 
 SimConf = dict[Literal["general", "space", "environment"], dict[str, Any]]
-ParamScanConf = dict[Literal["general", "space"], dict[str, list[Any]]]
+""""""
+ParamScanConf = dict[Literal["general", "space", "environment"], dict[str, list[Any]]]
 
 
-def param_scan(outer_dict: ParamScanConf) -> Iterator:
+def param_scan_cartesian_product(outer_dict: ParamScanConf) -> Iterator[SimConf]:
     """
     Return an iterator over all parameter combinations of a configuration parameter dictionary
     which consists of an outer dictionary indexed by strings and containing inner dictionaries
     as values which are indexed by strings and contain lists of possible values for each parameter.
 
     For additional detail see :ref:`Parameter Scan Configuration`.
+
+
+    Parameters
+    ----------
+    outer_dict
+        A dict of dict specifying the parameter space.
+
+    Returns
+    -------
+        An Iterator of parameter combinations that can be passed to `simulate_parameter_space`.
 
     Examples
     --------
@@ -59,7 +71,7 @@ def param_scan(outer_dict: ParamScanConf) -> Iterator:
         >>> conf = {
         >>>     "general": {"parameter_1": [1, 2], "parameter_2": ["a"]},
         >>>     "request_generator": {"parameter_1": [0, 5]},
-        >>> tuple(param_scan(conf))
+        >>> tuple(param_scan_cartesian_product(conf))
         (
            {
                "general": {"parameter_1": 1, "parameter_2": "a"},
@@ -79,13 +91,6 @@ def param_scan(outer_dict: ParamScanConf) -> Iterator:
            },
         )
 
-    Parameters
-    ----------
-    outer_dict
-
-    Returns
-    -------
-
     """
     # outer_dict = {outer_key1: inner_dict1, outer_key_2: inner_dict2, ...}
     # inner_dict1 = {inner_key1: inner_dict_values[1], inner_key2: inner_dict_values[2], ...}
@@ -104,6 +109,88 @@ def param_scan(outer_dict: ParamScanConf) -> Iterator:
             )
         )
     )
+
+
+def param_scan(
+    params_to_product: ParamScanConf, params_to_zip: ParamScanConf
+) -> Iterator[SimConf]:
+    """
+    Returns an iterator of parameter combinations, just like `.param_scan_cartesian_product`. However, allows the user
+    to specify an arbitrary combination of parameters that should not be part of the cartesian product, but rather
+    always appear as a fixed combination.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+        >>> params_to_zip = {1: {"a": [8,9], "b": [88, 99]}}
+        >>> params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
+        >>> tuple(param_scan(params_to_zip=params_to_zip, params_to_product=params_to_product))
+        (
+           {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
+           {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
+           {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
+           {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
+           {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
+           {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
+           {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
+           {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
+        ),
+
+
+    Parameters
+    ----------
+    params_to_zip
+        A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
+        supplied. The values for each inner dict should be lists that all match in lengths. In the returned iterator,
+        these parameters will be :func:`zipped <python:zip>` together.
+    params_to_product
+        A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
+        supplied. All possible combinations of these parameters will be generated.
+    Returns
+    -------
+        An Iterator of parameter combinations that can be passed to `simulate_parameter_space`.
+
+    """
+    outer_keys = set(params_to_zip.keys()) | set(params_to_product.keys())
+    zipped_params_iter = zip(
+        *(
+            params_to_zip[outer_key][inner_key]
+            for outer_key in params_to_zip.keys()
+            for inner_key in params_to_zip[outer_key].keys()
+        )
+    )
+    zipped_keypairs = [
+        (outer_key, inner_key)
+        for outer_key in params_to_zip.keys()
+        for inner_key in params_to_zip[outer_key].keys()
+    ]
+
+    producted_params_iter = it.product(
+        *(
+            params_to_product[outer_key][inner_key]
+            for outer_key in params_to_product.keys()
+            for inner_key in params_to_product[outer_key].keys()
+        )
+    )
+    producted_keypairs = [
+        (outer_key, inner_key)
+        for outer_key in params_to_product.keys()
+        for inner_key in params_to_product[outer_key].keys()
+    ]
+
+    for zipped_params, producted_params in it.product(
+        zipped_params_iter, producted_params_iter
+    ):
+        d = {outer_key: dict() for outer_key in outer_keys}
+
+        for (u, v), p in zip(zipped_keypairs, zipped_params):
+            d[u][v] = p
+
+        for (u, v), p in zip(producted_keypairs, producted_params):
+            d[u][v] = p
+        yield d
 
 
 def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:

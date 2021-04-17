@@ -42,25 +42,29 @@ for example ``conf = {"general": {"param1": [value1, value2]}, "request_generato
 
 The values and types allowed as list elements in the inner dict are the following:
 
-* Valid Values for ``"general"``
+* Valid values for ``"general"``
     * ``n_reqs: int``
     * ``space: TransportSpace``
     * ``n_vehicles: int``
     * ``initial_location: Location``
     * ``seat_capacity: int``
     * ``dispatcher: Dispatcher``
-* Valid Values for ``"request_generator"``
+* Valid values for ``"request_generator"``
     * ``request_generator: Type[RequestGenerator]``
     * ``rate: int``
     * ``max_pickup_delay: int``
     * ``max_pickup_delivery_delay_rel: int``
     * ``seed: int``
-* Valid Values for ``environment``
+* Valid values for ``environment``
     * ``TransportationRequestCls: Type[TransportationRequest]``
     * ``VehicleStateCls: Type[VehicleStateCls]``
     * ``FleetStateCls: Type[FleetStateCls]``
-    * ``data_dir``: PosixPath``
+    * ``data_dir``: `PosixPath`
     * ``chunksize``: int
+
+
+.. automodule:: thesimulator.extras.parameter_spaces
+    :members: param_scan_cartesian_product, param_scan
 
 
 Executing Simulations
@@ -83,29 +87,29 @@ for example ``conf = {"general": {"param1": value1}, "request_generator": {"para
 
 The values and types allowed as values in the inner dict are again the following:
 
-* Valid Values for ``"general"``
+* Valid values for ``"general"``
     * ``n_reqs: int``
     * ``space: TransportSpace``
     * ``n_vehicles: int``
     * ``initial_location: Location``
     * ``seat_capacity: int``
     * ``dispatcher: Dispatcher``
-* Valid Values for ``"request_generator"``
+* Valid values for ``"request_generator"``
     * ``request_generator: Type[RequestGenerator]``
     * ``rate: int``
     * ``max_pickup_delay: int``
     * ``max_pickup_delivery_delay_rel: int``
     * ``seed: int``
-* Valid Values for ``environment``
+* Valid values for ``environment``
     * ``TransportationRequestCls: Type[TransportationRequest]``
     * ``VehicleStateCls: Type[VehicleStateCls]``
     * ``FleetStateCls: Type[FleetStateCls]``
-    * ``data_dir``: PosixPath``
+    * ``data_dir``: `PosixPath`
     * ``chunksize``: int
 
 
-.. automodule:: thesimulator.extras.parameter_spaces.simulate_parameter_space
-    :members:
+.. automodule:: thesimulator.extras.parameter_spaces
+    :members: simulate_parameter_space
 
 
 JSON IO
