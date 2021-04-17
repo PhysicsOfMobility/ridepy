@@ -109,7 +109,7 @@ The values and types allowed as values in the inner dict are again the following
 
 
 .. automodule:: thesimulator.extras.parameter_spaces
-    :members: simulate_parameter_combinations
+    :members: simulate_parameter_combinations, simulate_parameter_space
 
 
 JSON IO

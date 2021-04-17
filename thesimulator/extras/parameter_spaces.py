@@ -139,7 +139,7 @@ def param_scan(
     params_to_zip
         A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
         supplied. The values for each inner dict should be lists that all match in lengths. In the returned iterator,
-        these parameters will be :func:`zipped <python:zip>` together.
+        these parameters will be :func:`zipped <python:zip>` together, i.e. they will vary together.
     params_to_product
         A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
         supplied. All possible combinations of these parameters will be generated.
@@ -312,6 +312,44 @@ def simulate_parameter_combinations(
     debug=False,
 ):
     """
+    Run simulations for different parameter combinations. See the docstring of `.simulate_parameter_space` for more details.
+
+    Parameters
+    ----------
+    param_combinations
+        An iterable of parameter configurations. For more detail see :ref:`Executing Simulations`
+    process_chunksize
+    max_workers
+    debug
+        See the  docstring of `.simulate_parameter_space`
+
+    Returns
+    -------
+        See the  docstring of `.simulate_parameter_space`
+    """
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        sim_ids = list(
+            executor.map(
+                ft.partial(perform_single_simulation, debug=debug),
+                param_combinations,
+                chunksize=process_chunksize,
+            )
+        )
+
+    return sim_ids
+
+
+def simulate_parameter_space(
+    *,
+    data_dir: Path,
+    param_space_to_product: ParamScanConf,
+    param_space_to_zip: Optional[ParamScanConf] = None,
+    chunksize: int = 1000,
+    process_chunksize: int = 1,
+    max_workers=None,
+    debug=False,
+):
+    """
     Run a parameter scan of simulations and save emitted events to disk in JSON Lines format
     and additional JSON file containing the simulation parameters. Parallelization is accomplished
     by multiprocessing. For more detail see :ref:`Executing Simulations`.
@@ -337,28 +375,6 @@ def simulate_parameter_combinations(
     Results can be accessed by reading `data_dir / f"{sim_uuid}.jsonl"`,
     parameters at `data_dir / f"{sim_uuid}_params.json"`
     """
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        sim_ids = list(
-            executor.map(
-                ft.partial(perform_single_simulation, debug=debug),
-                param_combinations,
-                chunksize=process_chunksize,
-            )
-        )
-
-    return sim_ids
-
-
-def simulate_parameter_space(
-    *,
-    data_dir: Path,
-    param_space_to_product: ParamScanConf,
-    param_space_to_zip: Optional[ParamScanConf] = None,
-    chunksize: int = 1000,
-    process_chunksize: int = 1,
-    max_workers=None,
-    debug=False,
-):
     param_space_to_product["environment"]["data_dir"] = [data_dir]
     param_space_to_product["environment"]["chunksize"] = [chunksize]
 
