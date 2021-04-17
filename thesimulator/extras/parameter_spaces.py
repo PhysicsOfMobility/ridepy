@@ -41,8 +41,9 @@ from thesimulator.extras.io import save_params_json, save_events_json
 logger = logging.getLogger(__name__)
 
 SimConf = dict[Literal["general", "space", "environment"], dict[str, Any]]
-""""""
+"""Specifies the parameter combinations for a single simulation run."""
 ParamScanConf = dict[Literal["general", "space", "environment"], dict[str, list[Any]]]
+"""Specifies a parameter space that should be scanned to generate an iterable of `SimConf` objects."""
 
 
 def param_scan_cartesian_product(outer_dict: ParamScanConf) -> Iterator[SimConf]:
@@ -298,10 +299,10 @@ def perform_single_simulation(params, debug):
     return sim_id
 
 
-def simulate_parameter_space(
+def simulate_parameter_combinations(
     *,
     data_dir: Path,
-    conf: ParamScanConf,
+    param_combinations: Iterator[SimConf],
     chunksize: int = 1000,
     process_chunksize: int = 1,
     max_workers=None,
@@ -316,8 +317,8 @@ def simulate_parameter_space(
     ----------
     data_dir
         path to the desired output directory
-    conf
-        configuration dict for the parameter scan.
+    param_combinations
+        iterator of single simulation configurations. see :ref:`Parameter Scan Configuration` for details.
     chunksize
         Maximum number of events to keep in memory before saving to disk
     process_chunksize
@@ -341,7 +342,7 @@ def simulate_parameter_space(
         sim_ids = list(
             executor.map(
                 ft.partial(perform_single_simulation, debug=debug),
-                param_scan(conf),
+                param_combinations,
                 chunksize=process_chunksize,
             )
         )
