@@ -75,6 +75,8 @@ autodoc_type_aliases = {
     "RequestEvent": "thesimulator.events.RequestEvent",
     "StopEvent": "thesimulator.events.StopEvent",
     "SingleVehicleSolution": "thesimulator.data_structures.SingleVehicleSolution",
+    "SimConf": "thesimulator.extras.parameter_spaces.SimConf",
+    "ParamScanConf": "thesimulator.extras.parameter_spaces.ParamScanConf",
 }
 autodoc_inherit_docstrings = False
 

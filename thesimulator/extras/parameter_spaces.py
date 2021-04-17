@@ -2,13 +2,12 @@ import sys
 import logging
 import concurrent.futures
 import os
+import hashlib
 
 import functools as ft
-import numpy as np
 import itertools as it
-from collections import defaultdict
 
-from typing import Iterator, Any, Literal
+from typing import Iterator, Any, Optional, Literal, Dict
 from pathlib import Path
 
 from thesimulator.util.dispatchers import (
@@ -22,15 +21,9 @@ from thesimulator.util.spaces_cython import Euclidean2D as CyEuclidean2D
 from thesimulator.util.request_generators import RandomRequestGenerator
 from thesimulator.data_structures import (
     TransportationRequest,
-    InternalRequest,
-    StopAction,
-    Stop,
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
-    InternalRequest as CyInternalRequest,
-    StopAction as CyStopAction,
-    Stop as CyStop,
 )
 from thesimulator.vehicle_state import VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
@@ -40,9 +33,10 @@ from thesimulator.extras.io import save_params_json, save_events_json
 
 logger = logging.getLogger(__name__)
 
-SimConf = dict[Literal["general", "space", "environment"], dict[str, Any]]
+SimConf = Dict[Literal["general", "space", "environment"], Dict[str, Any]]
 """Specifies the parameter combinations for a single simulation run."""
-ParamScanConf = dict[Literal["general", "space", "environment"], dict[str, list[Any]]]
+
+ParamScanConf = Dict[Literal["general", "space", "environment"], Dict[str, list[Any]]]
 """Specifies a parameter space that should be scanned to generate an iterable of `SimConf` objects."""
 
 
@@ -62,7 +56,7 @@ def param_scan_cartesian_product(outer_dict: ParamScanConf) -> Iterator[SimConf]
 
     Returns
     -------
-        An Iterator of parameter combinations that can be passed to `simulate_parameter_space`.
+        An Iterator of parameter combinations that can be passed to `simulate_parameter_combinations`.
 
     Examples
     --------
@@ -151,35 +145,42 @@ def param_scan(
         supplied. All possible combinations of these parameters will be generated.
     Returns
     -------
-        An Iterator of parameter combinations that can be passed to `simulate_parameter_space`.
+        An Iterator of parameter combinations that can be passed to `simulate_parameter_combinations`.
 
     """
     outer_keys = set(params_to_zip.keys()) | set(params_to_product.keys())
-    zipped_params_iter = zip(
-        *(
-            params_to_zip[outer_key][inner_key]
+    if params_to_zip:
+        zipped_params_iter = zip(
+            *(
+                params_to_zip[outer_key][inner_key]
+                for outer_key in params_to_zip.keys()
+                for inner_key in params_to_zip[outer_key].keys()
+            )
+        )
+
+        zipped_keypairs = [
+            (outer_key, inner_key)
             for outer_key in params_to_zip.keys()
             for inner_key in params_to_zip[outer_key].keys()
-        )
-    )
-    zipped_keypairs = [
-        (outer_key, inner_key)
-        for outer_key in params_to_zip.keys()
-        for inner_key in params_to_zip[outer_key].keys()
-    ]
+        ]
+    else:
+        zipped_params_iter = zipped_keypairs = [tuple()]
 
-    producted_params_iter = it.product(
-        *(
-            params_to_product[outer_key][inner_key]
+    if params_to_product:
+        producted_params_iter = it.product(
+            *(
+                params_to_product[outer_key][inner_key]
+                for outer_key in params_to_product.keys()
+                for inner_key in params_to_product[outer_key].keys()
+            )
+        )
+        producted_keypairs = [
+            (outer_key, inner_key)
             for outer_key in params_to_product.keys()
             for inner_key in params_to_product[outer_key].keys()
-        )
-    )
-    producted_keypairs = [
-        (outer_key, inner_key)
-        for outer_key in params_to_product.keys()
-        for inner_key in params_to_product[outer_key].keys()
-    ]
+        ]
+    else:
+        producted_params_iter = producted_keypairs = [tuple()]
 
     for zipped_params, producted_params in it.product(
         zipped_params_iter, producted_params_iter
@@ -253,8 +254,21 @@ def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
 
 
 def perform_single_simulation(params, debug):
-    space = params["general"]["space"]
+    # we need a pseudorandom id that does not change if this function is called with the same params
+    sim_id = hashlib.sha224(str(params)).hexdigest()
+    data_dir = params["environment"].get("data_dir", Path())
+    jsonl_path = data_dir / f"{sim_id}.jsonl"
+    param_path = data_dir / f"{sim_id}_params.json"
 
+    if param_path.exists():
+        # assume that a previous simulation run already exists. this works because we write
+        # to param_path *after* a successful simulation run.
+        logger.info(f"Previous simulation data found for {params=}, skipping")
+        return sim_id
+    else:
+        assert not jsonl_path.exists()
+
+    space = params["general"]["space"]
     rg = RandomRequestGenerator(
         rate=params["request_generator"]["rate"],
         max_pickup_delay=params["request_generator"]["max_pickup_delay"],
@@ -281,29 +295,18 @@ def perform_single_simulation(params, debug):
 
     simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
 
-    sim_id = get_uuid()
-    data_dir = params["environment"].get("data_dir", Path())
-    jsonl_path = data_dir / f"{sim_id}.jsonl"
-    param_path = data_dir / f"{sim_id}_params.json"
-
-    assert not jsonl_path.exists()
-    assert not param_path.exists()
-
-    save_params_json(param_path=param_path, params=params)
-
     while chunk := list(
         it.islice(simulation, params["environment"].get("chunksize", 1000))
     ):
         save_events_json(jsonl_path=jsonl_path, events=chunk)
 
+    save_params_json(param_path=param_path, params=params)
     return sim_id
 
 
 def simulate_parameter_combinations(
     *,
-    data_dir: Path,
     param_combinations: Iterator[SimConf],
-    chunksize: int = 1000,
     process_chunksize: int = 1,
     max_workers=None,
     debug=False,
@@ -334,10 +337,6 @@ def simulate_parameter_combinations(
     Results can be accessed by reading `data_dir / f"{sim_uuid}.jsonl"`,
     parameters at `data_dir / f"{sim_uuid}_params.json"`
     """
-
-    conf["environment"]["data_dir"] = [data_dir]
-    conf["environment"]["chunksize"] = [chunksize]
-
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         sim_ids = list(
             executor.map(
@@ -348,3 +347,29 @@ def simulate_parameter_combinations(
         )
 
     return sim_ids
+
+
+def simulate_parameter_space(
+    *,
+    data_dir: Path,
+    param_space_to_product: ParamScanConf,
+    param_space_to_zip: Optional[ParamScanConf] = None,
+    chunksize: int = 1000,
+    process_chunksize: int = 1,
+    max_workers=None,
+    debug=False,
+):
+    param_space_to_product["environment"]["data_dir"] = [data_dir]
+    param_space_to_product["environment"]["chunksize"] = [chunksize]
+
+    if param_space_to_zip is None:
+        param_space_to_zip = dict()
+
+    return simulate_parameter_combinations(
+        param_combinations=param_scan(
+            params_to_product=param_space_to_product, params_to_zip=param_space_to_zip
+        ),
+        process_chunksize=process_chunksize,
+        max_workers=max_workers,
+        debug=debug,
+    )

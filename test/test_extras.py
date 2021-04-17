@@ -16,6 +16,7 @@ from thesimulator.extras.spaces import (
 )
 
 from thesimulator.extras.parameter_spaces import (
+    simulate_parameter_combinations,
     simulate_parameter_space,
     get_default_conf,
     param_scan,
@@ -44,7 +45,7 @@ def test_simulate(cython, tmp_path, capfd):
     conf["general"]["n_reqs"] = [10]
     conf["general"]["n_vehicles"] = [10, 100]
     conf["general"]["seat_capacity"] = [2, 8]
-    res = simulate_parameter_space(
+    res = simulate_parameter_combinations(
         data_dir=tmp_path, conf=conf, chunksize=1000, debug=True
     )
 
@@ -62,7 +63,11 @@ def test_simulate(cython, tmp_path, capfd):
 def test_io_simulate(tmp_path, capfd):
     conf = get_default_conf(cython=True)
     conf["general"]["n_reqs"] = [100]
-    res = simulate_parameter_space(data_dir=tmp_path, conf=conf, chunksize=1000)
+    res = simulate_parameter_space(
+        data_dir=tmp_path,
+        param_space_to_product=conf,
+        chunksize=1000,
+    )
 
     evs = read_events_json(tmp_path / f"{res[0]}.jsonl")
     params = read_params_json(param_path=tmp_path / f"{res[0]}_params.json")
@@ -120,3 +125,18 @@ def test_param_scan():
         {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
         {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
     )
+
+
+def test_param_scan_equivalent_to_cartesian_product():
+    params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
+    assert list(
+        param_scan(params_to_product=params_to_product, params_to_zip=dict())
+    ) == list(param_scan_cartesian_product(params_to_product))
+
+
+def test_param_scan_equivalent_to_pure_zip():
+    params_to_zip = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
+    assert list(param_scan(params_to_zip=params_to_zip, params_to_product=dict())) == [
+        {1: {"c": 100}, 2: {"z": 1000}},
+        {1: {"c": 200}, 2: {"z": 2000}},
+    ]
