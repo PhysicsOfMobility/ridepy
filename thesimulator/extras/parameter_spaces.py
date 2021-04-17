@@ -255,7 +255,8 @@ def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
 
 def perform_single_simulation(params, debug):
     # we need a pseudorandom id that does not change if this function is called with the same params
-    sim_id = hashlib.sha224(str(params)).hexdigest()
+    # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
+    sim_id = hashlib.sha224(str(params).encode("ascii", errors="strict")).hexdigest()
     data_dir = params["environment"].get("data_dir", Path())
     jsonl_path = data_dir / f"{sim_id}.jsonl"
     param_path = data_dir / f"{sim_id}_params.json"

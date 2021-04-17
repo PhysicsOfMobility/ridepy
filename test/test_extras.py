@@ -45,8 +45,8 @@ def test_simulate(cython, tmp_path, capfd):
     conf["general"]["n_reqs"] = [10]
     conf["general"]["n_vehicles"] = [10, 100]
     conf["general"]["seat_capacity"] = [2, 8]
-    res = simulate_parameter_combinations(
-        data_dir=tmp_path, conf=conf, chunksize=1000, debug=True
+    res = simulate_parameter_space(
+        data_dir=tmp_path, param_space_to_product=conf, chunksize=1000, debug=True
     )
 
     # evaluate multiprocessing
