@@ -239,10 +239,10 @@ def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
             dispatcher=[dispatcher],
         ),
         request_generator=dict(
-            request_generator=[RequestGeneratorCls],
+            RequestGeneratorCls=[RequestGeneratorCls],
             rate=[10],
             max_pickup_delay=[3],
-            max_pickup_delivery_delay_rel=[1.9],
+            max_delivery_delay_rel=[1.9],
             seed=[42],
         ),
         environment=dict(
@@ -270,13 +270,11 @@ def perform_single_simulation(params, debug):
         assert not jsonl_path.exists()
 
     space = params["general"]["space"]
-    rg = RandomRequestGenerator(
-        rate=params["request_generator"]["rate"],
-        max_pickup_delay=params["request_generator"]["max_pickup_delay"],
-        max_delivery_delay_rel=params["request_generator"]["max_pickup_delay"],
-        seed=params["request_generator"]["seed"],
+    RequestGeneratorCls = params["request_generator"].pop("RequestGeneratorCls")
+    rg = RequestGeneratorCls(
         space=space,
         request_class=params["environment"]["TransportationRequestCls"],
+        **params["request_generator"],
     )
 
     fs = params["environment"]["FleetStateCls"](

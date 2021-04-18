@@ -73,15 +73,11 @@ class ParamsJSONDecoder(json.JSONDecoder):
             if "initial_location" in dct and isinstance(dct["initial_location"], list):
                 dct["initial_location"] = tuple(dct["initial_location"])
 
-            # test for str type because `request_generator` is also an outer key
-            if "request_generator" in dct and isinstance(dct["request_generator"], str):
-                module, cls = dct["request_generator"].rsplit(".", 1)
-                dct["request_generator"] = getattr(importlib.import_module(module), cls)
-
             for cls_str in [
                 "TransportationRequestCls",
                 "FleetStateCls",
                 "VehicleStateCls",
+                "RequestGeneratorCls",
             ]:
                 if cls_str in dct:
                     module, cls = dct[cls_str].rsplit(".", 1)
