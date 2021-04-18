@@ -164,6 +164,21 @@ class EventsJSONDecoder(json.JSONDecoder):
         return dct
 
 
+def create_params_json(*, params: dict) -> str:
+    """
+    Create a dictionary containing simulation parameters to pretty JSON,
+    overwriting existing. Parameter dictionaries may contain anything that is supported
+    by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
+    `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
+
+    Parameters
+    ----------
+    params
+        dictionary containing the params to save
+    """
+    return json.dumps(params, indent=4, cls=ParamsJSONEncoder)
+
+
 def save_params_json(*, param_path: Path, params: dict) -> None:
     """
     Save a dictionary containing simulation parameters to pretty JSON,
@@ -178,7 +193,8 @@ def save_params_json(*, param_path: Path, params: dict) -> None:
     params
         dictionary containing the params to save
     """
-    json.dump(params, param_path.open("w"), indent=4, cls=ParamsJSONEncoder)
+    with open(str(param_path), "w") as f:
+        f.write(create_params_json(params=params))
 
 
 def read_params_json(param_path: Path) -> dict:

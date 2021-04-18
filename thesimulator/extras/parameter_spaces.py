@@ -29,7 +29,11 @@ from thesimulator.vehicle_state import VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from thesimulator.util import get_uuid
-from thesimulator.extras.io import save_params_json, save_events_json
+from thesimulator.extras.io import (
+    create_params_json,
+    save_params_json,
+    save_events_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +194,9 @@ def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
 def perform_single_simulation(params, debug):
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
-    sim_id = hashlib.sha224(str(params).encode("ascii", errors="strict")).hexdigest()
+
+    params_json = create_params_json(params=params)
+    sim_id = hashlib.sha224(params_json.encode("ascii", errors="strict")).hexdigest()
     data_dir = params["environment"].get("data_dir", Path())
     jsonl_path = data_dir / f"{sim_id}.jsonl"
     param_path = data_dir / f"{sim_id}_params.json"
@@ -198,10 +204,18 @@ def perform_single_simulation(params, debug):
     if param_path.exists():
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
-        logger.info(f"Previous simulation data found for {params=}, skipping")
+        logger.info(
+            f"Pre-existing param json exists for {params=}, skipping simulation"
+        )
         return sim_id
     else:
-        assert not jsonl_path.exists()
+        logger.info(
+            f"No pre-existing param json exists for {params=}, running simulation"
+        )
+        if jsonl_path.exists():
+            logger.info(
+                "Potentially incomplete simulation data exists, this will be overwritten"
+            )
 
     space = params["general"]["space"]
     RequestGeneratorCls = params["request_generator"].pop("RequestGeneratorCls")
@@ -233,7 +247,8 @@ def perform_single_simulation(params, debug):
     ):
         save_events_json(jsonl_path=jsonl_path, events=chunk)
 
-    save_params_json(param_path=param_path, params=params)
+    with open(str(param_path), "w") as f:
+        f.write(params_json)
     return sim_id
 
 
@@ -268,7 +283,6 @@ def simulate_parameter_combinations(
                 chunksize=process_chunksize,
             )
         )
-
     return sim_ids
 
 
