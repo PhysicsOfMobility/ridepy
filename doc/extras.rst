@@ -59,12 +59,12 @@ The values and types allowed as list elements in the inner dict are the followin
     * ``TransportationRequestCls: Type[TransportationRequest]``
     * ``VehicleStateCls: Type[VehicleStateCls]``
     * ``FleetStateCls: Type[FleetStateCls]``
-    * ``data_dir``: `PosixPath`
-    * ``chunksize``: int
+    * ``data_dir: PosixPath``
+    * ``chunksize: int``
 
 
 .. automodule:: thesimulator.extras.parameter_spaces
-    :members: param_scan_cartesian_product, param_scan
+    :members: get_default_conf, param_scan_cartesian_product, param_scan
 
 
 Executing Simulations
@@ -104,8 +104,8 @@ The values and types allowed as values in the inner dict are again the following
     * ``TransportationRequestCls: Type[TransportationRequest]``
     * ``VehicleStateCls: Type[VehicleStateCls]``
     * ``FleetStateCls: Type[FleetStateCls]``
-    * ``data_dir``: `PosixPath`
-    * ``chunksize``: int
+    * ``data_dir: PosixPath``
+    * ``chunksize: int``
 
 
 .. automodule:: thesimulator.extras.parameter_spaces
