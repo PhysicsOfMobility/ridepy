@@ -1,8 +1,9 @@
 import pytest
 import os
 import re
-
 import logging
+
+import itertools as it
 
 from thesimulator.extras.io import (
     save_params_json,
@@ -128,6 +129,21 @@ def test_param_scan():
 
 
 def test_param_scan_equivalent_to_cartesian_product():
+    param_scan_cartesian_product = lambda outer_dict: (
+        {
+            outer_key: inner_dict
+            for outer_key, inner_dict in zip(outer_dict, inner_dicts)
+        }
+        for inner_dicts in it.product(
+            *map(
+                lambda inner_dict: map(
+                    lambda inner_dict_values: dict(zip(inner_dict, inner_dict_values)),
+                    it.product(*inner_dict.values()),
+                ),
+                outer_dict.values(),
+            )
+        )
+    )
     params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
     assert list(
         param_scan(params_to_product=params_to_product, params_to_zip=dict())
