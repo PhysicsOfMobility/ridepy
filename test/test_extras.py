@@ -81,7 +81,11 @@ def test_io_params(tmp_path):
     param_path = tmp_path / f"params.json"
 
     for cython in [False, True]:
-        params = next(param_scan(params_to_product=get_default_conf(cython=cython)))
+        params = next(
+            param_scan(
+                params_to_product=get_default_conf(cython=cython), params_to_zip=dict()
+            )
+        )
 
         save_params_json(param_path=param_path, params=params)
         restored_params = read_params_json(param_path=param_path)
