@@ -21,7 +21,6 @@ from thesimulator.extras.parameter_spaces import (
     simulate_parameter_space,
     get_default_conf,
     param_scan,
-    param_scan_cartesian_product,
 )
 from thesimulator.util.analytics import get_stops_and_requests
 
@@ -82,7 +81,7 @@ def test_io_params(tmp_path):
     param_path = tmp_path / f"params.json"
 
     for cython in [False, True]:
-        params = next(param_scan_cartesian_product(get_default_conf(cython=cython)))
+        params = next(param_scan(params_to_product=get_default_conf(cython=cython)))
 
         save_params_json(param_path=param_path, params=params)
         restored_params = read_params_json(param_path=param_path)
