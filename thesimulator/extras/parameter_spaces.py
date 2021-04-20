@@ -1,3 +1,5 @@
+import abc
+
 import sys
 import logging
 import concurrent.futures
@@ -28,25 +30,17 @@ from thesimulator.data_structures_cython import (
 from thesimulator.vehicle_state import VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
 from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.util import get_uuid
 from thesimulator.extras.io import (
     create_params_json,
-    save_params_json,
     save_events_json,
 )
 
 logger = logging.getLogger(__name__)
 
-SimConf = Dict[Literal["general", "space", "environment"], Dict[str, Any]]
-"""Specifies the parameter combinations for a single simulation run."""
 
-ParamScanConf = Dict[Literal["general", "space", "environment"], Dict[str, list[Any]]]
-"""Specifies a parameter space that should be scanned to generate an iterable of `SimConf` objects."""
-
-
-def param_scan(
-    params_to_product: ParamScanConf, params_to_zip: ParamScanConf
-) -> Iterator[SimConf]:
+def iterate_zip_product(
+    *, params_to_product: Optional[dict] = None, params_to_zip: Optional[dict] = None
+):
     """
     Returns an iterator of parameter combinations, just like `.param_scan_cartesian_product`. However, allows the user
     to specify an arbitrary combination of parameters that should not be part of the cartesian product, but rather
@@ -59,7 +53,7 @@ def param_scan(
 
         >>> params_to_zip = {1: {"a": [8,9], "b": [88, 99]}}
         >>> params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-        >>> tuple(param_scan(params_to_zip=params_to_zip, params_to_product=params_to_product))
+        >>> tuple(iterate_zip_product(params_to_zip=params_to_zip, params_to_product=params_to_product))
         (
            {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
            {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
@@ -130,65 +124,8 @@ def param_scan(
 
         for (u, v), p in zip(producted_keypairs, producted_params):
             d[u][v] = p
+
         yield d
-
-
-def get_default_conf(cython: bool = True, mpi: bool = False) -> ParamScanConf:
-    """
-    Return default parameter scan configuration as dict.
-    For more detail see :ref:`Parameter Scan Configuration`.
-
-    Parameters
-    ----------
-    cython
-        If True, use cython types.
-    mpi
-        If True use MPIFuturesFleetState for parallelization.
-
-    Returns
-    -------
-
-    """
-    if cython:
-        SpaceObj = CyEuclidean2D()
-        dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
-        TransportationRequestCls = CyTransportationRequest
-        VehicleStateCls = CyVehicleState
-    else:
-        SpaceObj = Euclidean2D()
-        dispatcher = brute_force_total_traveltime_minimizing_dispatcher
-        TransportationRequestCls = TransportationRequest
-        VehicleStateCls = VehicleState
-
-    if mpi:
-        FleetStateCls = MPIFuturesFleetState
-    else:
-        FleetStateCls = SlowSimpleFleetState
-
-    RequestGeneratorCls = RandomRequestGenerator
-
-    return dict(
-        general=dict(
-            n_reqs=[100],
-            space=[SpaceObj],
-            n_vehicles=[10],
-            initial_location=[(0, 0)],
-            seat_capacity=[8],
-            dispatcher=[dispatcher],
-        ),
-        request_generator=dict(
-            RequestGeneratorCls=[RequestGeneratorCls],
-            rate=[10],
-            max_pickup_delay=[3],
-            max_delivery_delay_rel=[1.9],
-            seed=[42],
-        ),
-        environment=dict(
-            TransportationRequestCls=[TransportationRequestCls],
-            VehicleStateCls=[VehicleStateCls],
-            FleetStateCls=[FleetStateCls],
-        ),
-    )
 
 
 def perform_single_simulation(params, debug):
@@ -250,6 +187,112 @@ def perform_single_simulation(params, debug):
     with open(str(param_path), "w") as f:
         f.write(params_json)
     return sim_id
+
+
+class ParameterSet:
+    """
+    Specifies a parameter space that should be scanned to generate an iterable of `SimConf` objects.
+    """
+
+    def __init__(
+        self,
+        *,
+        base_params: Optional[dict] = None,
+        zip_params: Optional[dict] = None,
+        product_params: Optional[dict] = None,
+        cython: bool = True,
+        mpi: bool = False,
+    ):
+        """
+        For more detail see :ref:`Parameter Scan Configuration`.
+
+        Parameters
+        ----------
+        cython
+            If True, use cython types.
+        mpi
+            If True use MPIFuturesFleetState for parallelization.
+
+        Returns
+        -------
+
+        """
+
+        if cython:
+            SpaceObj = CyEuclidean2D()
+            dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+            TransportationRequestCls = CyTransportationRequest
+            VehicleStateCls = CyVehicleState
+        else:
+            SpaceObj = Euclidean2D()
+            dispatcher = brute_force_total_traveltime_minimizing_dispatcher
+            TransportationRequestCls = TransportationRequest
+            VehicleStateCls = VehicleState
+
+        if mpi:
+            FleetStateCls = MPIFuturesFleetState
+        else:
+            FleetStateCls = SlowSimpleFleetState
+
+        RequestGeneratorCls = RandomRequestGenerator
+
+        self.base_params = (
+            base_params
+            if base_params is not None
+            else dict(
+                general=dict(
+                    n_reqs=100,
+                    space=SpaceObj,
+                    n_vehicles=10,
+                    initial_location=(0, 0),
+                    seat_capacity=8,
+                    dispatcher=dispatcher,
+                ),
+                request_generator=dict(
+                    RequestGeneratorCls=RequestGeneratorCls,
+                    rate=10,
+                    max_pickup_delay=3,
+                    max_delivery_delay_rel=1.9,
+                    seed=42,
+                ),
+                environment=dict(
+                    TransportationRequestCls=TransportationRequestCls,
+                    VehicleStateCls=VehicleStateCls,
+                    FleetStateCls=FleetStateCls,
+                ),
+            )
+        )
+
+        self.zip_params = zip_params if zip_params is not None else {}
+
+        self.product_params = product_params if product_params is not None else {}
+
+    def __iter__(self):
+        self.iterator_zip_product = iterate_zip_product(
+            params_to_zip=self.zip_params, params_to_product=self.product_params
+        )
+        return self
+
+    def __next__(self):
+        # FIXME this won't work, will have to do this for every inner dict separately
+        # return self.base_params | next(self.iterator_zip_product)
+        ...
+
+    def run(self):
+        self.result_ids = []
+
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=max_workers
+        ) as executor:
+            sim_ids = list(
+                executor.map(
+                    ft.partial(perform_single_simulation, debug=debug),
+                    param_combinations,
+                    chunksize=process_chunksize,
+                )
+            )
+
+        return sim_ids
 
 
 def simulate_parameter_combinations(
@@ -329,7 +372,7 @@ def simulate_parameter_space(
         param_space_to_zip = dict()
 
     return simulate_parameter_combinations(
-        param_combinations=param_scan(
+        param_combinations=iterate_zip_product(
             params_to_product=param_space_to_product, params_to_zip=param_space_to_zip
         ),
         process_chunksize=process_chunksize,

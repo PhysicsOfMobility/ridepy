@@ -64,7 +64,7 @@ The values and types allowed as list elements in the inner dict are the followin
 
 
 .. automodule:: thesimulator.extras.parameter_spaces
-    :members: get_default_conf, param_scan_cartesian_product, param_scan
+    :members: get_default_conf, param_scan_cartesian_product, iterate_zip_product
 
 
 Executing Simulations

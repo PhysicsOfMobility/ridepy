@@ -20,7 +20,7 @@ from thesimulator.extras.parameter_spaces import (
     simulate_parameter_combinations,
     simulate_parameter_space,
     get_default_conf,
-    param_scan,
+    iterate_zip_product,
 )
 from thesimulator.util.analytics import get_stops_and_requests
 
@@ -82,7 +82,7 @@ def test_io_params(tmp_path):
 
     for cython in [False, True]:
         params = next(
-            param_scan(
+            iterate_zip_product(
                 params_to_product=get_default_conf(cython=cython), params_to_zip=dict()
             )
         )
@@ -106,7 +106,9 @@ def test_param_scan_length():
         2: {"w": [1000, 2000]},
     }
     res = list(
-        param_scan(params_to_zip=params_tozip, params_to_product=params_toproduct)
+        iterate_zip_product(
+            params_to_zip=params_tozip, params_to_product=params_toproduct
+        )
     )
 
     assert len(res) == 3 * 2 * 4 * 2
@@ -118,7 +120,9 @@ def test_param_scan():
     params_to_zip = {1: {"a": [8, 9], "b": [88, 99]}}
     params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
     assert tuple(
-        param_scan(params_to_zip=params_to_zip, params_to_product=params_to_product)
+        iterate_zip_product(
+            params_to_zip=params_to_zip, params_to_product=params_to_product
+        )
     ) == (
         {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
         {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
@@ -149,13 +153,15 @@ def test_param_scan_equivalent_to_cartesian_product():
     )
     params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
     assert list(
-        param_scan(params_to_product=params_to_product, params_to_zip=dict())
+        iterate_zip_product(params_to_product=params_to_product, params_to_zip=dict())
     ) == list(param_scan_cartesian_product(params_to_product))
 
 
 def test_param_scan_equivalent_to_pure_zip():
     params_to_zip = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-    assert list(param_scan(params_to_zip=params_to_zip, params_to_product=dict())) == [
+    assert list(
+        iterate_zip_product(params_to_zip=params_to_zip, params_to_product=dict())
+    ) == [
         {1: {"c": 100}, 2: {"z": 1000}},
         {1: {"c": 200}, 2: {"z": 2000}},
     ]
