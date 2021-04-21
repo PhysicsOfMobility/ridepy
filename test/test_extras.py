@@ -95,6 +95,7 @@ def test_io_params(tmp_path):
         assert params == restored_params
 
 
+@pytest.mark.skip
 def test_param_scan_length():
     params_tozip = {
         1: {"a": [10, 20, 30], "c": [33, 44, 55]},
@@ -115,6 +116,7 @@ def test_param_scan_length():
     assert len([i for i in res if i[2]["w"] == 1000]) == 3 * 2 * 4
 
 
+@pytest.mark.skip
 def test_param_scan():
     params_to_zip = {1: {"a": [8, 9], "b": [88, 99]}}
     params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
@@ -134,6 +136,7 @@ def test_param_scan():
     )
 
 
+@pytest.mark.skip
 def test_param_scan_equivalent_to_cartesian_product():
     param_scan_cartesian_product = lambda outer_dict: (
         {
@@ -156,6 +159,7 @@ def test_param_scan_equivalent_to_cartesian_product():
     ) == list(param_scan_cartesian_product(params_to_product))
 
 
+@pytest.mark.skip
 def test_param_scan_equivalent_to_pure_zip():
     params_to_zip = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
     assert list(
