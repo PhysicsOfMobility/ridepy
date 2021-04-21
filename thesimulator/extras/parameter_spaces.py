@@ -147,17 +147,18 @@ def perform_single_simulation(
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
         logger.info(
-            f"Pre-existing param json exists for {params=}, skipping simulation"
+            f"Pre-existing param json exists for {params=} at {param_path=}, skipping simulation"
         )
         return sim_id
     else:
         logger.info(
-            f"No pre-existing param json exists for {params=}, running simulation"
+            f"No pre-existing param json exists for {params=} at {param_path=}, running simulation"
         )
         if jsonl_path.exists():
             logger.info(
-                "Potentially incomplete simulation data exists, this will be overwritten"
+                f"Potentially incomplete simulation data exists at {jsonl_path=}, this will be overwritten"
             )
+            jsonl_path.unlink()
 
     space = params["general"]["space"]
     RequestGeneratorCls = params["request_generator"].pop("RequestGeneratorCls")
