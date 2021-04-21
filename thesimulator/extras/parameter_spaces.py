@@ -133,15 +133,21 @@ logger = logging.getLogger(__name__)
 
 
 def perform_single_simulation(
-    params, *, data_dir: PosixPath, chunksize: int = 1000, debug: bool = False
+    params,
+    *,
+    data_dir: PosixPath,
+    chunksize: int = 1000,
+    debug: bool = False,
+    param_path_suffix: str = "_params.json",
+    result_path_suffix: str = ".jsonl",
 ):
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
 
     params_json = create_params_json(params=params)
     sim_id = hashlib.sha224(params_json.encode("ascii", errors="strict")).hexdigest()
-    jsonl_path = data_dir / f"{sim_id}.jsonl"
-    param_path = data_dir / f"{sim_id}_params.json"
+    result_path = data_dir / f"{sim_id}{result_path_suffix}"
+    param_path = data_dir / f"{sim_id}{param_path_suffix}"
 
     if param_path.exists():
         # assume that a previous simulation run already exists. this works because we write
@@ -154,21 +160,21 @@ def perform_single_simulation(
         logger.info(
             f"No pre-existing param json exists for {params=} at {param_path=}, running simulation"
         )
-        if jsonl_path.exists():
+        if result_path.exists():
             logger.info(
-                f"Potentially incomplete simulation data exists at {jsonl_path=}, this will be overwritten"
+                f"Potentially incomplete simulation data exists at {result_path=}, this will be overwritten"
             )
-            jsonl_path.unlink()
+            result_path.unlink()
 
     space = params["general"]["space"]
     RequestGeneratorCls = params["request_generator"].pop("RequestGeneratorCls")
     rg = RequestGeneratorCls(
         space=space,
-        request_class=params["environment"]["TransportationRequestCls"],
+        request_class=params["general"]["TransportationRequestCls"],
         **params["request_generator"],
     )
 
-    fs = params["environment"]["FleetStateCls"](
+    fs = params["general"]["FleetStateCls"](
         initial_locations={
             vehicle_id: params["general"]["initial_location"]
             for vehicle_id in range(params["general"]["n_vehicles"])
@@ -176,7 +182,7 @@ def perform_single_simulation(
         space=space,
         dispatcher=params["general"]["dispatcher"],
         seat_capacities=params["general"]["seat_capacity"],
-        vehicle_state_class=params["environment"]["VehicleStateCls"],
+        vehicle_state_class=params["general"]["VehicleStateCls"],
     )
 
     # NOTE: this string is matched for testing
@@ -186,7 +192,7 @@ def perform_single_simulation(
     simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
 
     while chunk := list(it.islice(simulation, chunksize)):
-        save_events_json(jsonl_path=jsonl_path, events=chunk)
+        save_events_json(jsonl_path=result_path, events=chunk)
 
     with open(str(param_path), "w") as f:
         f.write(params_json)
@@ -241,6 +247,8 @@ class SimulationSet:
         max_workers: Optional[int] = None,
         process_chunksize: int = 1,
         jsonl_chunksize: int = 1000,
+        result_path_suffix: str = ".jsonl",
+        param_path_suffix: str = "_params.json",
     ):
         """
         For more detail see :ref:`Parameter Scan Configuration`.
@@ -262,6 +270,9 @@ class SimulationSet:
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = data_dir
+
+        self._result_path_suffix = result_path_suffix
+        self._param_path_suffix = param_path_suffix
 
         if cython:
             SpaceObj = CyEuclidean2D()
@@ -304,7 +315,7 @@ class SimulationSet:
 
         base_params = base_params if base_params is not None else {}
         zip_params = zip_params if zip_params is not None else {}
-        product_params = product_params if zip_params is not None else {}
+        product_params = product_params if product_params is not None else {}
 
         # assert no unknown outer keys
         assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
@@ -334,6 +345,20 @@ class SimulationSet:
     def result_ids(self):
         # protect result ids
         return self._result_ids if self._result_ids is not None else []
+
+    @property
+    def param_paths(self):
+        return [
+            self.data_dir / f"{result_id}{self._param_path_suffix}"
+            for result_id in self._result_ids
+        ]
+
+    @property
+    def result_paths(self):
+        return [
+            self.data_dir / f"{result_id}{self._result_path_suffix}"
+            for result_id in self._result_ids
+        ]
 
     @staticmethod
     def _make_joined_key_pairs_values(*, params, join_fn):
@@ -405,8 +430,10 @@ class SimulationSet:
                         debug=self.debug,
                         chunksize=self.jsonl_chunksize,
                         data_dir=self.data_dir,
+                        param_path_suffix=self._param_path_suffix,
+                        result_path_suffix=self._result_path_suffix,
                     ),
-                    param_combinations,
+                    param_combinations(),
                     chunksize=self.process_chunksize,
                 )
             )

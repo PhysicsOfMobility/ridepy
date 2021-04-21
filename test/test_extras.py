@@ -45,17 +45,18 @@ def test_simulate(cython, tmp_path, capfd):
         debug=True,
     )
 
-    res = simulation_set.run()
+    simulation_set.run()
 
     # evaluate multiprocessing
     out, _ = capfd.readouterr()
     pids = re.findall(r"Simulating run on process (\d+) @", out)
     assert 1 < len(set(pids)) <= os.cpu_count()
 
-    assert len(res) == 4
-    for r in res:
-        assert (tmp_path / f"{r}_params.json").exists()
-        assert (tmp_path / f"{r}.jsonl").exists()
+    assert len(simulation_set.result_ids) == 4
+    assert all(
+        path.exists()
+        for path in it.chain(simulation_set.param_paths, simulation_set.result_paths)
+    )
 
 
 def test_io_simulate(tmp_path):
@@ -65,10 +66,10 @@ def test_io_simulate(tmp_path):
         debug=True,
     )
 
-    res = simulation_set.run()
+    simulation_set.run()
 
-    evs = read_events_json(tmp_path / f"{res[0]}.jsonl")
-    params = read_params_json(param_path=tmp_path / f"{res[0]}_params.json")
+    evs = read_events_json(simulation_set.result_paths[0])
+    params = read_params_json(simulation_set.param_paths[0])
     stops, requests = get_stops_and_requests(
         space=params["general"]["space"], events=evs
     )
