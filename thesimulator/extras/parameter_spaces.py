@@ -13,8 +13,8 @@ import hashlib
 import functools as ft
 import itertools as it
 
-from typing import Iterator, Any, Optional, Literal, Dict, Iterable
-from pathlib import Path
+from typing import Iterator, Any, Optional, Literal, Dict, Iterable, Union
+from pathlib import Path, PosixPath
 
 from thesimulator.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
@@ -41,98 +41,100 @@ from thesimulator.extras.io import (
 
 logger = logging.getLogger(__name__)
 
+#
+# def iterate_zip_product(
+#     *, params_to_product: Optional[dict] = None, params_to_zip: Optional[dict] = None
+# ):
+#     """
+#     Returns an iterator of parameter combinations, just like `.param_scan_cartesian_product`. However, allows the user
+#     to specify an arbitrary combination of parameters that should not be part of the cartesian product, but rather
+#     always appear as a fixed combination.
+#
+#     Examples
+#     --------
+#
+#     .. code-block:: python
+#
+#         >>> params_to_zip = {1: {"a": [8,9], "b": [88, 99]}}
+#         >>> params = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
+#         >>> tuple(iterate_zip_product(params_to_zip=params_to_zip, params=params))
+#         (
+#            {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
+#            {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
+#            {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
+#            {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
+#            {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
+#            {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
+#            {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
+#            {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
+#         ),
+#
+#
+#     Parameters
+#     ----------
+#     params_to_zip
+#         A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
+#         supplied. The values for each inner dict should be lists that all match in lengths. In the returned iterator,
+#         these parameters will be :func:`zipped <python:zip>` together, i.e. they will vary together.
+#     params_to_product
+#         A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
+#         supplied. All possible combinations of these parameters will be generated.
+#     Returns
+#     -------
+#         An Iterator of parameter combinations that can be passed to `simulate_parameter_combinations`.
+#
+#     """
+#     outer_keys = set(params_to_zip) | set(params_to_product)
+#     if params_to_zip:
+#         zipped_params_iter = zip(
+#             *(
+#                 params_to_zip[outer_key][inner_key]
+#                 for outer_key in params_to_zip.keys()
+#                 for inner_key in params_to_zip[outer_key].keys()
+#             )
+#         )
+#
+#         zipped_keypairs = [
+#             (outer_key, inner_key)
+#             for outer_key in params_to_zip.keys()
+#             for inner_key in params_to_zip[outer_key].keys()
+#         ]
+#     else:
+#         zipped_params_iter = zipped_keypairs = [tuple()]
+#
+#     if params_to_product:
+#         producted_params_iter = it.product(
+#             *(
+#                 params_to_product[outer_key][inner_key]
+#                 for outer_key in params_to_product.keys()
+#                 for inner_key in params_to_product[outer_key].keys()
+#             )
+#         )
+#         producted_keypairs = [
+#             (outer_key, inner_key)
+#             for outer_key in params_to_product.keys()
+#             for inner_key in params_to_product[outer_key].keys()
+#         ]
+#     else:
+#         producted_params_iter = producted_keypairs = [tuple()]
+#
+#     for zipped_params, producted_params in it.product(
+#         zipped_params_iter, producted_params_iter
+#     ):
+#         d = {outer_key: dict() for outer_key in outer_keys}
+#
+#         for (u, v), p in zip(zipped_keypairs, zipped_params):
+#             d[u][v] = p
+#
+#         for (u, v), p in zip(producted_keypairs, producted_params):
+#             d[u][v] = p
+#
+#         yield d
 
-def iterate_zip_product(
-    *, params_to_product: Optional[dict] = None, params_to_zip: Optional[dict] = None
+
+def perform_single_simulation(
+    params, *, data_dir: PosixPath, chunksize: int = 1000, debug: bool = False
 ):
-    """
-    Returns an iterator of parameter combinations, just like `.param_scan_cartesian_product`. However, allows the user
-    to specify an arbitrary combination of parameters that should not be part of the cartesian product, but rather
-    always appear as a fixed combination.
-
-    Examples
-    --------
-
-    .. code-block:: python
-
-        >>> params_to_zip = {1: {"a": [8,9], "b": [88, 99]}}
-        >>> params = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-        >>> tuple(iterate_zip_product(params_to_zip=params_to_zip, params=params))
-        (
-           {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
-           {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
-           {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
-           {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
-           {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
-           {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
-           {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
-           {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
-        ),
-
-
-    Parameters
-    ----------
-    params_to_zip
-        A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
-        supplied. The values for each inner dict should be lists that all match in lengths. In the returned iterator,
-        these parameters will be :func:`zipped <python:zip>` together, i.e. they will vary together.
-    params_to_product
-        A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
-        supplied. All possible combinations of these parameters will be generated.
-    Returns
-    -------
-        An Iterator of parameter combinations that can be passed to `simulate_parameter_combinations`.
-
-    """
-    outer_keys = set(params_to_zip) | set(params_to_product)
-    if params_to_zip:
-        zipped_params_iter = zip(
-            *(
-                params_to_zip[outer_key][inner_key]
-                for outer_key in params_to_zip.keys()
-                for inner_key in params_to_zip[outer_key].keys()
-            )
-        )
-
-        zipped_keypairs = [
-            (outer_key, inner_key)
-            for outer_key in params_to_zip.keys()
-            for inner_key in params_to_zip[outer_key].keys()
-        ]
-    else:
-        zipped_params_iter = zipped_keypairs = [tuple()]
-
-    if params_to_product:
-        producted_params_iter = it.product(
-            *(
-                params_to_product[outer_key][inner_key]
-                for outer_key in params_to_product.keys()
-                for inner_key in params_to_product[outer_key].keys()
-            )
-        )
-        producted_keypairs = [
-            (outer_key, inner_key)
-            for outer_key in params_to_product.keys()
-            for inner_key in params_to_product[outer_key].keys()
-        ]
-    else:
-        producted_params_iter = producted_keypairs = [tuple()]
-
-    for zipped_params, producted_params in it.product(
-        zipped_params_iter, producted_params_iter
-    ):
-        d = {outer_key: dict() for outer_key in outer_keys}
-
-        for (u, v), p in zip(zipped_keypairs, zipped_params):
-            d[u][v] = p
-
-        for (u, v), p in zip(producted_keypairs, producted_params):
-            d[u][v] = p
-
-        yield d
-
-
-def perform_single_simulation(params, *, data_dir, chunksize=1000, debug=False):
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
 
@@ -204,18 +206,31 @@ class SimulationSet:
 
     @staticmethod
     def _zip_params_equal_length(zip_params):
-        return ft.reduce(
-            op.__eq__,
-            (
-                len(inner_value)
-                for inner_dict in zip_params.values()
-                for inner_value in inner_dict
-            ),
-        )
+        if zip_params and next(iter(next(iter(zip_params.values())).values())):
+            return ft.reduce(
+                op.__eq__,
+                (
+                    len(inner_value)
+                    for inner_dict in zip_params.values()
+                    for inner_value in inner_dict
+                ),
+            )
+        else:
+            return True
+
+    @property
+    def data_dir(self):
+        return self._data_dir
+
+    @data_dir.setter
+    def data_dir(self, data_dir):
+        data_dir.mkdir(exist_ok=True, parents=True)
+        self._data_dir = Path(data_dir)
 
     def __init__(
         self,
         *,
+        data_dir: Union[str, PosixPath],
         base_params: Optional[dict] = None,
         zip_params: Optional[dict] = None,
         product_params: Optional[dict] = None,
@@ -224,6 +239,7 @@ class SimulationSet:
         debug: bool = False,
         max_workers: Optional[int] = None,
         process_chunksize: int = 1,
+        jsonl_chunksize: int = 1000,
     ):
         """
         For more detail see :ref:`Parameter Scan Configuration`.
@@ -243,6 +259,8 @@ class SimulationSet:
         self.debug = debug
         self.max_workers = max_workers
         self.process_chunksize = process_chunksize
+        self.jsonl_chunksize = jsonl_chunksize
+        self.data_dir = data_dir
 
         if cython:
             SpaceObj = CyEuclidean2D()
@@ -283,6 +301,10 @@ class SimulationSet:
             ),
         )
 
+        base_params = base_params if base_params is not None else {}
+        zip_params = zip_params if zip_params is not None else {}
+        product_params = product_params if zip_params is not None else {}
+
         # assert no unknown outer keys
         assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
             self._base_params
@@ -302,13 +324,14 @@ class SimulationSet:
         ), "zipped parameters must be of equal length"
 
         self._base_params = self._two_level_dict_update(self._base_params, base_params)
-        self._zip_params = zip_params if zip_params is not None else {}
-        self._product_params = product_params if product_params is not None else {}
+        self._zip_params = zip_params
+        self._product_params = product_params
 
         self._result_ids = None
 
     @property
     def result_ids(self):
+        # protect result ids
         return self._result_ids if self._result_ids is not None else []
 
     @staticmethod
@@ -376,7 +399,12 @@ class SimulationSet:
         ) as executor:
             self._result_ids = list(
                 executor.map(
-                    ft.partial(perform_single_simulation, debug=self.debug),
+                    ft.partial(
+                        perform_single_simulation,
+                        debug=self.debug,
+                        chunksize=self.jsonl_chunksize,
+                        data_dir=self.data_dir,
+                    ),
                     param_combinations,
                     chunksize=self.process_chunksize,
                 )
