@@ -76,6 +76,7 @@ def test_io_simulate(tmp_path):
     print(stops)
 
 
+@pytest.mark.skip
 def test_io_params(tmp_path):
     param_path = tmp_path / f"params.json"
 
