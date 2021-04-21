@@ -350,14 +350,14 @@ class SimulationSet:
     def param_paths(self):
         return [
             self.data_dir / f"{result_id}{self._param_path_suffix}"
-            for result_id in self._result_ids
+            for result_id in self.result_ids
         ]
 
     @property
     def result_paths(self):
         return [
             self.data_dir / f"{result_id}{self._result_path_suffix}"
-            for result_id in self._result_ids
+            for result_id in self.result_ids
         ]
 
     @staticmethod
