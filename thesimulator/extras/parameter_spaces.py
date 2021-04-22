@@ -1,20 +1,26 @@
-from collections import defaultdict
-from copy import deepcopy
-
-import abc
-import operator as op
-
-import sys
 import logging
-import concurrent.futures
+import sys
 import os
 import hashlib
 
+import concurrent.futures
+
+import operator as op
 import functools as ft
 import itertools as it
 
-from typing import Iterator, Any, Optional, Literal, Dict, Iterable, Union
-from pathlib import Path, PosixPath
+from collections import defaultdict
+from copy import deepcopy
+from typing import (
+    Iterator,
+    Any,
+    Optional,
+    Iterable,
+    Union,
+    Sequence,
+    Callable,
+)
+from pathlib import Path
 
 from thesimulator.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
@@ -41,106 +47,49 @@ from thesimulator.extras.io import (
 
 logger = logging.getLogger(__name__)
 
-#
-# def iterate_zip_product(
-#     *, params_to_product: Optional[dict] = None, params_to_zip: Optional[dict] = None
-# ):
-#     """
-#     Returns an iterator of parameter combinations, just like `.param_scan_cartesian_product`. However, allows the user
-#     to specify an arbitrary combination of parameters that should not be part of the cartesian product, but rather
-#     always appear as a fixed combination.
-#
-#     Examples
-#     --------
-#
-#     .. code-block:: python
-#
-#         >>> params_to_zip = {1: {"a": [8,9], "b": [88, 99]}}
-#         >>> params = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-#         >>> tuple(iterate_zip_product(params_to_zip=params_to_zip, params=params))
-#         (
-#            {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
-#            {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
-#            {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
-#            {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
-#            {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
-#            {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
-#            {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
-#            {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
-#         ),
-#
-#
-#     Parameters
-#     ----------
-#     params_to_zip
-#         A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
-#         supplied. The values for each inner dict should be lists that all match in lengths. In the returned iterator,
-#         these parameters will be :func:`zipped <python:zip>` together, i.e. they will vary together.
-#     params_to_product
-#         A dict of dict like the argument of `.param_scan_cartesian_product`. However, a subset of the keys can be
-#         supplied. All possible combinations of these parameters will be generated.
-#     Returns
-#     -------
-#         An Iterator of parameter combinations that can be passed to `simulate_parameter_combinations`.
-#
-#     """
-#     outer_keys = set(params_to_zip) | set(params_to_product)
-#     if params_to_zip:
-#         zipped_params_iter = zip(
-#             *(
-#                 params_to_zip[outer_key][inner_key]
-#                 for outer_key in params_to_zip.keys()
-#                 for inner_key in params_to_zip[outer_key].keys()
-#             )
-#         )
-#
-#         zipped_keypairs = [
-#             (outer_key, inner_key)
-#             for outer_key in params_to_zip.keys()
-#             for inner_key in params_to_zip[outer_key].keys()
-#         ]
-#     else:
-#         zipped_params_iter = zipped_keypairs = [tuple()]
-#
-#     if params_to_product:
-#         producted_params_iter = it.product(
-#             *(
-#                 params_to_product[outer_key][inner_key]
-#                 for outer_key in params_to_product.keys()
-#                 for inner_key in params_to_product[outer_key].keys()
-#             )
-#         )
-#         producted_keypairs = [
-#             (outer_key, inner_key)
-#             for outer_key in params_to_product.keys()
-#             for inner_key in params_to_product[outer_key].keys()
-#         ]
-#     else:
-#         producted_params_iter = producted_keypairs = [tuple()]
-#
-#     for zipped_params, producted_params in it.product(
-#         zipped_params_iter, producted_params_iter
-#     ):
-#         d = {outer_key: dict() for outer_key in outer_keys}
-#
-#         for (u, v), p in zip(zipped_keypairs, zipped_params):
-#             d[u][v] = p
-#
-#         for (u, v), p in zip(producted_keypairs, producted_params):
-#             d[u][v] = p
-#
-#         yield d
-
 
 def perform_single_simulation(
-    params,
+    params: dict[str, dict[str, Any]],
     *,
-    data_dir: PosixPath,
-    chunksize: int = 1000,
+    data_dir: Path,
+    jsonl_chunksize: int = 1000,
     debug: bool = False,
     param_path_suffix: str = "_params.json",
     result_path_suffix: str = ".jsonl",
-):
+) -> str:
+    """
+    Execute a single simulation run based on a parameter dictionary
+    and save parameters and result events to disk.
+
+    Parameters
+    ----------
+    params
+        Parameter dictionary to base the simulation on. Must contain the following keys:
+        - general
+            - n_vehicles
+            - seat_capacity
+            - initial_location
+            - space
+            - dispatcher
+            - TransportationRequestCls
+            - VehicleStateCls
+        - request_generator
+            - RequestGeneratorCls
+    data_dir
+        Existing directory in which to store parameters and results.
+    jsonl_chunksize
+        Number of simulation events to keep in memory before writing them to disk at once.
+    debug
+        Print debug info to stdout.
+    param_path_suffix
+        Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
+    result_path_suffix
+        Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
+
+    Returns
+    -------
+
+    """
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
 
@@ -191,7 +140,7 @@ def perform_single_simulation(
 
     simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
 
-    while chunk := list(it.islice(simulation, chunksize)):
+    while chunk := list(it.islice(simulation, jsonl_chunksize)):
         save_events_json(jsonl_path=result_path, events=chunk)
 
     with open(str(param_path), "w") as f:
@@ -201,18 +150,64 @@ def perform_single_simulation(
 
 class SimulationSet:
     """
-    Specifies a parameter space that should be scanned to generate an iterable of `SimConf` objects.
+    A set of simulations. The parameter space is defined through constant `base_params`,
+    zipped `zip_params` and cartesian product `product_params`. A set of a single simulation
+    is also allowed. Through `SimulationSet.run`, configurable multiprocessing is implemented,
+    allowing for parallelization of simulation runs at different parameters.
     """
 
     @staticmethod
-    def _two_level_dict_update(base_dict: dict, update_dict: dict) -> dict:
+    def _two_level_dict_update(
+        base_dict: dict[str, dict[str, Any]], update_dict: dict[str, dict[str, Any]]
+    ) -> dict:
+        """
+        Update two-level nested dictionary with deepcopying,
+        where `update_dict` overwrites entries in `base_dict`.
+
+        Example
+        -------
+
+        .. code-block:: python
+
+            >>> SimulationSet._two_level_dict_update(
+            ...     {"a": {"b": 5, 6: 8}}, {"a": {6: "fooo", 8: "baaar"}, "baz": {"6": 6}}
+            ... )
+            {'a': {'b': 5, 6: 'fooo', 8: 'baaar'}, 'baz': {'6': 6}}
+
+
+        Parameters
+        ----------
+        base_dict
+            two-level nested dict to update
+        update_dict
+            two-level nested dict which overwrites entries in base_dict
+
+        Returns
+        -------
+        updated deepcopy of base_dict
+
+        """
         d = deepcopy(base_dict)
         for outer_key in set(base_dict) | set(update_dict):
             d[outer_key] = base_dict.get(outer_key, {}) | update_dict.get(outer_key, {})
         return d
 
     @staticmethod
-    def _zip_params_equal_length(zip_params):
+    def _zip_params_equal_length(
+        zip_params: dict[str, dict[str, Sequence[Any]]]
+    ) -> bool:
+        """
+        Evaluate whether the sequences in the inner dict are of equal length.
+
+        Parameters
+        ----------
+        zip_params
+
+        Returns
+        -------
+        True if sequences are of equal length, False otherwise
+
+        """
         if zip_params and next(iter(next(iter(zip_params.values())).values())):
             return ft.reduce(
                 op.__eq__,
@@ -226,21 +221,29 @@ class SimulationSet:
             return True
 
     @property
-    def data_dir(self):
+    def data_dir(self) -> Path:
+        """
+        Get directory in which to store the parameters and results.
+        """
         return self._data_dir
 
     @data_dir.setter
-    def data_dir(self, data_dir):
+    def data_dir(self, data_dir: Union[str, Path]) -> None:
+        """
+        Set directory in which to store the parameters and results.
+        Will be created if not existent.
+        """
+        data_dir = Path(data_dir)
         data_dir.mkdir(exist_ok=True, parents=True)
-        self._data_dir = Path(data_dir)
+        self._data_dir = data_dir
 
     def __init__(
         self,
         *,
-        data_dir: Union[str, PosixPath],
-        base_params: Optional[dict] = None,
-        zip_params: Optional[dict] = None,
-        product_params: Optional[dict] = None,
+        data_dir: Union[str, Path],
+        base_params: Optional[dict[str, dict[str, Any]]] = None,
+        zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
+        product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         cython: bool = True,
         mpi: bool = False,
         debug: bool = False,
@@ -249,20 +252,39 @@ class SimulationSet:
         jsonl_chunksize: int = 1000,
         result_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
-    ):
+    ) -> None:
         """
-        For more detail see :ref:`Parameter Scan Configuration`.
 
         Parameters
         ----------
+        data_dir
+            Directory in which to store the parameters and results.
+        base_params
+            Dictionary setting parameters that are kept constant throughout the simulation set, optional.
+        zip_params
+            Dictionary setting parameters that are varied together throughout the simulation set, optional.
+            The values for each inner dict should be lists that all match in lengths.
+        product_params
+            Dictionary setting parameters of which the cartesian product (i.e. all possible
+            combinations of the supplied parameters) is created and varied throughout
+            the simulation set, optional.
         cython
-            If True, use cython types.
+            Use cython.
         mpi
-            If True use MPIFuturesFleetState for parallelization.
-
-        Returns
-        -------
-
+            Use MPIFuturesFleetState.
+        debug
+            Print debug info.
+        max_workers
+            Maximum number of multiprocessing workers. Defaults to number of processors
+            on the machine if `None` or not given.
+        process_chunksize
+            Number of simulations to submit to each multiprocessing worker at a time.
+        jsonl_chunksize
+            Maximum number of events to keep in memory before saving to disk
+        param_path_suffix
+            Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
+        result_path_suffix
+            Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
         """
 
         self.debug = debug
@@ -342,32 +364,45 @@ class SimulationSet:
         self._result_ids = None
 
     @property
-    def result_ids(self):
+    def result_ids(self) -> list[str]:
+        """
+        Get simulation result IDs.
+        """
         # protect result ids
         return self._result_ids if self._result_ids is not None else []
 
     @property
-    def param_paths(self):
+    def param_paths(self) -> list[Path]:
+        """
+        Get list of JSON parameter files.
+        """
         return [
             self.data_dir / f"{result_id}{self._param_path_suffix}"
             for result_id in self.result_ids
         ]
 
     @property
-    def result_paths(self):
+    def result_paths(self) -> list[Path]:
+        """
+        Get list of resulting output event JSON Lines file paths.
+        """
         return [
             self.data_dir / f"{result_id}{self._result_path_suffix}"
             for result_id in self.result_ids
         ]
 
     @staticmethod
-    def _make_joined_key_pairs_values(*, params, join_fn):
+    def _make_joined_key_pairs_values(
+        *, params: dict[str, dict[str, Sequence[Any]]], join_fn: Callable
+    ) -> tuple[Iterable[tuple[str, str]], Iterable[Iterable[Any]]]:
         """
 
         Parameters
         ----------
         params
+            Parameter dictionary containing sequences as inner values.
         join_fn
+            e.g. `zip` or `itertools.product`
 
         Returns
         -------
@@ -392,6 +427,16 @@ class SimulationSet:
         return joined_key_pairs, joined_values_iter
 
     def run(self):
+        """
+        Run the simulations configured through `base_params`, `zip_params` and `product_params` using
+        multiprocessing. The parameters and resulting output events are written to disk
+        in JSON/JSON Lines format. For more detail see :ref:`Executing Simulations`.
+
+        Access simulations results
+            - by id: `SimulationSet.result_ids`
+            - by parameter file `SimulationSet.param_paths`
+            - by result file `SimulationSet.result_paths`
+        """
         zipped_key_pairs, zipped_values_iter = self._make_joined_key_pairs_values(
             params=self._zip_params, join_fn=zip
         )
@@ -402,7 +447,11 @@ class SimulationSet:
             params=self._product_params, join_fn=it.product
         )
 
-        def param_combinations():
+        def param_combinations() -> Iterator[dict[str, dict[str, Any]]]:
+            """
+            Generator yielding complete parameter sets which can be
+            supplied to `perform_single_simulation`.
+            """
             for zipped_params, multiplied_params in it.product(
                 zipped_values_iter, multiplied_values_iter
             ):
@@ -428,7 +477,7 @@ class SimulationSet:
                     ft.partial(
                         perform_single_simulation,
                         debug=self.debug,
-                        chunksize=self.jsonl_chunksize,
+                        jsonl_chunksize=self.jsonl_chunksize,
                         data_dir=self.data_dir,
                         param_path_suffix=self._param_path_suffix,
                         result_path_suffix=self._result_path_suffix,
@@ -438,7 +487,10 @@ class SimulationSet:
                 )
             )
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """
+        Number of simulations performed when calling `SimulationSet.run`.
+        """
         zip_part = len(next(iter(next(iter(self._zip_params.values())).values())))
         product_part = ft.reduce(
             op.mul,
@@ -449,89 +501,3 @@ class SimulationSet:
             ),
         )
         return zip_part * product_part
-
-
-# def simulate_parameter_combinations(
-#     *,
-#     param_combinations: Iterator[SimConf],
-#     process_chunksize: int = 1,
-#     max_workers=None,
-#     debug=False,
-# ):
-#     """
-#     Run simulations for different parameter combinations. See the docstring of `.simulate_parameter_space` for more details.
-#
-#     Parameters
-#     ----------
-#     param_combinations
-#         An iterable of parameter configurations. For more detail see :ref:`Executing Simulations`
-#     process_chunksize
-#     max_workers
-#     debug
-#         See the  docstring of `.simulate_parameter_space`
-#
-#     Returns
-#     -------
-#         See the  docstring of `.simulate_parameter_space`
-#     """
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-#         sim_ids = list(
-#             executor.map(
-#                 ft.partial(perform_single_simulation, debug=debug),
-#                 param_combinations,
-#                 chunksize=process_chunksize,
-#             )
-#         )
-#     return sim_ids
-
-
-# def simulate_parameter_space(
-#     *,
-#     data_dir: Path,
-#     param_space_to_product: ParamScanConf,
-#     param_space_to_zip: Optional[ParamScanConf] = None,
-#     chunksize: int = 1000,
-#     process_chunksize: int = 1,
-#     max_workers=None,
-#     debug=False,
-# ):
-#     """
-#     Run a parameter scan of simulations and save emitted events to disk in JSON Lines format
-#     and additional JSON file containing the simulation parameters. Parallelization is accomplished
-#     by multiprocessing. For more detail see :ref:`Executing Simulations`.
-#
-#     Parameters
-#     ----------
-#     data_dir
-#         path to the desired output directory
-#     param_combinations
-#         iterator of single simulation configurations. see :ref:`Parameter Scan Configuration` for details.
-#     chunksize
-#         Maximum number of events to keep in memory before saving to disk
-#     process_chunksize
-#         Number of simulations to submit to a process in the process pool at a time
-#     max_workers
-#         Defaults to number of processors on the machine if `None` or not given.
-#     debug
-#         Print multiprocessing debug info.
-#
-#     Returns
-#     -------
-#     List of simulation UUIDs.
-#     Results can be accessed by reading `data_dir / f"{sim_uuid}.jsonl"`,
-#     parameters at `data_dir / f"{sim_uuid}_params.json"`
-#     """
-#     param_space_to_product["environment"]["data_dir"] = [data_dir]
-#     param_space_to_product["environment"]["chunksize"] = [chunksize]
-#
-#     if param_space_to_zip is None:
-#         param_space_to_zip = dict()
-#
-#     return simulate_parameter_combinations(
-#         param_combinations=iterate_zip_product(
-#             params=param_space_to_product, params_to_zip=param_space_to_zip
-#         ),
-#         process_chunksize=process_chunksize,
-#         max_workers=max_workers,
-#         debug=debug,
-#     )

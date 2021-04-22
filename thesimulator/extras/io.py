@@ -13,7 +13,7 @@ from thesimulator.data_structures import TransportSpace
 from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
 import thesimulator.events
 from thesimulator.events import Event
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 
 class ParamsJSONEncoder(json.JSONEncoder):
@@ -43,7 +43,7 @@ class ParamsJSONEncoder(json.JSONEncoder):
         # dispatcher?
         elif callable(obj):
             return f"{obj.__module__}.{obj.__name__}"
-        elif isinstance(obj, PosixPath):
+        elif isinstance(obj, Path):
             return str(obj.expanduser().resolve())
         else:
             return json.JSONEncoder.default(self, obj)
