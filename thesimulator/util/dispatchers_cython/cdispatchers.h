@@ -184,5 +184,131 @@ namespace cstuff {
             return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
         }
     }
+
+    template<typename Loc>
+    InsertionResult<Loc> zero_detour_dispatcher(
+            std::shared_ptr<TransportationRequest<Loc>> request,
+            vector<Stop<Loc>> &stoplist,
+            TransportSpace<Loc> &space,
+            int seat_capacity,
+            bool debug=false
+    ) {
+        /*
+        Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
+        according to the process described in https://arxiv.org/abs/2001.09711
+
+        Parameters
+        ----------
+        request
+            request to be serviced
+        stoplist
+            stoplist of the vehicle, to be mapped to a new stoplist
+        space
+            transport space the vehicle is operating on
+
+        Returns
+        -------
+
+        */
+        double min_cost = INFINITY;
+        bool insertion_found = false;
+
+        // Warning: i,j refers to the indices where the new stop would be inserted. So i-1/j-1 is the index of
+        // the stop preceding the stop to be inserted.
+        pair<int, int> best_insertion{0, 0};
+        int i = -1;
+        for (auto stop_before_pickup = stoplist.begin(); stop_before_pickup != stoplist.end()-1; ++stop_before_pickup) {
+            i++; // The first iteration of the loop: i = 0
+            // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
+            auto time_to_pickup = space.t(stop_before_pickup.location, request->origin);
+            auto time_from_pickup = time_to_stop_after_insertion(stoplist, request->origin, i, space);
+            auto original_pickup_edge_length = time_from_current_stop_to_next(
+                    stoplist, i, space
+            );
+
+            if (time_to_pickup + time_from_pickup - original_pickup_edge_length > 0) continue;
+            // a zero detour pickup has been found
+            // try dropoff immediately
+            auto time_to_dropoff = space.t(request->origin, request->destination);
+            auto time_from_dropoff = time_to_stop_after_insertion(
+                    stoplist, request->destination, i, space
+            );
+            if (time_to_pickup + time_to_dropoff + time_from_dropoff - original_pickup_edge_length == 0)
+            {
+                // found an insertion, stop looking
+                best_insertion = {i, i};
+                min_cost = 0;
+                insertion_found = true;
+                break;
+            }
+            // have to try dropoff not immediately after pickup
+            int j = i;
+            for (auto stop_before_dropoff = stoplist.begin() + i + 1;
+                 stop_before_dropoff != stoplist.end() - 1; ++stop_before_dropoff) {
+                j++; // first iteration: dropoff after j=(i+1)'th stop. pickup was after i'th stop.
+                // Need to check for seat capacity constraints. Note the loop: the constraint was not violated after
+                // servicing the previous stop (otherwise we wouldn't've reached this line). Need to check that the
+                // constraint is not violated due to the action at this stop (stop_before_dropoff)
+                time_to_dropoff = space.t(
+                        stop_before_dropoff->location, request->destination
+                );
+                time_from_dropoff = time_to_stop_after_insertion(
+                        stoplist, request->destination, j, space
+                );
+                auto original_dropoff_edge_length = time_from_current_stop_to_next(
+                        stoplist, j, space
+                );
+                if (time_to_dropoff + time_from_dropoff - original_dropoff_edge_length > 0) continue;
+                else {
+                    best_insertion = {i, j};
+                    min_cost = 0;
+                    insertion_found = true;
+                    break;
+                }
+            }
+            if (insertion_found == true) break;
+            else
+            {
+                // dropoff has to be appended
+                best_insertion = {i, stoplist.size()-1}; // will be inserted after LEN-1'th stop
+                min_cost = 0; // should the cost indicate actual costs?
+                insertion_found = true;
+                break;
+            }
+        }
+        if (insertion_found == false)
+        {
+            // both pickup and dropoff have to be appended
+            best_insertion = {stoplist.size()-1, stoplist.size()-1}; // will be inserted after LEN-1'th stop
+            min_cost = 0; // should the cost indicate actual costs?
+            insertion_found = true;
+            break;
+        }
+
+        if (min_cost < INFINITY){ // actually min_cost has to be 0 at the moment. maybe assert?
+            int best_pickup_idx = best_insertion.first;
+            int best_dropoff_idx = best_insertion.second;
+            auto new_stoplist = insert_request_to_stoplist_drive_first(
+                    stoplist,
+                    request,
+                    best_pickup_idx,
+                    best_dropoff_idx,
+                    space
+            );
+            if (debug) {
+                std::cout << "Best insertion: " << best_pickup_idx << ", " << best_dropoff_idx << std::endl;
+                std::cout << "Min cost: " << min_cost << std::endl;
+            }
+            auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
+            auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
+
+            auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
+            auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
+            return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do};
+        }
+        else{
+            return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
+        }
+    }
 }
 #endif //THESIMULATOR_CDISPATCHERS_H
