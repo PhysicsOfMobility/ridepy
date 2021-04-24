@@ -282,7 +282,6 @@ namespace cstuff {
             best_insertion = {stoplist.size()-1, stoplist.size()-1}; // will be inserted after LEN-1'th stop
             min_cost = 0; // should the cost indicate actual costs?
             insertion_found = true;
-            break;
         }
 
         if (min_cost < INFINITY){ // actually min_cost has to be 0 at the moment. maybe assert?
