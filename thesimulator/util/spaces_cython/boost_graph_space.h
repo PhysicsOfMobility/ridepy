@@ -51,8 +51,6 @@ namespace cstuff {
             // call dijkstra
             int src_idx = this->vertex_label2index[src];
             cached_dijkstra(src_idx);
-            //dijkstra_shortest_paths(this->_g, src_idx, predecessor_map(&this->_predecessors[0]).distance_map(
-            //        &this->_distances[0]));
             return this->_distances[this->vertex_label2index[target]];
         }
 
@@ -66,8 +64,6 @@ namespace cstuff {
             int u_idx = this->vertex_label2index[u];
             const int v_idx = this->vertex_label2index[v];
             cached_dijkstra(u_idx);
-            //dijkstra_shortest_paths(this->_g, u_idx, predecessor_map(&this->_predecessors[0]).distance_map(
-            //        &this->_distances[0]));
 
             vertex_t predecessor, current_node = v_idx;
             double dist_from_dest = 0;
