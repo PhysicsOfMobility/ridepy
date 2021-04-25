@@ -220,7 +220,7 @@ namespace cstuff {
         for (auto stop_before_pickup = stoplist.begin(); stop_before_pickup != stoplist.end()-1; ++stop_before_pickup) {
             i++; // The first iteration of the loop: i = 0
             // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
-            auto time_to_pickup = space.t(stop_before_pickup.location, request->origin);
+            auto time_to_pickup = space.t(stop_before_pickup->location, request->origin);
             auto time_from_pickup = time_to_stop_after_insertion(stoplist, request->origin, i, space);
             auto original_pickup_edge_length = time_from_current_stop_to_next(
                     stoplist, i, space
@@ -270,8 +270,12 @@ namespace cstuff {
             else
             {
                 // dropoff has to be appended
-                best_insertion = {i, stoplist.size()-1}; // will be inserted after LEN-1'th stop
-                min_cost = 0; // should the cost indicate actual costs?
+                j = stoplist.size()-1;
+                time_to_dropoff = space.t(
+                        stoplist[j].location, request->destination
+                );
+                best_insertion = {i, j}; // will be inserted after LEN-1'th stop
+                min_cost = time_to_dropoff; // should the cost indicate actual costs?
                 insertion_found = true;
                 break;
             }
@@ -279,8 +283,9 @@ namespace cstuff {
         if (insertion_found == false)
         {
             // both pickup and dropoff have to be appended
-            best_insertion = {stoplist.size()-1, stoplist.size()-1}; // will be inserted after LEN-1'th stop
-            min_cost = 0; // should the cost indicate actual costs?
+            i = stoplist.size()-1;
+            min_cost = space.t(stoplist[i].location, request->origin)+space.t(request->origin, request->destination);
+            best_insertion = {i, i}; // will be inserted after LEN-1'th stop
             insertion_found = true;
         }
 
