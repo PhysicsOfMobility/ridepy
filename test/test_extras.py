@@ -90,56 +90,70 @@ def test_io_simulate(tmp_path):
     print(stops)
 
 
-@pytest.mark.skip
-def test_io_params(tmp_path):
+@pytest.mark.parametrize("cython", [True, False])
+def test_io_params(cython, tmp_path):
     param_path = tmp_path / f"params.json"
 
-    for cython in [False, True]:
-        params = next(
-            iterate_zip_product(
-                params_to_product=get_default_conf(cython=cython), params_to_zip=dict()
-            )
-        )
+    simulation_set = SimulationSet(
+        base_params={"general": {"n_reqs": 10}},
+        product_params={"general": {"n_vehicles": [10, 100], "seat_capacity": [2, 8]}},
+        zip_params={
+            "general": {
+                "space": [CyEuclidean2D(), CyGraph.from_nx(make_nx_cycle_graph())],
+                "initial_location": [(0.0, 0.0), 0],
+            }
+        },
+        data_dir=tmp_path,
+        debug=True,
+        cython=cython,
+    )
+    params = next(iter(simulation_set))
 
-        save_params_json(param_path=param_path, params=params)
-        restored_params = read_params_json(param_path=param_path)
-        print()
-        print(params)
-        print(restored_params)
+    save_params_json(param_path=param_path, params=params)
+    restored_params = read_params_json(param_path=param_path)
+    print()
+    print(params)
+    print(restored_params)
 
-        assert params == restored_params
+    assert params == restored_params
 
 
-@pytest.mark.skip
-def test_param_scan_length():
-    params_tozip = {
+def test_param_scan_length(tmp_path):
+    params_to_zip = {
         1: {"a": [10, 20, 30], "c": [33, 44, 55]},
         2: {"z": [100, 200, 300]},
     }
-    params_toproduct = {
+    params_to_product = {
         1: {"b": [21, 22], "d": [66, 67, 67, 68]},
         2: {"w": [1000, 2000]},
     }
-    res = list(
-        iterate_zip_product(
-            params_to_zip=params_tozip, params_to_product=params_toproduct
-        )
+    simulation_set = SimulationSet(
+        product_params=params_to_product,
+        zip_params=params_to_zip,
+        data_dir=tmp_path,
+        validate=False,
     )
+    simulation_set._base_params = {}
+    res = list(iter(simulation_set))
 
     assert len(res) == 3 * 2 * 4 * 2
     assert len([i for i in res if i[1]["a"] == 10]) == 2 * 4 * 2
     assert len([i for i in res if i[2]["w"] == 1000]) == 3 * 2 * 4
 
 
-@pytest.mark.skip
-def test_param_scan():
+def test_param_scan(tmp_path):
     params_to_zip = {1: {"a": [8, 9], "b": [88, 99]}}
     params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-    assert tuple(
-        iterate_zip_product(
-            params_to_zip=params_to_zip, params_to_product=params_to_product
-        )
-    ) == (
+    simulation_set = SimulationSet(
+        product_params=params_to_product,
+        zip_params=params_to_zip,
+        data_dir=tmp_path,
+        validate=False,
+    )
+    simulation_set._base_params = {}
+    res = tuple(iter(simulation_set))
+
+    assert res == (
         {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
         {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
         {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
@@ -151,8 +165,7 @@ def test_param_scan():
     )
 
 
-@pytest.mark.skip
-def test_param_scan_equivalent_to_cartesian_product():
+def test_param_scan_equivalent_to_cartesian_product(tmp_path):
     param_scan_cartesian_product = lambda outer_dict: (
         {
             outer_key: inner_dict
@@ -169,17 +182,28 @@ def test_param_scan_equivalent_to_cartesian_product():
         )
     )
     params_to_product = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-    assert list(
-        iterate_zip_product(params_to_product=params_to_product, params_to_zip=dict())
-    ) == list(param_scan_cartesian_product(params_to_product))
+    simulation_set = SimulationSet(
+        product_params=params_to_product,
+        data_dir=tmp_path,
+        validate=False,
+    )
+    simulation_set._base_params = {}
+    res = list(iter(simulation_set))
+
+    assert res == list(param_scan_cartesian_product(params_to_product))
 
 
-@pytest.mark.skip
-def test_param_scan_equivalent_to_pure_zip():
+def test_param_scan_equivalent_to_pure_zip(tmp_path):
     params_to_zip = {1: {"c": [100, 200]}, 2: {"z": [1000, 2000]}}
-    assert list(
-        iterate_zip_product(params_to_zip=params_to_zip, params_to_product=dict())
-    ) == [
+
+    simulation_set = SimulationSet(
+        zip_params=params_to_zip,
+        data_dir=tmp_path,
+        validate=False,
+    )
+    simulation_set._base_params = {}
+    res = list(iter(simulation_set))
+    assert res == [
         {1: {"c": 100}, 2: {"z": 1000}},
         {1: {"c": 200}, 2: {"z": 2000}},
     ]

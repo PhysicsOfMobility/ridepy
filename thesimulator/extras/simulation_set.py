@@ -255,6 +255,7 @@ class SimulationSet:
         jsonl_chunksize: int = 1000,
         result_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
+        validate: bool = True,
     ) -> None:
         """
 
@@ -288,6 +289,8 @@ class SimulationSet:
             Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
         result_path_suffix
             Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
+        validate
+            Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
         """
 
         self.debug = debug
@@ -342,25 +345,26 @@ class SimulationSet:
         zip_params = zip_params if zip_params is not None else {}
         product_params = product_params if product_params is not None else {}
 
-        # assert no unknown outer keys
-        assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
-            self.default_base_params
-        ), "invalid outer key"
+        if validate:
+            # assert no unknown outer keys
+            assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
+                self.default_base_params
+            ), "invalid outer key"
 
-        # assert no unknown inner keys
-        for outer_key in self.default_base_params:
-            assert not (
-                set(base_params.get(outer_key, {}))
-                | set(zip_params.get(outer_key, {}))
-                | set(product_params.get(outer_key, {}))
-            ) - set(
-                self.default_base_params[outer_key]
-            ), f"invalid inner key for {outer_key=}"
+            # assert no unknown inner keys
+            for outer_key in self.default_base_params:
+                assert not (
+                    set(base_params.get(outer_key, {}))
+                    | set(zip_params.get(outer_key, {}))
+                    | set(product_params.get(outer_key, {}))
+                ) - set(
+                    self.default_base_params[outer_key]
+                ), f"invalid inner key for {outer_key=}"
 
-        # assert equal length of zipped parameters
-        assert self._zip_params_equal_length(
-            zip_params
-        ), "zipped parameters must be of equal length"
+            # assert equal length of zipped parameters
+            assert self._zip_params_equal_length(
+                zip_params
+            ), "zipped parameters must be of equal length"
 
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params
