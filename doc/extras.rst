@@ -92,6 +92,9 @@ filenames of the resulting JSONL/JSON files are also directly available through
 .. automodule:: thesimulator.extras.simulation_set
     :members: perform_single_simulation
 
+.. automodule:: thesimulator.extras.simulation_set
+    :members: simulate_parameter_combinations
+
 JSON IO
 -------
 

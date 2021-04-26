@@ -562,7 +562,7 @@ def simulate_parameter_combinations(
 
     Returns
     -------
-        See the  docstring of `.simulate_parameter_space`
+        List of simulation IDs. See the docstring of `.SimulationSet` for more detail.
     """
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         sim_ids = list(
