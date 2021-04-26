@@ -105,12 +105,12 @@ def perform_single_simulation(
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
         logger.info(
-            f"Pre-existing param json exists for {params=} at {param_path=}, skipping simulation"
+            f"Pre-existing param json exists for {params_json=} at {param_path=}, skipping simulation"
         )
         return sim_id
     else:
         logger.info(
-            f"No pre-existing param json exists for {params=} at {param_path=}, running simulation"
+            f"No pre-existing param json exists for {params_json=} at {param_path=}, running simulation"
         )
         if result_path.exists():
             logger.info(
@@ -191,7 +191,8 @@ class SimulationSet:
 
         """
         d = deepcopy(base_dict)
-        for outer_key in set(base_dict) | set(update_dict):
+        # This sorted is needed otherwise detection of pre existing simulation run does not work.
+        for outer_key in sorted(set(base_dict) | set(update_dict)):
             d[outer_key] = base_dict.get(outer_key, {}) | update_dict.get(outer_key, {})
         return d
 
