@@ -16,7 +16,7 @@ from thesimulator.extras.spaces import (
     make_nx_star_graph,
 )
 
-from thesimulator.extras.parameter_spaces import (
+from thesimulator.extras.simulation_set import (
     SimulationSet,
 )
 from thesimulator.util.analytics import get_stops_and_requests

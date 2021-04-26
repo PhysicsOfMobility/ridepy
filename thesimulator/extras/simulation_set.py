@@ -65,16 +65,19 @@ def perform_single_simulation(
     ----------
     params
         Parameter dictionary to base the simulation on. Must contain the following keys:
-        - general
-            - n_vehicles
-            - seat_capacity
-            - initial_location
-            - space
-            - dispatcher
-            - TransportationRequestCls
-            - VehicleStateCls
-        - request_generator
-            - RequestGeneratorCls
+
+        - ``general``
+            - ``n_reqs``
+            - ``n_vehicles``
+            - ``seat_capacity``
+            - ``initial_location``
+            - ``space``
+            - ``dispatcher``
+            - ``TransportationRequestCls``
+            - ``VehicleStateCls``
+            - ``FleetStateCls``
+        - ``request_generator``
+            - ``RequestGeneratorCls``
     data_dir
         Existing directory in which to store parameters and results.
     jsonl_chunksize
@@ -314,7 +317,7 @@ class SimulationSet:
 
         RequestGeneratorCls = RandomRequestGenerator
 
-        self._base_params = dict(
+        self.default_base_params = dict(
             general=dict(
                 n_reqs=100,
                 space=SpaceObj,
@@ -341,23 +344,27 @@ class SimulationSet:
 
         # assert no unknown outer keys
         assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
-            self._base_params
+            self.default_base_params
         ), "invalid outer key"
 
         # assert no unknown inner keys
-        for outer_key in self._base_params:
+        for outer_key in self.default_base_params:
             assert not (
                 set(base_params.get(outer_key, {}))
                 | set(zip_params.get(outer_key, {}))
                 | set(product_params.get(outer_key, {}))
-            ) - set(self._base_params[outer_key]), f"invalid inner key for {outer_key=}"
+            ) - set(
+                self.default_base_params[outer_key]
+            ), f"invalid inner key for {outer_key=}"
 
         # assert equal length of zipped parameters
         assert self._zip_params_equal_length(
             zip_params
         ), "zipped parameters must be of equal length"
 
-        self._base_params = self._two_level_dict_update(self._base_params, base_params)
+        self._base_params = self._two_level_dict_update(
+            self.default_base_params, base_params
+        )
         self._zip_params = zip_params
         self._product_params = product_params
 
