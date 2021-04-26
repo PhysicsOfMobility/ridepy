@@ -6,7 +6,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
-#include "lru_cache.h"
+#include "lru/lru.hpp"
 
 #include "cspaces.h"
 
@@ -19,7 +19,7 @@ namespace cstuff {
         typedef adjacency_list <vecS, vecS, undirectedS, property<vertex_name_t, vertex_t>, property<edge_weight_t, double>>
                 Graph;
         typedef pair <vertex_t, vertex_t> Edge;
-        typedef LRUCache<vertex_t, pair<vector<int>, vector<double>>> pred_cache_t;
+        typedef LRU::Cache<vertex_t, pair<vector<int>, vector<double>>> pred_cache_t;
 
     private:
         Graph _g;
@@ -29,11 +29,11 @@ namespace cstuff {
         vector<double> _distances;
         vector<int> _predecessors;
         vector<double> _weights;
-        pred_cache_t pred_cache{1000};
+        pred_cache_t pred_cache{1000}; // the cache size could be set at initialization
 
         void cached_dijkstra(int u_idx){
-            if (pred_cache.exists(u_idx)) {
-                auto res = pred_cache.fetch(u_idx);
+            if (pred_cache.contains(u_idx)) {
+                auto res = pred_cache.lookup(u_idx);
                 this->_predecessors = res.first;
                 this->_distances = res.second;
             }
