@@ -524,3 +524,59 @@ class SimulationSet:
             ),
         )
         return zip_part * product_part
+
+
+def simulate_parameter_combinations(
+    *,
+    param_combinations: Iterator[dict[str, dict[str, Sequence[Any]]]],
+    data_dir: Union[str, Path],
+    debug: bool = False,
+    max_workers: Optional[int] = None,
+    process_chunksize: int = 1,
+    jsonl_chunksize: int = 1000,
+    result_path_suffix: str = ".jsonl",
+    param_path_suffix: str = "_params.json",
+):
+    """
+    Run simulations for different parameter combinations using multiprocessing.
+
+    Parameters
+    ----------
+    param_combinations
+        An iterable of parameter configurations. For more detail see :ref:`Executing Simulations`
+    data_dir
+        Directory in which to store the parameters and results.
+    debug
+        Print debug info.
+    max_workers
+        Maximum number of multiprocessing workers. Defaults to number of processors
+        on the machine if `None` or not given.
+    process_chunksize
+        Number of simulations to submit to each multiprocessing worker at a time.
+    jsonl_chunksize
+        Maximum number of events to keep in memory before saving to disk
+    param_path_suffix
+        Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
+    result_path_suffix
+        Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
+
+    Returns
+    -------
+        See the  docstring of `.simulate_parameter_space`
+    """
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        sim_ids = list(
+            executor.map(
+                ft.partial(
+                    perform_single_simulation,
+                    debug=debug,
+                    jsonl_chunksize=jsonl_chunksize,
+                    data_dir=data_dir,
+                    param_path_suffix=param_path_suffix,
+                    result_path_suffix=result_path_suffix,
+                ),
+                param_combinations,
+                chunksize=process_chunksize,
+            )
+        )
+    return sim_ids
