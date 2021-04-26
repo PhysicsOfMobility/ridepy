@@ -217,7 +217,7 @@ class SimulationSet:
                 (
                     len(inner_value)
                     for inner_dict in zip_params.values()
-                    for inner_value in inner_dict
+                    for inner_value in inner_dict.values()
                 ),
             )
         else:
@@ -498,13 +498,16 @@ class SimulationSet:
         """
         Number of simulations performed when calling `SimulationSet.run`.
         """
-        zip_part = len(next(iter(next(iter(self._zip_params.values())).values())))
+        if self._zip_params:
+            zip_part = len(next(iter(next(iter(self._zip_params.values())).values())))
+        else:
+            zip_part = 1
         product_part = ft.reduce(
             op.mul,
             (
                 len(inner_value)
                 for inner_dict in self._product_params.values()
-                for inner_value in inner_dict
+                for inner_value in inner_dict.values()
             ),
         )
         return zip_part * product_part

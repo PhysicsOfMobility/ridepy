@@ -15,11 +15,14 @@ from thesimulator.extras.spaces import (
     make_nx_grid,
     make_nx_star_graph,
 )
-
 from thesimulator.extras.simulation_set import (
     SimulationSet,
 )
 from thesimulator.util.analytics import get_stops_and_requests
+from thesimulator.util.spaces_cython import (
+    Euclidean2D as CyEuclidean2D,
+    Graph as CyGraph,
+)
 
 
 def test_spaces():
@@ -41,6 +44,12 @@ def test_simulate(cython, tmp_path, capfd):
     simulation_set = SimulationSet(
         base_params={"general": {"n_reqs": 10}},
         product_params={"general": {"n_vehicles": [10, 100], "seat_capacity": [2, 8]}},
+        zip_params={
+            "general": {
+                "space": [CyEuclidean2D(), CyGraph.from_nx(make_nx_cycle_graph())],
+                "initial_location": [(0.0, 0.0), 0],
+            }
+        },
         data_dir=tmp_path,
         debug=True,
     )
@@ -52,7 +61,12 @@ def test_simulate(cython, tmp_path, capfd):
     pids = re.findall(r"Simulating run on process (\d+) @", out)
     assert 1 < len(set(pids)) <= os.cpu_count()
 
-    assert len(simulation_set.result_ids) == 4
+    n_sim = 8
+    assert len(simulation_set.result_ids) == n_sim
+    assert len(simulation_set.param_paths) == n_sim
+    assert len(simulation_set.result_paths) == n_sim
+    assert len(simulation_set) == n_sim
+
     assert all(
         path.exists()
         for path in it.chain(simulation_set.param_paths, simulation_set.result_paths)
