@@ -166,8 +166,8 @@ class EventsJSONDecoder(json.JSONDecoder):
 
 def create_params_json(*, params: dict) -> str:
     """
-    Create a dictionary containing simulation parameters to pretty JSON,
-    overwriting existing. Parameter dictionaries may contain anything that is supported
+    Create a dictionary containing simulation parameters to pretty JSON.
+    Parameter dictionaries may contain anything that is supported
     by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
     `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
 
