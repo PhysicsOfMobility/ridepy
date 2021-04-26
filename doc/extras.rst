@@ -1,128 +1,118 @@
 Module ``extras``
 =================
 
-This package contains additional functionality that is not a core part of the
-simulator but rather makes it more convenient to set up and use it. Currently
-this involves code for performing multiple simulations while varying parameters
-("parameter scan"), reading and writing parameter sets and simulation output to
-and from disk as JSON/`JSON Lines`_. In addition,
-convenience methods for easily creating graph transport spaces are included.
+This package contains additional functionality that is not a core part of the simulator
+but rather makes it more convenient to set up and use it. Currently this involves code
+for performing multiple simulations while varying parameters ("parameter scan"), reading
+and writing parameter sets and simulation output to and from disk as JSON/`JSON Lines`_.
+In addition, convenience methods for easily creating graph transport spaces are
+included.
 
 
 Simulations and Parameter Scans
 -------------------------------
 
-.. currentmodule:: thesimulator.extras.parameter_spaces
+.. currentmodule:: thesimulator.extras.simulation_set
 
-This module allows to configure and execute a set of simulations
-while varying specific parameters, i.e. performing a parameter scan.
-The typical workflow is as follows:
+This module allows to configure and execute a set of simulations while varying specific
+parameters, i.e. performing a parameter scan.  The typical workflow is as follows:
 
 .. code-block:: python
 
-    # get base parameter scan configuration
-    conf = get_default_conf(cython=True)
-
-    # modify parameter scan configuration
-    conf['general']['n_reqs'] = [1, 10, 100]
-    conf['request_generator']['rate'] = [1000]
+    # create SimulationSet instance
+    simulation_set = SimulationSet(
+        base_params={"general": {"n_reqs": 10}},
+        product_params={"general": {"n_vehicles": [10, 100], "seat_capacity": [2, 8]}},
+        data_dir=tmp_path,
+        debug=True,
+    )
 
     # execute simulations
-    simulate_parameter_space(data_dir=output_path, conf=conf)
+    simulation_set.run()
 
-Parameter Scan Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For `.simulate_parameter_space()` to work, all parameters in the base parameter scan configuration supplied by `.get_default_conf()`
-must be present. The general schema of the parameter scan configuration dictionary is an outer dictionary
-indexed by specific strings and containing inner dictionaries as values which are indexed by strings
-and contain lists of possible values for each parameter.
-Its type is ``dict[Literal["general", "space", "environment"], dict[str, list[Any]]]``,
-for example ``conf = {"general": {"param1": [value1, value2]}, "request_generator": {"param42": [value2]}}``.
+Parameter Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
 
-The values and types allowed as list elements in the inner dict are the following:
+`SimulationSet` takes three main arguments: ``base_params``, ``zip_params`` and
+``product_params``. Base parameters are parameters which are kept constant across all
+simulations defined by the simulation set. Here the values of the inner dict are the
+actual parameters. For zip and product parameters, lists of values are supplied as the
+inner dictionary's values. Zip parameters are varied simultaneously across the
+simulations, i.e. the first simulation will use the first parameter value for all of the
+parameters in ``zip_params``, the second simulation will use the second parameter
+values, and so on. For zip paramaters it is important that all lists of parameter values
+are of equal length. The lists in product parameters on the other hand will be
+multiplied as a Cartesian product. Here the lengths do not have to match, all possible
+combinations will be simulated.
 
-* Valid Values for ``"general"``
+The current list of supported parameters is:
+
+* Valid values for ``general``
     * ``n_reqs: int``
-    * ``space: TransportSpace``
     * ``n_vehicles: int``
-    * ``initial_location: Location``
     * ``seat_capacity: int``
+    * ``initial_location: Location``
+    * ``space: TransportSpace``
     * ``dispatcher: Dispatcher``
-* Valid Values for ``"request_generator"``
-    * ``request_generator: Type[RequestGenerator]``
-    * ``rate: int``
-    * ``max_pickup_delay: int``
-    * ``max_pickup_delivery_delay_rel: int``
-    * ``seed: int``
-* Valid Values for ``environment``
     * ``TransportationRequestCls: Type[TransportationRequest]``
     * ``VehicleStateCls: Type[VehicleStateCls]``
     * ``FleetStateCls: Type[FleetStateCls]``
-    * ``data_dir``: PosixPath``
-    * ``chunksize``: int
+* Valid values for ``request_generator``
+    * ``request_generator: Type[RequestGenerator]``
+    * Any request generator keyword argument
+
+
+Note that not every parameter necessarily needs to be supplied. `SimulationSet` contains
+default parameters ``SimulationSet.default_base_params``, which are used for parameters
+not specified through arguments. The order of precedence is, last taking highest:
+``default_base_params``, ``base_params``, ``zip_params``, ``product_params``.
 
 
 Executing Simulations
 ~~~~~~~~~~~~~~~~~~~~~
 
-When `.simulate_parameter_space()` is called, independent simulations are performed for each parameter set drawn from
-the parameter scan configuration. The events that are generated by the simulation are written to disk
-in the `JSON Lines`_ format. The simulation parameters are also written to disk, in a separate JSON file.
-This includes all data necessary to perform the respective simulation. For more detail, see :ref:`JSON IO`.
-For each simulation run, a UUID is generated and the data is stored to ``<uuid>.jsonl`` for the
-events and ``<uuid>_params.json`` for the simulation parameters. The UUIDs generated during a
-parameter scan are returned by `.simulate_parameter_space()`.
-
-The general schema of the (single) simulation configuration dictionary is again an outer dictionary
-indexed by specific strings and containing inner dictionaries as values which are indexed by strings.
-Unlike the parameter scan dictionary the parameter values are now single values, not lists of values.
-
-Its type is ``dict[Literal["general", "space", "environment"], dict[str, Any]]``,
-for example ``conf = {"general": {"param1": value1}, "request_generator": {"param42": value2}}``.
-
-The values and types allowed as values in the inner dict are again the following:
-
-* Valid Values for ``"general"``
-    * ``n_reqs: int``
-    * ``space: TransportSpace``
-    * ``n_vehicles: int``
-    * ``initial_location: Location``
-    * ``seat_capacity: int``
-    * ``dispatcher: Dispatcher``
-* Valid Values for ``"request_generator"``
-    * ``request_generator: Type[RequestGenerator]``
-    * ``rate: int``
-    * ``max_pickup_delay: int``
-    * ``max_pickup_delivery_delay_rel: int``
-    * ``seed: int``
-* Valid Values for ``environment``
-    * ``TransportationRequestCls: Type[TransportationRequest]``
-    * ``VehicleStateCls: Type[VehicleStateCls]``
-    * ``FleetStateCls: Type[FleetStateCls]``
-    * ``data_dir``: PosixPath``
-    * ``chunksize``: int
+Simulations are executed when `SimulationSet.run()` is called. Independent simulations
+are performed through executing `.perform_single_simulation()` for each parameter set
+using multiprocessing. The events that are generated by the simulation are written to
+disk in the `JSON Lines`_ format. The simulation parameters are also written to disk, in
+separate JSON files.  This includes all data necessary to perform the respective
+simulation. For more detail, see :ref:`JSON IO`.  For each simulation run, a unique
+identfier is generated and the data is stored to ``<uuid>.jsonl`` for the events and
+``<uuid>_params.json`` for the simulation parameters. The identifier hashes the
+parameter set, thereby allowing to continue an interrupted simulation set run later.
+The IDs generated can be retrieved using `SimulationSet.result_ids`. Alternatively the
+filenames of the resulting JSONL/JSON files are also directly available through
+`SimulationSet.param_paths` and `SimulationSet.result_paths`.
 
 
-.. automodule:: thesimulator.extras.parameter_spaces.simulate_parameter_space
-    :members:
+.. automodule:: thesimulator.extras.simulation_set
+    :members: SimulationSet
 
+.. automodule:: thesimulator.extras.simulation_set
+    :members: perform_single_simulation
+
+.. automodule:: thesimulator.extras.simulation_set
+    :members: simulate_parameter_combinations
 
 JSON IO
 -------
 
 .. currentmodule:: thesimulator.extras.io
 
-This IO module implements functionality for reading and writing to JSON/`JSON Lines`_ format.
+This IO module implements functionality for reading and writing to JSON/`JSON Lines`_
+format.
 
-Simulation parameter configurations can be saved and restored using `.save_params_json()` and
-`.read_params_json()`. The IO module handles serialization and deserialization of the ``RequestGenerator``,
-the dispatcher and the ``TransportSpace`` used for the simulation. This allows to recreate any simulation
-from its saved parameter dictionary. Note though that this *does not* serialize the actual objects. If the
+Simulation parameter configurations can be saved and restored using
+`.save_params_json()` and `.read_params_json()`. The IO module handles serialization and
+deserialization of the ``RequestGenerator``, the dispatcher and the ``TransportSpace``
+used for the simulation. This allows to recreate any simulation from its saved parameter
+dictionary. Note though that this *does not* serialize the actual objects. If the
 implementation of e.g. the dispatcher is modified, the simulation result *will* change.
 
-A list of simulation output events can be saved and restored using `.save_events_json()` and
-`.read_events_json()`. The IO module handles serialization and deserialization of the various event types:
+A list of simulation output events can be saved and restored using `.save_events_json()`
+and `.read_events_json()`. The IO module handles serialization and deserialization of
+the various event types:
 
 * ``VehicleStateBeginEvent``
 * ``VehicleStateEndEvent``
@@ -149,8 +139,8 @@ Spaces
 
 .. currentmodule:: thesimulator.extras.spaces
 
-This module implements thin convenience wrappers around ``networkx`` to create
-common network topologies to be used as transport spaces.
+This module implements thin convenience wrappers around ``networkx`` to create common
+network topologies to be used as transport spaces.
 
 .. automodule:: thesimulator.extras.spaces
     :members:
