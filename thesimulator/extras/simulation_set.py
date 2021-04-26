@@ -433,20 +433,11 @@ class SimulationSet:
 
         return joined_key_pairs, joined_values_iter
 
-    def run(self):
-        """
-        Run the simulations configured through `base_params`, `zip_params` and `product_params` using
-        multiprocessing. The parameters and resulting output events are written to disk
-        in JSON/JSON Lines format. For more detail see :ref:`Executing Simulations`.
-
-        Access simulations results
-            - by id: `SimulationSet.result_ids`
-            - by parameter file `SimulationSet.param_paths`
-            - by result file `SimulationSet.result_paths`
-        """
+    def __iter__(self):
         zipped_key_pairs, zipped_values_iter = self._make_joined_key_pairs_values(
             params=self._zip_params, join_fn=zip
         )
+
         (
             multiplied_key_pairs,
             multiplied_values_iter,
@@ -476,6 +467,24 @@ class SimulationSet:
 
                 yield self._two_level_dict_update(self._base_params, d)
 
+        self._param_combinations = param_combinations()
+        return self
+
+    def __next__(self):
+        return next(self._param_combinations)
+
+    def run(self):
+        """
+        Run the simulations configured through `base_params`, `zip_params` and `product_params` using
+        multiprocessing. The parameters and resulting output events are written to disk
+        in JSON/JSON Lines format. For more detail see :ref:`Executing Simulations`.
+
+        Access simulations results
+            - by id: `SimulationSet.result_ids`
+            - by parameter file `SimulationSet.param_paths`
+            - by result file `SimulationSet.result_paths`
+        """
+
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.max_workers
         ) as executor:
@@ -489,7 +498,7 @@ class SimulationSet:
                         param_path_suffix=self._param_path_suffix,
                         result_path_suffix=self._result_path_suffix,
                     ),
-                    param_combinations(),
+                    iter(self),
                     chunksize=self.process_chunksize,
                 )
             )
