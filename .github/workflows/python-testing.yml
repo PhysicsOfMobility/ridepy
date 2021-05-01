@@ -16,7 +16,7 @@ jobs:
     - name: Checkout submodules
       run: git submodule update --init --recursive
 
-    - name: Set up Python 3.9
+    - name: Set up Python 3.9.4
       uses: actions/setup-python@v2
       with:
         python-version: 3.9.4
@@ -34,13 +34,12 @@ jobs:
 
     - name: Install Dependencies
       # Somehow the tests fail if we do python setup.py install
-      #run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
-      run: pip install pytest cython==3.0a6 && python setup.py develop
+      run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
 
 
     - name: Test with pytest
       run: |
-        pytest -vvv --junitxml=test-junit-reports/result.xml
+        pytest -vvv --junitxml=test-junit-reports/result.xml test/
 
     - name: Test OpenMPI stuff
       run: |
