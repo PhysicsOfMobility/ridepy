@@ -13,8 +13,8 @@ jobs:
     steps:
     - name: Checkout repository and submodules
       uses: actions/checkout@v2
-      with:
-        submodules: recursive
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -40,7 +40,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest -p no:cacheprovider -vvv --junitxml=test-junit-reports/result.xml
+        pytest -vvv --junitxml=test-junit-reports/result.xml
 
     - name: Test OpenMPI stuff
       run: |
