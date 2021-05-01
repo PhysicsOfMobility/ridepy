@@ -4,7 +4,7 @@
 
 name: Python application
 
-on: [push, pull_request]
+on: push
 
 jobs:
   test:
@@ -35,7 +35,7 @@ jobs:
     - name: Install Dependencies
       # Somehow the tests fail if we do python setup.py install
       #run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
-      run: python setup.py develop && pip install pytest
+      run: pip install pytest cython && python setup.py develop
 
 
     - name: Test with pytest
