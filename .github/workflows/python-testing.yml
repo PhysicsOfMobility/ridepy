@@ -39,7 +39,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest -vvv --junitxml=test-junit-reports/result.xml
+        pytest --cache-clear && pytest -vvv --junitxml=test-junit-reports/result.xml
 
     - name: Test OpenMPI stuff
       run: |
