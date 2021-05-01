@@ -49,7 +49,7 @@ combinations will be simulated.
 The current list of supported parameters is:
 
 * Valid values for ``general``
-    * ``n_reqs: int``
+    * either ``n_reqs: int`` or ``t_cutoff: float``
     * ``n_vehicles: int``
     * ``seat_capacity: int``
     * ``initial_location: Location``

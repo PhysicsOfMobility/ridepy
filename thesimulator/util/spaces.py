@@ -142,6 +142,7 @@ class Euclidean2D(Euclidean):
 
     @smartVectorize
     def d(self, u, v):
+        breakpoint()
         return m.sqrt(m.pow(v[0] - u[0], 2) + m.pow(v[1] - u[1], 2))
 
     def asdict(self):
