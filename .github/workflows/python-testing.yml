@@ -19,7 +19,7 @@ jobs:
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9.4
+        python-version: 3.9.2
 
     - name: Cache python environment
       uses: actions/cache@v2
@@ -34,7 +34,8 @@ jobs:
 
     - name: Install Dependencies
       # Somehow the tests fail if we do python setup.py install
-      run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
+      #run: pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
+      run: python setup.py develop && pip install pytest
 
 
     - name: Test with pytest
