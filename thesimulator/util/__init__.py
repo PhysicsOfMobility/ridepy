@@ -76,7 +76,9 @@ class smartVectorize:
 
         # check homogenous shape for all keyword arguments and, if applicable,
         # make sure they also match the positional arguments' ones
-        if kwargs and (shape := np.shape(list(kwargs.values())[0])) is None:
+        if kwargs:
+            if shape is None:
+                shape = np.shape(list(kwargs.values())[0])
             if not all(np.shape(v) == shape for v in kwargs.values()):
                 raise ValueError("vector shapes must match")
 
