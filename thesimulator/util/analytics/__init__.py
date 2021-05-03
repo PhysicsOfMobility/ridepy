@@ -74,8 +74,6 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     state_duration   float64
     occupancy        float64
     location         Union[float64, int, Tuple[float64]]
-    time_to_next     float64
-    dist_to_next     float64
     ```
 
     Parameters
@@ -358,6 +356,8 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     state_duration   float64
     occupancy        float64
     location         Union[float64, int, Tuple[float64]]
+    time_to_next     float64
+    dist_to_next     float64
     ```
 
     Parameters
@@ -441,6 +441,8 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
     state_duration   float64
     occupancy        float64
     location         Union[float64, int, Tuple[float64]]
+    time_to_next     float64
+    dist_to_next     float64
     ```
 
     The `requests` DataFrame returned has the following schema:
