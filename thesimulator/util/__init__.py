@@ -76,9 +76,7 @@ class smartVectorize:
 
         # check homogenous shape for all keyword arguments and, if applicable,
         # make sure they also match the positional arguments' ones
-        if kwargs:
-            if shape is None:
-                shape = np.shape(list(kwargs.values())[0])
+        if kwargs and (shape := np.shape(list(kwargs.values())[0])) is None:
             if not all(np.shape(v) == shape for v in kwargs.values()):
                 raise ValueError("vector shapes must match")
 
@@ -89,6 +87,9 @@ class smartVectorize:
         # (mind that a single number here has dimensionality 0)
         # the number of dimensions of the transport space, we are dealing
         # with single coordinate vectors. Hence we call the base_fn normally.
+        # NOTE: this may produce weird errors if the "correct" shape is not detected by np.shape, e.g.
+        # for a pd.Series of coordinate tuples. In this case, the condition will evaluate true and feed
+        # the series to base_fn
         if len(shape) == self.self_.n_dim - 1:
             return self.base_fn(self.self_, *args, **kwargs)
         # if however we have dimensionality of the space plus one,
@@ -126,22 +127,7 @@ class smartVectorize:
                         )
                     ]
 
-                # finally the question of return type arises. First infer
-                # the input type from the first supplied argument:
-                if args:
-                    atype = type(args[0])
-                elif kwargs:
-                    atype = type(list(kwargs.values())[0])
-                else:
-                    atype = None
-
-                # If we got pandas Series, we return one. This should in reality
-                # only happen within analysis code.
-                if atype == pd.Series:
-                    return pd.Series(res)
-                # In all other cases, we convert the list into a numpy array
-                else:
-                    return np.array(res)
+                return np.array(res)
 
             # ...if however there is a dedicated vectorized function,
             #    we just forward everything and return

@@ -398,13 +398,11 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     def dist_time_to_next(df):
         locs = df["location"]
 
-        dist_to_next = space.d(locs[:-1], locs[1:])
-        dist_to_next.index = df.index[:-1]
-        df["dist_to_next"] = dist_to_next
+        dist_to_next = space.d(locs[:-1].to_list(), locs[1:].to_list())
+        df["dist_to_next"] = pd.Series(dist_to_next, index=df.index[:-1])
 
-        time_to_next = space.t(locs[:-1], locs[1:])
-        time_to_next.index = df.index[:-1]
-        df["time_to_next"] = time_to_next
+        time_to_next = space.t(locs[:-1].to_list(), locs[1:].to_list())
+        df["time_to_next"] = pd.Series(time_to_next, index=df.index[:-1])
 
         return df
 
