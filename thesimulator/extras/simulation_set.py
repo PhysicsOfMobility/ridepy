@@ -274,15 +274,13 @@ class SimulationSet:
 
         """
 
-        # BUGGY!!!!
-        if zip_params and (
-            ref_len := len(next(iter(next(iter(zip_params.values())).values())))
-        ):
-            return all(
-                len(inner_value) == ref_len
+        if zip_params:
+            g = it.groupby(
+                len(inner_value)
                 for inner_dict in zip_params.values()
                 for inner_value in inner_dict.values()
             )
+            return next(g, True) and not next(g, False)
         else:
             return True
 
@@ -416,7 +414,7 @@ class SimulationSet:
             ), "invalid outer key"
 
             # assert no unknown inner keys
-            for outer_key in self.default_base_params:
+            for outer_key in set(self.default_base_params) - {"request_generator"}:
                 assert not (
                     set(base_params.get(outer_key, {}))
                     | set(zip_params.get(outer_key, {}))
