@@ -253,7 +253,7 @@ def test_simulation_set_validate(tmp_path):
     # valid keys
     ##################################
 
-    with pytest.raises(AssertionError, match=r"invalid inner.*='general'"):
+    with pytest.raises(AssertionError, match=r"invalid.*='general'"):
         SimulationSet(
             base_params={
                 "general": {"fizz": "baz"},
@@ -262,8 +262,40 @@ def test_simulation_set_validate(tmp_path):
             validate=True,
         )
 
+        SimulationSet(
+            zip_params={
+                "general": {"fizz": "baz"},
+            },
+            data_dir=tmp_path,
+            validate=True,
+        )
+
+        SimulationSet(
+            product_params={
+                "general": {"fizz": "baz"},
+            },
+            data_dir=tmp_path,
+            validate=True,
+        )
+
     SimulationSet(
         base_params={
+            "request_generator": {"fizz": "baz"},
+        },
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        zip_params={
+            "request_generator": {"fizz": "baz"},
+        },
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        product_params={
             "request_generator": {"fizz": "baz"},
         },
         data_dir=tmp_path,
