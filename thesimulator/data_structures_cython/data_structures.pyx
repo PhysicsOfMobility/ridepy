@@ -800,3 +800,12 @@ cdef class Stoplist:
         if len(self) != len(other):
             return False
         return all(self[i]==other[i] for i in range(len(self)))
+
+
+# https://stackoverflow.com/a/56551790
+cdef extern from "malloc.h" nogil:
+     int malloc_trim(size_t pad)
+
+
+def return_memory_to_OS():
+    malloc_trim(0)

@@ -36,6 +36,7 @@ from thesimulator.data_structures import (
 )
 from thesimulator.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
+    return_memory_to_OS,
 )
 from thesimulator.vehicle_state import VehicleState
 from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
@@ -105,12 +106,12 @@ def perform_single_simulation(
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
         logger.info(
-            f"Pre-existing param json exists for {params_json=} at {param_path=}, skipping simulation"
+            f"Pre-existing param json exists at {param_path=}, skipping simulation"
         )
         return sim_id
     else:
         logger.info(
-            f"No pre-existing param json exists for {params_json=} at {param_path=}, running simulation"
+            f"No pre-existing param json exists at {param_path=}, running simulation"
         )
         if result_path.exists():
             logger.info(
@@ -142,12 +143,12 @@ def perform_single_simulation(
         print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
     simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
-
     while chunk := list(it.islice(simulation, jsonl_chunksize)):
         save_events_json(jsonl_path=result_path, events=chunk)
-
+        return_memory_to_OS()
     with open(str(param_path), "w") as f:
         f.write(params_json)
+    return_memory_to_OS()
     return sim_id
 
 
@@ -189,21 +190,20 @@ def simulate_parameter_combinations(
     -------
         List of simulation IDs. See the docstring of `.SimulationSet` for more detail.
     """
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        sim_ids = list(
-            executor.map(
-                ft.partial(
-                    perform_single_simulation,
-                    debug=debug,
-                    jsonl_chunksize=jsonl_chunksize,
-                    data_dir=data_dir,
-                    param_path_suffix=param_path_suffix,
-                    result_path_suffix=result_path_suffix,
-                ),
-                param_combinations,
-                chunksize=process_chunksize,
-            )
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+    sim_ids = list(
+        map(
+            ft.partial(
+                perform_single_simulation,
+                debug=debug,
+                jsonl_chunksize=jsonl_chunksize,
+                data_dir=data_dir,
+                param_path_suffix=param_path_suffix,
+                result_path_suffix=result_path_suffix,
+            ),
+            param_combinations,
         )
+    )
     return sim_ids
 
 
