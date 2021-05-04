@@ -92,7 +92,7 @@ def test_cyclic_graph():
     y = pd.Series(np.arange(5, dtype="i8"))
     d = space.d(x, y)
 
-    assert d.equals(pd.Series([0, 1, 2, 1, np.inf]))
+    assert np.array_equal(d, [0, 1, 2, 1, np.inf])
 
 
 def test_star_graph():
@@ -112,7 +112,7 @@ def test_star_graph():
     y = pd.Series(np.arange(5, dtype="i8"))
     d = space.d(x, y)
 
-    assert d.equals(pd.Series([0, 1, 1, 1, 1]))
+    assert np.array_equal(d, pd.Series([0, 1, 1, 1, 1]))
 
 
 def test_CyEuclidean2D():

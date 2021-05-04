@@ -67,7 +67,7 @@ def perform_single_simulation(
         Parameter dictionary to base the simulation on. Must contain the following keys:
 
         - ``general``
-            - ``n_reqs``
+            - either ``n_reqs``  or ``t_cutoff``
             - ``n_vehicles``
             - ``seat_capacity``
             - ``initial_location``
@@ -141,7 +141,12 @@ def perform_single_simulation(
     if debug:
         print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
-    simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
+    if params["general"]["n_reqs"] is not None:
+        simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
+    elif params["general"]["t_cutoff"] is not None:
+        simulation = fs.simulate(rg, t_cutoff=params["general"]["t_cutoff"])
+    else:
+        raise ValueError("must either specify n_reqs or t_cutoff")
 
     while chunk := list(it.islice(simulation, jsonl_chunksize)):
         save_events_json(jsonl_path=result_path, events=chunk)
@@ -268,15 +273,14 @@ class SimulationSet:
         True if sequences are of equal length, False otherwise
 
         """
-        if zip_params and next(iter(next(iter(zip_params.values())).values())):
-            return ft.reduce(
-                op.__eq__,
-                (
-                    len(inner_value)
-                    for inner_dict in zip_params.values()
-                    for inner_value in inner_dict.values()
-                ),
+
+        if zip_params:
+            g = it.groupby(
+                len(inner_value)
+                for inner_dict in zip_params.values()
+                for inner_value in inner_dict.values()
             )
+            return next(g, True) and not next(g, False)
         else:
             return True
 
@@ -380,6 +384,7 @@ class SimulationSet:
         self.default_base_params = dict(
             general=dict(
                 n_reqs=100,
+                t_cutoff=None,
                 space=SpaceObj,
                 n_vehicles=10,
                 initial_location=(0, 0),
@@ -409,7 +414,7 @@ class SimulationSet:
             ), "invalid outer key"
 
             # assert no unknown inner keys
-            for outer_key in self.default_base_params:
+            for outer_key in set(self.default_base_params) - {"request_generator"}:
                 assert not (
                     set(base_params.get(outer_key, {}))
                     | set(zip_params.get(outer_key, {}))

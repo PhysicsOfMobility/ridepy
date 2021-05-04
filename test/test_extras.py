@@ -207,3 +207,97 @@ def test_param_scan_equivalent_to_pure_zip(tmp_path):
         {1: {"c": 100}, 2: {"z": 1000}},
         {1: {"c": 200}, 2: {"z": 2000}},
     ]
+
+
+def test_simulation_set_validate(tmp_path):
+    ##################################
+    # ZIP PARAMS
+    ##################################
+
+    SimulationSet(
+        zip_params={
+            "general": {"n_reqs": [100, 200, 300], "n_vehicles": [1000, 2000, 3000]}
+        },
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        zip_params={"general": {"n_vehicles": [1000, 2000, 3000]}},
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        zip_params={"general": {"n_vehicles": []}},
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        zip_params={"general": {}},
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    with pytest.raises(AssertionError, match=r"equal length"):
+        SimulationSet(
+            zip_params={
+                "general": {"n_reqs": [100, 200], "n_vehicles": [1000, 2000, 3000]}
+            },
+            data_dir=tmp_path,
+            validate=True,
+        )
+
+    ##################################
+    # valid keys
+    ##################################
+
+    with pytest.raises(AssertionError, match=r"invalid.*='general'"):
+        SimulationSet(
+            base_params={
+                "general": {"fizz": "baz"},
+            },
+            data_dir=tmp_path,
+            validate=True,
+        )
+
+        SimulationSet(
+            zip_params={
+                "general": {"fizz": "baz"},
+            },
+            data_dir=tmp_path,
+            validate=True,
+        )
+
+        SimulationSet(
+            product_params={
+                "general": {"fizz": "baz"},
+            },
+            data_dir=tmp_path,
+            validate=True,
+        )
+
+    SimulationSet(
+        base_params={
+            "request_generator": {"fizz": "baz"},
+        },
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        zip_params={
+            "request_generator": {"fizz": "baz"},
+        },
+        data_dir=tmp_path,
+        validate=True,
+    )
+
+    SimulationSet(
+        product_params={
+            "request_generator": {"fizz": "baz"},
+        },
+        data_dir=tmp_path,
+        validate=True,
+    )

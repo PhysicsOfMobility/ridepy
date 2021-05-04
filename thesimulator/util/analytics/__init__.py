@@ -152,12 +152,23 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     # compute the occupancy as delta_occupancy cumsum
     stops["occupancy"] = stops.groupby("vehicle_id")["delta_occupancy"].cumsum()
 
-    # and change index to hierarchical (vehicle_id, timestamp). Note that this is
-    # non-unique as multiply stops on the same vehicle may have identical timestamps.
-    stops.set_index(["vehicle_id", "timestamp"], inplace=True)
+    # set index to ('vehicle_id, 'stop_id'), where stop_id in 0...N for each vehicle
+    stops = (
+        stops.groupby("vehicle_id")
+        .apply(lambda df: df.reset_index(drop=True))
+        .drop("vehicle_id", axis=1)
+    )
+    stops.index.rename(names="stop_id", level=1, inplace=True)
 
-    # check total operational times of all vehicles are identical
-    assert len(stops.groupby("vehicle_id")["state_duration"].sum().unique()) == 1
+    # check total operational times of all vehicles are almost identical
+    iterator = iter(stops.groupby("vehicle_id")["state_duration"].sum())
+    try:
+        first = next(iterator)
+    except StopIteration:
+        pass
+    else:
+        assert all(np.isclose(first, x) for x in iterator)
+
     return stops
 
 
@@ -328,7 +339,7 @@ def _create_transportation_requests_dataframe(
     return reqs
 
 
-def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
+def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     """
     Add non-internal stops' locations to the stoplist DataFrame as inferred
     from the *accepted* requests.
@@ -345,6 +356,8 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
     state_duration   float64
     occupancy        float64
     location         Union[float64, int, Tuple[float64]]
+    time_to_next     float64
+    dist_to_next     float64
     ```
 
     Parameters
@@ -381,8 +394,30 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops) -> pd.DataFrame:
             "location_tmp"
         ],
     )
+
+    def dist_time_to_next(df):
+        locs = df["location"]
+
+        dist_to_next = space.d(locs[:-1].to_list(), locs[1:].to_list())
+        df["dist_to_next"] = pd.Series(dist_to_next, index=df.index[:-1])
+
+        time_to_next = space.t(locs[:-1].to_list(), locs[1:].to_list())
+        df["time_to_next"] = pd.Series(time_to_next, index=df.index[:-1])
+
+        return df
+
+    stops = stops.groupby("vehicle_id").apply(dist_time_to_next)
+
     return stops[
-        ["delta_occupancy", "request_id", "state_duration", "occupancy", "location"]
+        [
+            "delta_occupancy",
+            "request_id",
+            "state_duration",
+            "occupancy",
+            "location",
+            "dist_to_next",
+            "time_to_next",
+        ]
     ]
 
 
@@ -406,6 +441,8 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
     state_duration   float64
     occupancy        float64
     location         Union[float64, int, Tuple[float64]]
+    time_to_next     float64
+    dist_to_next     float64
     ```
 
     The `requests` DataFrame returned has the following schema:
@@ -461,7 +498,7 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
 
     try:
         stops_df = _add_locations_to_stoplist_dataframe(
-            reqs=requests_df, stops=stops_df
+            reqs=requests_df, stops=stops_df, space=space
         )
     except KeyError:
         pass

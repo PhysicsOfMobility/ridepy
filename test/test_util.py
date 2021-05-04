@@ -60,10 +60,6 @@ def test_smartVectorize():
     vl = list(va)
     el = ea
 
-    us = pd.Series(ua)
-    vs = pd.Series(va)
-    es = pd.Series(ea)
-
     for w1, w2, w3 in [
         [
             lambda u, v: phony1.foo(u, v),
@@ -95,10 +91,6 @@ def test_smartVectorize():
             w1(ul, vl)
         assert np.array_equal(w2(ul, vl), el)
         assert np.array_equal(w3(ul, vl), el + 1)
-
-        assert np.array_equal(w1(us, vs), es)
-        assert np.array_equal(w2(us, vs), es)
-        assert np.array_equal(w3(us, vs), es + 1)
 
         x = np.zeros((100, 2))
 
