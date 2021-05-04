@@ -410,6 +410,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
 
     return stops[
         [
+            "timestamp",
             "delta_occupancy",
             "request_id",
             "state_duration",
