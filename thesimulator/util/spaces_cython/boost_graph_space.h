@@ -1,16 +1,17 @@
 #ifndef BOOST_GRAPH_SPACE_H
 #define BOOST_GRAPH_SPACE_H
 #include <iostream>
+#include <utility>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include "lru/lru.hpp"
 
 #include "cspaces.h"
 
 using namespace std;
 using namespace boost;
-
 
 namespace cstuff {
     template<typename vertex_t>
@@ -18,6 +19,8 @@ namespace cstuff {
         typedef adjacency_list <vecS, vecS, undirectedS, property<vertex_name_t, vertex_t>, property<edge_weight_t, double>>
                 Graph;
         typedef pair <vertex_t, vertex_t> Edge;
+        typedef LRU::Cache<int, pair<vector<int>, vector<double>>> pred_cache_t;
+
     private:
         Graph _g;
         map<vertex_t, int> vertex_label2index;
@@ -26,13 +29,28 @@ namespace cstuff {
         vector<double> _distances;
         vector<int> _predecessors;
         vector<double> _weights;
+        pred_cache_t pred_cache{1000}; // the cache size could be set at initialization
+
+        void cached_dijkstra(int u_idx){
+            if (pred_cache.contains(u_idx)) {
+                auto res = pred_cache.lookup(u_idx);
+                this->_predecessors = res.first;
+                this->_distances = res.second;
+            }
+            else {
+                // not in cache, compute
+                dijkstra_shortest_paths(this->_g, u_idx, predecessor_map(&this->_predecessors[0]).distance_map(
+                        &this->_distances[0]));
+                // insert into cache
+                pred_cache.insert(u_idx, make_pair(this->_predecessors, this->_distances));
+            }
+        }
 
     public:
         double d(vertex_t src, vertex_t target) override {
             // call dijkstra
             int src_idx = this->vertex_label2index[src];
-            dijkstra_shortest_paths(this->_g, src_idx, predecessor_map(&this->_predecessors[0]).distance_map(
-                    &this->_distances[0]));
+            cached_dijkstra(src_idx);
             return this->_distances[this->vertex_label2index[target]];
         }
 
@@ -45,8 +63,7 @@ namespace cstuff {
             // call dijkstra
             int u_idx = this->vertex_label2index[u];
             const int v_idx = this->vertex_label2index[v];
-            dijkstra_shortest_paths(this->_g, u_idx, predecessor_map(&this->_predecessors[0]).distance_map(
-                    &this->_distances[0]));
+            cached_dijkstra(u_idx);
 
             vertex_t predecessor, current_node = v_idx;
             double dist_from_dest = 0;
