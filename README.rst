@@ -59,7 +59,7 @@ stage, prefixing the pull request with "WIP:".
 Code style is *black* for Python and *LLVM* for C++. To format your code use
 
 - ``black .`` for Python
-- ``find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format -style=file -i {} \;`` for C++
+- ``find . -regex '.*\.\(cxx\|h\)' -exec clang-format -style=file -i {} \;`` for C++
 
 Testing
 ~~~~~~~

@@ -10,7 +10,7 @@ add_subdirectory(util)
 
 # add the executable
 add_executable(
-        dispatcher vehicle_state_cython/cstuff.cpp util/spaces_cython/cspaces.cpp)
+        dispatcher vehicle_state_cython/cstuff.cpp util/spaces_cython/cspaces.cxx)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
