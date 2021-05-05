@@ -5,7 +5,7 @@ from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
 
-cdef extern from "cspaces.cpp":
+cdef extern from "cspaces.cxx":
     pass
 
 """

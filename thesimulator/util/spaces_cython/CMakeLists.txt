@@ -1,1 +1,1 @@
-add_library(spaces cspaces.cpp cspaces.h)
+add_library(spaces cspaces.cxx cspaces.h)
