@@ -56,6 +56,11 @@ stage, prefixing the pull request with "WIP:".
 -  ``production`` should always be usable and, if possible, not break
    things.
 
+Code style is *black* for Python and *LLVM* for C++. To format your code use
+
+- ``black .`` for Python
+- ``find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format -style=file -i {} \;`` for C++
+
 Testing
 ~~~~~~~
 
