@@ -7,6 +7,7 @@ import numpy as np
 import networkx as nx
 from hypothesis import given
 import hypothesis.strategies as st
+from time import time
 
 np.random.seed(0)
 import pandas as pd
@@ -477,3 +478,24 @@ def test_random_point_generation():
 
     random.seed(42)
     assert py_R3L2_loc == py_R3L2.random_point()
+
+
+def test_caching_in_boost_graph_space():
+    cy_graph = CyGraph.from_nx(make_nx_grid((100, 100)))
+
+    vertices = cy_graph.vertices
+    src, dest = min(vertices), max(vertices)
+
+    compute_times = []
+    results = []
+
+    for i in range(2):
+        tick = time()
+        res = cy_graph.d(src, dest)
+        tock = time()
+
+        compute_times.append(tock - tick)
+        results.append(res)
+
+    assert (np.array(results) == results[0]).all()
+    assert compute_times[0] > compute_times[1]

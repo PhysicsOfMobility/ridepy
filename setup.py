@@ -19,6 +19,7 @@ extensions = [
         "*",
         ["thesimulator/**/*.pyx"],
         extra_compile_args=["-std=c++17"],
+        include_dirs=["thesimulator/util/spaces_cython/lru-cache/include"],
     ),
 ]
 

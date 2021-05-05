@@ -11,14 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
+
+    - name: Cache python environment
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
+
     - name: Install system dependencies using apt
       run: |
-        sudo apt-get update && sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev
+        sudo apt-get update && sudo apt-get -y install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev build-essential
 
 
     - name: Install Dependencies
@@ -28,7 +39,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest -vvv --junitxml=test-junit-reports/result.xml
+        pytest -vvv --junitxml=test-junit-reports/result.xml test/
 
     - name: Test OpenMPI stuff
       run: |
