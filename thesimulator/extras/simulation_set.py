@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import hashlib
+import loky
 
 import concurrent.futures
 
@@ -21,6 +22,7 @@ from typing import (
     Callable,
 )
 from pathlib import Path
+
 
 from thesimulator.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
@@ -190,20 +192,21 @@ def simulate_parameter_combinations(
     -------
         List of simulation IDs. See the docstring of `.SimulationSet` for more detail.
     """
-    # with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-    sim_ids = list(
-        map(
-            ft.partial(
-                perform_single_simulation,
-                debug=debug,
-                jsonl_chunksize=jsonl_chunksize,
-                data_dir=data_dir,
-                param_path_suffix=param_path_suffix,
-                result_path_suffix=result_path_suffix,
-            ),
-            param_combinations,
+    with loky.get_reusable_executor(max_workers=max_workers) as executor:
+        sim_ids = list(
+            executor.map(
+                ft.partial(
+                    perform_single_simulation,
+                    debug=debug,
+                    jsonl_chunksize=jsonl_chunksize,
+                    data_dir=data_dir,
+                    param_path_suffix=param_path_suffix,
+                    result_path_suffix=result_path_suffix,
+                ),
+                param_combinations,
+                chunksize=process_chunksize,
+            )
         )
-    )
     return sim_ids
 
 

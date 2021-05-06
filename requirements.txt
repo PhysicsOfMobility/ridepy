@@ -10,3 +10,4 @@ jupytext
 matplotlib
 wurlitzer
 cython==3.0a6
+loky
