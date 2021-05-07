@@ -1,11 +1,11 @@
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     TransportationRequest,
     InternalRequest,
     Stop,
     StopAction,
     Stoplist,
 )
-from thesimulator.data_structures_cython import LocType
+from ridepy.data_structures_cython import LocType
 
 import pytest
 

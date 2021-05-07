@@ -1,11 +1,11 @@
 import random
 import numpy as np
 
-from thesimulator.data_structures import TransportSpace, TransportationRequest
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures import TransportSpace, TransportationRequest
+from ridepy.data_structures_cython import (
     TransportationRequest as CTransportationRequest,
 )
-from thesimulator.util.spaces import Euclidean
+from ridepy.util.spaces import Euclidean
 
 
 class RandomRequestGenerator:

@@ -1,20 +1,20 @@
 # distutils: language=c++
 
-from thesimulator.util import MAX_SEAT_CAPACITY
+from ridepy.util import MAX_SEAT_CAPACITY
 
-from thesimulator.events import PickupEvent, DeliveryEvent, InternalEvent
-from thesimulator.data_structures import (
+from ridepy.events import PickupEvent, DeliveryEvent, InternalEvent
+from ridepy.data_structures import (
     Dispatcher,
     SingleVehicleSolution,
 )
-from thesimulator.data_structures_cython.data_structures cimport (
+from ridepy.data_structures_cython.data_structures cimport (
     TransportationRequest,
     Stop,
     StopAction,
     Stoplist,
 )
 
-from thesimulator.util.spaces_cython.spaces cimport TransportSpace
+from ridepy.util.spaces_cython.spaces cimport TransportSpace
 
 from typing import List, Union
 from copy import deepcopy

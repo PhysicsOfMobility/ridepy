@@ -9,10 +9,10 @@ import functools as ft
 
 from typing import Iterable
 
-from thesimulator.data_structures import TransportSpace
-from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
-import thesimulator.events
-from thesimulator.events import Event
+from ridepy.data_structures import TransportSpace
+from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
+import ridepy.events
+from ridepy.events import Event
 from pathlib import Path
 
 
@@ -159,7 +159,7 @@ class EventsJSONDecoder(json.JSONDecoder):
             "RequestAcceptanceEvent",
             "RequestRejectionEvent",
         ]:
-            dct = getattr(thesimulator.events, cls)(**dct[cls])
+            dct = getattr(ridepy.events, cls)(**dct[cls])
 
         return dct
 

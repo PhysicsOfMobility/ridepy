@@ -6,37 +6,37 @@ import itertools as it
 
 from numpy import inf
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
     TransportationRequest,
 )
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     Stop as CyStop,
     InternalRequest as CyInternalRequest,
     StopAction as CyStopAction,
 )
-from thesimulator.events import (
+from ridepy.events import (
     VehicleStateBeginEvent,
     RequestSubmissionEvent,
     RequestRejectionEvent,
     VehicleStateEndEvent,
 )
-from thesimulator.util.testing_utils import setup_insertion_data_structures
-from thesimulator.vehicle_state import VehicleState
-from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
+from ridepy.util.testing_utils import setup_insertion_data_structures
+from ridepy.vehicle_state import VehicleState
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 
-from thesimulator.util.dispatchers import (
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.dispatchers_cython.dispatchers import (
+from ridepy.util.dispatchers_cython.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.util.spaces import Euclidean2D
-from thesimulator.util.spaces_cython import Euclidean2D as CyEuclidean2D
+from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.util.spaces import Euclidean2D
+from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 
 
 def test_slow_simple_fleet_state_initialization():
@@ -67,7 +67,7 @@ def test_slow_simple_fleet_state_initialization():
                 testable()
 
 
-# TODO: see https://github.com/PhysicsOfMobility/theSimulator/issues/120
+# TODO: see https://github.com/PhysicsOfMobility/ridepy/issues/120
 @pytest.mark.skip("Currently, not everything is validated, this is why this segfaults")
 def test_slow_simple_fleet_state_from_fleet():
     py_space = Euclidean2D()

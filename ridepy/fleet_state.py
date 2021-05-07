@@ -27,11 +27,11 @@ from mpi4py.futures import MPICommExecutor
 
 import logging
 
-from thesimulator.util.request_generators import RandomRequestGenerator
+from ridepy.util.request_generators import RandomRequestGenerator
 
 logger = logging.getLogger(__name__)
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     Stop,
     Stoplist,
     Request,
@@ -55,7 +55,7 @@ from .events import (
     VehicleStateEndEvent,
     RequestSubmissionEvent,
 )
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
     InternalRequest as CyInternalRequest,
     LocType,
@@ -63,11 +63,11 @@ from thesimulator.data_structures_cython import (
     Stop as CyStop,
 )
 
-from thesimulator.vehicle_state import VehicleState
-from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
+from ridepy.vehicle_state import VehicleState
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 
-from thesimulator.data_structures import TransportSpace
-from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
+from ridepy.data_structures import TransportSpace
+from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
 
 
 class FleetState(ABC):

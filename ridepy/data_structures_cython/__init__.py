@@ -1,4 +1,4 @@
-from thesimulator.data_structures_cython.data_structures import (
+from ridepy.data_structures_cython.data_structures import (
     TransportationRequest,
     InternalRequest,
     Stop,

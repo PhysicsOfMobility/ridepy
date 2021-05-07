@@ -6,10 +6,10 @@ import pandas as pd
 
 from numpy import nan, inf
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     TransportationRequest,
 )
-from thesimulator.events import (
+from ridepy.events import (
     RequestAcceptanceEvent,
     RequestRejectionEvent,
     PickupEvent,
@@ -20,19 +20,19 @@ from thesimulator.events import (
     RequestEvent,
     RequestSubmissionEvent,
 )
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
 )
-from thesimulator.util.spaces_cython import Euclidean2D as CyEuclidean2D
-from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.util.dispatchers import (
+from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
+from ridepy.fleet_state import SlowSimpleFleetState
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D
-from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.analytics.plotting import plot_occupancy_hist
-from thesimulator.vehicle_state import VehicleState
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.spaces import Euclidean1D, Euclidean2D
+from ridepy.util.analytics import get_stops_and_requests
+from ridepy.util.analytics.plotting import plot_occupancy_hist
+from ridepy.vehicle_state import VehicleState
 
 
 def test_get_stops_and_requests():

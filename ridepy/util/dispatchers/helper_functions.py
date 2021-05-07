@@ -1,7 +1,7 @@
 from typing import Optional
 from copy import deepcopy
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     Stoplist,
     TransportationRequest,
     TransportSpace,

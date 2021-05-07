@@ -3,12 +3,12 @@
 from cython.operator cimport dereference
 from libcpp.memory cimport dynamic_pointer_cast
 
-from thesimulator.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
-from thesimulator.data_structures_cython.data_structures cimport TransportationRequest, Stoplist, LocType, R2loc
-from thesimulator.data_structures_cython.cdata_structures cimport InsertionResult, \
+from ridepy.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
+from ridepy.data_structures_cython.data_structures cimport TransportationRequest, Stoplist, LocType, R2loc
+from ridepy.data_structures_cython.cdata_structures cimport InsertionResult, \
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
-from thesimulator.util.dispatchers_cython.cdispatchers cimport \
+from ridepy.util.dispatchers_cython.cdispatchers cimport \
     brute_force_total_traveltime_minimizing_dispatcher as c_brute_force_total_traveltime_minimizing_dispatcher, \
     zero_detour_dispatcher as c_zero_detour_dispatcher
 

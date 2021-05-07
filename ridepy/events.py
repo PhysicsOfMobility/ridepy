@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Union
 
-from thesimulator.data_structures import ID
+from ridepy.data_structures import ID
 
 
 @dataclass

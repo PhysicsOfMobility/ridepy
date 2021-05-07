@@ -6,29 +6,29 @@ import pandas as pd
 import sys
 import argparse
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     TransportationRequest as PyTransportationRequest,
 )
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
 )
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.vehicle_state import VehicleState as PyVehicleState
-from thesimulator.vehicle_state_cython import VehicleState as CyVehicleState
-from thesimulator.util.dispatchers import (
+from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.vehicle_state import VehicleState as PyVehicleState
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.dispatchers_cython import (
+from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean2D as pyEuclidean2D
-from thesimulator.util.spaces_cython import Euclidean2D as cyEuclidean2D
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.spaces import Euclidean2D as pyEuclidean2D
+from ridepy.util.spaces_cython import Euclidean2D as cyEuclidean2D
 
-from thesimulator.util.analytics import get_stops_and_requests
+from ridepy.util.analytics import get_stops_and_requests
 import logging
 
-sim_logger = logging.getLogger("thesimulator")
+sim_logger = logging.getLogger("ridepy")
 sim_logger.setLevel(logging.CRITICAL)
 sim_logger.handlers[0].setLevel(logging.CRITICAL)
 

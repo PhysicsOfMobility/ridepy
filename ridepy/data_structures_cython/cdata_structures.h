@@ -2,8 +2,8 @@
 // Created by Debsankha Manik on 13.12.20.
 //
 
-#ifndef THESIMULATOR_CDATA_STRUCTURES_H
-#define THESIMULATOR_CDATA_STRUCTURES_H
+#ifndef RIDEPY_CDATA_STRUCTURES_H
+#define RIDEPY_CDATA_STRUCTURES_H
 
 #include "../util/spaces_cython/cspaces.h"
 #include <cmath>
@@ -97,4 +97,4 @@ template <typename Loc> struct InsertionResult {
 };
 } // namespace cstuff
 
-#endif // THESIMULATOR_CDATA_STRUCTURES_H
+#endif // RIDEPY_CDATA_STRUCTURES_H

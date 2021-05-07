@@ -8,7 +8,7 @@ from time import time
 from numpy import inf
 from random import randint
 
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     Stop,
     TransportationRequest,
     InternalRequest,
@@ -17,15 +17,15 @@ from thesimulator.data_structures_cython import (
     Stoplist,
 )
 
-from thesimulator.util.spaces_cython import Euclidean2D, Manhattan2D
-from thesimulator.util.dispatchers_cython import (
+from ridepy.util.spaces_cython import Euclidean2D, Manhattan2D
+from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.vehicle_state_cython import VehicleState
+from ridepy.vehicle_state_cython import VehicleState
 
 import logging
 
-sim_logger = logging.getLogger("thesimulator")
+sim_logger = logging.getLogger("ridepy")
 sim_logger.setLevel(logging.DEBUG)
 sim_logger.handlers[0].setLevel(logging.DEBUG)
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(thesimulator)
+project(ridepy)
 
 # add the MathFunctions library
 add_subdirectory(vehicle_state_cython)

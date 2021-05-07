@@ -1,15 +1,15 @@
-from thesimulator.data_structures import Location, TransportSpace, Stoplist, Dispatcher
-from thesimulator.util.spaces_cython import TransportSpace as CyTransportSpace
-from thesimulator.util.dispatchers_cython import (
+from ridepy.data_structures import Location, TransportSpace, Stoplist, Dispatcher
+from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
+from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.spaces_cython import spaces as cyspaces
+from ridepy.util.spaces_cython import spaces as cyspaces
 from typing import Literal, Iterable, Union, Callable
 
-from thesimulator import data_structures as pyds, data_structures_cython as cyds
-from thesimulator import data_structures_cython as cyds
-from thesimulator.util import spaces as pyspaces
-from thesimulator.util.dispatchers import (
+from ridepy import data_structures as pyds, data_structures_cython as cyds
+from ridepy import data_structures_cython as cyds
+from ridepy.util import spaces as pyspaces
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
 

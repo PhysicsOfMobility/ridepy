@@ -2,7 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     TransportationRequest,
     Stoplist,
     TransportSpace,
@@ -10,7 +10,7 @@ from thesimulator.data_structures import (
     StopAction,
     SingleVehicleSolution,
 )
-from thesimulator.util.dispatchers.helper_functions import (
+from ridepy.util.dispatchers.helper_functions import (
     cpat_of_inserted_stop,
     time_to_stop_after_insertion,
     time_from_current_stop_to_next,

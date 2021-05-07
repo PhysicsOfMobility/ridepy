@@ -5,18 +5,18 @@ import itertools as it
 
 from numpy import inf, isclose
 
-from thesimulator.events import (
+from ridepy.events import (
     RequestRejectionEvent,
     PickupEvent,
     DeliveryEvent,
 )
-from thesimulator.util.dispatchers_cython import zero_detour_dispatcher
-from thesimulator.extras.spaces import make_nx_grid
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces_cython import Euclidean2D, Graph
-from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.util.testing_utils import setup_insertion_data_structures
-from thesimulator.vehicle_state_cython import VehicleState
+from ridepy.util.dispatchers_cython import zero_detour_dispatcher
+from ridepy.extras.spaces import make_nx_grid
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.spaces_cython import Euclidean2D, Graph
+from ridepy.fleet_state import SlowSimpleFleetState
+from ridepy.util.testing_utils import setup_insertion_data_structures
+from ridepy.vehicle_state_cython import VehicleState
 
 
 @pytest.mark.parametrize("kind", ["cython"])

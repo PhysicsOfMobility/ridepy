@@ -7,13 +7,13 @@ from typing import Iterable, List, Optional, Dict, Any
 import numpy as np
 import pandas as pd
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     TransportationRequest,
     ID,
     Stop,
     TransportSpace,
 )
-from thesimulator.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
+from ridepy.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
 
 
 def _create_events_dataframe(events: Iterable[Event]) -> pd.DataFrame:
@@ -103,7 +103,7 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     # NOTE: This assumes occupancy delta of +1/-1, i.e. only single-customer requests.
     #       If the simulator should allow for multi-customer requests in the future,
     #       this must be changed.
-    #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
+    #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
     stops["delta_occupancy"] = stops["event_type"].map(
         defaultdict(float, PickupEvent=1, DeliveryEvent=-1)
     )
@@ -305,7 +305,7 @@ def _create_transportation_requests_dataframe(
     # - direct travel time
     # `to_list()` is necessary as for dimensionality > 1 the `pd.Series` will contain tuples
     # which will not be understood as a dimension by `np.shape(...)` which subsequently confuses smartVectorize
-    # see https://github.com/PhysicsOfMobility/theSimulator/issues/85
+    # see https://github.com/PhysicsOfMobility/ridepy/issues/85
     reqs[("submitted", "direct_travel_time")] = space.t(
         reqs[("submitted", "origin")].to_list(),
         reqs[("submitted", "destination")].to_list(),
@@ -314,7 +314,7 @@ def _create_transportation_requests_dataframe(
     # - direct travel distance
     # again: `to_list()` is necessary as for dimensionality > 1 the `pd.Series` will contain tuples
     # which will not be understood as a dimension by `np.shape(...)` which subsequently  confuses smartVectorize
-    # see https://github.com/PhysicsOfMobility/theSimulator/issues/85
+    # see https://github.com/PhysicsOfMobility/ridepy/issues/85
     reqs[("submitted", "direct_travel_distance")] = space.d(
         reqs[("submitted", "origin")].to_list(),
         reqs[("submitted", "destination")].to_list(),
@@ -381,7 +381,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     # NOTE: This assumes occupancy delta of +1/-1, i.e. only single-customer requests.
     #       If the simulator should allow for multi-customer requests in the future,
     #       this must be changed.
-    #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
+    #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
     locations.index = locations.index.set_levels(
         locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
         1,
@@ -429,7 +429,7 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
     # NOTE: This assumes occupancy delta of +1/-1, i.e. only single-customer requests.
     #       If the simulator should allow for multi-customer requests in the future,
     #       this must be changed.
-    #       See also [issue #45](https://github.com/PhysicsOfMobility/theSimulator/issues/45)
+    #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
 
     The `stops` DataFrame returned has the following schema:
     ```

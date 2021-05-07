@@ -6,34 +6,34 @@ from time import time
 import itertools as it
 from pandas.core.common import flatten
 
-from thesimulator.data_structures_cython import Stoplist as CyStoplist
+from ridepy.data_structures_cython import Stoplist as CyStoplist
 
-from thesimulator import data_structures_cython as cyds
-from thesimulator import data_structures as pyds
+from ridepy import data_structures_cython as cyds
+from ridepy import data_structures as pyds
 
-from thesimulator.events import (
+from ridepy.events import (
     RequestRejectionEvent,
     PickupEvent,
     DeliveryEvent,
 )
 
-from thesimulator.data_structures_cython.data_structures import LocType
-from thesimulator.util import spaces as pyspaces
-from thesimulator.util.spaces_cython import spaces as cyspaces
-from thesimulator.util.request_generators import RandomRequestGenerator
+from ridepy.data_structures_cython.data_structures import LocType
+from ridepy.util import spaces as pyspaces
+from ridepy.util.spaces_cython import spaces as cyspaces
+from ridepy.util.request_generators import RandomRequestGenerator
 
-from thesimulator.util.dispatchers import (
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.dispatchers_cython import (
+from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.testing_utils import stoplist_from_properties
-from thesimulator.vehicle_state import VehicleState as py_VehicleState
-from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
+from ridepy.util.testing_utils import stoplist_from_properties
+from ridepy.vehicle_state import VehicleState as py_VehicleState
+from ridepy.vehicle_state_cython import VehicleState as cy_VehicleState
 
-from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.extras.spaces import make_nx_grid
+from ridepy.fleet_state import SlowSimpleFleetState
+from ridepy.extras.spaces import make_nx_grid
 
 
 def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):

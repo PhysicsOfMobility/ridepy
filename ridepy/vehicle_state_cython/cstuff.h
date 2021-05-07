@@ -2,8 +2,8 @@
 // Created by dmanik on 29.11.20.
 //
 
-#ifndef THESIMULATOR_CSTUFF_H
-#define THESIMULATOR_CSTUFF_H
+#ifndef RIDEPY_CSTUFF_H
+#define RIDEPY_CSTUFF_H
 
 #include <algorithm> // for max()
 #include <cmath>
@@ -22,4 +22,4 @@
 using namespace std;
 
 #endif
-// THESIMULATOR_CSTUFF_H
+// RIDEPY_CSTUFF_H

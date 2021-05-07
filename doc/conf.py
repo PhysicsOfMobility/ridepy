@@ -14,11 +14,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../"))
-import thesimulator
+import ridepy
 
 # -- Project information -----------------------------------------------------
 
-project = "theSimulator"
+project = "ridepy"
 copyright = "2021, Felix Jung and Debsankha Manik"
 author = "Felix Jung and Debsankha Manik"
 
@@ -71,10 +71,10 @@ default_role = "py:obj"
 add_module_names = False
 autodoc_typehints = "description"
 autodoc_type_aliases = {
-    "Event": "thesimulator.events.Event",
-    "RequestEvent": "thesimulator.events.RequestEvent",
-    "StopEvent": "thesimulator.events.StopEvent",
-    "SingleVehicleSolution": "thesimulator.data_structures.SingleVehicleSolution",
+    "Event": "ridepy.events.Event",
+    "RequestEvent": "ridepy.events.RequestEvent",
+    "StopEvent": "ridepy.events.StopEvent",
+    "SingleVehicleSolution": "ridepy.data_structures.SingleVehicleSolution",
 }
 autodoc_inherit_docstrings = False
 

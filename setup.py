@@ -17,19 +17,19 @@ with open("requirements-doc.txt", "r") as f:
 extensions = [
     Extension(
         "*",
-        ["thesimulator/**/*.pyx"],
+        ["ridepy/**/*.pyx"],
         extra_compile_args=["-std=c++17"],
-        include_dirs=["thesimulator/util/spaces_cython/lru-cache/include"],
+        include_dirs=["ridepy/util/spaces_cython/lru-cache/include"],
     ),
 ]
 
 setuptools.setup(
-    name="thesimulator",
+    name="ridepy",
     version="0.1",
     python_requires=">=3.9",
     zip_safe=False,
     packages=setuptools.find_packages(),
-    # ext_modules=cythonize("thesimulator/**/*.pyx", language='c++',),
+    # ext_modules=cythonize("ridepy/**/*.pyx", language='c++',),
     ext_modules=cythonize(extensions, compiler_directives={"embedsignature": True}),
     install_requires=reqs,
     extras_require={"dev": dev_reqs, "doc": doc_reqs},

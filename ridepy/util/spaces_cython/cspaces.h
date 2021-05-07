@@ -2,8 +2,8 @@
 // Created by dmanik on 29.11.20.
 //
 
-#ifndef THESIMULATOR_CSPACES_H
-#define THESIMULATOR_CSPACES_H
+#ifndef RIDEPY_CSPACES_H
+#define RIDEPY_CSPACES_H
 
 #include <algorithm> // for max()
 #include <chrono>    // for benchmarking
@@ -62,4 +62,4 @@ public:
 } // namespace cstuff
 
 #endif
-// THESIMULATOR_CSPACES_H
+// RIDEPY_CSPACES_H

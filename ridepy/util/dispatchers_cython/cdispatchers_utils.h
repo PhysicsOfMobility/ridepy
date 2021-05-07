@@ -2,8 +2,8 @@
 // Created by Debsankha Manik on 13.12.20.
 //
 
-#ifndef THESIMULATOR_CDISPATCHERS_UTILS_H
-#define THESIMULATOR_CDISPATCHERS_UTILS_H
+#ifndef RIDEPY_CDISPATCHERS_UTILS_H
+#define RIDEPY_CDISPATCHERS_UTILS_H
 
 #include "../../data_structures_cython/cdata_structures.h"
 
@@ -216,4 +216,4 @@ bool is_timewindow_violated_dueto_insertion(
 }
 } // namespace cstuff
 
-#endif // THESIMULATOR_CDISPATCHERS_UTILS_H
+#endif // RIDEPY_CDISPATCHERS_UTILS_H

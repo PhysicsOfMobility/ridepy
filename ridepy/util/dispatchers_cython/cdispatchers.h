@@ -2,8 +2,8 @@
 // Created by Debsankha Manik on 13.12.20.
 //
 
-#ifndef THESIMULATOR_CDISPATCHERS_H
-#define THESIMULATOR_CDISPATCHERS_H
+#ifndef RIDEPY_CDISPATCHERS_H
+#define RIDEPY_CDISPATCHERS_H
 
 #include "../../data_structures_cython/cdata_structures.h"
 #include "../spaces_cython/cspaces.h"
@@ -295,4 +295,4 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
   }
 }
 } // namespace cstuff
-#endif // THESIMULATOR_CDISPATCHERS_H
+#endif // RIDEPY_CDISPATCHERS_H

@@ -1,8 +1,8 @@
 import itertools as it
 
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D, Graph
-from thesimulator.extras.spaces import make_nx_grid
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.spaces import Euclidean1D, Euclidean2D, Graph
+from ridepy.extras.spaces import make_nx_grid
 
 
 def test_random_request_generator():

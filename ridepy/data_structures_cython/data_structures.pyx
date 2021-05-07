@@ -20,7 +20,7 @@ from libcpp.memory cimport dynamic_pointer_cast
 from cython.operator cimport typeid
 
 
-from thesimulator.data_structures_cython.cdata_structures cimport (
+from ridepy.data_structures_cython.cdata_structures cimport (
     Request as CRequest,
     TransportationRequest as CTransportationRequest,
     InternalRequest as CInternalRequest,

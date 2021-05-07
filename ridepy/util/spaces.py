@@ -11,8 +11,8 @@ import networkx as nx
 import itertools as it
 from scipy.spatial import distance as spd
 
-from thesimulator.data_structures import TransportSpace, ID
-from thesimulator.util import smartVectorize, make_repr
+from ridepy.data_structures import TransportSpace, ID
+from ridepy.util import smartVectorize, make_repr
 
 
 class Euclidean(TransportSpace):

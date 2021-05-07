@@ -7,21 +7,21 @@ import numpy as np
 
 from tabulate import tabulate
 
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.data_structures import (
+from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
     TransportationRequest,
 )
-from thesimulator.events import PickupEvent, DeliveryEvent, StopEvent
-from thesimulator.util.dispatchers import (
+from ridepy.events import PickupEvent, DeliveryEvent, StopEvent
+from ridepy.util.dispatchers import (
     taxicab_dispatcher_drive_first,
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean1D, Euclidean2D
-from thesimulator.vehicle_state import VehicleState
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.spaces import Euclidean1D, Euclidean2D
+from ridepy.vehicle_state import VehicleState
 
 
 def test_slow_simple_fleet_state_simulate():

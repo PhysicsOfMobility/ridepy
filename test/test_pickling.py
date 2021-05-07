@@ -3,11 +3,11 @@ from numpy import inf
 import pickle
 import random
 
-from thesimulator import data_structures as pyds
-from thesimulator import data_structures_cython as cyds
-from thesimulator.util import spaces as pyspaces
-from thesimulator.util import spaces_cython as cyspaces
-from thesimulator.extras.spaces import make_nx_cycle_graph
+from ridepy import data_structures as pyds
+from ridepy import data_structures_cython as cyds
+from ridepy.util import spaces as pyspaces
+from ridepy.util import spaces_cython as cyspaces
+from ridepy.extras.spaces import make_nx_cycle_graph
 
 
 def pickled_object_equal_to_original(obj):

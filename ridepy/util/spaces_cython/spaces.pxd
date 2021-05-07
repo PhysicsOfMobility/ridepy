@@ -10,7 +10,7 @@ from .cspaces cimport (
     GraphSpace as CGraphSpace
 )
 
-from thesimulator.data_structures_cython.data_structures cimport LocType, R2loc
+from ridepy.data_structures_cython.data_structures cimport LocType, R2loc
 
 
 cdef union USpace:

@@ -1,16 +1,16 @@
 import pytest
 import numpy as np
 import pandas as pd
-from thesimulator.util import smartVectorize, make_dict
+from ridepy.util import smartVectorize, make_dict
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     TransportationRequest as pyTransportationRequest,
     InternalRequest as pyInternalRequest,
     Stop as pyStop,
     StopAction as pyStopAction,
 )
 
-from thesimulator.data_structures_cython import (
+from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
     InternalRequest as CyInternalRequest,
     Stop as CyStop,

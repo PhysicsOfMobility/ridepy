@@ -1,6 +1,6 @@
 |Code style: black|
 
-theSimulator
+ridepy
 ============
 
 Simulates a dispatching algorithm serving exogeneous transportation
@@ -29,8 +29,8 @@ Installation
 
 .. code:: sh
 
-   git clone git@github.com:PhysicsOfMobility/theSimulator.git
-   cd theSimulator
+   git clone git@github.com:PhysicsOfMobility/ridepy.git
+   cd ridepy
    pre-commit install
    python setup.py develop
    pytest

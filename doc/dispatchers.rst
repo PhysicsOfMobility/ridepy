@@ -1,5 +1,5 @@
 The dispatchers
 ---------------
 
-.. automodule:: thesimulator.util.dispatchers
+.. automodule:: ridepy.util.dispatchers
     :members:
