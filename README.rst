@@ -35,6 +35,19 @@ Installation
    python setup.py develop
    pytest
 
+
+Building the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: sh
+    
+    pip install -r requirements-doc.txt
+    cd doc
+    make html
+
+The documentation can then be found at ``doc/_build/html/index.html``.
+
+
 First Steps
 -----------
 
