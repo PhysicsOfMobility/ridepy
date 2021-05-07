@@ -1,9 +1,9 @@
 FleetState
 ==========
-.. currentmodule:: thesimulator.fleet_state
+.. currentmodule:: ridepy.fleet_state
 
 The ``FleetState`` class is the core component that a user needs in order to setting up
-and running a simulation using theSimulator, as described in :doc:`overview`. Once the
+and running a simulation using ridepy, as described in :doc:`overview`. Once the
 user creates a ``FleetState`` with the desired number of vehicles of appropriate
 capacities and initial positions, a simulation can be run by calling
 `FleetState.simulate()`, supplying iterator or requests. The ``FleetState`` advances the

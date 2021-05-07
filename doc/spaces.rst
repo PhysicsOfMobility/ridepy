@@ -1,7 +1,7 @@
 The spaces
 ----------
 
-.. automodule:: thesimulator.util.spaces
+.. automodule:: ridepy.util.spaces
     :members:
 
 

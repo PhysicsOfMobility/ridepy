@@ -24,18 +24,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # + tags=[]
-from thesimulator.fleet_state import SlowSimpleFleetState
-from thesimulator.vehicle_state import VehicleState
+from ridepy.fleet_state import SlowSimpleFleetState
+from ridepy.vehicle_state import VehicleState
 
-from thesimulator.util.dispatchers import (
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
 
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.spaces import Euclidean2D
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.spaces import Euclidean2D
 
-from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.analytics.plotting import plot_occupancy_hist
+from ridepy.util.analytics import get_stops_and_requests
+from ridepy.util.analytics.plotting import plot_occupancy_hist
 
 # + tags=[]
 # assume dark background for plots?

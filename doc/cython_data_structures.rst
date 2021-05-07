@@ -4,7 +4,7 @@ This cython module wraps the struct templates exposed from C++ by
 `data_structures_cython.pxd` into extension types.  Since an extension type
 obviously cannot be templated, we will use the :ref:`desc_runtime_dispatch` approach.
 
-.. py:class:: thesimulator.data_structures_cython.LocType
+.. py:class:: ridepy.data_structures_cython.LocType
 
     Representing the kind of location objects the simulator supports. either of:
 
@@ -16,7 +16,7 @@ obviously cannot be templated, we will use the :ref:`desc_runtime_dispatch` appr
        the python version of this enum i.e. `.data_structures.LocType` has to be used.
 
 
-.. automodule:: thesimulator.data_structures_cython
+.. automodule:: ridepy.data_structures_cython
     :members: TransportationRequest, InternalRequest, Stop, Stoplist
     :special-members: __len__, __getitem__
 

@@ -12,7 +12,7 @@ included.
 Simulations and Parameter Scans
 -------------------------------
 
-.. currentmodule:: thesimulator.extras.simulation_set
+.. currentmodule:: ridepy.extras.simulation_set
 
 This module allows to configure and execute a set of simulations while varying specific
 parameters, i.e. performing a parameter scan.  The typical workflow is as follows:
@@ -86,19 +86,19 @@ filenames of the resulting JSONL/JSON files are also directly available through
 `SimulationSet.param_paths` and `SimulationSet.result_paths`.
 
 
-.. automodule:: thesimulator.extras.simulation_set
+.. automodule:: ridepy.extras.simulation_set
     :members: SimulationSet
 
-.. automodule:: thesimulator.extras.simulation_set
+.. automodule:: ridepy.extras.simulation_set
     :members: perform_single_simulation
 
-.. automodule:: thesimulator.extras.simulation_set
+.. automodule:: ridepy.extras.simulation_set
     :members: simulate_parameter_combinations
 
 JSON IO
 -------
 
-.. currentmodule:: thesimulator.extras.io
+.. currentmodule:: ridepy.extras.io
 
 This IO module implements functionality for reading and writing to JSON/`JSON Lines`_
 format.
@@ -131,18 +131,18 @@ Later this can e.g. be used as input for the analytics module:
         space=read_params_json("params.json")
         )
 
-.. automodule:: thesimulator.extras.io
+.. automodule:: ridepy.extras.io
     :members:
 
 Spaces
 ------
 
-.. currentmodule:: thesimulator.extras.spaces
+.. currentmodule:: ridepy.extras.spaces
 
 This module implements thin convenience wrappers around ``networkx`` to create common
 network topologies to be used as transport spaces.
 
-.. automodule:: thesimulator.extras.spaces
+.. automodule:: ridepy.extras.spaces
     :members:
 
 

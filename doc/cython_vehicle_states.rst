@@ -6,7 +6,7 @@ but it is not possible to mix pure-python and cython components: If you want to 
 :doc:`dispatchers<cython_dispatchers>`, then you need to use cythonic
 :doc:`data_structures<cython_data_structures>` and :doc:`spaces<cython_spaces>`.
 
-.. autoclass:: thesimulator.vehicle_state_cython.VehicleState
+.. autoclass:: ridepy.vehicle_state_cython.VehicleState
     :members: fast_forward_time, sudo ddcutil --display 2 setvcp 10 70  # lenovo
 
 

@@ -17,21 +17,21 @@ import logging
 import pathlib
 from mpi4py import MPI
 
-from thesimulator import data_structures as pyds
-from thesimulator import data_structures_cython as cyds
-from thesimulator.util import spaces as pyspaces
-from thesimulator.util import spaces_cython as cyspaces
-from thesimulator.util.request_generators import RandomRequestGenerator
-from thesimulator.util.dispatchers import (
+from ridepy import data_structures as pyds
+from ridepy import data_structures_cython as cyds
+from ridepy.util import spaces as pyspaces
+from ridepy.util import spaces_cython as cyspaces
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.dispatchers_cython import (
+from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.vehicle_state import VehicleState as py_VehicleState
-from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
-from thesimulator.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
-from thesimulator.extras.spaces import make_nx_grid
+from ridepy.vehicle_state import VehicleState as py_VehicleState
+from ridepy.vehicle_state_cython import VehicleState as cy_VehicleState
+from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.extras.spaces import make_nx_grid
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -41,9 +41,9 @@ rank = comm.Get_rank()
 logfile = pathlib.Path(f".tmp_test_logdir/rank_{rank}.out")
 logfile.parent.mkdir(exist_ok=True)
 
-vehicle_level_logger_cython = logging.getLogger("thesimulator.vehicle_state_cython")
+vehicle_level_logger_cython = logging.getLogger("ridepy.vehicle_state_cython")
 vehicle_level_logger_cython.handlers = []
-vehicle_level_logger_python = logging.getLogger("thesimulator.vehicle_state")
+vehicle_level_logger_python = logging.getLogger("ridepy.vehicle_state")
 vehicle_level_logger_python.handlers = []
 handler = logging.FileHandler(str(logfile))
 handler.setLevel(logging.DEBUG)

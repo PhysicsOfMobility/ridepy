@@ -1,7 +1,7 @@
 Cython wrapping internals
 =========================
 Here we will detail the design decisions we made while implementing the core
-components of `theSimulator` in cython. Our goals were
+components of `ridepy` in cython. Our goals were
 
 * The calling code would require minimal changes while switching from pure python
   components  to their cython equivalents.
@@ -14,7 +14,7 @@ why and explain how to extend these components.
 
 Handling different types of location objects
 --------------------------------------------
-The pure pythonic parts of `theSimulator` can handle simulation runs in any
+The pure pythonic parts of `ridepy` can handle simulation runs in any
 `.TransportSpace`, e.g. `Euclidean2D`, where location objects are `Tuple[float,
 float]` or a `.Graph` where the nodes are arbitrary python objects. It is not
 so easy to expose similar functionalities in a cython-wrapped python module.

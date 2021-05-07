@@ -5,21 +5,21 @@ import logging
 
 import itertools as it
 
-from thesimulator.extras.io import (
+from ridepy.extras.io import (
     save_params_json,
     read_params_json,
     read_events_json,
 )
-from thesimulator.extras.spaces import (
+from ridepy.extras.spaces import (
     make_nx_cycle_graph,
     make_nx_grid,
     make_nx_star_graph,
 )
-from thesimulator.extras.simulation_set import (
+from ridepy.extras.simulation_set import (
     SimulationSet,
 )
-from thesimulator.util.analytics import get_stops_and_requests
-from thesimulator.util.spaces_cython import (
+from ridepy.util.analytics import get_stops_and_requests
+from ridepy.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Graph as CyGraph,
 )

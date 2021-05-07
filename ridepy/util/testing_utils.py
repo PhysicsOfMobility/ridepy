@@ -1,0 +1,124 @@
+from ridepy.data_structures import Location, TransportSpace, Stoplist, Dispatcher
+from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
+from ridepy.util.dispatchers_cython import (
+    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+)
+from ridepy.util.spaces_cython import spaces as cyspaces
+from typing import Literal, Iterable, Union, Callable
+
+from ridepy import data_structures as pyds, data_structures_cython as cyds
+from ridepy import data_structures_cython as cyds
+from ridepy.util import spaces as pyspaces
+from ridepy.util.dispatchers import (
+    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
+)
+
+
+def stoplist_from_properties(
+    *,
+    stoplist_properties: Iterable[tuple[Location, float, float, float]],
+    space: Union[TransportSpace, CyTransportSpace],
+    kind: str,
+) -> Union[Stoplist, cyds.Stoplist]:
+    """
+    Generate stoplist from an iterable of stop properties.
+    Format:
+
+    .. code-block:: python
+
+        (
+            (location, CPAT, timewindow_min, timewindow_max),
+            ...,
+        )
+
+    Parameters
+    ----------
+    stoplist_properties
+        Iterable of stop property tuples `(location, CPAT, timewindow_min, timewindow_max)`
+    space
+        Space to place the stops on
+    kind
+        "cython" or "python"
+
+    Returns
+    -------
+
+    """
+
+    if kind == "python":
+        data_structure_module = pyds
+    elif kind == "cython":
+        data_structure_module = cyds
+    else:
+        raise ValueError(f"Supplied invalid {kind=}, must be 'python' or 'cython'")
+
+    python_stoplist = [
+        data_structure_module.Stop(
+            location=loc,
+            request=data_structure_module.InternalRequest(
+                request_id=-1, creation_timestamp=0, location=loc
+            ),
+            action=data_structure_module.StopAction.internal,
+            estimated_arrival_time=cpat,
+            occupancy_after_servicing=0,
+            time_window_min=tw_min,
+            time_window_max=tw_max,
+        )
+        for loc, cpat, tw_min, tw_max in stoplist_properties
+    ]
+
+    if kind == "python":
+        return python_stoplist
+    else:
+        return cyds.Stoplist(python_stoplist=python_stoplist, loc_type=space.loc_type)
+
+
+def setup_insertion_data_structures(
+    *,
+    stoplist_properties: Iterable[tuple[Location, float, float, float]],
+    request_properties,
+    space_type: str,
+    kind: str,
+) -> tuple[
+    Union[TransportSpace, CyTransportSpace],
+    Union[pyds.TransportationRequest, cyds.TransportationRequest],
+    Union[Stoplist, cyds.Stoplist],
+    Dispatcher,
+]:
+    """
+
+    Parameters
+    ----------
+    stoplist_properties
+    request_properties
+    space_type
+    kind
+        'cython' or 'python'
+
+    Returns
+    -------
+    space, request, stoplist, dispatcher
+    """
+
+    if kind == "python":
+        spaces = pyspaces
+        ds = pyds
+        dispatcher = py_brute_force_total_traveltime_minimizing_dispatcher
+    elif kind == "cython":
+        spaces = cyspaces
+        ds = cyds
+        dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+    else:
+        raise ValueError(f"Supplied invalid {kind=}, must be 'python' or 'cython'")
+
+    space = getattr(spaces, space_type)()
+
+    # set up the request
+    request = ds.TransportationRequest(**request_properties)
+
+    # set up the stoplist
+    stoplist = stoplist_from_properties(
+        stoplist_properties=stoplist_properties, space=space, kind=kind
+    )
+
+    return space, request, stoplist, dispatcher

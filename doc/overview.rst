@@ -3,7 +3,7 @@ Overview
 
 .. highlight:: python
 
-Here we describe the design of theSimulator, and how to get started with using
+Here we describe the design of ridepy, and how to get started with using
 it to run simulations. We also describe how to specify new dispatching
 algorithms and new transport spaces.
 
@@ -11,14 +11,14 @@ algorithms and new transport spaces.
 
 The setting
 -----------
-theSimulator does *not* do agent-based simulations. Rather, it starts with a set of
+ridepy does *not* do agent-based simulations. Rather, it starts with a set of
 *transportation requests* (denoting the desire of an individual to be transported from A
 to B within specified time windows), and a *dispatcher* (an algorithm that determines
 which vehicle should service which requests and in which order). Then it simply
 simulates these requests arriving in the system, being picked up and delivered. Requests
 that cannot be delivered within the specified time windows are *rejected*.
 
-theSimulator makes it easy to experiment with different dispatching algorithms,
+ridepy makes it easy to experiment with different dispatching algorithms,
 spatiotemporal request densities, fleet sizes and transport spaces (2-D plane, different
 graphs). It comes with an `analytics` module that computes from the simulation output
 various metrics like the statistical distributions of occupancies, waiting times and
@@ -30,7 +30,7 @@ quantitative study, we include two powerful ways of speeding up the simulation:
 Using parallelism:
    The dispatcher interface prescribes computing a *cost* for serving a request with a
    certain vehicle. Then the vehicle with the minimum cost is chosen. Since this is an
-   "embarassingly parallelizable" operation, theSimulator provides two parallel ways of
+   "embarassingly parallelizable" operation, ridepy provides two parallel ways of
    computing it, out of the box:
 
    - ``multiprocessing``,
@@ -63,12 +63,12 @@ generate some requests with random origins and destinations:
 .. code-block:: python
 
     >>> import itertools as it
-    >>> from thesimulator.util.spaces import Euclidean2D
-    >>> from thesimulator.fleet_state import SlowSimpleFleetState
-    >>> from thesimulator.data_structures import Stop, InternalRequest, StopAction
-    >>> from thesimulator.util.request_generators import RandomRequestGenerator
-    >>> from thesimulator.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
-    >>> from thesimulator.util.analytics import get_stops_and_requests
+    >>> from ridepy.util.spaces import Euclidean2D
+    >>> from ridepy.fleet_state import SlowSimpleFleetState
+    >>> from ridepy.data_structures import Stop, InternalRequest, StopAction
+    >>> from ridepy.util.request_generators import RandomRequestGenerator
+    >>> from ridepy.util.dispatchers import brute_force_total_traveltime_minimizing_dispatcher
+    >>> from ridepy.util.analytics import get_stops_and_requests
     >>> space = pyEuclidean2D()
     >>> request_rate = 1
     >>> rg = RandomRequestGenerator(
@@ -104,7 +104,7 @@ desired number of vehicles, the initial positions of the vehicles, and a
 
 
 We have chosen one of the dispatchers provided in the :mod:`dispatchers
-<thesimulator.util.dispatchers>` module. It is possible (and encouraged) to implement their
+<ridepy.util.dispatchers>` module. It is possible (and encouraged) to implement their
 own.
 
 Now, simulate
@@ -131,7 +131,7 @@ delivered.
 
 Using parallelism
 -----------------
-Running theSimulator in a multi-node OpenMPI cluster is as simple as replacing
+Running ridepy in a multi-node OpenMPI cluster is as simple as replacing
 :class:`SlowSimpleFleetState <fleet_state.SlowSimpleFleetState>` with
 :class:`MPIFuturesFleetState <fleet_state.MPIFuturesFleetState>`:
 
@@ -164,20 +164,20 @@ versions of ``TransportationRequest``, ``Stop``, ``VehicleState`` and a
    :emphasize-lines: 6-15, 33
 
    import itertools as it
-   from thesimulator.util.spaces_cython import Euclidean2D
-   from thesimulator.fleet_state import SlowSimpleFleetState
-   from thesimulator.util.request_generators import RandomRequestGenerator
+   from ridepy.util.spaces_cython import Euclidean2D
+   from ridepy.fleet_state import SlowSimpleFleetState
+   from ridepy.util.request_generators import RandomRequestGenerator
 
-   from thesimulator.data_structures_cython import (
+   from ridepy.data_structures_cython import (
        Stop,
        InternalRequest,
        TransportationRequest,
        StopAction,
    )
-   from thesimulator.util.dispatchers_cython import (
+   from ridepy.util.dispatchers_cython import (
        brute_force_total_traveltime_minimizing_dispatcher,
    )
-   from thesimulator.vehicle_state_cython import VehicleState as cy_VehicleState
+   from ridepy.vehicle_state_cython import VehicleState as cy_VehicleState
 
    space = Euclidean2D()
    request_rate = 1

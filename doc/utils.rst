@@ -15,13 +15,13 @@ The module contains some utility functions and classes.
 The request generators
 ----------------------
 
-.. automodule:: thesimulator.util.request_generators
+.. automodule:: ridepy.util.request_generators
     :members:
 
 The analytics module
 --------------------
 
-.. automodule:: thesimulator.util.analytics
+.. automodule:: ridepy.util.analytics
     :members:
 
 

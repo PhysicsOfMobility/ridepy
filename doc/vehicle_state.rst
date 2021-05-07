@@ -8,6 +8,6 @@ The ``VehicleState`` class holds a vehicle's :ref:`Stoplist <desc_stoplist>`. It
     computes the cost for serving a :class:`TransportationRequest` with this vehicle.
 
 
-.. automodule:: thesimulator.vehicle_state
+.. automodule:: ridepy.vehicle_state
     :members:
 

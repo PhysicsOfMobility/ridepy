@@ -12,20 +12,20 @@ from time import time
 np.random.seed(0)
 import pandas as pd
 
-from thesimulator.util.spaces import (
+from ridepy.util.spaces import (
     Euclidean,
     Euclidean1D,
     Euclidean2D,
     Graph,
     DiGraph,
 )
-from thesimulator.util.spaces_cython import (
+from ridepy.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Manhattan2D as CyManhattan2D,
     Graph as CyGraph,
 )
 
-from thesimulator.extras.spaces import (
+from ridepy.extras.spaces import (
     make_nx_cycle_graph,
     make_nx_grid,
     make_nx_star_graph,

@@ -4,21 +4,21 @@ from numpy import inf
 from functools import reduce
 from time import time
 
-from thesimulator.data_structures import (
+from ridepy.data_structures import (
     Stop,
     InternalRequest,
     StopAction,
     TransportationRequest,
 )
-from thesimulator.util.spaces import Euclidean2D
-from thesimulator.util.dispatchers import (
+from ridepy.util.spaces import Euclidean2D
+from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
-from thesimulator.util.testing_utils import stoplist_from_properties
+from ridepy.util.testing_utils import stoplist_from_properties
 
 import logging
 
-sim_logger = logging.getLogger("thesimulator")
+sim_logger = logging.getLogger("ridepy")
 sim_logger.setLevel(logging.DEBUG)
 sim_logger.handlers[0].setLevel(logging.DEBUG)
 
