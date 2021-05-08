@@ -1,7 +1,6 @@
 import pytest
 import os
 import re
-import logging
 
 import itertools as it
 
@@ -39,6 +38,9 @@ def test_spaces():
     assert ring.size() == 10
 
 
+@pytest.mark.skipif(
+    "GITLAB_CI" in os.environ, reason="does not pass in GitLab CI because num_cpu is 1"
+)
 @pytest.mark.parametrize("cython", [True, False])
 def test_simulate(cython, tmp_path, capfd):
     simulation_set = SimulationSet(

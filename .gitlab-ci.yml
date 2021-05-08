@@ -1,12 +1,30 @@
-image: python:3.9.5-buster
+image: registry.gitlab.com/physicsofmobility/ridepy
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - test
+  - deploy
+
+pytest:
+  stage: test
+  script:
+    - apt-get update && apt-get -y install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev build-essential
+    - pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt -r requirements-doc.txt && python setup.py develop
+    - pytest --junitxml=report.xml test/
+    - sphinx-build -b html doc/ public
+  artifacts:
+     when: always
+     reports:
+       junit: report.xml
+     paths:
+       - public
 
 pages:
   stage: deploy
   script:
-  - git submodule update --remote --recursive
-  - apt-get update && apt-get -y install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev build-essential
-  - pip install --upgrade pip wheel && pip install -r requirements.txt -r requirements-dev.txt && python setup.py develop
-  - sphinx-build -b html doc/ public
+    - echo "uploading docs to gitlab pages"
   artifacts:
     paths:
     - public
