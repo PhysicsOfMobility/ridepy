@@ -12,7 +12,9 @@ doc/_build
 
 # C extensions
 *.so
-*.cpp # (i.e. auto-generated files. Persistent ones shall end with cxx)
+
+# auto-generated files. Persistent ones shall end with cxx
+*.cpp 
 
 # Distribution / packaging
 .Python
