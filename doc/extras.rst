@@ -49,18 +49,20 @@ combinations will be simulated.
 The current list of supported parameters is:
 
 * Valid values for ``general``
-    * either ``n_reqs: int`` or ``t_cutoff: float``
-    * ``n_vehicles: int``
-    * ``seat_capacity: int``
-    * ``initial_location: Location``
-    * ``space: TransportSpace``
-    * ``dispatcher: Dispatcher``
-    * ``TransportationRequestCls: Type[TransportationRequest]``
-    * ``VehicleStateCls: Type[VehicleStateCls]``
-    * ``FleetStateCls: Type[FleetStateCls]``
+    * either ``n_reqs``  or ``t_cutoff``
+    * ``seat_capacity``
+    * (``initial_location`` and ``n_vehicles``) or ``initial_locations``
+    * ``space``
+    * ``dispatcher``
+    * ``TransportationRequestCls``
+    * ``VehicleStateCls``
+    * ``FleetStateCls``
 * Valid values for ``request_generator``
     * ``request_generator: Type[RequestGenerator]``
     * Any request generator keyword argument
+* Valid values for ``dispatcher``
+    * ``dispatcher_callable``
+    * Any dispatcher keyword argument
 
 
 Note that not every parameter necessarily needs to be supplied. `SimulationSet` contains
