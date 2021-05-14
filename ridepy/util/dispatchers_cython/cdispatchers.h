@@ -23,7 +23,7 @@ template <typename Loc>
 InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
     std::shared_ptr<TransportationRequest<Loc>> request,
     vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
-    ExternalCost external_cost, bool debug = false) {
+    ExternalCost external_cost = ExternalCost::absolute_detour, bool debug = false) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
   by minimizing the total driving time.
