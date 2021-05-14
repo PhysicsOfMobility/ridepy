@@ -173,7 +173,7 @@ template <typename Loc>
 InsertionResult<Loc>
 zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
                        vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
-                       int seat_capacity, bool debug = false) {
+                       int seat_capacity, double detour=0, bool debug = false) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
   according to the process described in https://arxiv.org/abs/2001.09711

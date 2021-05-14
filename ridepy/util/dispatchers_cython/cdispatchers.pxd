@@ -16,4 +16,8 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
     InsertionResult[Loc] zero_detour_dispatcher[Loc](
           shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
-          const TransportSpace &space, int seat_capacity, bint debug)
+          const TransportSpace &space,
+          int seat_capacity,
+          double detour,
+          bint debug
+    )
