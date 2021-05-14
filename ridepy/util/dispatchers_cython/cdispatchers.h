@@ -186,6 +186,16 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
       stoplist of the vehicle, to be mapped to a new stoplist
   space
       transport space the vehicle is operating on
+  detour
+      Maximum relative detour that is allowed to be incurred into the route
+      when picking up or delivering a request between two existing stops, where
+      the current position of the vehicle counts as a stop.
+      The detour is defined relative to the travel time between the two existing
+      stops. I.e. for existing adjacent stops $u, v$ and new stop $w$,
+      the constraint is that
+      $$
+      \frac{d(u,w)+d(w,v)}{d(u, v)}-1\stackrel{!}{\leq}\mathrm{detour}
+      $$
 
   Returns
   -------
@@ -202,6 +212,7 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
        stop_before_pickup != stoplist.end() - 1; ++stop_before_pickup) {
     i++; // The first iteration of the loop: i = 0
     // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
+
     auto time_to_pickup =
         space.t(stop_before_pickup->location, request->origin);
     auto time_from_pickup =
@@ -209,16 +220,15 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     auto original_pickup_edge_length =
         time_from_current_stop_to_next(stoplist, i, space);
 
-    if (time_to_pickup + time_from_pickup - original_pickup_edge_length > 0)
+    if ((time_to_pickup + time_from_pickup) / original_pickup_edge_length - 1 > detour)
       continue;
-    // a zero detour pickup has been found
+
+    // an valid pickup has been found
     // try dropoff immediately
     auto time_to_dropoff = space.t(request->origin, request->destination);
     auto time_from_dropoff =
         time_to_stop_after_insertion(stoplist, request->destination, i, space);
-    if (time_to_pickup + time_to_dropoff + time_from_dropoff -
-            original_pickup_edge_length ==
-        0) {
+    if (time_to_pickup + time_to_dropoff + time_from_dropoff - original_pickup_edge_length == 0) {
       // found an insertion, stop looking
       best_insertion = {i, i};
       min_cost = 0;
