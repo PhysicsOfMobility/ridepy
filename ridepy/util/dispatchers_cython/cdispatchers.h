@@ -11,12 +11,19 @@
 #include <climits>
 
 using namespace std;
+
 namespace cstuff {
+enum ExternalCost {
+  absolute_detour = 0,
+  finishing_time = 1,
+  total_route_time = 2
+};
+
 template <typename Loc>
 InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
     std::shared_ptr<TransportationRequest<Loc>> request,
     vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
-    bool debug = false) {
+    ExternalCost external_cost, bool debug = false) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
   by minimizing the total driving time.
@@ -24,11 +31,17 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
   Parameters
   ----------
   request
-      request to be serviced
+      Request to be serviced
   stoplist
-      stoplist of the vehicle, to be mapped to a new stoplist
+      Stoplist of the vehicle, to be mapped to a new stoplist
   space
-      transport space the vehicle is operating on
+      Transport space the vehicle is operating on
+  debug
+      Print debug info
+  external_cost
+      - absolute_detour: ``absolute pickup detour + absolute dropoff detour``
+      - finishing_time: ``new_stoplist[-1].CPAT``
+      - total_route_time: ``new_stoplist[-1].CPAT - new_stoplist[0].CPAT``
 
   Returns
   -------
@@ -162,6 +175,19 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
 
     auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
     auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
+
+    switch (external_cost) {
+    case ExternalCost::absolute_detour:
+      break;
+    case ExternalCost::finishing_time:
+      min_cost = new_stoplist.back().estimated_arrival_time;
+      break;
+    case ExternalCost::total_route_time:
+      min_cost = new_stoplist.back().estimated_arrival_time -
+                 new_stoplist.at(1).estimated_arrival_time;
+      break;
+    }
+
     return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
                                 LAST_pu,      EAST_do,  LAST_do};
   } else {

@@ -99,6 +99,7 @@ class FleetState(ABC):
                 vehicle.stoplist,
                 self.space,
                 vehicle.seat_capacity,
+                **self.dispatcher_kwargs,
             )
         except Exception as e:
             raise TypeError(f"unsuitable dispatcher, error was:\n{e}")
@@ -110,6 +111,7 @@ class FleetState(ABC):
         vehicle_state_class: Union[Type[VehicleState], Type[CyVehicleState]],
         space: Union[TransportSpace, CyTransportSpace],
         dispatcher: Dispatcher,
+        dispatcher_kwargs: Optional[dict[str, Any]] = None,
         seat_capacities: Union[int, Dict[int, int]],
     ):
         """
@@ -127,6 +129,8 @@ class FleetState(ABC):
         dispatcher
             The dispatching algorithm that maps a (stoplist, TransportationRequest) pair into a cost and new stoplist.
             See :doc:`introduction` for more details.
+        dispatcher_kwargs
+            additional keyword arguments to supply to the dispatcher
         vehicle_state_class
             The vehicle state class to be used. Can be either `.vehicle_state.VehicleState` (pure pythonic) or
             `.vehicle_state_cython.VehicleState` (implemented in cython).
@@ -168,6 +172,7 @@ class FleetState(ABC):
 
         self.vehicle_state_class = vehicle_state_class
         self.dispatcher = dispatcher
+        self.dispatcher_kwargs = dispatcher_kwargs or {}
         self.space = space
 
         assert initial_locations, "No initial locations supplied."
@@ -199,6 +204,7 @@ class FleetState(ABC):
                 ],
                 space=space,
                 dispatcher=self.dispatcher,
+                dispatcher_kwargs=self.dispatcher_kwargs,
                 seat_capacity=seat_capacities[vehicle_id],
             )
             for vehicle_id in initial_locations.keys()
@@ -213,6 +219,7 @@ class FleetState(ABC):
         fleet: Dict[int, VehicleState],
         space: Union[TransportSpace, CyTransportSpace],
         dispatcher: Dispatcher,
+        dispatcher_kwargs: Optional[dict[str, Any]] = None,
         validate: bool = True,
     ):
         """
@@ -227,6 +234,8 @@ class FleetState(ABC):
             TransportSpace to operate on
         dispatcher
             dispatcher to use to assign requests to vehicles or reject them.
+        dispatcher_kwargs
+            additional keyword arguments to supply to the dispatcher
         VehicleStateCls
             Class to create vehicle_state objects from
         validate
@@ -240,6 +249,7 @@ class FleetState(ABC):
         self.dispatcher = dispatcher
         self.fleet = fleet
         self.space = space
+        self._dispatcher_kwargs = dispatcher_kwargs or {}
 
         if validate:
             VehicleStateCls = type(next(iter(self.fleet.values())))

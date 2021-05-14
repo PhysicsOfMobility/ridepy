@@ -11,6 +11,8 @@ import itertools as it
 
 from collections import defaultdict
 from copy import deepcopy
+
+import warnings
 from typing import (
     Iterator,
     Any,
@@ -21,6 +23,8 @@ from typing import (
     Callable,
 )
 from pathlib import Path
+
+from ridepy.util.dispatchers_cython.cdispatchers import ExternalCost
 
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
@@ -68,9 +72,8 @@ def perform_single_simulation(
 
         - ``general``
             - either ``n_reqs``  or ``t_cutoff``
-            - ``n_vehicles``
             - ``seat_capacity``
-            - ``initial_location``
+            - (``initial_location`` and ``n_vehicles``) or ``initial_locations``
             - ``space``
             - ``dispatcher``
             - ``TransportationRequestCls``
@@ -78,6 +81,8 @@ def perform_single_simulation(
             - ``FleetStateCls``
         - ``request_generator``
             - ``RequestGeneratorCls``
+        - ``dispatcher``
+            - ``dispatcher_callable``
     data_dir
         Existing directory in which to store parameters and results.
     jsonl_chunksize
@@ -126,13 +131,35 @@ def perform_single_simulation(
         **params["request_generator"],
     )
 
-    fs = params["general"]["FleetStateCls"](
-        initial_locations={
+    dispatcher = params["dispatcher"].pop("dispatcher_callable")
+    if (
+        params["general"].get("n_vehicles") is not None
+        and params["general"].get("initial_location") is not None
+    ):
+        initial_locations = {
             vehicle_id: params["general"]["initial_location"]
             for vehicle_id in range(params["general"]["n_vehicles"])
-        },
+        }
+
+        if params["general"].get("initial_locations") is not None:
+            warnings.warn(f"disregarding {params['general']['initial_locations']=}")
+
+    elif params["general"].get("initial_locations") is not None:
+        initial_locations = params["general"]["initial_locations"]
+
+        if params["general"].get("initial_location") is not None:
+            warnings.warn(f"disregarding {params['general']['initial_location']=}")
+        if params["general"].get("n_vehicles") is not None:
+            warnings.warn(f"disregarding {params['general']['n_vehicles']=}")
+    else:
+        raise ValueError(
+            "must either specify 'n_vehicles' and 'initial_location' or 'initial_locations'"
+        )
+    fs = params["general"]["FleetStateCls"](
+        initial_locations=initial_locations,
         space=space,
-        dispatcher=params["general"]["dispatcher"],
+        dispatcher=dispatcher,
+        dispatcher_kwargs=params["dispatcher"],
         seat_capacities=params["general"]["seat_capacity"],
         vehicle_state_class=params["general"]["VehicleStateCls"],
     )
@@ -141,10 +168,17 @@ def perform_single_simulation(
     if debug:
         print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
-    if params["general"]["n_reqs"] is not None:
+    if params["general"].get("n_reqs") is not None:
         simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
-    elif params["general"]["t_cutoff"] is not None:
+
+        if params["general"].get("t_cutoff") is not None:
+            warnings.warn(f"disregarding {params['general']['t_cutoff']=}")
+
+    elif params["general"].get("t_cutoff") is not None:
         simulation = fs.simulate(rg, t_cutoff=params["general"]["t_cutoff"])
+
+        if params["general"].get("n_reqs") is not None:
+            warnings.warn(f"disregarding {params['general']['n_reqs']=}")
     else:
         raise ValueError("must either specify n_reqs or t_cutoff")
 
@@ -388,12 +422,13 @@ class SimulationSet:
                 space=SpaceObj,
                 n_vehicles=10,
                 initial_location=(0, 0),
+                initial_locations=None,
                 seat_capacity=8,
-                dispatcher=dispatcher,
                 TransportationRequestCls=TransportationRequestCls,
                 VehicleStateCls=VehicleStateCls,
                 FleetStateCls=FleetStateCls,
             ),
+            dispatcher=dict(dispatcher_callable=dispatcher),
             request_generator=dict(
                 RequestGeneratorCls=RequestGeneratorCls,
                 rate=10,
@@ -414,7 +449,10 @@ class SimulationSet:
             ), "invalid outer key"
 
             # assert no unknown inner keys
-            for outer_key in set(self.default_base_params) - {"request_generator"}:
+            for outer_key in set(self.default_base_params) - {
+                "request_generator",
+                "dispatcher",
+            }:
                 assert not (
                     set(base_params.get(outer_key, {}))
                     | set(zip_params.get(outer_key, {}))
@@ -427,6 +465,21 @@ class SimulationSet:
             assert self._zip_params_equal_length(
                 zip_params
             ), "zipped parameters must be of equal length"
+
+            # For now, cython enums have to be converted to int as they cannot be pickled which
+            # is necessary for multiprocessing
+            # See https://github.com/PhysicsOfMobility/ridepy/issues/167
+            cython_enum_types = (ExternalCost,)
+            for outer_dict in [base_params, zip_params, product_params]:
+                for outer_key, inner_dict in outer_dict.items():
+                    for inner_key, inner_value in inner_dict.items():
+                        if isinstance(inner_value, cython_enum_types):
+                            warnings.warn(
+                                f"{inner_key} is cython enum, converting to int to enable pickling."
+                            )
+                            outer_dict[outer_key][inner_key] = int(
+                                outer_dict[outer_key][inner_key]
+                            )
 
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params

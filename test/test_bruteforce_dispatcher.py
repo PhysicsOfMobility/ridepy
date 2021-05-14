@@ -19,6 +19,7 @@ from ridepy.util.spaces import Euclidean2D, Graph
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.util.testing_utils import setup_insertion_data_structures
 from ridepy.vehicle_state import VehicleState
+from ridepy.util.dispatchers_cython import ExternalCost
 
 
 @pytest.mark.parametrize("kind", ["python", "cython"])
@@ -547,6 +548,60 @@ def test_sanity_in_graph():
                     delivery_times[rid] - pickup_times[rid],
                     space.t(req.origin, req.destination),
                 )
+
+
+@pytest.mark.parametrize("kind", ["cython"])
+def test_external_cost(kind):
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 1), 1, 0, inf],
+        [(0, 3), 3, 0, inf],
+        [(0, 5), 5, 0, inf],
+        [(0, 7), 7, 0, inf],
+    ]
+    # fmt: on
+    request_properties = dict(
+        request_id=42,
+        creation_timestamp=1,
+        origin=(0.5, 4),
+        destination=(0.5, 6),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=inf,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    (
+        space,
+        request,
+        stoplist,
+        brute_force_total_traveltime_minimizing_dispatcher,
+    ) = setup_insertion_data_structures(
+        stoplist_properties=stoplist_properties,
+        request_properties=request_properties,
+        space_type="Manhattan2D",
+        kind=kind,
+    )
+
+    for external_cost, expected_cost in zip(
+        (
+            ExternalCost.absolute_detour,
+            ExternalCost.finishing_time,
+            ExternalCost.total_route_time,
+        ),
+        (2, 7 + 2, 7 + 2 - 3),
+    ):
+        min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+            request,
+            stoplist,
+            space,
+            seat_capacity=10,
+            external_cost=external_cost,
+        )
+        assert new_stoplist[2].location == request.origin
+        assert new_stoplist[4].location == request.destination
+        assert [s.occupancy_after_servicing for s in new_stoplist] == [0, 0, 1, 1, 0, 0]
+        assert min_cost == expected_cost
 
 
 if __name__ == "__main__":

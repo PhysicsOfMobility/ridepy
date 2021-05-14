@@ -14,10 +14,9 @@ from ridepy.extras.spaces import (
     make_nx_grid,
     make_nx_star_graph,
 )
-from ridepy.extras.simulation_set import (
-    SimulationSet,
-)
+from ridepy.extras.simulation_set import SimulationSet
 from ridepy.util.analytics import get_stops_and_requests
+from ridepy.util.dispatchers_cython import ExternalCost
 from ridepy.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Graph as CyGraph,
@@ -76,11 +75,16 @@ def test_simulate(cython, tmp_path, capfd):
 
 
 def test_io_simulate(tmp_path):
-    simulation_set = SimulationSet(
-        base_params={"general": {"n_reqs": 10}},
-        data_dir=tmp_path,
-        debug=True,
-    )
+    with pytest.warns(UserWarning, match=r"external_cost"):
+        simulation_set = SimulationSet(
+            base_params={
+                "general": {"n_reqs": 10},
+                "dispatcher": {"external_cost": ExternalCost.absolute_detour},
+            },
+            data_dir=tmp_path,
+            debug=True,
+            cython=True,
+        )
 
     simulation_set.run()
 

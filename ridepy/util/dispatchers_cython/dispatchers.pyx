@@ -22,15 +22,21 @@ from ridepy.util.dispatchers_cython.cdispatchers cimport \
 #     InsertionResult[int] insertion_result_int
 
 # This cpdef is crucial, otherwise we can't use this function from both python  and cython
-cpdef brute_force_total_traveltime_minimizing_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
-                                               TransportSpace space, int seat_capacity, bint debug=False):
+cpdef brute_force_total_traveltime_minimizing_dispatcher(
+        TransportationRequest cy_request,
+        Stoplist stoplist,
+        TransportSpace space,
+        int seat_capacity,
+        ExternalCost external_cost=ExternalCost.absolute_detour,
+        bint debug=False
+):
     cdef InsertionResult[R2loc] insertion_result_r2loc
     cdef InsertionResult[int] insertion_result_int
     if cy_request.loc_type == LocType.R2LOC:
         insertion_result_r2loc = c_brute_force_total_traveltime_minimizing_dispatcher[R2loc](
             dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](cy_request._ureq._req_r2loc),
             stoplist.ustoplist._stoplist_r2loc,
-            dereference(space.u_space.space_r2loc_ptr), seat_capacity, debug
+            dereference(space.u_space.space_r2loc_ptr), seat_capacity, external_cost, debug
         )
         return insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist),\
                (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
@@ -39,7 +45,7 @@ cpdef brute_force_total_traveltime_minimizing_dispatcher(TransportationRequest c
         insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[int](
             dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
             stoplist.ustoplist._stoplist_int,
-            dereference(space.u_space.space_int_ptr), seat_capacity, debug
+            dereference(space.u_space.space_int_ptr), seat_capacity, external_cost, debug
         )
         return insertion_result_int.min_cost, Stoplist.from_c_int(insertion_result_int.new_stoplist),\
                (insertion_result_int.EAST_pu, insertion_result_int.LAST_pu,
@@ -72,4 +78,3 @@ cpdef zero_detour_dispatcher(TransportationRequest cy_request, Stoplist stoplist
                 insertion_result_int.EAST_do, insertion_result_int.LAST_do)
     else:
         raise ValueError("This line should never have been reached")
-
