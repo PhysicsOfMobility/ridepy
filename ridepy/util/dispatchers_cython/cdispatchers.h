@@ -187,15 +187,14 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
   space
       transport space the vehicle is operating on
   detour
-      Maximum relative detour that is allowed to be incurred into the route
-      when picking up or delivering a request between two existing stops, where
-      the current position of the vehicle counts as a stop.
-      The detour is defined relative to the travel time between the two existing
-      stops. I.e. for existing adjacent stops $u, v$ and new stop $w$,
-      the constraint is that
-      $$
-      \frac{d(u,w)+d(w,v)}{d(u, v)}-1\stackrel{!}{\leq}\mathrm{detour}
-      $$
+
+    For a single new stop ``x`` to be inserted between ``(u,v)``,
+    the following constraint must be fulfilled:
+    ``(d(u,x) + d(x, v)) / d(u,v) - 1 <= detour``
+
+    For an adjacent insertion of ``(x,y)`` in-between ``(u,v)`` the
+    aforementioned criterion is applied successively:
+    ``((d(u,x) + d(x, v)) / d(u,v) - 1 <= detour) /\  ((d(x,y) + d(y, v)) / d(x,v) - 1 <= detour)``
 
   Returns
   -------
