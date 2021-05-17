@@ -223,6 +223,11 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     i++; // The first iteration of the loop: i = 0
     // (new stop would be inserted at idx=1). Insertion at idx=0 impossible.
 
+    if (stop_before_pickup->occupancy_after_servicing == seat_capacity) {
+      // inserting here will violate capacity constraint
+      continue;
+    }
+
     auto time_to_pickup =
         space.t(stop_before_pickup->location, request->origin);
     auto time_from_pickup =
@@ -266,6 +271,12 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
       // constraint is not violated due to the action at this stop
       // (stop_before_dropoff)
 
+      if (stop_before_dropoff->occupancy_after_servicing == seat_capacity) {
+        // Capacity is violated. We need to break off this loop because no
+        // insertion either here or at a later stop is permitted
+        break;
+      }
+
       time_to_dropoff =
           space.t(stop_before_dropoff->location, request->destination);
       time_from_dropoff = time_to_stop_after_insertion(
@@ -304,7 +315,6 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     min_cost = space.t(stoplist[i].location, request->origin) +
                space.t(request->origin, request->destination);
     best_insertion = {i, i}; // will be inserted after LEN-1'th stop
-    insertion_found = true;
   }
 
   if (min_cost < INFINITY) {
