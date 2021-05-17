@@ -10,7 +10,7 @@ from ridepy.events import (
     PickupEvent,
     DeliveryEvent,
 )
-from ridepy.util.dispatchers_cython import zero_detour_dispatcher
+from ridepy.util.dispatchers_cython import simple_ellipse_dispatcher
 from ridepy.extras.spaces import make_nx_grid
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces_cython import Euclidean2D, Graph
@@ -45,7 +45,7 @@ def test_append_to_empty_stoplist(kind):
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
@@ -84,7 +84,7 @@ def test_inserted_at_the_middle(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -127,23 +127,23 @@ def test_capacity_constraint(kind):
     ##############################
     # vehicle large enough
     ##############################
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=2
     )
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
     assert [s.occupancy_after_servicing for s in new_stoplist] == [1, 2, 1, 0]
 
-
     ##############################
     # vehicle not large enough
     ##############################
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=1
     )
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
     assert [s.occupancy_after_servicing for s in new_stoplist] == [1, 0, 1, 0]
+
 
 @pytest.mark.parametrize("kind", ["cython"])
 def test_inserted_at_the_middle_with_detour(kind):
@@ -181,7 +181,7 @@ def test_inserted_at_the_middle_with_detour(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request,
         stoplist,
         space,
@@ -218,7 +218,7 @@ def test_inserted_at_the_middle_with_detour(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request,
         stoplist,
         space,
@@ -255,7 +255,7 @@ def test_inserted_at_the_middle_with_detour(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request,
         stoplist,
         space,
@@ -302,7 +302,7 @@ def test_inserted_separately(kind):
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -347,7 +347,7 @@ def test_inserted_separately_with_detour(kind):
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10, detour=1
     )
 
@@ -380,7 +380,7 @@ def test_inserted_separately_with_detour(kind):
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10, detour=1
     )
 
@@ -413,7 +413,7 @@ def test_inserted_separately_with_detour(kind):
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10, detour=1
     )
 
@@ -456,7 +456,7 @@ def test_dropoff_appended(kind):
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -497,7 +497,7 @@ def test_pickup_and_dropoff_appended(kind):
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = zero_detour_dispatcher(
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
