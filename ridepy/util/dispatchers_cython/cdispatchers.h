@@ -173,10 +173,20 @@ template <typename Loc>
 InsertionResult<Loc>
 zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
                        vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
-                       int seat_capacity, double detour=0, bool debug = false) {
+                       int seat_capacity, double detour = 0,
+                       bool debug = false) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
   according to the process described in https://arxiv.org/abs/2001.09711
+
+  Note that this dispatcher disregards stops' and requests' time windows.
+  Capacity constraints *are* honored.
+
+  Insertions for which neither pickup nor dropoff are appended use no
+  explicit cost function. The first insertion that violates no constraints will
+  be chosen, and zero cost will be returned. In case either the dropoff or both
+  pickup and dropoff have to be appended, the returned cost is the extra
+  traveltime that is incurred, the time from the previous last stop to the dropoff.
 
   Parameters
   ----------
@@ -194,7 +204,8 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
 
     For an adjacent insertion of ``(x,y)`` in-between ``(u,v)`` the
     aforementioned criterion is applied successively:
-    ``((d(u,x) + d(x, v)) / d(u,v) - 1 <= detour) /\  ((d(x,y) + d(y, v)) / d(x,v) - 1 <= detour)``
+    ``((d(u,x) + d(x, v)) / d(u,v) - 1 <= detour) /\  ((d(x,y) + d(y, v)) /
+  d(x,v) - 1 <= detour)``
 
   Returns
   -------
@@ -219,7 +230,11 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     auto original_pickup_edge_length =
         time_from_current_stop_to_next(stoplist, i, space);
 
-    if ((time_to_pickup + time_from_pickup) / original_pickup_edge_length - 1 > detour)
+    auto pickup_absolute_detour =
+        time_to_pickup + time_from_pickup - original_pickup_edge_length;
+    auto pickup_relative_detour = pickup_absolute_detour / original_pickup_edge_length;
+
+    if (pickup_relative_detour > detour)
       continue;
 
     // an valid pickup has been found
@@ -227,7 +242,12 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     auto time_to_dropoff = space.t(request->origin, request->destination);
     auto time_from_dropoff =
         time_to_stop_after_insertion(stoplist, request->destination, i, space);
-    if (time_to_pickup + time_to_dropoff + time_from_dropoff - original_pickup_edge_length == 0) {
+
+    auto dropoff_absolute_detour =
+        time_to_dropoff + time_from_dropoff - time_from_pickup;
+    auto dropoff_relative_detour = dropoff_absolute_detour / time_from_pickup;
+
+    if (dropoff_relative_detour <= detour) {
       // found an insertion, stop looking
       best_insertion = {i, i};
       min_cost = 0;
@@ -245,14 +265,19 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
       // (otherwise we wouldn't've reached this line). Need to check that the
       // constraint is not violated due to the action at this stop
       // (stop_before_dropoff)
+
       time_to_dropoff =
           space.t(stop_before_dropoff->location, request->destination);
       time_from_dropoff = time_to_stop_after_insertion(
           stoplist, request->destination, j, space);
       auto original_dropoff_edge_length =
           time_from_current_stop_to_next(stoplist, j, space);
-      if (time_to_dropoff + time_from_dropoff - original_dropoff_edge_length >
-          0)
+      dropoff_absolute_detour =
+          time_to_dropoff + time_from_dropoff - original_dropoff_edge_length;
+      dropoff_relative_detour =
+          dropoff_absolute_detour / original_dropoff_edge_length;
+
+      if (dropoff_relative_detour > detour)
         continue;
       else {
         best_insertion = {i, j};
@@ -268,7 +293,7 @@ zero_detour_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
       j = stoplist.size() - 1;
       time_to_dropoff = space.t(stoplist[j].location, request->destination);
       best_insertion = {i, j};    // will be inserted after LEN-1'th stop
-      min_cost = time_to_dropoff; // should the cost indicate actual costs?
+      min_cost = time_to_dropoff;
       insertion_found = true;
       break;
     }

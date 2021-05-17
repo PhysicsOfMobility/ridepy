@@ -8,4 +8,4 @@ cpdef brute_force_total_traveltime_minimizing_dispatcher(TransportationRequest c
                                               TransportSpace space, int seat_capacity, bint debug=*)
 
 cpdef zero_detour_dispatcher(TransportationRequest cy_request, Stoplist stoplist,
-                                              TransportSpace space, int seat_capacity, bint debug=*)
+                                              TransportSpace space, int seat_capacity, double detour=*, bint debug=*)
