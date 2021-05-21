@@ -174,7 +174,7 @@ InsertionResult<Loc>
 simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
                           vector<Stop<Loc>> &stoplist,
                           TransportSpace<Loc> &space, int seat_capacity,
-                          double detour = 0, bool debug = false) {
+                          double max_relative_detour = 0, bool debug = false) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
   according to the process described in https://arxiv.org/abs/2001.09711
@@ -197,16 +197,16 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
       stoplist of the vehicle, to be mapped to a new stoplist
   space
       transport space the vehicle is operating on
-  detour
+  max_relative_detour
 
     For a single new stop ``x`` to be inserted between ``(u,v)``,
     the following constraint must be fulfilled:
-    ``(d(u,x) + d(x, v)) / d(u,v) - 1 <= detour``
+    ``(d(u,x) + d(x, v)) / d(u,v) - 1 <= max_relative_detour``
 
     For an adjacent insertion of ``(x,y)`` in-between ``(u,v)`` the
     aforementioned criterion is applied successively:
-    ``((d(u,x) + d(x, v)) / d(u,v) - 1 <= detour) /\  ((d(x,y) + d(y, v)) /
-  d(x,v) - 1 <= detour)``
+    ``((d(u,x) + d(x, v)) / d(u,v) - 1 <= max_relative_detour) /\  ((d(x,y) +
+  d(y, v)) / d(x,v) - 1 <= max_relative_detour)``
 
   Returns
   -------
@@ -214,6 +214,16 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
   */
   double min_cost = INFINITY;
   bool insertion_found = false;
+
+  auto relative_detour = [](auto absolute_detour,
+                            auto original_edge_length) -> double {
+    if (absolute_detour == 0)
+      return 0;
+    else if (original_edge_length == 0)
+      INFINITY;
+    else
+      return absolute_detour / original_edge_length;
+  };
 
   // Warning: i,j refers to the indices where the new stop would be inserted. So
   // i-1/j-1 is the index of the stop preceding the stop to be inserted.
@@ -238,10 +248,9 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
 
     auto pickup_absolute_detour =
         time_to_pickup + time_from_pickup - original_pickup_edge_length;
-    auto pickup_relative_detour =
-        pickup_absolute_detour / original_pickup_edge_length;
 
-    if (pickup_relative_detour > detour)
+    if (relative_detour(pickup_absolute_detour, original_pickup_edge_length) >
+        max_relative_detour)
       continue;
 
     // an valid pickup has been found
@@ -252,9 +261,9 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
 
     auto dropoff_absolute_detour =
         time_to_dropoff + time_from_dropoff - time_from_pickup;
-    auto dropoff_relative_detour = dropoff_absolute_detour / time_from_pickup;
 
-    if (dropoff_relative_detour <= detour) {
+    if (relative_detour(dropoff_absolute_detour, time_from_pickup) <=
+        max_relative_detour) {
       // found an insertion, stop looking
       best_insertion = {i, i};
       min_cost = 0;
@@ -287,10 +296,9 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
           time_from_current_stop_to_next(stoplist, j, space);
       dropoff_absolute_detour =
           time_to_dropoff + time_from_dropoff - original_dropoff_edge_length;
-      dropoff_relative_detour =
-          dropoff_absolute_detour / original_dropoff_edge_length;
 
-      if (dropoff_relative_detour > detour)
+      if (relative_detour(dropoff_absolute_detour,
+                          original_dropoff_edge_length) > max_relative_detour)
         continue;
       else {
         best_insertion = {i, j};

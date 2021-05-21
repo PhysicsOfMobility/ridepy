@@ -18,6 +18,6 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
           vector[Stop[Loc]] &stoplist,
           const TransportSpace &space,
           int seat_capacity,
-          double detour,
+          double max_relative_detour,
           bint debug
     )

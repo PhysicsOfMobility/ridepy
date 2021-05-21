@@ -186,7 +186,7 @@ def test_inserted_at_the_middle_with_detour(kind):
         stoplist,
         space,
         seat_capacity=10,
-        detour=1,
+        max_relative_detour=1,
     )
     assert min_cost == 0
     assert new_stoplist[1].location == request.origin
@@ -223,7 +223,7 @@ def test_inserted_at_the_middle_with_detour(kind):
         stoplist,
         space,
         seat_capacity=10,
-        detour=1,
+        max_relative_detour=1,
     )
     assert min_cost == (4 - 2) + (1.5 + eps) + (3 - 2) + (1.5 + eps - 1)
     assert new_stoplist[2].location == request.origin
@@ -260,7 +260,7 @@ def test_inserted_at_the_middle_with_detour(kind):
         stoplist,
         space,
         seat_capacity=10,
-        detour=1,
+        max_relative_detour=1,
     )
 
     assert min_cost == (4 - 3) + (1 + eps)
@@ -311,6 +311,51 @@ def test_inserted_separately(kind):
 
 
 @pytest.mark.parametrize("kind", ["cython"])
+def test_same_location_with_detour(kind):
+    # fmt: off
+    # location, cpat, tw_min, tw_max,
+    stoplist_properties = [
+        [(0, 0), 0, 0, inf],
+        [(0, 1), 1, 0, inf],
+        [(0, 1), 1, 0, inf],
+        [(0, 5), 5, 0, inf],
+        [(0, 5), 5, 0, inf],
+    ]
+    # fmt: on
+    eps = 1e-4
+
+    request_properties = dict(
+        request_id=42,
+        creation_timestamp=1,
+        origin=(0, 1),
+        destination=(0, 5),
+        pickup_timewindow_min=0,
+        pickup_timewindow_max=inf,
+        delivery_timewindow_min=0,
+        delivery_timewindow_max=inf,
+    )
+    (
+        space,
+        request,
+        stoplist,
+        brute_force_total_traveltime_minimizing_dispatcher,
+    ) = setup_insertion_data_structures(
+        stoplist_properties=stoplist_properties,
+        request_properties=request_properties,
+        space_type="Manhattan2D",
+        kind=kind,
+    )
+    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
+        request, stoplist, space, seat_capacity=10, max_relative_detour=1
+    )
+
+    assert min_cost == 0
+    assert new_stoplist[1].location == request.origin
+    assert new_stoplist[-3].location == request.destination
+    assert [s.occupancy_after_servicing for s in new_stoplist] == [0, 1, 1, 1, 0, 0, 0]
+
+
+@pytest.mark.parametrize("kind", ["cython"])
 def test_inserted_separately_with_detour(kind):
     # fmt: off
     # location, cpat, tw_min, tw_max,
@@ -348,7 +393,7 @@ def test_inserted_separately_with_detour(kind):
         kind=kind,
     )
     min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
-        request, stoplist, space, seat_capacity=10, detour=1
+        request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
     assert min_cost == 0
@@ -381,7 +426,7 @@ def test_inserted_separately_with_detour(kind):
         kind=kind,
     )
     min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
-        request, stoplist, space, seat_capacity=10, detour=1
+        request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
     assert min_cost == (7 - 2) + (1 + eps) + (4 - 2) + (1 + eps + 1)
@@ -414,7 +459,7 @@ def test_inserted_separately_with_detour(kind):
         kind=kind,
     )
     min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(
-        request, stoplist, space, seat_capacity=10, detour=1
+        request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
     assert min_cost == (7 - 4) + (1 + eps)
