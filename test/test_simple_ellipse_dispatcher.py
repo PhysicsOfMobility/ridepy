@@ -32,7 +32,7 @@ def test_append_to_empty_stoplist(kind):
         delivery_timewindow_max=inf,
     )
 
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [[(0, 0), 0, 0, inf]]
     (
         space,
@@ -55,7 +55,7 @@ def test_append_to_empty_stoplist(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_inserted_at_the_middle(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
@@ -95,7 +95,7 @@ def test_inserted_at_the_middle(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_capacity_constraint(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf, 1],
         [(0, 3), 3, 0, inf, 0],
@@ -148,7 +148,7 @@ def test_capacity_constraint(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_inserted_at_the_middle_with_detour(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 4), 4, 0, inf],
@@ -272,7 +272,7 @@ def test_inserted_at_the_middle_with_detour(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_inserted_separately(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
@@ -313,7 +313,7 @@ def test_inserted_separately(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_same_location_with_detour(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 0), 0, 0, inf],
         [(0, 1), 1, 0, inf],
@@ -358,7 +358,7 @@ def test_same_location_with_detour(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_inserted_separately_with_detour(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
@@ -471,7 +471,7 @@ def test_inserted_separately_with_detour(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_dropoff_appended(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
@@ -512,7 +512,7 @@ def test_dropoff_appended(kind):
 @pytest.mark.parametrize("kind", ["cython"])
 def test_pickup_and_dropoff_appended(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
