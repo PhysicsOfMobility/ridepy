@@ -13,7 +13,11 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
           vector[Stop[Loc]] &stoplist,
           const TransportSpace &space, int seat_capacity, bint debug)
 
-    InsertionResult[Loc] zero_detour_dispatcher[Loc](
+    InsertionResult[Loc] simple_ellipse_dispatcher[Loc](
           shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
-          const TransportSpace &space, int seat_capacity, bint debug)
+          const TransportSpace &space,
+          int seat_capacity,
+          double max_relative_detour,
+          bint debug
+    )

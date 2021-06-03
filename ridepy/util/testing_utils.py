@@ -4,7 +4,7 @@ from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from ridepy.util.spaces_cython import spaces as cyspaces
-from typing import Literal, Iterable, Union, Callable
+from typing import Literal, Iterable, Union, Callable, Sequence
 
 from ridepy import data_structures as pyds, data_structures_cython as cyds
 from ridepy import data_structures_cython as cyds
@@ -16,7 +16,7 @@ from ridepy.util.dispatchers import (
 
 def stoplist_from_properties(
     *,
-    stoplist_properties: Iterable[tuple[Location, float, float, float]],
+    stoplist_properties: Iterable[Sequence[Union[Location, float]]],
     space: Union[TransportSpace, CyTransportSpace],
     kind: str,
 ) -> Union[Stoplist, cyds.Stoplist]:
@@ -28,6 +28,15 @@ def stoplist_from_properties(
 
         (
             (location, CPAT, timewindow_min, timewindow_max),
+            ...,
+        )
+
+    or
+
+    .. code-block:: python
+
+        (
+            (location, CPAT, timewindow_min, timewindow_max, occupancy_after_servicing),
             ...,
         )
 
@@ -54,17 +63,17 @@ def stoplist_from_properties(
 
     python_stoplist = [
         data_structure_module.Stop(
-            location=loc,
+            location=prop[0],
             request=data_structure_module.InternalRequest(
-                request_id=-1, creation_timestamp=0, location=loc
+                request_id=-1, creation_timestamp=0, location=prop[0]
             ),
             action=data_structure_module.StopAction.internal,
-            estimated_arrival_time=cpat,
-            occupancy_after_servicing=0,
-            time_window_min=tw_min,
-            time_window_max=tw_max,
+            estimated_arrival_time=prop[1],
+            occupancy_after_servicing=prop[4] if len(prop) == 5 else 0,
+            time_window_min=prop[2],
+            time_window_max=prop[3],
         )
-        for loc, cpat, tw_min, tw_max in stoplist_properties
+        for prop in stoplist_properties
     ]
 
     if kind == "python":
@@ -75,7 +84,7 @@ def stoplist_from_properties(
 
 def setup_insertion_data_structures(
     *,
-    stoplist_properties: Iterable[tuple[Location, float, float, float]],
+    stoplist_properties: Iterable[Sequence[Union[Location, float]]],
     request_properties,
     space_type: str,
     kind: str,

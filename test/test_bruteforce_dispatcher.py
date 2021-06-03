@@ -34,7 +34,7 @@ def test_append_to_empty_stoplist(kind):
         delivery_timewindow_max=inf,
     )
 
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [[(0, 0), 0, 0, inf]]
     (
         space,
@@ -58,7 +58,7 @@ def test_append_to_empty_stoplist(kind):
 def test_no_solution_found(kind):
     """Test that if no solution exists, none is returned"""
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 1, 1],
         [(0, 3), 3, 3, 3]
@@ -133,7 +133,7 @@ def test_no_solution_found(kind):
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_append_due_to_timewindow(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 3, 3]
@@ -179,7 +179,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
     delays do not.
     """
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 2), 2, 2, 4],
@@ -245,7 +245,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_timewindow_violation_at_pickup_checked(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 2), 2, 2, 2.5],
@@ -305,7 +305,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_inserted_at_the_middle(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, 6],
@@ -345,7 +345,7 @@ def test_inserted_at_the_middle(kind):
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_inserted_separately(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
@@ -390,7 +390,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
     of seat_capacity=1
     """
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, inf],
@@ -459,7 +459,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_stoplist_not_modified_inplace(kind):
     # fmt: off
-    # location, cpat, tw_min, tw_max,
+    # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [
         [(0, 1), 1, 0, inf],
         [(0, 3), 3, 0, 6],
