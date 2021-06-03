@@ -31,8 +31,9 @@ Installation
 
    git clone git@github.com:PhysicsOfMobility/ridepy.git
    cd ridepy
-   pre-commit install
+   pip install -r requirements.txt
    python setup.py develop
+   pre-commit install
    pytest
 
 
