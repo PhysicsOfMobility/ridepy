@@ -28,7 +28,8 @@ Installation
 ~~~~~~~~~~~~
 
 .. code:: sh
-
+   sudo apt-get update && sudo apt-get -y install openmpi-bin \
+     openmpi-common libopenmpi-dev libboost-all-dev build-essential
    git clone git@github.com:PhysicsOfMobility/ridepy.git
    cd ridepy
    pip install -r requirements.txt
