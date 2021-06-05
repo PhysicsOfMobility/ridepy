@@ -6,6 +6,7 @@
 #define RIDEPY_CDISPATCHERS_UTILS_H
 
 #include "../../data_structures_cython/cdata_structures.h"
+#include "ortools_optimizer.h"
 
 namespace cstuff {
 template <typename Loc>

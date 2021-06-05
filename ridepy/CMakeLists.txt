@@ -1,16 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 
 # set the project name
 project(ridepy)
 
-# add the MathFunctions library
-add_subdirectory(vehicle_state_cython)
 add_subdirectory(data_structures_cython)
 add_subdirectory(util)
-
-# add the executable
-add_executable(
-        dispatcher vehicle_state_cython/cstuff.cpp util/spaces_cython/cspaces.cxx)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
