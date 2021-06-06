@@ -21,6 +21,7 @@
 using namespace operations_research;
 using namespace std;
 namespace cstuff {
+
 template <typename Loc>
 //vector<vector<Stop<Loc>>>
 void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
@@ -33,7 +34,7 @@ void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
   // A list of all timewindows
   vector<pair<double, double>> time_windows;
   //  a list of all pickup/dropoff index pairs
-  map<int, pair<RoutingIndexManager::NodeIndex, RoutingIndexManager::NodeIndex>> pudo_idxpairs;
+  map<int, pair<int, int>> pudo_idxpairs;
   // list of indices for the start locations
   vector<int> start_loc_idxs;
   // list of lists, contains the indices for the dropoff stops of the onboard requests
@@ -42,7 +43,7 @@ void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
   // -1 for dropoffs, +1 for pickups
   vector<int> delta_load;
 
-  int flat_stop_idx = 0;
+  int flat_stop_idx {0};
   int vehicle_idx = 0;
   bool is_cpe_stop = false;
   for (auto &stoplist : stoplists) {
@@ -61,18 +62,19 @@ void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
       time_windows.push_back(make_pair(stop.time_window_min, stop.time_window_max));
       // construct pu/do pairs
       if (stop.action==StopAction::pickup) {
-        pudo_idxpairs[stop.request->request_id].first = RoutingIndexManager::NodeIndex{flat_stop_idx};
+        pudo_idxpairs[stop.request->request_id] = make_pair(int{flat_stop_idx},
+                                                            int{-1});
         delta_load.push_back(1);
       }
       else {
         if (stop.action==StopAction::dropoff) {
           delta_load.push_back(-1);
-          auto idxpair = pudo_idxpairs.find(stop.request->request_id);
-          if (idxpair == pudo_idxpairs.end()) {
+          if (pudo_idxpairs.count(stop.request->request_id)==0) {
             // this is an onboard request's dropoff
             onboard_requests_dropoff_idxs[vehicle_idx].push_back(flat_stop_idx);
           }
-          else idxpair.second = RoutingIndexManager::NodeIndex{flat_stop_idx};
+          // this dropoff is part of a PU/DO pair
+          else pudo_idxpairs[stop.request->request_id].second = int{flat_stop_idx};
         }
         else delta_load.push_back(0);
       }
@@ -88,8 +90,8 @@ void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
   RoutingIndexManager manager(
       all_stops.size()+1, // number of all the stops in the system: We need one extra for the dummy end stop
       stoplists.size(), // number of vehicles
-      start_loc_idxs,
-      end_loc_idx
+      vector<RoutingIndexManager::NodeIndex>(start_loc_idxs.begin(), start_loc_idxs.end()),
+      vector<RoutingIndexManager::NodeIndex>{1, RoutingIndexManager::NodeIndex{end_loc_idx}}
       );
 
 
@@ -98,13 +100,12 @@ void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
 
   // Define a distance callback that returns 0 for the dummy end node.
   const int transit_callback_index = routing.RegisterTransitCallback(
-      [&all_stops, space, end_loc_idx, &manager](int64_t from_index, int64_t to_index) -> int64_t {
-
+      [&all_stops, &space, &end_loc_idx, &manager](int64_t from_index, int64_t to_index) -> int64_t {
+        auto from_idx = manager.IndexToNode(from_index).value();
+        auto to_idx = manager.IndexToNode(to_index).value();
         if ((from_index == end_loc_idx) or (to_index == end_loc_idx)) return 0;
         // Convert from routing variable Index to time matrix NodeIndex
-        auto from_ = all_stops[manager.IndexToNode(from_index).value()].location;
-        auto to_ = all_stops[manager.IndexToNode(to_index).value()].location;
-        return space.t(from_, to_);
+        return space.t(all_stops[from_index].location, all_stops[to_index].location);
       });
 
   // Define cost of each arc.
@@ -153,8 +154,8 @@ void optimize_stoplists(vector<vector<Stop<Loc>>> stoplists,
   // Specify that dropoffs follow pickups.
   Solver* const solver = routing.solver();
   for (const auto& [request_id, pudo] : pudo_idxpairs) {
-  int64_t pickup_index = manager.NodeToIndex(pudo.first);
-  int64_t delivery_index = manager.NodeToIndex(pudo.second);
+  int64_t pickup_index = manager.NodeToIndex(RoutingIndexManager::NodeIndex {pudo.first});
+  int64_t delivery_index = manager.NodeToIndex(RoutingIndexManager::NodeIndex {pudo.second});
   routing.AddPickupAndDelivery(pickup_index, delivery_index);
   solver->AddConstraint(solver->MakeEquality(
       routing.VehicleVar(pickup_index), routing.VehicleVar(delivery_index)));
