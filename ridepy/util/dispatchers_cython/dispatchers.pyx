@@ -1,16 +1,20 @@
 # distutils: language=c++
+# distutils: libraries = ortools pthread
 
 from cython.operator cimport dereference
 from libcpp.memory cimport dynamic_pointer_cast
+from libcpp.vector cimport vector
 
 from ridepy.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
 from ridepy.data_structures_cython.data_structures cimport TransportationRequest, Stoplist, LocType, R2loc
 from ridepy.data_structures_cython.cdata_structures cimport InsertionResult, \
     TransportationRequest as CTransportationRequest, \
-    Request as CRequest
+    Request as CRequest, \
+    Stop as CStop
 from ridepy.util.dispatchers_cython.cdispatchers cimport \
     brute_force_total_traveltime_minimizing_dispatcher as c_brute_force_total_traveltime_minimizing_dispatcher, \
-    simple_ellipse_dispatcher as c_simple_ellipse_dispatcher
+    simple_ellipse_dispatcher as c_simple_ellipse_dispatcher, \
+    optimize_stoplists as c_optimize_stoplists
 
 # Just like we did in data_structures_cython.Stop, we would have liked to have an union holding
 # InsertionResult[R2loc] and InsertionResult[int] inside brute_force_total_traveltime_minimizing_dispatcher. However,
@@ -73,3 +77,33 @@ cpdef simple_ellipse_dispatcher(TransportationRequest cy_request, Stoplist stopl
     else:
         raise ValueError("This line should never have been reached")
 
+
+def optimize_stoplists(stoplists,
+                       TransportSpace space,
+                       vector[int] seat_capacities):
+    cdef vector[vector[CStop[R2loc]]] c_stoplists_old_r2loc
+    cdef vector[vector[CStop[R2loc]]] c_stoplists_new_r2loc
+    cdef vector[vector[CStop[int]]] c_stoplists_old_int
+    cdef vector[vector[CStop[int]]] c_stoplists_new_int
+
+    if space.loc_type == LocType.R2LOC:
+        for stoplist in stoplists:
+            c_stoplists_old_r2loc.push_back((<Stoplist>stoplist).ustoplist._stoplist_r2loc)
+
+        c_stoplists_new_r2loc = c_optimize_stoplists[R2loc](
+                    c_stoplists_old_r2loc,
+                    dereference(space.u_space.space_r2loc_ptr),
+                    seat_capacities)
+        return [Stoplist.from_c_r2loc(sl) for sl in c_stoplists_new_r2loc]
+
+    if space.loc_type == LocType.INT:
+        for stoplist in stoplists:
+            c_stoplists_old_int.push_back((<Stoplist>stoplist).ustoplist._stoplist_int)
+
+        c_stoplists_new_int = c_optimize_stoplists[int](
+                    c_stoplists_old_int,
+                    dereference(space.u_space.space_int_ptr),
+                    seat_capacities)
+        return [Stoplist.from_c_int(sl) for sl in c_stoplists_new_int]
+    else:
+        raise ValueError("This line should never have been reached")
