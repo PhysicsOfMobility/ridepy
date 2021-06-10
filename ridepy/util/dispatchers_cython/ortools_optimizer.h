@@ -45,16 +45,19 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
   int flat_stop_idx{0};
   int vehicle_idx = 0;
   bool is_cpe_stop = false;
+  bool delta_load_pushed_back=false;
   for (auto &stoplist : stoplists) {
     is_cpe_stop = true;
     onboard_requests_dropoff_idxs.emplace_back(vector<int>(0));
     for (Stop<Loc> &stop : stoplist) {
+      delta_load_pushed_back = false;
       // note the index if cpe stop. ortools will need it soon
       all_stops.push_back(stop);
       if (is_cpe_stop) {
         start_loc_idxs.push_back(flat_stop_idx);
         // Set delta_load at CPE equal to the number of onboard requests.
         delta_load.push_back(stop.occupancy_after_servicing);
+        delta_load_pushed_back = true;
       }
       is_cpe_stop = false;
       // record the time windows
@@ -64,10 +67,10 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
       if (stop.action == StopAction::pickup) {
         pudo_idxpairs[stop.request->request_id] =
             make_pair(int{flat_stop_idx}, int{-1});
-        delta_load.push_back(1);
+        if (!delta_load_pushed_back) delta_load.push_back(1);
       } else {
         if (stop.action == StopAction::dropoff) {
-          delta_load.push_back(-1);
+          if (!delta_load_pushed_back) delta_load.push_back(-1);
           if (pudo_idxpairs.count(stop.request->request_id) == 0) {
             // this is an onboard request's dropoff
             onboard_requests_dropoff_idxs[vehicle_idx].push_back(flat_stop_idx);
@@ -76,7 +79,7 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
           else
             pudo_idxpairs[stop.request->request_id].second = int{flat_stop_idx};
         } else
-          delta_load.push_back(0);
+          if (!delta_load_pushed_back) delta_load.push_back(0);
       }
       flat_stop_idx++;
     }
