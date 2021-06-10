@@ -9,10 +9,10 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # adding the Google_Tests_run target
-add_executable(tests_run cpp_integration_test.cpp)
+add_executable(tests_run cpp_integration_test.cxx)
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
 add_executable(
-        integration_test_insertion cpp_integration_test.cpp ../ridepy/util/spaces_cython/cspaces.cxx)
+        integration_test_insertion cpp_integration_test.cxx ../ridepy/util/spaces_cython/cspaces.cxx)
 target_link_libraries(integration_test_insertion LINK_PUBLIC dispatchers gtest gtest_main)
 # target_link_libraries(integration_test_insertion gtest gtest_main)
