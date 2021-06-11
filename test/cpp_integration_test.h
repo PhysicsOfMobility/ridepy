@@ -14,7 +14,7 @@
 //#include <boost/range/iterator_range.hpp>
 #include "../ridepy/data_structures_cython/cdata_structures.h"
 #include "../ridepy/util/spaces_cython/cspaces.h"
-#include "cdispatchers.h"
+#include "../ridepy/util/dispatchers_cython/cdispatchers.h"
 #include <chrono> // for benchmarking
 #include <iostream>
 #include <random>

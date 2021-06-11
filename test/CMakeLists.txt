@@ -9,7 +9,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # adding the Google_Tests_run target
-add_executable(tests_run cpp_integration_test.cxx)
+#add_executable(tests_run cpp_integration_test.cxx)
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
 add_executable(
