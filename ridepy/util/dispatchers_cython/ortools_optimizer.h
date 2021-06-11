@@ -5,32 +5,45 @@
 #ifndef DEVEL_SIMULATOR_ORTOOLS_OPTIMIZER_H
 #define DEVEL_SIMULATOR_ORTOOLS_OPTIMIZER_H
 
+#include "../../data_structures_cython/cdata_structures.h"
+#include "../spaces_cython/cspaces.h"
+#include "cdispatchers_utils.h"
+
 #include "ortools/constraint_solver/routing.h"
 #include "ortools/constraint_solver/routing_enums.pb.h"
 #include "ortools/constraint_solver/routing_index_manager.h"
 #include "ortools/constraint_solver/routing_parameters.h"
 
-#include "../../data_structures_cython/cdata_structures.h"
-#include "../spaces_cython/cspaces.h"
-#include "cdispatchers_utils.h"
 #include <climits>
 #include <utility>      // std::pair
 #include <map>
 #include <algorithm>    // std::binary_search, std::sort
+#include <limits>
 
 using namespace operations_research;
 using namespace std;
 namespace cstuff {
 
+int64_t rescale_time(double time, double resolution, double min_time){
+  if(isinf(time)) return INT64_MAX;
+
+  if (time-min_time > resolution*INT64_MAX) throw std::out_of_range("Cannot rescale time");
+
+  int64_t res = (time - min_time)/resolution;
+  if ((time > 0) and (res == 0)) throw std::out_of_range("Cannot rescale time");
+  return res;
+}
+
 template <typename Loc>
 vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
-                   TransportSpace<Loc> &space, vector<int> &vehicle_capacities_inp)
+                   TransportSpace<Loc> &space, vector<int> &vehicle_capacities_inp,
+                   double current_time=0, double time_resolution=1e-8)
 {
   int num_vehicles = stoplists.size();
   // We will create the data structures needed to initialize the ortools routing problem A flat list of all stops
-  vector<Stop<Loc>> all_stops;
+  vector<Stop<Loc>*> all_stops;
   // A list of all timewindows
-  vector<pair<double, double>> time_windows;
+  vector<pair<int64_t, int64_t>> time_windows;
   //  a list of all pickup/dropoff index pairs
   map<int, pair<int, int>> pudo_idxpairs;
   // list of indices for the start locations
@@ -40,7 +53,6 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
   // -1 for dropoffs, +1 for pickups
   vector<int> delta_load;
   vector<int64_t> vehicle_capacities(vehicle_capacities_inp.begin(), vehicle_capacities_inp.end());
-
 
   int flat_stop_idx{0};
   int vehicle_idx = 0;
@@ -52,17 +64,26 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
     for (Stop<Loc> &stop : stoplist) {
       delta_load_pushed_back = false;
       // note the index if cpe stop. ortools will need it soon
-      all_stops.push_back(stop);
+      all_stops.push_back(&stop);
       if (is_cpe_stop) {
         start_loc_idxs.push_back(flat_stop_idx);
         // Set delta_load at CPE equal to the number of onboard requests.
         delta_load.push_back(stop.occupancy_after_servicing);
         delta_load_pushed_back = true;
       }
-      is_cpe_stop = false;
       // record the time windows
-      time_windows.push_back(
-          make_pair(stop.time_window_min, stop.time_window_max));
+      if (is_cpe_stop) {
+        time_windows.push_back(
+          make_pair(rescale_time(stop.estimated_arrival_time, time_resolution, current_time),
+                    rescale_time(stop.estimated_arrival_time, time_resolution, current_time))
+            );
+      }
+      else {
+        time_windows.push_back(
+          make_pair(rescale_time(stop.time_window_min, time_resolution, current_time),
+                    rescale_time(stop.time_window_max, time_resolution, current_time))
+            );
+      }
       // construct pu/do pairs
       if (stop.action == StopAction::pickup) {
         pudo_idxpairs[stop.request->request_id] =
@@ -82,6 +103,7 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
           if (!delta_load_pushed_back) delta_load.push_back(0);
       }
       flat_stop_idx++;
+      is_cpe_stop = false;
     }
     vehicle_idx++;
   }
@@ -103,15 +125,16 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
 
   // Define a distance callback that returns 0 for the dummy end node.
   const int transit_callback_index = routing.RegisterTransitCallback(
-      [&all_stops, &space, &end_loc_idx,
+      [&all_stops, &space, &end_loc_idx, &time_resolution, &current_time,
        &manager](int64_t from_index, int64_t to_index) -> int64_t {
         auto from_idx = manager.IndexToNode(from_index).value();
         auto to_idx = manager.IndexToNode(to_index).value();
         if ((from_idx == end_loc_idx) or (to_idx == end_loc_idx))
           return 0;
         // Convert from routing variable Index to time matrix NodeIndex
-        return space.t(all_stops[from_idx].location,
-                       all_stops[to_idx].location);
+        return rescale_time(
+            space.t(all_stops[from_idx]->location, all_stops[to_idx]->location),
+            time_resolution, current_time);
       });
 
   // Define cost of each arc.
@@ -120,8 +143,8 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
   // Add Time constraint.
   std::string time{"Time"};
   routing.AddDimension(transit_callback_index, // transit callback index
-                       int64_t{3000000},       // allow waiting time
-                       int64_t{3000000},       // maximum time per vehicle
+                       int64_t{INT64_MAX},       // allow waiting time
+                       int64_t{INT64_MAX},       // maximum time per vehicle
                        false, // Don't force start cumul to zero
                        time);
   const RoutingDimension &time_dimension = routing.GetDimensionOrDie(time);
@@ -206,14 +229,28 @@ vector<vector<Stop<Loc>>> optimize_stoplists(vector<vector<Stop<Loc>>> &stoplist
   // Optional stuff: specify initial solution
   const Assignment *solution = routing.SolveWithParameters(searchParameters);
 
+  if (solution == nullptr) throw std::runtime_error("ortools found no solution");
+
   // Now construct new stoplists from the solution
   vector<vector<Stop<Loc>>> new_stoplists(num_vehicles);
-  for (int vehicle_idx = 0; vehicle_idx < num_vehicles; ++vehicle_idx) {
+  for (vehicle_idx = 0; vehicle_idx < num_vehicles; ++vehicle_idx) {
     int64_t index = routing.Start(vehicle_idx);
+    Stop<Loc> old_stop;
+    is_cpe_stop = true;
     while (routing.IsEnd(index) == false) {
-      new_stoplists[vehicle_idx].push_back(all_stops[manager.IndexToNode(index).value()]);
-      int64_t previous_index = index;
+      int new_stop_idx_in_flat_vec = manager.IndexToNode(index).value();
+      Stop<Loc> new_stop = *all_stops[new_stop_idx_in_flat_vec];
+
+      if (not is_cpe_stop){
+        double traveltime_from_old_stop = space.t(old_stop.location, new_stop.location);
+        new_stop.estimated_arrival_time = old_stop.estimated_departure_time() + traveltime_from_old_stop;
+        new_stop.occupancy_after_servicing = old_stop.occupancy_after_servicing + delta_load[new_stop_idx_in_flat_vec];
+      }
+
+      new_stoplists[vehicle_idx].push_back(new_stop);
       index = solution->Value(routing.NextVar(index));
+      is_cpe_stop = false;
+      old_stop = new_stop;
     }
   }
   return new_stoplists;

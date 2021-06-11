@@ -19,6 +19,8 @@ from ridepy.util.spaces import Euclidean2D, Graph
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.util.testing_utils import setup_insertion_data_structures
 from ridepy.vehicle_state import VehicleState
+from ridepy.util.dispatchers_cython import optimize_stoplists
+
 
 
 @pytest.mark.parametrize("kind", ["python", "cython"])
@@ -50,6 +52,8 @@ def test_append_to_empty_stoplist(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
+    if kind == 'cython':
+        new_stoplist, = optimize_stoplists([new_stoplist], space, [10])
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
 

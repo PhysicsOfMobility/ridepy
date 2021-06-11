@@ -107,3 +107,24 @@ TEST(RidepyTest, unittest){
   auto bla = optimize_stoplists(old_stoplists, space, capacities);
   auto foo = 42;
 }
+
+
+TEST(RidepyTest, test_insertion_to_empty) {
+  Manhattan2D space;
+  auto r1 = make_shared<TransportationRequest<R2loc>>(
+      42, 1.0, make_pair(0.0, 1.0), make_pair(0.0, 2.0), 0.0, INFINITY, 0.0,
+      INFINITY);
+
+  vector<Stop<R2loc>> sl1_orig{
+      Stop<R2loc>(make_pair(0.0, 0.0), r1, StopAction::internal, 0.0, 0,
+                  0, INFINITY),
+      Stop<R2loc>(make_pair(0.0, 1.0), r1, StopAction::pickup, 1.0, 1, 0, INFINITY),
+      Stop<R2loc>(make_pair(0.0, 2.0), r1, StopAction::dropoff, 1.0, 0,0, INFINITY),
+  };
+
+
+  vector<int> capacities{10};
+  vector<vector<Stop<R2loc>>> old_stoplists{sl1_orig};
+  auto bla = optimize_stoplists(old_stoplists, space, capacities);
+  auto foo = 42;
+}

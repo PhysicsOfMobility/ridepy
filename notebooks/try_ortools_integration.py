@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.0
+#       jupytext_version: 1.11.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -27,7 +27,7 @@ from ridepy.util.spaces_cython import Manhattan2D
 # + tags=[]
 from numpy import inf
 
-inf = 1000000
+inf = 1e8
 
 # + tags=[]
 r1 = TransportationRequest(1, 0, (-100, 0), (-100, 20))
@@ -70,9 +70,10 @@ sls_new = optimize_stoplists([sl1_orig, sl2_orig], Manhattan2D(), [1, 1])
 for sl in sls_new:
     print("-" * 20)
     for s in sl:
-        print(s.location, s.action)
+        print(s.location, s.estimated_arrival_time, s.action)
+# + tags=[]
+sls_new[0]
 # -
-
 
 
 
