@@ -19,6 +19,7 @@
 #include <map>
 #include <algorithm>    // std::binary_search, std::sort
 #include <limits>
+#include <string>
 
 using namespace operations_research;
 using namespace std;
@@ -27,10 +28,10 @@ namespace cstuff {
 int64_t rescale_time(double time, double resolution, double min_time){
   if(isinf(time)) return INT64_MAX;
 
-  if (time-min_time > resolution*INT64_MAX) throw std::out_of_range("Cannot rescale time");
+  if (time-min_time > resolution*INT64_MAX) throw std::invalid_argument("cannot rescale time " + to_string(time));
 
   int64_t res = (time - min_time)/resolution;
-  if ((time > 0) and (res == 0)) throw std::out_of_range("Cannot rescale time");
+  if ((time > 0) and (res == 0)) throw std::invalid_argument("cannot rescale time " + to_string(time));
   return res;
 }
 

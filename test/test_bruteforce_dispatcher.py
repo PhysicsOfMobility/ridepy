@@ -53,7 +53,7 @@ def test_append_to_empty_stoplist(kind):
         request, stoplist, space, seat_capacity=10
     )
     if kind == 'cython':
-        new_stoplist, = optimize_stoplists([new_stoplist], space, [10])
+        new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=100)
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
 
