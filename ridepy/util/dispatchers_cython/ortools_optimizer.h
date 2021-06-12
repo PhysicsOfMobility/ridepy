@@ -25,6 +25,18 @@ using namespace operations_research;
 using namespace std;
 namespace cstuff {
 
+/**
+ * ortools accepts dimension values such as time windows only as int_64.
+   Therefore we provide this utility function to rescale time to int_64 so that
+   the optimizer output is the same as it would have been if ortools understood
+   doubles. The goal here is to throw exceptions if we can detect this is not
+   going to be possible, rather than silently produce nonsensical solutions.
+
+ * @param time the time to rescale
+ * @param resolution two times t and t+resolution must not be mapped to identical value
+ * @param min_time the above may not be guaranteed if time < min_time
+ * @return rescaled time
+ */
 int64_t rescale_time(double time, double resolution, double min_time) {
   if (isinf(time))
     return INT64_MAX;
@@ -38,6 +50,9 @@ int64_t rescale_time(double time, double resolution, double min_time) {
   return res;
 }
 
+/**
+ * optimizes a vector of stoplists using ortools.
+ */
 template <typename Loc>
 vector<vector<Stop<Loc>>>
 optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
@@ -49,7 +64,7 @@ optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
         "stoplists and vehicle_capacities do not match in size");
   int num_vehicles = stoplists.size();
   // We will create the data structures needed to initialize the ortools routing
-  // problem A flat list of all stops
+  // problem. First,  a flat list of all stops
   vector<Stop<Loc> *> all_stops;
   // A list of all timewindows
   vector<pair<int64_t, int64_t>> time_windows;
@@ -60,11 +75,14 @@ optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
   // list of lists, contains the indices for the dropoff stops of the onboard
   // requests for each vehicle
   vector<vector<int>> onboard_requests_dropoff_idxs;
-  // -1 for dropoffs, +1 for pickups
+  // delta_load, -1 for dropoffs, +1 for pickups
   vector<int> delta_load;
+  // vehicle_capacities in int64_t
   vector<int64_t> vehicle_capacities(vehicle_capacities_inp.begin(),
                                      vehicle_capacities_inp.end());
 
+  // now go through the list of stoplists and populate these above-defined
+  // variables
   int flat_stop_idx{0};
   int vehicle_idx = 0;
   bool is_cpe_stop = false;
@@ -78,44 +96,47 @@ optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
       all_stops.push_back(&stop);
       if (is_cpe_stop) {
         start_loc_idxs.push_back(flat_stop_idx);
-        // Set delta_load at CPE equal to the number of onboard requests.
+        // set delta_load at CPE equal to the number of onboard requests. This
+        // is essential for the capacity constraints to be applied correctly
         delta_load.push_back(stop.occupancy_after_servicing);
-        delta_load_pushed_back = true;
-      }
-      // record the time windows
-      if (is_cpe_stop) {
+
         time_windows.push_back(
+            // the time windows at CPE must have zero width
+            // the time windows have to be int64_t, so rescaling is necessary
             make_pair(rescale_time(stop.estimated_arrival_time, time_resolution,
                                    current_time),
                       rescale_time(stop.estimated_arrival_time, time_resolution,
                                    current_time)));
-      } else {
+        is_cpe_stop = false;
+      } else { // not a cpe stop
+        // record the time windows
+        // the time windows have to be int64_t, so rescaling is necessary
         time_windows.push_back(make_pair(
             rescale_time(stop.time_window_min, time_resolution, current_time),
             rescale_time(stop.time_window_max, time_resolution, current_time)));
-      }
-      // construct pu/do pairs
-      if (stop.action == StopAction::pickup) {
-        pudo_idxpairs[stop.request->request_id] =
-            make_pair(int{flat_stop_idx}, int{-1});
-        if (!delta_load_pushed_back)
+        // construct pu/do pairs
+        if (stop.action == StopAction::pickup) {
+          pudo_idxpairs[stop.request->request_id] =
+              // we do not know yet what the dropoff idx is, store -1
+              make_pair(int{flat_stop_idx}, int{-1});
           delta_load.push_back(1);
-      } else {
-        if (stop.action == StopAction::dropoff) {
-          if (!delta_load_pushed_back)
+        } else {
+          if (stop.action == StopAction::dropoff) {
             delta_load.push_back(-1);
-          if (pudo_idxpairs.count(stop.request->request_id) == 0) {
-            // this is an onboard request's dropoff
-            onboard_requests_dropoff_idxs[vehicle_idx].push_back(flat_stop_idx);
-          }
-          // this dropoff is part of a PU/DO pair
-          else
-            pudo_idxpairs[stop.request->request_id].second = int{flat_stop_idx};
-        } else if (!delta_load_pushed_back)
-          delta_load.push_back(0);
+            if (pudo_idxpairs.count(stop.request->request_id) == 0) {
+              // this is an onboard request's dropoff
+              onboard_requests_dropoff_idxs[vehicle_idx].push_back(
+                  flat_stop_idx);
+            }
+            // this dropoff is part of a PU/DO pair
+            else
+              pudo_idxpairs[stop.request->request_id].second =
+                  int{flat_stop_idx};
+          } else // neither pickup nor dropoff
+            delta_load.push_back(0);
+        }
       }
       flat_stop_idx++;
-      is_cpe_stop = false;
     }
     vehicle_idx++;
   }
@@ -250,23 +271,23 @@ optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
   vector<vector<Stop<Loc>>> new_stoplists(num_vehicles);
   for (vehicle_idx = 0; vehicle_idx < num_vehicles; ++vehicle_idx) {
     int64_t index = routing.Start(vehicle_idx);
-    Stop<Loc> old_stop;
+    Stop<Loc> *old_stop;
     is_cpe_stop = true;
     while (routing.IsEnd(index) == false) {
       int new_stop_idx_in_flat_vec = manager.IndexToNode(index).value();
-      Stop<Loc> new_stop = *all_stops[new_stop_idx_in_flat_vec];
+      Stop<Loc> *new_stop = all_stops[new_stop_idx_in_flat_vec];
 
       if (not is_cpe_stop) {
         double traveltime_from_old_stop =
-            space.t(old_stop.location, new_stop.location);
-        new_stop.estimated_arrival_time =
-            old_stop.estimated_departure_time() + traveltime_from_old_stop;
-        new_stop.occupancy_after_servicing =
-            old_stop.occupancy_after_servicing +
+            space.t(old_stop->location, new_stop->location);
+        new_stop->estimated_arrival_time =
+            old_stop->estimated_departure_time() + traveltime_from_old_stop;
+        new_stop->occupancy_after_servicing =
+            old_stop->occupancy_after_servicing +
             delta_load[new_stop_idx_in_flat_vec];
       }
 
-      new_stoplists[vehicle_idx].push_back(new_stop);
+      new_stoplists[vehicle_idx].push_back(*new_stop);
       index = solution->Value(routing.NextVar(index));
       is_cpe_stop = false;
       old_stop = new_stop;
