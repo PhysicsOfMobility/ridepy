@@ -120,13 +120,19 @@ def test_ortools_optimization_delivers_onboard_requests_with_correct_vehicle():
     r4 = create_request_from_properties(req_id=4, orig=(3, 100), dest=(5, 100))
 
     old_stoplist_1 = create_stoplist_from_properties(
-        initial_location=(0, 0),
+        # let's "bias" the initial location so that if the optimizer doesn't understand
+        # that dropoffs must be done by the correct vehicle, this vehicle would
+        # do r2 and r3
+        initial_location=(0, -100),
         initial_load=1,
         actions=[(r1, do), (r2, pu), (r2, do)],
         space=Manhattan2D(),
     )
     old_stoplist_2 = create_stoplist_from_properties(
-        initial_location=(0, 0),
+        # similarly "bias" the initial location so that if the optimizer doesn't understand
+        # that dropoffs must be done by the correct vehicle, this vehicle would
+        # do r1 and r4
+        initial_location=(0, 100),
         initial_load=1,
         actions=[(r3, do), (r4, pu), (r4, do)],
         space=Manhattan2D(),
@@ -140,6 +146,7 @@ def test_ortools_optimization_delivers_onboard_requests_with_correct_vehicle():
         time_resolution=1e-10,
     )
     # while testing, let's not check for CPE
+    # vehicle one should do r1 and r4, vehicle two r2 and r3
     assert [[(s.request, s.action) for s in sl][1:] for sl in new_stoplists] == [
         [(r4, pu), (r1, do), (r4, do)],
         [(r2, pu), (r3, do), (r2, do)],
@@ -192,14 +199,14 @@ def test_ortools_prouces_sane_solutions():
     )
 
     old_stoplist_1 = create_stoplist_from_properties(
-        initial_location=(0, 10), # initialize one vehicle in the upper half-plane
+        initial_location=(0, 10),  # initialize one vehicle in the upper half-plane
         initial_load=0,
         actions=actions_1,
         space=Manhattan2D(),
     )
 
     old_stoplist_2 = create_stoplist_from_properties(
-        initial_location=(0, -10), # initialize one vehicle in the lower half-plane
+        initial_location=(0, -10),  # initialize one vehicle in the lower half-plane
         initial_load=0,
         actions=actions_2,
         space=Manhattan2D(),

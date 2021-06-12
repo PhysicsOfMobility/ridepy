@@ -24,7 +24,7 @@ from ortools.constraint_solver import pywrapcp
 def create_data_model():
     """Stores the data for the problem."""
     data = {}
-    data['time_matrix'] = [
+    data["time_matrix"] = [
         [0, 6, 9, 8, 7, 3, 6, 2, 3, 2, 6, 6, 4, 4, 5, 9, 7],
         [6, 0, 8, 3, 2, 6, 8, 4, 8, 8, 13, 7, 5, 8, 12, 10, 14],
         [9, 8, 0, 11, 10, 6, 3, 9, 5, 8, 4, 15, 14, 13, 9, 18, 9],
@@ -43,7 +43,7 @@ def create_data_model():
         [9, 10, 18, 6, 8, 12, 15, 8, 13, 9, 13, 3, 4, 5, 9, 0, 9],
         [7, 14, 9, 16, 14, 8, 5, 10, 6, 5, 4, 10, 8, 6, 2, 9, 0],
     ]
-    data['time_windows'] = [
+    data["time_windows"] = [
         (0, 5),  # depot
         (7, 12),  # 1
         (10, 15),  # 2
@@ -62,34 +62,35 @@ def create_data_model():
         (10, 15),  # 15
         (11, 15),  # 16
     ]
-    data['num_vehicles'] = 4
-    data['depot'] = 0
+    data["num_vehicles"] = 4
+    data["depot"] = 0
     return data
 
 
 def print_solution(data, manager, routing, solution):
     """Prints solution on console."""
-    print(f'Objective: {solution.ObjectiveValue()}')
-    time_dimension = routing.GetDimensionOrDie('Time')
+    print(f"Objective: {solution.ObjectiveValue()}")
+    time_dimension = routing.GetDimensionOrDie("Time")
     total_time = 0
-    for vehicle_id in range(data['num_vehicles']):
+    for vehicle_id in range(data["num_vehicles"]):
         index = routing.Start(vehicle_id)
-        plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
+        plan_output = "Route for vehicle {}:\n".format(vehicle_id)
         while not routing.IsEnd(index):
             time_var = time_dimension.CumulVar(index)
-            plan_output += '{0} Time({1},{2}) -> '.format(
-                manager.IndexToNode(index), solution.Min(time_var),
-                solution.Max(time_var))
+            plan_output += "{0} Time({1},{2}) -> ".format(
+                manager.IndexToNode(index),
+                solution.Min(time_var),
+                solution.Max(time_var),
+            )
             index = solution.Value(routing.NextVar(index))
         time_var = time_dimension.CumulVar(index)
-        plan_output += '{0} Time({1},{2})\n'.format(manager.IndexToNode(index),
-                                                    solution.Min(time_var),
-                                                    solution.Max(time_var))
-        plan_output += 'Time of the route: {}min\n'.format(
-            solution.Min(time_var))
+        plan_output += "{0} Time({1},{2})\n".format(
+            manager.IndexToNode(index), solution.Min(time_var), solution.Max(time_var)
+        )
+        plan_output += "Time of the route: {}min\n".format(solution.Min(time_var))
         print(plan_output)
         total_time += solution.Min(time_var)
-    print('Total time of all routes: {}min'.format(total_time))
+    print("Total time of all routes: {}min".format(total_time))
 
 
 """Solve the VRP with time windows."""
@@ -97,8 +98,9 @@ def print_solution(data, manager, routing, solution):
 data = create_data_model()
 
 # Create the routing index manager.
-manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
-                                       data['num_vehicles'], data['depot'])
+manager = pywrapcp.RoutingIndexManager(
+    len(data["time_matrix"]), data["num_vehicles"], data["depot"]
+)
 
 # Create Routing Model.
 routing = pywrapcp.RoutingModel(manager)
@@ -110,7 +112,8 @@ def time_callback(from_index, to_index):
     # Convert from routing variable Index to time matrix NodeIndex.
     from_node = manager.IndexToNode(from_index)
     to_node = manager.IndexToNode(to_index)
-    return data['time_matrix'][from_node][to_node]
+    return data["time_matrix"][from_node][to_node]
+
 
 transit_callback_index = routing.RegisterTransitCallback(time_callback)
 
@@ -118,39 +121,39 @@ transit_callback_index = routing.RegisterTransitCallback(time_callback)
 routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
 # Add Time Windows constraint.
-time = 'Time'
+time = "Time"
 routing.AddDimension(
     transit_callback_index,
     30,  # allow waiting time
     30,  # maximum time per vehicle
     False,  # Don't force start cumul to zero.
-    time)
+    time,
+)
 time_dimension = routing.GetDimensionOrDie(time)
 # Add time window constraints for each location except depot.
-for location_idx, time_window in enumerate(data['time_windows']):
-    if location_idx == data['depot']:
+for location_idx, time_window in enumerate(data["time_windows"]):
+    if location_idx == data["depot"]:
         continue
     index = manager.NodeToIndex(location_idx)
     time_dimension.CumulVar(index).SetRange(time_window[0], time_window[1])
 # Add time window constraints for each vehicle start node.
-depot_idx = data['depot']
-for vehicle_id in range(data['num_vehicles']):
+depot_idx = data["depot"]
+for vehicle_id in range(data["num_vehicles"]):
     index = routing.Start(vehicle_id)
     time_dimension.CumulVar(index).SetRange(
-        data['time_windows'][depot_idx][0],
-        data['time_windows'][depot_idx][1])
+        data["time_windows"][depot_idx][0], data["time_windows"][depot_idx][1]
+    )
 
 # Instantiate route start and end times to produce feasible times.
-for i in range(data['num_vehicles']):
-    routing.AddVariableMinimizedByFinalizer(
-        time_dimension.CumulVar(routing.Start(i)))
-    routing.AddVariableMinimizedByFinalizer(
-        time_dimension.CumulVar(routing.End(i)))
+for i in range(data["num_vehicles"]):
+    routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.Start(i)))
+    routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.End(i)))
 
 # Setting first solution heuristic.
 search_parameters = pywrapcp.DefaultRoutingSearchParameters()
 search_parameters.first_solution_strategy = (
-    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+)
 
 # Solve the problem.
 solution = routing.SolveWithParameters(search_parameters)
@@ -164,9 +167,14 @@ if solution:
 # ## Great! The stuff works, let's now adapt it for our use case
 
 # + tags=[]
-from thesimulator.data_structures import TransportationRequest, InternalRequest, Stop, StopAction
+from thesimulator.data_structures import (
+    TransportationRequest,
+    InternalRequest,
+    Stop,
+    StopAction,
+)
 from thesimulator.util.spaces import Manhattan2D
-from numpy import inf 
+from numpy import inf
 
 # ortools doesn't understand infinity
 inf = 10000
@@ -177,70 +185,90 @@ inf = 10000
 # + tags=[]
 manhattan = Manhattan2D()
 
-request_1 = TransportationRequest(request_id=1, creation_timestamp=0, origin=(2,100), destination=(10,100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
-request_2 = TransportationRequest(request_id=2, creation_timestamp=0, origin=(2,-100), destination=(10,-100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
+request_1 = TransportationRequest(
+    request_id=1,
+    creation_timestamp=0,
+    origin=(2, 100),
+    destination=(10, 100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
+request_2 = TransportationRequest(
+    request_id=2,
+    creation_timestamp=0,
+    origin=(2, -100),
+    destination=(10, -100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
 
 requests = [request_1, request_2]
 
 stoplist_vehicle_1 = [
     Stop(
-        location=(0,100), 
-        request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0,100)),
+        location=(0, 100),
+        request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0, 100)),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=request_1.origin, 
+        location=request_1.origin,
         request=request_1,
         action=StopAction.pickup,
         estimated_arrival_time=2,
         occupancy_after_servicing=1,
         time_window_min=request_1.pickup_timewindow_min,
-        time_window_max=request_1.pickup_timewindow_max
+        time_window_max=request_1.pickup_timewindow_max,
     ),
     Stop(
-        location=request_1.destination, 
+        location=request_1.destination,
         request=request_1,
         action=StopAction.dropoff,
         estimated_arrival_time=10,
         occupancy_after_servicing=0,
         time_window_min=request_1.delivery_timewindow_min,
-        time_window_max=request_1.delivery_timewindow_max
-    ),   
+        time_window_max=request_1.delivery_timewindow_max,
+    ),
 ]
 
 
 stoplist_vehicle_2 = [
     Stop(
-        location=(0,-100), 
-        request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0,-100)),
+        location=(0, -100),
+        request=InternalRequest(
+            request_id=-1, creation_timestamp=0, location=(0, -100)
+        ),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=request_2.origin, 
+        location=request_2.origin,
         request=request_2,
         action=StopAction.pickup,
         estimated_arrival_time=2,
         occupancy_after_servicing=1,
         time_window_min=request_2.pickup_timewindow_min,
-        time_window_max=request_2.pickup_timewindow_max
+        time_window_max=request_2.pickup_timewindow_max,
     ),
     Stop(
-        location=request_2.destination, 
+        location=request_2.destination,
         request=request_2,
         action=StopAction.dropoff,
         estimated_arrival_time=10,
         occupancy_after_servicing=0,
         time_window_min=request_2.delivery_timewindow_min,
-        time_window_max=request_2.delivery_timewindow_max
-     ),   
+        time_window_max=request_2.delivery_timewindow_max,
+    ),
 ]
 
 stoplists = [stoplist_vehicle_1, stoplist_vehicle_2]
@@ -249,7 +277,16 @@ stoplists = [stoplist_vehicle_1, stoplist_vehicle_2]
 # ### A new request...
 
 # + tags=[]
-new_request = TransportationRequest(request_id=99, creation_timestamp=0, origin=(5,80), destination=(9,80), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
+new_request = TransportationRequest(
+    request_id=99,
+    creation_timestamp=0,
+    origin=(5, 80),
+    destination=(9, 80),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
 requests.append(new_request)
 # -
 
@@ -260,45 +297,49 @@ all_stops = [stop for stoplist in stoplists for stop in stoplist]
 
 stops_for_new_request = [
     Stop(
-        location=new_request.origin, 
+        location=new_request.origin,
         request=new_request,
         action=StopAction.pickup,
         estimated_arrival_time=None,
         occupancy_after_servicing=None,
         time_window_min=new_request.pickup_timewindow_min,
-        time_window_max=new_request.pickup_timewindow_max
+        time_window_max=new_request.pickup_timewindow_max,
     ),
     Stop(
-        location=new_request.destination, 
+        location=new_request.destination,
         request=new_request,
         action=StopAction.dropoff,
         estimated_arrival_time=None,
         occupancy_after_servicing=None,
         time_window_min=new_request.delivery_timewindow_min,
-        time_window_max=new_request.delivery_timewindow_max
-     ),
+        time_window_max=new_request.delivery_timewindow_max,
+    ),
 ]
 
 all_stops.extend(stops_for_new_request)
 
 dummy_end_stops = [
     Stop(
-        location=(1000, 100), 
-        request=InternalRequest(request_id=1000, creation_timestamp=0, location=(1000, 100)),
+        location=(1000, 100),
+        request=InternalRequest(
+            request_id=1000, creation_timestamp=0, location=(1000, 100)
+        ),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=(1000,-100), 
-        request=InternalRequest(request_id=2000, creation_timestamp=0, location=(1000, -100)),
+        location=(1000, -100),
+        request=InternalRequest(
+            request_id=2000, creation_timestamp=0, location=(1000, -100)
+        ),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
 ]
 
@@ -306,8 +347,11 @@ dummy_end_stops = [
 
 all_stops.extend(dummy_end_stops)
 
-stoploc2idx = {stop.location:idx for idx, stop in enumerate(all_stops)}
-start_loc_idxs = [stoploc2idx[stoplist_vehicle_1[0].location], stoploc2idx[stoplist_vehicle_2[0].location]]
+stoploc2idx = {stop.location: idx for idx, stop in enumerate(all_stops)}
+start_loc_idxs = [
+    stoploc2idx[stoplist_vehicle_1[0].location],
+    stoploc2idx[stoplist_vehicle_2[0].location],
+]
 end_loc_idxs = [stoploc2idx[end_stop.location] for end_stop in dummy_end_stops]
 
 
@@ -320,8 +364,11 @@ for request in requests:
             if stop.action == StopAction.dropoff:
                 do_idx = stop_idx
     pickup_delivery_idx_pairs.append((pu_idx, do_idx))
-    
-delta_occupancies = [{StopAction.pickup:1, StopAction.dropoff:-1, StopAction.internal:0}[stop.action] for stop in all_stops]
+
+delta_occupancies = [
+    {StopAction.pickup: 1, StopAction.dropoff: -1, StopAction.internal: 0}[stop.action]
+    for stop in all_stops
+]
 # -
 
 all_stops
@@ -338,7 +385,9 @@ pickup_delivery_idx_pairs
 num_vehicles = len(stoplists)
 
 # Create the routing index manager.
-manager = pywrapcp.RoutingIndexManager(len(all_stops), num_vehicles, start_loc_idxs, end_loc_idxs)
+manager = pywrapcp.RoutingIndexManager(
+    len(all_stops), num_vehicles, start_loc_idxs, end_loc_idxs
+)
 
 # Create Routing Model.
 routing = pywrapcp.RoutingModel(manager)
@@ -349,7 +398,7 @@ def time_callback(from_index, to_index):
     # Convert from routing variable Index to time matrix NodeIndex.
     from_node = manager.IndexToNode(from_index)
     to_node = manager.IndexToNode(to_index)
-    
+
     # if either from_index or the to_index is a dummy end node, return 0
     if from_index in end_loc_idxs or to_index in end_loc_idxs:
         return 0
@@ -358,19 +407,21 @@ def time_callback(from_index, to_index):
         to_loc = all_stops[to_index].location
         return manhattan.d(from_loc, to_loc)
 
+
 transit_callback_index = routing.RegisterTransitCallback(time_callback)
 
 # Define cost of each arc.
 routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
 # Add Time Windows constraint.
-time = 'Time'
+time = "Time"
 routing.AddDimension(
     evaluator_index=transit_callback_index,
     slack_max=1000000,  # allow waiting time. TODO set to what is sensible
     capacity=10000000,  # maximum time per vehicle. TODO set to what is sensible
     fix_start_cumul_to_zero=True,  # force start cumul to zero
-    name=time)
+    name=time,
+)
 time_dimension = routing.GetDimensionOrDie(time)
 
 # Add time window constraints for each location except depot.
@@ -386,7 +437,9 @@ for stop_idx, stop in enumerate(all_stops):
 for vehicle_idx in range(num_vehicles):
     start_stop = all_stops[start_loc_idxs[vehicle_idx]]
     index = routing.Start(vehicle_idx)
-    time_dimension.CumulVar(index).SetRange(start_stop.time_window_min, start_stop.time_window_max)
+    time_dimension.CumulVar(index).SetRange(
+        start_stop.time_window_min, start_stop.time_window_max
+    )
 
 # TODO: onboard customers have to be dropped off by the same vehicle
 # - Add a single capacity dimension for each onboard trip.
@@ -403,13 +456,14 @@ for pu_stop_idx, do_stop_idx in pickup_delivery_idx_pairs:
     delivery_index = manager.NodeToIndex(do_stop_idx)
     routing.AddPickupAndDelivery(pickup_index, delivery_index)
     routing.solver().Add(
-        routing.VehicleVar(pickup_index) == routing.VehicleVar(
-            delivery_index))
+        routing.VehicleVar(pickup_index) == routing.VehicleVar(delivery_index)
+    )
     routing.solver().Add(
-        time_dimension.CumulVar(pickup_index) <=
-        time_dimension.CumulVar(delivery_index))
+        time_dimension.CumulVar(pickup_index) <= time_dimension.CumulVar(delivery_index)
+    )
 
 # add capacity constraints
+
 
 def delta_occupancy_callback(from_index):
     """Returns the demand of the node."""
@@ -417,27 +471,29 @@ def delta_occupancy_callback(from_index):
     from_node = manager.IndexToNode(from_index)
     return delta_occupancies[from_node]
 
+
 delta_occupancy_callback_index = routing.RegisterUnaryTransitCallback(
-    delta_occupancy_callback)
+    delta_occupancy_callback
+)
 
 routing.AddDimensionWithVehicleCapacity(
     delta_occupancy_callback_index,
     0,  # null capacity slack
-    [4]*num_vehicles,  # vehicle maximum capacities
+    [4] * num_vehicles,  # vehicle maximum capacities
     True,  # start cumul to zero
-    'Capacity')
+    "Capacity",
+)
 
 # Instantiate route start and end times to produce feasible times.
 for i in range(num_vehicles):
-    routing.AddVariableMinimizedByFinalizer(
-        time_dimension.CumulVar(routing.Start(i)))
-    routing.AddVariableMinimizedByFinalizer(
-        time_dimension.CumulVar(routing.End(i)))
+    routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.Start(i)))
+    routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.End(i)))
 
 # Setting first solution heuristic.
 search_parameters = pywrapcp.DefaultRoutingSearchParameters()
 search_parameters.first_solution_strategy = (
-    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+)
 
 # Solve the problem.
 solution = routing.SolveWithParameters(search_parameters)
@@ -447,27 +503,30 @@ solution
 # + tags=[]
 def print_solution(stops, num_vehicles, manager, routing, solution):
     """Prints solution on console."""
-    print(f'Objective: {solution.ObjectiveValue()}')
-    time_dimension = routing.GetDimensionOrDie('Time')
+    print(f"Objective: {solution.ObjectiveValue()}")
+    time_dimension = routing.GetDimensionOrDie("Time")
     total_time = 0
     for vehicle_id in range(num_vehicles):
         index = routing.Start(vehicle_id)
-        plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
+        plan_output = "Route for vehicle {}:\n".format(vehicle_id)
         while not routing.IsEnd(index):
             time_var = time_dimension.CumulVar(index)
-            plan_output += '{0} Time({1},{2}) -> '.format(
-                stops[manager.IndexToNode(index)].location, solution.Min(time_var),
-                solution.Max(time_var))
+            plan_output += "{0} Time({1},{2}) -> ".format(
+                stops[manager.IndexToNode(index)].location,
+                solution.Min(time_var),
+                solution.Max(time_var),
+            )
             index = solution.Value(routing.NextVar(index))
         time_var = time_dimension.CumulVar(index)
-        plan_output += '{0} Time({1},{2})\n'.format(stops[manager.IndexToNode(index)].location,
-                                                    solution.Min(time_var),
-                                                    solution.Max(time_var))
-        plan_output += 'Time of the route: {}min\n'.format(
-            solution.Min(time_var))
+        plan_output += "{0} Time({1},{2})\n".format(
+            stops[manager.IndexToNode(index)].location,
+            solution.Min(time_var),
+            solution.Max(time_var),
+        )
+        plan_output += "Time of the route: {}min\n".format(solution.Min(time_var))
         print(plan_output)
         total_time += solution.Min(time_var)
-    print('Total time of all routes: {}min'.format(total_time))
+    print("Total time of all routes: {}min".format(total_time))
 
 
 # + tags=[]
@@ -481,79 +540,88 @@ if solution:
 # + tags=[]
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
-from thesimulator.data_structures import TransportationRequest, InternalRequest, Stop, StopAction
+from thesimulator.data_structures import (
+    TransportationRequest,
+    InternalRequest,
+    Stop,
+    StopAction,
+)
 from thesimulator.util.spaces import Manhattan2D
-from numpy import inf 
+from numpy import inf
 
 # ortools doesn't understand infinity
 inf = 10000
 
 manhattan = Manhattan2D()
 
+
 def create_data(request_1, request_2, new_request, vehicle_capacities=None):
     if vehicle_capacities is None:
-        vehicle_capacities = [10,10]
+        vehicle_capacities = [10, 10]
     requests = [request_1, request_2]
 
     stoplist_vehicle_1 = [
         Stop(
-            location=(0,100), 
-            request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0,100)),
+            location=(0, 100),
+            request=InternalRequest(
+                request_id=-1, creation_timestamp=0, location=(0, 100)
+            ),
             action=StopAction.internal,
             estimated_arrival_time=0,
             occupancy_after_servicing=0,
             time_window_min=0,
-            time_window_max=inf
+            time_window_max=inf,
         ),
         Stop(
-            location=request_1.origin, 
+            location=request_1.origin,
             request=request_1,
             action=StopAction.pickup,
             estimated_arrival_time=2,
             occupancy_after_servicing=1,
             time_window_min=request_1.pickup_timewindow_min,
-            time_window_max=request_1.pickup_timewindow_max
+            time_window_max=request_1.pickup_timewindow_max,
         ),
         Stop(
-            location=request_1.destination, 
+            location=request_1.destination,
             request=request_1,
             action=StopAction.dropoff,
             estimated_arrival_time=10,
             occupancy_after_servicing=0,
             time_window_min=request_1.delivery_timewindow_min,
-            time_window_max=request_1.delivery_timewindow_max
-        ),   
+            time_window_max=request_1.delivery_timewindow_max,
+        ),
     ]
-
 
     stoplist_vehicle_2 = [
         Stop(
-            location=(0,-100), 
-            request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0,-100)),
+            location=(0, -100),
+            request=InternalRequest(
+                request_id=-1, creation_timestamp=0, location=(0, -100)
+            ),
             action=StopAction.internal,
             estimated_arrival_time=0,
             occupancy_after_servicing=0,
             time_window_min=0,
-            time_window_max=inf
+            time_window_max=inf,
         ),
         Stop(
-            location=request_2.origin, 
+            location=request_2.origin,
             request=request_2,
             action=StopAction.pickup,
             estimated_arrival_time=2,
             occupancy_after_servicing=1,
             time_window_min=request_2.pickup_timewindow_min,
-            time_window_max=request_2.pickup_timewindow_max
+            time_window_max=request_2.pickup_timewindow_max,
         ),
         Stop(
-            location=request_2.destination, 
+            location=request_2.destination,
             request=request_2,
             action=StopAction.dropoff,
             estimated_arrival_time=10,
             occupancy_after_servicing=0,
             time_window_min=request_2.delivery_timewindow_min,
-            time_window_max=request_2.delivery_timewindow_max
-         ),   
+            time_window_max=request_2.delivery_timewindow_max,
+        ),
     ]
 
     stoplists = [stoplist_vehicle_1, stoplist_vehicle_2]
@@ -564,45 +632,49 @@ def create_data(request_1, request_2, new_request, vehicle_capacities=None):
 
     stops_for_new_request = [
         Stop(
-            location=new_request.origin, 
+            location=new_request.origin,
             request=new_request,
             action=StopAction.pickup,
             estimated_arrival_time=None,
             occupancy_after_servicing=None,
             time_window_min=new_request.pickup_timewindow_min,
-            time_window_max=new_request.pickup_timewindow_max
+            time_window_max=new_request.pickup_timewindow_max,
         ),
         Stop(
-            location=new_request.destination, 
+            location=new_request.destination,
             request=new_request,
             action=StopAction.dropoff,
             estimated_arrival_time=None,
             occupancy_after_servicing=None,
             time_window_min=new_request.delivery_timewindow_min,
-            time_window_max=new_request.delivery_timewindow_max
-         ),
+            time_window_max=new_request.delivery_timewindow_max,
+        ),
     ]
 
     all_stops.extend(stops_for_new_request)
 
     dummy_end_stops = [
         Stop(
-            location=(1000, 100), 
-            request=InternalRequest(request_id=1000, creation_timestamp=0, location=(1000, 100)),
+            location=(1000, 100),
+            request=InternalRequest(
+                request_id=1000, creation_timestamp=0, location=(1000, 100)
+            ),
             action=StopAction.internal,
             estimated_arrival_time=0,
             occupancy_after_servicing=0,
             time_window_min=0,
-            time_window_max=inf
+            time_window_max=inf,
         ),
         Stop(
-            location=(1000,-100), 
-            request=InternalRequest(request_id=2000, creation_timestamp=0, location=(1000, -100)),
+            location=(1000, -100),
+            request=InternalRequest(
+                request_id=2000, creation_timestamp=0, location=(1000, -100)
+            ),
             action=StopAction.internal,
             estimated_arrival_time=0,
             occupancy_after_servicing=0,
             time_window_min=0,
-            time_window_max=inf
+            time_window_max=inf,
         ),
     ]
 
@@ -610,10 +682,12 @@ def create_data(request_1, request_2, new_request, vehicle_capacities=None):
 
     all_stops.extend(dummy_end_stops)
 
-    stoploc2idx = {stop.location:idx for idx, stop in enumerate(all_stops)}
-    start_loc_idxs = [stoploc2idx[stoplist_vehicle_1[0].location], stoploc2idx[stoplist_vehicle_2[0].location]]
+    stoploc2idx = {stop.location: idx for idx, stop in enumerate(all_stops)}
+    start_loc_idxs = [
+        stoploc2idx[stoplist_vehicle_1[0].location],
+        stoploc2idx[stoplist_vehicle_2[0].location],
+    ]
     end_loc_idxs = [stoploc2idx[end_stop.location] for end_stop in dummy_end_stops]
-
 
     pickup_delivery_idx_pairs = []
     for request in requests:
@@ -625,8 +699,13 @@ def create_data(request_1, request_2, new_request, vehicle_capacities=None):
                     do_idx = stop_idx
         pickup_delivery_idx_pairs.append((pu_idx, do_idx))
 
-    delta_occupancies = [{StopAction.pickup:1, StopAction.dropoff:-1, StopAction.internal:0}[stop.action] for stop in all_stops]
-    
+    delta_occupancies = [
+        {StopAction.pickup: 1, StopAction.dropoff: -1, StopAction.internal: 0}[
+            stop.action
+        ]
+        for stop in all_stops
+    ]
+
     return dict(
         num_vehicles=len(stoplists),
         stops=all_stops,
@@ -639,37 +718,38 @@ def create_data(request_1, request_2, new_request, vehicle_capacities=None):
 
 def print_solution(stops, num_vehicles, manager, routing, solution):
     """Prints solution on console."""
-    print(f'Objective: {solution.ObjectiveValue()}')
-    time_dimension = routing.GetDimensionOrDie('Time')
+    print(f"Objective: {solution.ObjectiveValue()}")
+    time_dimension = routing.GetDimensionOrDie("Time")
     total_time = 0
     for vehicle_id in range(num_vehicles):
         index = routing.Start(vehicle_id)
-        plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
+        plan_output = "Route for vehicle {}:\n".format(vehicle_id)
         while not routing.IsEnd(index):
             time_var = time_dimension.CumulVar(index)
-            plan_output += '{0} -> '.format(
-                stops[manager.IndexToNode(index)].location)
+            plan_output += "{0} -> ".format(stops[manager.IndexToNode(index)].location)
             index = solution.Value(routing.NextVar(index))
         time_var = time_dimension.CumulVar(index)
-        plan_output += '{0}\n'.format(stops[manager.IndexToNode(index)].location)
-        plan_output += 'Time of the route: {}min\n'.format(
-            solution.Min(time_var))
+        plan_output += "{0}\n".format(stops[manager.IndexToNode(index)].location)
+        plan_output += "Time of the route: {}min\n".format(solution.Min(time_var))
         print(plan_output)
         total_time += solution.Min(time_var)
-    print('Total time of all routes: {}min'.format(total_time))
+    print("Total time of all routes: {}min".format(total_time))
+
 
 def solve_vrp(data):
     """Solve the VRP with time windows."""
     # Instantiate the data problem.
-    num_vehicles = data['num_vehicles']
-    all_stops = data['stops']
-    start_loc_idxs = data['start_loc_idxs']
-    end_loc_idxs = data['end_loc_idxs']
-    vehicle_capacities = data['vehicle_capacities']
-    pickup_delivery_idx_pairs = data['pickup_delivery_idx_pairs']
+    num_vehicles = data["num_vehicles"]
+    all_stops = data["stops"]
+    start_loc_idxs = data["start_loc_idxs"]
+    end_loc_idxs = data["end_loc_idxs"]
+    vehicle_capacities = data["vehicle_capacities"]
+    pickup_delivery_idx_pairs = data["pickup_delivery_idx_pairs"]
 
     # Create the routing index manager.
-    manager = pywrapcp.RoutingIndexManager(len(all_stops), num_vehicles, start_loc_idxs, end_loc_idxs)
+    manager = pywrapcp.RoutingIndexManager(
+        len(all_stops), num_vehicles, start_loc_idxs, end_loc_idxs
+    )
 
     # Create Routing Model.
     routing = pywrapcp.RoutingModel(manager)
@@ -695,13 +775,14 @@ def solve_vrp(data):
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
     # Add Time Windows constraint.
-    time = 'Time'
+    time = "Time"
     routing.AddDimension(
         evaluator_index=transit_callback_index,
         slack_max=1000000,  # allow waiting time. TODO set to what is sensible
         capacity=10000000,  # maximum time per vehicle. TODO set to what is sensible
         fix_start_cumul_to_zero=True,  # force start cumul to zero
-        name=time)
+        name=time,
+    )
     time_dimension = routing.GetDimensionOrDie(time)
 
     # Add time window constraints for each location except depot.
@@ -717,7 +798,9 @@ def solve_vrp(data):
     for vehicle_idx in range(num_vehicles):
         start_stop = all_stops[start_loc_idxs[vehicle_idx]]
         index = routing.Start(vehicle_idx)
-        time_dimension.CumulVar(index).SetRange(start_stop.time_window_min, start_stop.time_window_max)
+        time_dimension.CumulVar(index).SetRange(
+            start_stop.time_window_min, start_stop.time_window_max
+        )
 
     # Define Transportation Requests: i.e. add the notion of pickups and deliveries
     for pu_stop_idx, do_stop_idx in pickup_delivery_idx_pairs:
@@ -725,11 +808,12 @@ def solve_vrp(data):
         delivery_index = manager.NodeToIndex(do_stop_idx)
         routing.AddPickupAndDelivery(pickup_index, delivery_index)
         routing.solver().Add(
-            routing.VehicleVar(pickup_index) == routing.VehicleVar(
-                delivery_index))
+            routing.VehicleVar(pickup_index) == routing.VehicleVar(delivery_index)
+        )
         routing.solver().Add(
-            time_dimension.CumulVar(pickup_index) <=
-            time_dimension.CumulVar(delivery_index))
+            time_dimension.CumulVar(pickup_index)
+            <= time_dimension.CumulVar(delivery_index)
+        )
 
     # add capacity constraints
 
@@ -740,42 +824,72 @@ def solve_vrp(data):
         return delta_occupancies[from_node]
 
     delta_occupancy_callback_index = routing.RegisterUnaryTransitCallback(
-        delta_occupancy_callback)
+        delta_occupancy_callback
+    )
 
     routing.AddDimensionWithVehicleCapacity(
         delta_occupancy_callback_index,
         0,  # null capacity slack
         vehicle_capacities,  # vehicle maximum capacities
         True,  # start cumul to zero
-        'Capacity')
+        "Capacity",
+    )
 
     # Instantiate route start and end times to produce feasible times.
     for i in range(num_vehicles):
         routing.AddVariableMinimizedByFinalizer(
-            time_dimension.CumulVar(routing.Start(i)))
-        routing.AddVariableMinimizedByFinalizer(
-            time_dimension.CumulVar(routing.End(i)))
+            time_dimension.CumulVar(routing.Start(i))
+        )
+        routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.End(i)))
 
     # Setting first solution heuristic.
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+    )
 
     # Solve the problem.
     solution = routing.SolveWithParameters(search_parameters)
-    
+
     print_solution(all_stops, num_vehicles, manager, routing, solution)
 
 
 # + tags=[]
 manhattan = Manhattan2D()
 
-request_1 = TransportationRequest(request_id=1, creation_timestamp=0, origin=(2,100), destination=(10,100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
-request_2 = TransportationRequest(request_id=2, creation_timestamp=0, origin=(2,-100), destination=(10,-100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
-new_request = TransportationRequest(request_id=99, creation_timestamp=0, origin=(5,-80), destination=(9,-80), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
+request_1 = TransportationRequest(
+    request_id=1,
+    creation_timestamp=0,
+    origin=(2, 100),
+    destination=(10, 100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
+request_2 = TransportationRequest(
+    request_id=2,
+    creation_timestamp=0,
+    origin=(2, -100),
+    destination=(10, -100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
+new_request = TransportationRequest(
+    request_id=99,
+    creation_timestamp=0,
+    origin=(5, -80),
+    destination=(9, -80),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
 
 
-data=create_data(request_1, request_2, new_request, vehicle_capacities=[10, 1])
+data = create_data(request_1, request_2, new_request, vehicle_capacities=[10, 1])
 solve_vrp(data)
 # -
 
@@ -784,11 +898,47 @@ solve_vrp(data)
 # + tags=[]
 manhattan = Manhattan2D()
 
-request_1 = TransportationRequest(request_id=1, creation_timestamp=0, origin=(2,100), destination=(10,100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
-request_2 = TransportationRequest(request_id=2, creation_timestamp=0, origin=(2,-100), destination=(10,-100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
+request_1 = TransportationRequest(
+    request_id=1,
+    creation_timestamp=0,
+    origin=(2, 100),
+    destination=(10, 100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
+request_2 = TransportationRequest(
+    request_id=2,
+    creation_timestamp=0,
+    origin=(2, -100),
+    destination=(10, -100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
 
-onb_request_1 = TransportationRequest(request_id=11, creation_timestamp=0, origin=(-10,-100), destination=(5,-100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
-onb_request_2 = TransportationRequest(request_id=222, creation_timestamp=0, origin=(-10, 100), destination=(5,100), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
+onb_request_1 = TransportationRequest(
+    request_id=11,
+    creation_timestamp=0,
+    origin=(-10, -100),
+    destination=(5, -100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
+onb_request_2 = TransportationRequest(
+    request_id=222,
+    creation_timestamp=0,
+    origin=(-10, 100),
+    destination=(5, 100),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
 
 onb_requests = [[onb_request_1], [onb_request_2]]
 
@@ -796,148 +946,166 @@ requests = [request_1, request_2]
 
 stoplist_vehicle_1 = [
     Stop(
-        location=(0,100), 
-        request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0,100)),
+        location=(0, 100),
+        request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0, 100)),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=onb_request_1.destination, 
+        location=onb_request_1.destination,
         request=onb_request_1,
         action=StopAction.dropoff,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=request_1.origin, 
+        location=request_1.origin,
         request=request_1,
         action=StopAction.pickup,
         estimated_arrival_time=2,
         occupancy_after_servicing=1,
         time_window_min=request_1.pickup_timewindow_min,
-        time_window_max=request_1.pickup_timewindow_max
+        time_window_max=request_1.pickup_timewindow_max,
     ),
     Stop(
-        location=request_1.destination, 
+        location=request_1.destination,
         request=request_1,
         action=StopAction.dropoff,
         estimated_arrival_time=10,
         occupancy_after_servicing=0,
         time_window_min=request_1.delivery_timewindow_min,
-        time_window_max=request_1.delivery_timewindow_max
-    ),   
+        time_window_max=request_1.delivery_timewindow_max,
+    ),
 ]
 
 
 stoplist_vehicle_2 = [
     Stop(
-        location=(0,-100), 
-        request=InternalRequest(request_id=-1, creation_timestamp=0, location=(0,-100)),
+        location=(0, -100),
+        request=InternalRequest(
+            request_id=-1, creation_timestamp=0, location=(0, -100)
+        ),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=onb_request_2.destination, 
+        location=onb_request_2.destination,
         request=onb_request_2,
         action=StopAction.dropoff,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
-    ),   
+        time_window_max=inf,
+    ),
     Stop(
-        location=request_2.origin, 
+        location=request_2.origin,
         request=request_2,
         action=StopAction.pickup,
         estimated_arrival_time=2,
         occupancy_after_servicing=1,
         time_window_min=request_2.pickup_timewindow_min,
-        time_window_max=request_2.pickup_timewindow_max
+        time_window_max=request_2.pickup_timewindow_max,
     ),
     Stop(
-        location=request_2.destination, 
+        location=request_2.destination,
         request=request_2,
         action=StopAction.dropoff,
         estimated_arrival_time=10,
         occupancy_after_servicing=0,
         time_window_min=request_2.delivery_timewindow_min,
-        time_window_max=request_2.delivery_timewindow_max
-     ),   
+        time_window_max=request_2.delivery_timewindow_max,
+    ),
 ]
 
 stoplists = [stoplist_vehicle_1, stoplist_vehicle_2]
 
-new_request = TransportationRequest(request_id=99, creation_timestamp=0, origin=(5,80), destination=(9,80), pickup_timewindow_min=0, pickup_timewindow_max=inf, delivery_timewindow_min=0, delivery_timewindow_max=inf)
+new_request = TransportationRequest(
+    request_id=99,
+    creation_timestamp=0,
+    origin=(5, 80),
+    destination=(9, 80),
+    pickup_timewindow_min=0,
+    pickup_timewindow_max=inf,
+    delivery_timewindow_min=0,
+    delivery_timewindow_max=inf,
+)
 requests.append(new_request)
 
 all_stops = [stop for stoplist in stoplists for stop in stoplist]
 
 stops_for_new_request = [
     Stop(
-        location=new_request.origin, 
+        location=new_request.origin,
         request=new_request,
         action=StopAction.pickup,
         estimated_arrival_time=None,
         occupancy_after_servicing=None,
         time_window_min=new_request.pickup_timewindow_min,
-        time_window_max=new_request.pickup_timewindow_max
+        time_window_max=new_request.pickup_timewindow_max,
     ),
     Stop(
-        location=new_request.destination, 
+        location=new_request.destination,
         request=new_request,
         action=StopAction.dropoff,
         estimated_arrival_time=None,
         occupancy_after_servicing=None,
         time_window_min=new_request.delivery_timewindow_min,
-        time_window_max=new_request.delivery_timewindow_max
-     ),
+        time_window_max=new_request.delivery_timewindow_max,
+    ),
 ]
 
 all_stops.extend(stops_for_new_request)
 
 dummy_end_stops = [
     Stop(
-        location=(1000, 100), 
-        request=InternalRequest(request_id=1000, creation_timestamp=0, location=(1000, 100)),
+        location=(1000, 100),
+        request=InternalRequest(
+            request_id=1000, creation_timestamp=0, location=(1000, 100)
+        ),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
     Stop(
-        location=(1000,-100), 
-        request=InternalRequest(request_id=2000, creation_timestamp=0, location=(1000, -100)),
+        location=(1000, -100),
+        request=InternalRequest(
+            request_id=2000, creation_timestamp=0, location=(1000, -100)
+        ),
         action=StopAction.internal,
         estimated_arrival_time=0,
         occupancy_after_servicing=0,
         time_window_min=0,
-        time_window_max=inf
+        time_window_max=inf,
     ),
 ]
 
 
 all_stops.extend(dummy_end_stops)
 
-stoploc2idx = {stop.location:idx for idx, stop in enumerate(all_stops)}
-start_loc_idxs = [stoploc2idx[stoplist_vehicle_1[0].location], stoploc2idx[stoplist_vehicle_2[0].location]]
+stoploc2idx = {stop.location: idx for idx, stop in enumerate(all_stops)}
+start_loc_idxs = [
+    stoploc2idx[stoplist_vehicle_1[0].location],
+    stoploc2idx[stoplist_vehicle_2[0].location],
+]
 end_loc_idxs = [stoploc2idx[end_stop.location] for end_stop in dummy_end_stops]
 
 onboard_requests_delivery_stop_idxs = [list() for _ in stoplists]
 for vehicle_idx, onb_requests_single_vehicle in enumerate(onb_requests):
-    for stop_idx, stop in enumerate(all_stops): 
+    for stop_idx, stop in enumerate(all_stops):
         if stop.request in onb_requests_single_vehicle:
             onboard_requests_delivery_stop_idxs[vehicle_idx].append(stop_idx)
-                                       
-                                       
+
+
 pickup_delivery_idx_pairs = []
 for request in requests:
     for stop_idx, stop in enumerate(all_stops):
@@ -947,11 +1115,16 @@ for request in requests:
             if stop.action == StopAction.dropoff:
                 do_idx = stop_idx
     pickup_delivery_idx_pairs.append((pu_idx, do_idx))
-    
-delta_occupancies = [{StopAction.pickup:1, StopAction.dropoff:-1, StopAction.internal:0}[stop.action] for stop in all_stops]
+
+delta_occupancies = [
+    {StopAction.pickup: 1, StopAction.dropoff: -1, StopAction.internal: 0}[stop.action]
+    for stop in all_stops
+]
 
 for vehicle_idx, stop_idx in enumerate(start_loc_idxs):
-    delta_occupancies[stop_idx] = len(onboard_requests_delivery_stop_idxs[vehicle_idx])  # hack: Assign the delta_occupancy=num_onboard at CPE
+    delta_occupancies[stop_idx] = len(
+        onboard_requests_delivery_stop_idxs[vehicle_idx]
+    )  # hack: Assign the delta_occupancy=num_onboard at CPE
 delta_occupancies
 # -
 
@@ -963,7 +1136,9 @@ delta_occupancies
 num_vehicles = len(stoplists)
 
 # Create the routing index manager.
-manager = pywrapcp.RoutingIndexManager(len(all_stops), num_vehicles, start_loc_idxs, end_loc_idxs)
+manager = pywrapcp.RoutingIndexManager(
+    len(all_stops), num_vehicles, start_loc_idxs, end_loc_idxs
+)
 
 # Create Routing Model.
 routing = pywrapcp.RoutingModel(manager)
@@ -974,7 +1149,7 @@ def time_callback(from_index, to_index):
     # Convert from routing variable Index to time matrix NodeIndex.
     from_node = manager.IndexToNode(from_index)
     to_node = manager.IndexToNode(to_index)
-    
+
     # if either from_index or the to_index is a dummy end node, return 0
     if from_index in end_loc_idxs or to_index in end_loc_idxs:
         return 0
@@ -983,19 +1158,21 @@ def time_callback(from_index, to_index):
         to_loc = all_stops[to_index].location
         return manhattan.d(from_loc, to_loc)
 
+
 transit_callback_index = routing.RegisterTransitCallback(time_callback)
 
 # Define cost of each arc.
 routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
 # Add Time Windows constraint.
-time = 'Time'
+time = "Time"
 routing.AddDimension(
     evaluator_index=transit_callback_index,
     slack_max=1000000,  # allow waiting time. TODO set to what is sensible
     capacity=10000000,  # maximum time per vehicle. TODO set to what is sensible
     fix_start_cumul_to_zero=True,  # force start cumul to zero
-    name=time)
+    name=time,
+)
 time_dimension = routing.GetDimensionOrDie(time)
 
 # Add time window constraints for each location except depot.
@@ -1011,7 +1188,9 @@ for stop_idx, stop in enumerate(all_stops):
 for vehicle_idx in range(num_vehicles):
     start_stop = all_stops[start_loc_idxs[vehicle_idx]]
     index = routing.Start(vehicle_idx)
-    time_dimension.CumulVar(index).SetRange(start_stop.time_window_min, start_stop.time_window_max)
+    time_dimension.CumulVar(index).SetRange(
+        start_stop.time_window_min, start_stop.time_window_max
+    )
 
 # Ensure onboard requests are delivered by the respective vehicle
 for vehicle_idx, stop_idxs in enumerate(onboard_requests_delivery_stop_idxs):
@@ -1027,11 +1206,11 @@ for pu_stop_idx, do_stop_idx in pickup_delivery_idx_pairs:
     delivery_index = manager.NodeToIndex(do_stop_idx)
     routing.AddPickupAndDelivery(pickup_index, delivery_index)
     routing.solver().Add(
-        routing.VehicleVar(pickup_index) == routing.VehicleVar(
-            delivery_index))
+        routing.VehicleVar(pickup_index) == routing.VehicleVar(delivery_index)
+    )
     routing.solver().Add(
-        time_dimension.CumulVar(pickup_index) <=
-        time_dimension.CumulVar(delivery_index))
+        time_dimension.CumulVar(pickup_index) <= time_dimension.CumulVar(delivery_index)
+    )
 
 # add capacity constraints
 def delta_occupancy_callback(from_index):
@@ -1040,27 +1219,29 @@ def delta_occupancy_callback(from_index):
     from_node = manager.IndexToNode(from_index)
     return delta_occupancies[from_node]
 
+
 delta_occupancy_callback_index = routing.RegisterUnaryTransitCallback(
-    delta_occupancy_callback)
+    delta_occupancy_callback
+)
 
 routing.AddDimensionWithVehicleCapacity(
     delta_occupancy_callback_index,
     0,  # null capacity slack
-    [1]*num_vehicles,  # vehicle maximum capacities
+    [1] * num_vehicles,  # vehicle maximum capacities
     True,  # start cumul to zero
-    'Capacity')
+    "Capacity",
+)
 
 # Instantiate route start and end times to produce feasible times.
 for i in range(num_vehicles):
-    routing.AddVariableMinimizedByFinalizer(
-        time_dimension.CumulVar(routing.Start(i)))
-    routing.AddVariableMinimizedByFinalizer(
-        time_dimension.CumulVar(routing.End(i)))
+    routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.Start(i)))
+    routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.End(i)))
 
 # Setting first solution heuristic.
 search_parameters = pywrapcp.DefaultRoutingSearchParameters()
 search_parameters.first_solution_strategy = (
-    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+)
 
 # Solve the problem.
 solution = routing.SolveWithParameters(search_parameters)
@@ -1073,5 +1254,3 @@ if solution:
 # * Capacity constraints with onboard.
 #
 # links: https://github.com/google/or-tools/issues/1672
-
-

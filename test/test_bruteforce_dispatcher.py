@@ -22,7 +22,6 @@ from ridepy.vehicle_state import VehicleState
 from ridepy.util.dispatchers_cython import optimize_stoplists
 
 
-
 @pytest.mark.parametrize("kind", ["python", "cython"])
 def test_append_to_empty_stoplist(kind):
     request_properties = dict(
@@ -52,8 +51,10 @@ def test_append_to_empty_stoplist(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[-2].location == request.origin
     assert new_stoplist[-1].location == request.destination
@@ -132,8 +133,10 @@ def test_no_solution_found(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert not np.isinf(min_cost)
 
@@ -173,8 +176,10 @@ def test_append_due_to_timewindow(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert np.allclose(new_stoplist[-2].location, request.origin)
     assert np.allclose(new_stoplist[-1].location, request.destination)
@@ -223,8 +228,10 @@ def test_timewindow_violation_at_dropoff_checked(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[4].location == request.destination
@@ -252,8 +259,10 @@ def test_timewindow_violation_at_dropoff_checked(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[3].location == request.destination
@@ -294,8 +303,10 @@ def test_timewindow_violation_at_pickup_checked(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[2].location == request.origin
     assert new_stoplist[3].location == request.destination
@@ -318,8 +329,10 @@ def test_timewindow_violation_at_pickup_checked(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[3].location == request.destination
@@ -360,8 +373,10 @@ def test_inserted_at_the_middle(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-10)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-10
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
@@ -404,8 +419,10 @@ def test_inserted_separately(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-8)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-8
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[3].location == request.destination
@@ -520,8 +537,10 @@ def test_stoplist_not_modified_inplace(kind):
     min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
-    if kind == 'cython':
-        new_new_stoplist, = optimize_stoplists([new_stoplist], space, [10], current_time=0, time_resolution=1e-10)
+    if kind == "cython":
+        (new_new_stoplist,) = optimize_stoplists(
+            [new_stoplist], space, [10], current_time=0, time_resolution=1e-10
+        )
         assert new_stoplist == new_new_stoplist
     assert new_stoplist[1].location == request.origin
     assert new_stoplist[2].location == request.destination
