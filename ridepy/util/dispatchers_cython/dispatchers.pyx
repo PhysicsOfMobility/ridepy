@@ -82,7 +82,8 @@ def optimize_stoplists(stoplists,
                        TransportSpace space,
                        vector[int] seat_capacities,
                        double current_time=0,
-                       double time_resolution=1e-8):
+                       double time_resolution=1e-8,
+                       int search_timeout_sec=60):
     cdef vector[vector[CStop[R2loc]]] c_stoplists_old_r2loc
     cdef vector[vector[CStop[R2loc]]] c_stoplists_new_r2loc
     cdef vector[vector[CStop[int]]] c_stoplists_old_int
@@ -95,7 +96,7 @@ def optimize_stoplists(stoplists,
         c_stoplists_new_r2loc = c_optimize_stoplists[R2loc](
                     c_stoplists_old_r2loc,
                     dereference(space.u_space.space_r2loc_ptr),
-                    seat_capacities, current_time, time_resolution)
+                    seat_capacities, current_time, time_resolution, search_timeout_sec)
         return [Stoplist.from_c_r2loc(sl) for sl in c_stoplists_new_r2loc]
 
     if space.loc_type == LocType.INT:
@@ -105,7 +106,7 @@ def optimize_stoplists(stoplists,
         c_stoplists_new_int = c_optimize_stoplists[int](
                     c_stoplists_old_int,
                     dereference(space.u_space.space_int_ptr),
-                    seat_capacities, current_time, time_resolution)
+                    seat_capacities, current_time, time_resolution, search_timeout_sec)
         return [Stoplist.from_c_int(sl) for sl in c_stoplists_new_int]
     else:
         raise ValueError("This line should never have been reached")

@@ -26,4 +26,4 @@ cdef extern from "ortools_optimizer.h" namespace 'cstuff':
     vector[vector[Stop[Loc]]] optimize_stoplists[Loc](
           vector[vector[Stop[Loc]]] &stoplists,
           const TransportSpace &space, vector[int] seat_capacities,
-          double current_time, double time_resolution) except +
+          double current_time, double time_resolution, int search_timeout_sec) except +
