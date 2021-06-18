@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.0
+#       jupytext_version: 1.11.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -134,3 +134,121 @@ reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
 # + tags=[]
 plot_occupancy_hist(stops)
 # -
+
+# ## Scratch
+
+# + tags=[]
+from ridepy.util.dispatchers_cython import optimize_stoplists
+
+# + tags=[]
+n_buses = 50
+
+initial_location = (0, 0)
+
+space = Euclidean2D()
+
+rg = RandomRequestGenerator(
+    rate=n_buses*3,
+    max_pickup_delay=3,
+    max_delivery_delay_rel=3,
+    space=space,
+    request_class=TransportationRequest,
+    seed=90,
+)
+
+# create iterator yielding 100 random requests
+transportation_requests = list(it.islice(rg, n_buses*100))
+transportation_requests[-1]
+
+
+# + tags=[]
+fs = SlowSimpleFleetState(
+    initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
+    seat_capacities=8,
+    space=space,
+    dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+    vehicle_state_class=VehicleState,
+)
+
+# exhaust the simulator's iterator
+events = list(fs.simulate(transportation_requests, t_cutoff=transportation_requests[-1].creation_timestamp/2))
+len(events)
+
+
+# + tags=[]
+old_stoplists = [vs.stoplist for vid, vs in fs.fleet.items()]
+len(old_stoplists), sum(len(l) for l in old_stoplists)
+# -
+
+new_stoplists = optimize_stoplists(old_stoplists, space, [8]*len(old_stoplists), search_timeout_sec=100)
+
+# + tags=[]
+# %timeit -n 1 -r1 new_stoplists = optimize_stoplists(old_stoplists, space, [8]*len(old_stoplists), search_timeout_sec=100)
+
+# + tags=[]
+old_sum = sum(l[-1].estimated_arrival_time-l[0].estimated_arrival_time for l in old_stoplists)
+new_sum = sum(l[-1].estimated_arrival_time-l[0].estimated_arrival_time for l in new_stoplists)
+
+old_sum, new_sum, (old_sum-new_sum)*100/old_sum
+
+# + tags=[]
+from numpy.random import RandomState
+
+def benchmark_improvement_by_ortools(n_repeat=100):
+    results = []
+    n_buses = 50
+    initial_location = (0, 0)
+    space = Euclidean2D()
+
+    rstate = RandomState(seed=0)
+    for _ in range(n_repeat):
+        seed = rstate.randint(0, 100000)
+
+        rg = RandomRequestGenerator(
+            rate=n_buses*3,
+            max_pickup_delay=np.inf,
+            max_delivery_delay_rel=3,
+            space=space,
+            request_class=TransportationRequest,
+            seed=seed,
+        )
+
+        # create iterator yielding 100 random requests
+        transportation_requests = list(it.islice(rg, n_buses*100))
+        transportation_requests[-1]
+
+        fs = SlowSimpleFleetState(
+            initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
+            seat_capacities=8,
+            space=space,
+            dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+            vehicle_state_class=VehicleState,
+        )
+
+        # exhaust the simulator's iterator
+        events = list(fs.simulate(transportation_requests, t_cutoff=transportation_requests[-1].creation_timestamp/4))
+
+        old_stoplists = [vs.stoplist for vid, vs in fs.fleet.items()]
+
+        new_stoplists = optimize_stoplists(old_stoplists, space, [8]*len(old_stoplists), search_timeout_sec=100)
+
+        old_sum = sum(l[-1].estimated_arrival_time-l[0].estimated_arrival_time for l in old_stoplists)
+        new_sum = sum(l[-1].estimated_arrival_time-l[0].estimated_arrival_time for l in new_stoplists)
+
+        results.append([old_sum, new_sum, (old_sum-new_sum)*100/old_sum])
+        print(results[-1])
+    return pd.DataFrame(results, columns=['old', 'new', 'relative_improvement'])
+
+
+# + tags=[]
+benchmark = benchmark_improvement_by_ortools(n_repeat=20)
+benchmark
+
+# + tags=[]
+benchmark['relative_improvement'].describe()
+
+# + tags=[]
+benchmark['relative_improvement'].hist(bins=5)
+# -
+
+

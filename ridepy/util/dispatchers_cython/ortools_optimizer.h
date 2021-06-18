@@ -267,9 +267,6 @@ optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
         time_dimension.CumulVar(routing.End(i)));
   }
 
-  //  searchParameters.mutable_time_limit()->set_seconds(search_timeout_sec);
-  //  searchParameters.set_first_solution_strategy(
-  //      FirstSolutionStrategy::PATH_CHEAPEST_ARC);
 
   // TODO Optional stuff: specify initial solution
   // Get initial solution from routes.
@@ -282,7 +279,10 @@ optimize_stoplists(vector<vector<Stop<Loc>>> &stoplists,
 
   // Setting first solution heuristic.
   RoutingSearchParameters searchParameters = DefaultRoutingSearchParameters();
-  // Ask ortools to compute the solution
+  searchParameters.mutable_time_limit()->set_seconds(search_timeout_sec);
+  searchParameters.set_first_solution_strategy(
+      FirstSolutionStrategy::PATH_CHEAPEST_ARC);
+
   // Solve from initial solution.
   const Assignment *solution = routing.SolveFromAssignmentWithParameters(
       initial_solution, searchParameters);
