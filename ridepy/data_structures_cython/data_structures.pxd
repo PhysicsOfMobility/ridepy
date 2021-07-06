@@ -41,8 +41,8 @@ cdef union _UStop:
     CStop[int] *_stop_int
 
 cdef union _UStoplist:
-    vector[CStop[R2loc]] _stoplist_r2loc
-    vector[CStop[int]] _stoplist_int
+    shared_ptr[vector[CStop[R2loc]]] _stoplist_r2loc
+    shared_ptr[vector[CStop[int]]] _stoplist_int
 
 
 cdef class Request:
@@ -78,6 +78,6 @@ cdef class Stoplist:
     cdef _UStoplist ustoplist
     cdef Stop py_s
     @staticmethod
-    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] cstoplist)
+    cdef Stoplist from_c_r2loc(shared_ptr[vector[CStop[R2loc]]] cstoplist)
     @staticmethod
-    cdef Stoplist from_c_int(vector[CStop[int]] cstoplist)
+    cdef Stoplist from_c_int(shared_ptr[vector[CStop[int]]] cstoplist)

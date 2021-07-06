@@ -9,7 +9,7 @@
 
 namespace cstuff {
 template <typename Loc>
-std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
+std::shared_ptr<std::vector<Stop<Loc>>> insert_request_to_stoplist_drive_first(
     std::vector<Stop<Loc>> &stoplist,
     std::shared_ptr<TransportationRequest<Loc>> request, int pickup_idx,
     int dropoff_idx, TransportSpace<Loc> &space, int n_passengers = 1);
@@ -40,7 +40,7 @@ bool is_timewindow_violated_dueto_insertion(
 
 /* Now the implementations */
 template <typename Loc>
-std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
+std::shared_ptr<std::vector<Stop<Loc>>> insert_request_to_stoplist_drive_first(
     std::vector<Stop<Loc>> &stoplist,
     std::shared_ptr<TransportationRequest<Loc>> request, int pickup_idx,
     int dropoff_idx, TransportSpace<Loc> &space, int n_passengers) {
@@ -51,9 +51,10 @@ std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
   */
 
   // We don't want to modify stoplist in place. Make a copy.
-  std::vector<Stop<Loc>> new_stoplist{stoplist}; // TODO: NEED TO copy?
+  auto new_stoplist =
+      std::make_shared<std::vector<Stop<Loc>>>(stoplist); // TODO: NEED TO copy?
   // Handle the pickup
-  auto &stop_before_pickup = new_stoplist[pickup_idx];
+  auto &stop_before_pickup = (*new_stoplist)[pickup_idx];
   auto cpat_at_pu = stop_before_pickup.estimated_departure_time() +
                     space.t(stop_before_pickup.location, request->origin);
   Stop<Loc> pickup_stop(
@@ -65,23 +66,23 @@ std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
   // remember, the indices are as follows:
   // 0,1,...,pickup_idx,(pickup_not_yet_inserted),...,dropoff_idx,(dropoff_not_yet_inserted),
   // ...
-  for (auto s = new_stoplist.begin() + pickup_idx + 1;
-       s != new_stoplist.begin() + dropoff_idx + 1; ++s) {
+  for (auto s = new_stoplist->begin() + pickup_idx + 1;
+       s != new_stoplist->begin() + dropoff_idx + 1; ++s) {
     s->occupancy_after_servicing += n_passengers;
   }
 
-  insert_stop_to_stoplist_drive_first(new_stoplist, pickup_stop, pickup_idx,
+  insert_stop_to_stoplist_drive_first(*new_stoplist, pickup_stop, pickup_idx,
                                       space);
   // Handle the dropoff
   dropoff_idx += 1;
-  auto &stop_before_dropoff = new_stoplist[dropoff_idx];
+  auto &stop_before_dropoff = (*new_stoplist)[dropoff_idx];
   auto cpat_at_do = stop_before_dropoff.estimated_departure_time() +
                     space.t(stop_before_dropoff.location, request->destination);
   Stop<Loc> dropoff_stop(
       request->destination, request, StopAction::dropoff, cpat_at_do,
       stop_before_dropoff.occupancy_after_servicing - n_passengers,
       request->delivery_timewindow_min, request->delivery_timewindow_max);
-  insert_stop_to_stoplist_drive_first(new_stoplist, dropoff_stop, dropoff_idx,
+  insert_stop_to_stoplist_drive_first(*new_stoplist, dropoff_stop, dropoff_idx,
                                       space);
   return new_stoplist;
 }

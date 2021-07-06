@@ -47,7 +47,7 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         Stop(Loc, const shared_ptr[Request]&, StopAction, double, int, double, double)
 
     cdef cppclass InsertionResult[Loc]:
-        vector[Stop[Loc]] new_stoplist
+        shared_ptr[vector[Stop[Loc]]] new_stoplist
         double min_cost
         double EAST_pu
         double LAST_pu

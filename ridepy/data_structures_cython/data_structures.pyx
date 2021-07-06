@@ -688,20 +688,19 @@ cdef class Stoplist:
         otherwise deleted.
         """
         self.loc_type = loc_type
-
         if self.loc_type == LocType.R2LOC:
-            self.ustoplist._stoplist_r2loc = vector[CStop[R2loc]](0)
+            self.ustoplist._stoplist_r2loc = make_shared[vector[CStop[R2loc]]](0)
         elif self.loc_type == LocType.INT:
-            self.ustoplist._stoplist_int = vector[CStop[int]](0)
+            self.ustoplist._stoplist_int = make_shared[vector[CStop[int]]](0)
         else:
             raise ValueError(f"This line should never have been reached: {type(loc_type)}")
 
         if loc_type == LocType.R2LOC:
             for py_s in python_stoplist:
-                self.ustoplist._stoplist_r2loc.push_back(dereference((<Stop> py_s).ustop._stop_r2loc))
+                dereference(self.ustoplist._stoplist_r2loc).push_back(dereference((<Stop> py_s).ustop._stop_r2loc))
         elif loc_type == LocType.INT:
             for py_s in python_stoplist:
-                self.ustoplist._stoplist_int.push_back(dereference((<Stop> py_s).ustop._stop_int))
+                dereference(self.ustoplist._stoplist_int).push_back(dereference((<Stop> py_s).ustop._stop_int))
         else:
             raise ValueError("This line should never have been reached")
         logger.info("Created Stoplist")
@@ -718,9 +717,9 @@ cdef class Stoplist:
         else:
             raise IndexError(f"list index {i} out of range")
         if self.loc_type == LocType.R2LOC:
-            return Stop.from_c_r2loc(&self.ustoplist._stoplist_r2loc[i])
+            return Stop.from_c_r2loc(&(dereference(self.ustoplist._stoplist_r2loc)[i]))
         elif self.loc_type == LocType.INT:
-            return Stop.from_c_int(&self.ustoplist._stoplist_int[i])
+            return Stop.from_c_int(&(dereference(self.ustoplist._stoplist_int)[i]))
         else:
             raise ValueError("This line should never have been reached")
 
@@ -729,9 +728,9 @@ cdef class Stoplist:
         Works like `list.__len__`.
         """
         if self.loc_type == LocType.R2LOC:
-            return <int> self.ustoplist._stoplist_r2loc.size()
+            return <int> dereference(self.ustoplist._stoplist_r2loc).size()
         elif self.loc_type == LocType.INT:
-            return <int> self.ustoplist._stoplist_int.size()
+            return <int> dereference(self.ustoplist._stoplist_int).size()
         else:
             raise ValueError("This line should never have been reached")
 
@@ -740,18 +739,18 @@ cdef class Stoplist:
         Removes the nth element. Does not return anything.
         """
         if self.loc_type == LocType.R2LOC:
-            self.ustoplist._stoplist_r2loc.erase(
-                self.ustoplist._stoplist_r2loc.begin()+n
+            dereference(self.ustoplist._stoplist_r2loc).erase(
+                dereference(self.ustoplist._stoplist_r2loc).begin()+n
             )
         elif self.loc_type == LocType.INT:
-            self.ustoplist._stoplist_int.erase(
-                self.ustoplist._stoplist_int.begin()+n
+            dereference(self.ustoplist._stoplist_int).erase(
+                dereference(self.ustoplist._stoplist_int).begin()+n
             )
         else:
             raise ValueError("This line should never have been reached")
 
     @staticmethod
-    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] cstoplist):
+    cdef Stoplist from_c_r2loc(shared_ptr[vector[CStop[R2loc]]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.R2LOC
@@ -759,7 +758,7 @@ cdef class Stoplist:
         return stoplist
 
     @staticmethod
-    cdef Stoplist from_c_int(vector[CStop[int]] cstoplist):
+    cdef Stoplist from_c_int(shared_ptr[vector[CStop[int]]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.INT
@@ -768,9 +767,9 @@ cdef class Stoplist:
 
     def __repr__(self):
         if self.loc_type == LocType.R2LOC:
-            return f"[{', '.join(repr(Stop.from_c_r2loc(&s)) for s in self.ustoplist._stoplist_r2loc)}]"
+            return f"[{', '.join(repr(Stop.from_c_r2loc(&s)) for s in dereference(self.ustoplist._stoplist_r2loc))}]"
         elif self.loc_type == LocType.INT:
-            return f"[{', '.join(repr(Stop.from_c_int(&s)) for s in self.ustoplist._stoplist_int)}]"
+            return f"[{', '.join(repr(Stop.from_c_int(&s)) for s in dereference(self.ustoplist._stoplist_int))}]"
         else:
             raise ValueError("This line should never have been reached")
 
@@ -782,13 +781,13 @@ cdef class Stoplist:
             # return list([Stop.from_c_r2loc(&s) for s in self.ustoplist._stoplist_r2loc])
             # However, it doesn't. So we need the more verbose loop:
             res = []
-            for idx in range(self.ustoplist._stoplist_r2loc.size()):
-                res.append(Stop.from_c_r2loc(&self.ustoplist._stoplist_r2loc[idx]))
+            for idx in range(dereference(self.ustoplist._stoplist_r2loc).size()):
+                res.append(Stop.from_c_r2loc(&dereference(self.ustoplist._stoplist_r2loc)[idx]))
             return res
         elif self.loc_type == LocType.INT:
             res = []
-            for idx in range(self.ustoplist._stoplist_int.size()):
-                res.append(Stop.from_c_int(&self.ustoplist._stoplist_int[idx]))
+            for idx in range(dereference(self.ustoplist._stoplist_int).size()):
+                res.append(Stop.from_c_int(&dereference(self.ustoplist._stoplist_int)[idx]))
             return res
         else:
             raise ValueError("This line should never have been reached")
