@@ -14,6 +14,7 @@ method call to the appropriate object inside that union.
 from numpy import inf
 
 from cython.operator cimport dereference
+from libc.stdlib cimport free
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.memory cimport dynamic_pointer_cast
@@ -283,6 +284,7 @@ cdef class TransportationRequest(Request):
     cdef TransportationRequest from_c_r2loc(shared_ptr[CTransportationRequest[R2loc]] creq):
         cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
         req._utranspreq._req_r2loc = creq
+        req._ureq._req_r2loc.reset()
         req._ureq._req_r2loc = dynamic_pointer_cast[CRequest[R2loc], CTransportationRequest[R2loc]](creq)
         req.loc_type = LocType.R2LOC
         return req
@@ -290,6 +292,7 @@ cdef class TransportationRequest(Request):
     @staticmethod
     cdef TransportationRequest from_c_int(shared_ptr[CTransportationRequest[int]] creq):
         cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
+        req._ureq._req_int.reset()
         req._utranspreq._req_int = creq
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](creq)
         req.loc_type = LocType.INT
@@ -312,6 +315,10 @@ cdef class TransportationRequest(Request):
                 self.delivery_timewindow_min,
                 self.delivery_timewindow_max
             )
+
+    def __dealloc__(self):
+        #print("dealloc TransportationRequest")
+        ...
 
 cdef class InternalRequest(Request):
     """
@@ -400,6 +407,7 @@ cdef class InternalRequest(Request):
     cdef InternalRequest from_c_r2loc(shared_ptr[CInternalRequest[R2loc]] creq):
         cdef InternalRequest req = InternalRequest.__new__(InternalRequest)
         req._uinternreq._req_r2loc = creq
+        req._ureq._req_r2loc.reset()
         req._ureq._req_r2loc = dynamic_pointer_cast[CRequest[R2loc], CInternalRequest[R2loc]](creq)
         req.loc_type = LocType.R2LOC
         return req
@@ -408,6 +416,7 @@ cdef class InternalRequest(Request):
     cdef InternalRequest from_c_int(shared_ptr[CInternalRequest[int]] creq):
         cdef InternalRequest req = InternalRequest.__new__(InternalRequest)
         req._uinternreq._req_int = creq
+        req._ureq._req_int.reset()
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CInternalRequest[int]](creq)
         req.loc_type = LocType.INT
         return req
@@ -464,6 +473,7 @@ cdef class Stop:
         We will try to infer the `.LocType` from what `location` contains. Do not pass incompatible combinations like
         a `Request` with `LocType=R2LOC` and `location` of type `int`.
         """
+        self.ptr_owner = True
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
@@ -644,6 +654,17 @@ cdef class Stop:
                 self.time_window_max,
             )
 
+    def __dealloc__(self):
+        #print("dealloc stop")
+        if self.ptr_owner==False:
+            return
+        if self.loc_type == LocType.R2LOC:
+            free(self.ustop._stop_r2loc)
+        elif self.loc_type == LocType.INT:
+            free(self.ustop._stop_int)
+
+
+
 cdef class Stoplist:
     """
     The cythonic equivalent of `.data_structures.Stoplist`, which is just a python list of `.data_structures.Stop`.
@@ -687,11 +708,12 @@ cdef class Stoplist:
         The `Stop` objects are **copied** here, therefore the original `Stop` objects can safely be garbage collected/
         otherwise deleted.
         """
+        self.ptr_owner = True
         self.loc_type = loc_type
         if self.loc_type == LocType.R2LOC:
-            self.ustoplist._stoplist_r2loc = make_shared[vector[CStop[R2loc]]](0)
+            self.ustoplist._stoplist_r2loc = new vector[CStop[R2loc]](0)
         elif self.loc_type == LocType.INT:
-            self.ustoplist._stoplist_int = make_shared[vector[CStop[int]]](0)
+            self.ustoplist._stoplist_int = new vector[CStop[int]](0)
         else:
             raise ValueError(f"This line should never have been reached: {type(loc_type)}")
 
@@ -750,19 +772,21 @@ cdef class Stoplist:
             raise ValueError("This line should never have been reached")
 
     @staticmethod
-    cdef Stoplist from_c_r2loc(shared_ptr[vector[CStop[R2loc]]] cstoplist):
+    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.R2LOC
         stoplist.ustoplist._stoplist_r2loc = cstoplist
+        stoplist.ptr_owner = False
         return stoplist
 
     @staticmethod
-    cdef Stoplist from_c_int(shared_ptr[vector[CStop[int]]] cstoplist):
+    cdef Stoplist from_c_int(vector[CStop[int]] *cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.INT
         stoplist.ustoplist._stoplist_int = cstoplist
+        stoplist.ptr_owner = False
         return stoplist
 
     def __repr__(self):
@@ -799,3 +823,12 @@ cdef class Stoplist:
         if len(self) != len(other):
             return False
         return all(self[i]==other[i] for i in range(len(self)))
+
+    def __dealloc__(self):
+        #print("dealloc stoplist")
+        if self.ptr_owner==False:
+            return
+        if self.loc_type == LocType.R2LOC:
+            free(self.ustoplist._stoplist_r2loc)
+        elif self.loc_type == LocType.INT:
+            free(self.ustoplist._stoplist_int)

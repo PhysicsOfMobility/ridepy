@@ -16,7 +16,7 @@ from ridepy.data_structures_cython.data_structures cimport (
     LocType
 )
 
-from ridepy.data_structures_cython.cdata_structures cimport R2loc, Stop as CStop, InsertionResult
+from ridepy.data_structures_cython.cdata_structures cimport R2loc, Stop as CStop
 from ridepy.data_structures_cython.cdata_structures cimport InsertionResult, \
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
@@ -57,6 +57,7 @@ cdef class VehicleState:
     with its pure-python equivalent `.vehicle_state.VehicleState`.
     """
     cdef Stoplist initial_stoplist
+    cdef shared_ptr[vector[CStop[R2loc]]] c_stoplist_new
     cdef TransportSpace _space
     cdef int _vehicle_id
     cdef int _seat_capacity
@@ -121,14 +122,14 @@ cdef class VehicleState:
         # TODO optionally validate the travel time velocity constraints
         logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
 
-        cdef pair[vector[StopEventSpec],shared_ptr[vector[CStop[R2loc]]]] res = dereference(
+        cdef vector[StopEventSpec] res = dereference(
             self._uvstate._vstate_r2loc).fast_forward_time(t)
 
         #stop_event_specc, stoplist = res[0],
         event_cache = []
         cdef StopEventSpec evspec
 
-        for ev in res.first:
+        for ev in res:
             event_cache.append({
                         StopAction.pickup: PickupEvent,
                         StopAction.dropoff: DeliveryEvent,
@@ -137,9 +138,8 @@ cdef class VehicleState:
                         request_id=ev.request_id,
                         vehicle_id=ev.vehicle_id,
                         timestamp=ev.timestamp))
-        stoplist = Stoplist.from_c_r2loc(res.second)
 
-        return event_cache, stoplist
+        return event_cache
 
     def handle_transportation_request_single_vehicle(
             self, request: pyTransportationRequest
@@ -170,16 +170,23 @@ cdef class VehicleState:
 
         cdef vid = insertion_result_and_vid_r2loc.first
         cdef InsertionResult[R2loc] insertion_result_r2loc = insertion_result_and_vid_r2loc.second
+        self.c_stoplist_new = insertion_result_r2loc.new_stoplist
 
-        return vid, insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist),\
+        return vid, insertion_result_r2loc.min_cost, \
                (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
                 insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
 
+    def select_new_stoplist(self):
+        #dereference(self._uvstate._vstate_r2loc).stoplist.reset()
+        dereference(self._uvstate._vstate_r2loc).stoplist = self.c_stoplist_new
+
+    def boo(self):
+        return Stoplist.from_c_r2loc(self.c_stoplist_new.get())
+
+
     property stoplist:
         def __get__(self):
-            return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist)
-        def __set__(self, Stoplist new_stoplist):
-            dereference(self._uvstate._vstate_r2loc).stoplist = new_stoplist.ustoplist._stoplist_r2loc
+            return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist.get())
 
     property seat_capacity:
         def __get__(self):

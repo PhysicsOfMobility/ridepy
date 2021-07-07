@@ -42,7 +42,7 @@ public:
 
   ~VehicleState() {}
 
-  pair<vector<StopEventSpec>, std::shared_ptr<vector<Stop<Loc>>>>
+  vector<StopEventSpec>
   fast_forward_time(double t) {
     /*
     Update the vehicle_state to the simulator time `t`.
@@ -120,7 +120,7 @@ public:
       // stoplist is empty, only CPE is there. set CPE time to current time
       (*stoplist)[0].estimated_arrival_time = t;
     }
-    return make_pair(event_cache, stoplist);
+    return event_cache;
   }
 
   pair<int, InsertionResult<Loc>> handle_transportation_request_single_vehicle(

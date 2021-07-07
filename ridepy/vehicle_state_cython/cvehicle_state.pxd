@@ -25,6 +25,6 @@ cdef extern from "cvehicle_state.h" namespace 'cstuff':
         VehicleState(int vehicle_id, vector[Stop[Loc]] initial_stoplist,
                      TransportSpace[Loc] &space, str dispatcher, int seat_capacity)
 
-        pair[vector[StopEventSpec], shared_ptr[vector[Stop[Loc]]]] fast_forward_time(double t)
+        vector[StopEventSpec] fast_forward_time(double t)
         pair[int, InsertionResult[Loc]] handle_transportation_request_single_vehicle(
               shared_ptr[TransportationRequest[Loc]] request)
