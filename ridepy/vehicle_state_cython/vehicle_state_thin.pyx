@@ -70,27 +70,27 @@ cdef class VehicleState:
         #*, # haven't figured out yet how to get __reduce__+unpickling to work with keyword-only
         # arguments, hence we have to support __init__ with positional arguments for the time being
         int vehicle_id,
-        initial_stoplist_,
+        initial_stoplist,
         TransportSpace space,
         dispatcher,
         int seat_capacity,
     ):
         # Create a cython stoplist object from initial_stoplist
-        if isinstance(initial_stoplist_, Stoplist):
+        if isinstance(initial_stoplist, Stoplist):
             # if a `data_structures_cython.Stoplist` object, no need to re-create the cythonic stoplist
-            self.initial_stoplist = initial_stoplist_
+            self.initial_stoplist = initial_stoplist
         else:
             # assume that a python list of `data_structures_cython.Stop` objects are being passed
             # create a `data_structures_cython.Stoplist` object
-            self.initial_stoplist = Stoplist(initial_stoplist_, space.loc_type)
+            self.initial_stoplist = Stoplist(initial_stoplist, space.loc_type)
         if seat_capacity > INT_MAX:
             raise ValueError("Cannot use seat_capacity bigger that C++'s INT_MAX")
-        if space.LocType == LocType.R2LOC:
+        if space.loc_type == LocType.R2LOC:
             self.loc_type = LocType.R2LOC
             self._uvstate._vstate_r2loc = make_unique[CVehicleState[R2loc]](
                 vehicle_id, dereference(self.initial_stoplist.ustoplist._stoplist_r2loc),
                 dereference(space.u_space.space_r2loc_ptr), "brute_force", seat_capacity)
-        elif space.LocType == LocType.INT:
+        elif space.loc_type == LocType.INT:
             self.loc_type = LocType.INT
             self._uvstate._vstate_int = make_unique[CVehicleState[int]](
                 vehicle_id, dereference(self.initial_stoplist.ustoplist._stoplist_int),
@@ -174,3 +174,13 @@ cdef class VehicleState:
         return vid, insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist),\
                (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
                 insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+
+    property stoplist:
+        def __get__(self):
+            return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist)
+        def __set__(self, Stoplist new_stoplist):
+            dereference(self._uvstate._vstate_r2loc).stoplist = new_stoplist.ustoplist._stoplist_r2loc
+
+    property seat_capacity:
+        def __get__(self):
+            return dereference(self._uvstate._vstate_r2loc).seat_capacity
