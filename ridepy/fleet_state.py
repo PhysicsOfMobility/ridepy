@@ -462,14 +462,14 @@ class FleetState(ABC):
             # modify the best vehicle's stoplist
             # print(f"len of new stoplist={len(new_stoplist)}")
             self.fleet[best_vehicle].select_new_stoplist()
-            #logger.debug("New stoplist: ")
-            #logger.debug("[")
-            #for stop in new_stoplist:
+            # logger.debug("New stoplist: ")
+            # logger.debug("[")
+            # for stop in new_stoplist:
             #    logger.debug(
             #        f"Stop({stop.estimated_arrival_time=}, {stop.location=}, {stop.request.request_id=},\n"
             #        f"{stop.action=}, {stop.time_window_min=}, {stop.time_window_max=}),"
             #    )
-            #logger.debug("]")
+            # logger.debug("]")
             return RequestAcceptanceEvent(
                 request_id=req.request_id,
                 timestamp=self.t,
@@ -486,10 +486,10 @@ class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: float):
         for vehicle_state in self.fleet.values():
             vehicle_state.boo()
-        events = (vehicle_state.fast_forward_time(t)
-                    for vehicle_state in self.fleet.values()
-                  )
-        #for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
+        events = (
+            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
+        )
+        # for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
         #    logger.debug(f"Stoplist of vehicle {vehicle_id} at time {t}: ")
         #    logger.debug("[")
         #    for stop in new_stoplist:
