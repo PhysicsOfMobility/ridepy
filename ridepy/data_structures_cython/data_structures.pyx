@@ -14,6 +14,7 @@ method call to the appropriate object inside that union.
 from numpy import inf
 
 from cython.operator cimport dereference
+from libc.stdlib cimport free
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.memory cimport dynamic_pointer_cast
@@ -464,6 +465,7 @@ cdef class Stop:
         We will try to infer the `.LocType` from what `location` contains. Do not pass incompatible combinations like
         a `Request` with `LocType=R2LOC` and `location` of type `int`.
         """
+        self.ptr_owner = True
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
             self.loc_type = LocType.R2LOC
@@ -643,6 +645,17 @@ cdef class Stop:
                 self.time_window_min,
                 self.time_window_max,
             )
+
+    def __dealloc__(self):
+        #print("dealloc stop")
+        if self.ptr_owner==False:
+            return
+        if self.loc_type == LocType.R2LOC:
+            free(self.ustop._stop_r2loc)
+        elif self.loc_type == LocType.INT:
+            free(self.ustop._stop_int)
+
+
 
 cdef class Stoplist:
     """
