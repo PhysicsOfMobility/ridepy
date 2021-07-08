@@ -123,7 +123,7 @@ cdef class VehicleState:
         event_cache = []
 
         last_stop = None
-
+        print("len: ", len(self._stoplist))
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
         for i in range(len(self._stoplist) - 1, 0, -1):
             stop = self._stoplist[i]
@@ -151,7 +151,7 @@ cdef class VehicleState:
                 )
                 self._stoplist.remove_nth_elem(i)
 
-
+        print("len after: ", len(self._stoplist))
         # fix event cache order
         event_cache = event_cache[::-1]
 
@@ -206,6 +206,7 @@ cdef class VehicleState:
                 request,
                 self._stoplist,
                 self._space, self._seat_capacity)
+        print("len after insertion: ", len(ret[2]))
         return ret
 
     def __reduce__(self):
