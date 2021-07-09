@@ -30,6 +30,16 @@ from ridepy.data_structures_cython.cdata_structures cimport (
 )
 
 
+request_create_count = 0
+stop_create_count = 0
+stoplist_create_count = 0
+
+
+request_delete_count = 0
+stop_delete_count = 0
+stoplist_delete_count = 0
+
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -122,6 +132,9 @@ cdef class TransportationRequest(Request):
         We will try to infer `Loc` from what `origin` contains. The inference can be easily
         fooled by passing e.g. `origin = 2, destination = (0.3, 1.5)`.
         """
+        global request_create_count
+        request_create_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         if hasattr(origin, '__len__') and len(origin) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
@@ -286,6 +299,9 @@ cdef class TransportationRequest(Request):
         req._utranspreq._req_r2loc = creq
         req._ureq._req_r2loc = dynamic_pointer_cast[CRequest[R2loc], CTransportationRequest[R2loc]](creq)
         req.loc_type = LocType.R2LOC
+        global request_create_count
+        request_create_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         return req
 
     @staticmethod
@@ -294,11 +310,17 @@ cdef class TransportationRequest(Request):
         req._utranspreq._req_int = creq
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](creq)
         req.loc_type = LocType.INT
+        global request_create_count
+        request_create_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         return req
 
 
     def __dealloc__(self):
         # using unique_ptr's so no deletion
+        global request_delete_count
+        request_delete_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         pass
 
     def __reduce__(self):
@@ -342,6 +364,9 @@ cdef class InternalRequest(Request):
         ----
         We will try to infer `Loc` from what `location` contains.
         """
+        global request_create_count
+        request_create_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         if hasattr(location, '__len__') and len(location) == 2:
             # TODO: this inferring of LocType is kludgy. We should have it as an argument of __init__
             # let's assume both origin and destination are Tuple[double, double]
@@ -403,6 +428,9 @@ cdef class InternalRequest(Request):
         req._uinternreq._req_r2loc = creq
         req._ureq._req_r2loc = dynamic_pointer_cast[CRequest[R2loc], CInternalRequest[R2loc]](creq)
         req.loc_type = LocType.R2LOC
+        global request_create_count
+        request_create_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         return req
 
     @staticmethod
@@ -411,12 +439,17 @@ cdef class InternalRequest(Request):
         req._uinternreq._req_int = creq
         req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CInternalRequest[int]](creq)
         req.loc_type = LocType.INT
+        global request_create_count
+        request_create_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
         return req
 
 
     def __dealloc__(self):
         # using shared_ptr's so no deletion
-        pass
+        global request_delete_count
+        request_delete_count += 1
+        #print(f"request_create_count={request_create_count}, request_delete_count={request_delete_count}")
 
 
     def __reduce__(self):
@@ -465,6 +498,9 @@ cdef class Stop:
         We will try to infer the `.LocType` from what `location` contains. Do not pass incompatible combinations like
         a `Request` with `LocType=R2LOC` and `location` of type `int`.
         """
+        global stop_create_count
+        stop_create_count += 1
+        #print(f"stop_create_count={stop_create_count}, stop_delete_count={stop_delete_count}")
         self.ptr_owner = True
         if hasattr(location, '__len__') and len(location) == 2:
             # let's assume both origin and destination are Tuple[double, double]
@@ -624,6 +660,9 @@ cdef class Stop:
         stop.ptr_owner = False
         stop.ustop._stop_r2loc = cstop
         stop.loc_type = LocType.R2LOC
+        global stop_create_count
+        stop_create_count += 1
+        #print(f"stop_create_count={stop_create_count}, stop_delete_count={stop_delete_count}")
         return stop
 
     @staticmethod
@@ -632,6 +671,9 @@ cdef class Stop:
         stop.ptr_owner = False
         stop.ustop._stop_int = cstop
         stop.loc_type = LocType.INT
+        global stop_create_count
+        stop_create_count += 1
+        #print(f"stop_create_count={stop_create_count}, stop_delete_count={stop_delete_count}")
         return stop
 
     def __reduce__(self):
@@ -647,6 +689,9 @@ cdef class Stop:
             )
 
     def __dealloc__(self):
+        global stop_delete_count
+        stop_delete_count += 1
+        #print(f"stop_create_count={stop_create_count}, stop_delete_count={stop_delete_count}")
         #print("dealloc stop")
         if self.ptr_owner==False:
             return
@@ -700,6 +745,10 @@ cdef class Stoplist:
         The `Stop` objects are **copied** here, therefore the original `Stop` objects can safely be garbage collected/
         otherwise deleted.
         """
+        global stoplist_create_count
+        stoplist_create_count += 1
+        #print(f"stoplist_create_count={stoplist_create_count}, stoplist_delete_count={stoplist_delete_count}")
+
         self.ptr_owner = True
         self.loc_type = loc_type
         if self.loc_type == LocType.R2LOC:
@@ -770,6 +819,9 @@ cdef class Stoplist:
         stoplist.loc_type = LocType.R2LOC
         stoplist.ustoplist._stoplist_r2loc = cstoplist
         stoplist.ptr_owner = False
+        global stoplist_create_count
+        stoplist_create_count += 1
+        #print(f"stoplist_create_count={stoplist_create_count}, stoplist_delete_count={stoplist_delete_count}")
         return stoplist
 
     @staticmethod
@@ -779,6 +831,9 @@ cdef class Stoplist:
         stoplist.loc_type = LocType.INT
         stoplist.ustoplist._stoplist_int = cstoplist
         stoplist.ptr_owner = False
+        global stoplist_create_count
+        stoplist_create_count += 1
+        #print(f"stoplist_create_count={stoplist_create_count}, stoplist_delete_count={stoplist_delete_count}")
         return stoplist
 
     def __repr__(self):
@@ -824,4 +879,6 @@ cdef class Stoplist:
         #    free(self.ustoplist._stoplist_r2loc)
         #elif self.loc_type == LocType.INT:
         #    free(self.ustoplist._stoplist_int)
-        ...
+        global stoplist_delete_count
+        stoplist_delete_count += 1
+        #print(f"stoplist_create_count={stoplist_create_count}, stoplist_delete_count={stoplist_delete_count}")

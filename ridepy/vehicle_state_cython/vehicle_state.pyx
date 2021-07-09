@@ -29,7 +29,7 @@ from ridepy.util.dispatchers_cython.cdispatchers cimport simple_ellipse_dispatch
 from libcpp.memory cimport dynamic_pointer_cast
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
-from cython.operator cimport dereference
+from cython.operator cimport dereference as deref
 
 from ridepy.util.spaces_cython.spaces cimport TransportSpace
 
@@ -91,6 +91,7 @@ cdef class VehicleState:
             # assume that a python list of `data_structures_cython.Stop` objects are being passed
             # create a `data_structures_cython.Stoplist` object
             self._stoplist = Stoplist(initial_stoplist, space.loc_type)
+        self.c_stoplist = self._stoplist.ustoplist._stoplist_r2loc
         self._space = space
         self._dispatcher = dispatcher
         if seat_capacity > INT_MAX:
@@ -141,63 +142,67 @@ cdef class VehicleState:
         logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
         event_cache = []
 
-        last_stop = None
+        cdef bint last_stop_unset = True
+        cdef CStop[R2loc] last_stop
         #print("len: ", len(self._stoplist))
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
-        for i in range(len(self._stoplist) - 1, 0, -1):
-            stop = self._stoplist[i]
+        cdef CStop[R2loc] cstop
+        cdef int i
+        for i in range(<int> (deref(self.c_stoplist).size()) - 1, 0, -1):
+            cstop = deref(self.c_stoplist)[i]
             # service the stop at its estimated arrival time
-            if stop.estimated_arrival_time <= t:
+            if cstop.estimated_arrival_time <= t:
                 # as we are iterating backwards, the first stop iterated over is the last one serviced
-                if last_stop is None:
+                if last_stop_unset:
                     # this deepcopy is necessary because otherwise after removing elements from stoplist,
                     # last_stop will point to the wrong element.  See the failing test as well:
                     # test.test_data_structures_cython.test_stoplist_getitem_and_elem_removal_consistent
-                    last_stop = deepcopy(stop)
+                    last_stop = cstop
+                    last_stop_unset = False
 
                 event_cache.append(
                     {
                         StopAction.pickup: PickupEvent,
                         StopAction.dropoff: DeliveryEvent,
                         StopAction.internal: InternalEvent,
-                    }[stop.action](
-                        request_id=stop.request.request_id,
+                    }[cstop.action](
+                        request_id=deref(cstop.request).request_id,
                         vehicle_id=self._vehicle_id,
                         timestamp=max(
-                            stop.estimated_arrival_time, stop.time_window_min
+                            cstop.estimated_arrival_time, cstop.time_window_min
                         ),
                     )
                 )
-                self._stoplist.remove_nth_elem(i)
+                deref(self.c_stoplist).erase(deref(self.c_stoplist).begin()+i)
 
         #print("len after: ", len(self._stoplist))
         # fix event cache order
         event_cache = event_cache[::-1]
 
         # if no stop was serviced, the last stop is the outdated CPE
-        if last_stop is None:
-            last_stop = self._stoplist[0]
+        if last_stop_unset:
+            last_stop = deref(self.c_stoplist)[0]
 
         # set the occupancy at CPE
-        self._stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
+        deref(self.c_stoplist)[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-        if len(self._stoplist) > 1:
+        if deref(self.c_stoplist).size() > 1:
             if last_stop.estimated_arrival_time > t:
                 # still mid-jump from last interpolation, no need to interpolate
                 # again
                 pass
             else:
-                self._stoplist[0].location, jump_time = self._space.interp_time(
+                deref(self.c_stoplist)[0].location, jump_time = self._space.interp_time(
                     u=last_stop.location,
-                    v=self._stoplist[1].location,
-                    time_to_dest=self._stoplist[1].estimated_arrival_time - t,
+                    v=deref(self.c_stoplist)[1].location,
+                    time_to_dest=deref(self.c_stoplist)[1].estimated_arrival_time - t,
                 )
                 # set CPE time
-                self._stoplist[0].estimated_arrival_time = t + jump_time
+                deref(self.c_stoplist)[0].estimated_arrival_time = t + jump_time
         else:
             # stoplist is empty, only CPE is there. set CPE time to current time
-            self._stoplist[0].estimated_arrival_time = t
+            deref(self.c_stoplist)[0].estimated_arrival_time = t
 
         return event_cache
 
@@ -234,8 +239,8 @@ cdef class VehicleState:
                 <R2loc> request.destination, <double> request.pickup_timewindow_min,
                 <double> request.pickup_timewindow_max,
                 <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max),
-            dereference(self._stoplist.ustoplist._stoplist_r2loc),
-            dereference(self._space.u_space.space_r2loc_ptr),
+            deref(self.c_stoplist),
+            deref(self._space.u_space.space_r2loc_ptr),
             self._seat_capacity,
         )
         self.c_stoplist_new = insertion_result_r2loc.new_stoplist
@@ -247,7 +252,7 @@ cdef class VehicleState:
 
 
     def select_new_stoplist(self):
-        self._stoplist.ustoplist._stoplist_r2loc = self.c_stoplist_new
+        self.c_stoplist = self.c_stoplist_new
 
     def __reduce__(self):
         return self.__class__, \
