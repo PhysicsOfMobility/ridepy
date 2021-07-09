@@ -444,8 +444,8 @@ class FleetState(ABC):
             Modifies the `.VehicleState` of the vehicle with the least cost inplace.
 
         """
-        all_solutions = list(all_solutions)
-        print("length of solutions: ", [len(i[2]) for i in all_solutions])
+        #all_solutions = list(all_solutions)
+        #print("length of solutions: ", [len(i[2]) for i in all_solutions])
         (
             best_vehicle,
             min_cost,

@@ -13,6 +13,17 @@ from ridepy.data_structures_cython.data_structures cimport (
     StopAction,
     Stoplist,
 )
+from ridepy.data_structures_cython.cdata_structures cimport (
+    TransportationRequest as CTransportationRequest,
+    Stop as CStop,
+    Stoplist as CStoplist,
+    LocType
+)
+
+
+
+from ridepy.util.dispatchers_cython cimport simple_ellipse_dispatcher, \
+    brute_force_total_traveltime_minimizing_dispatcher
 
 from ridepy.util.spaces_cython.spaces cimport TransportSpace
 
@@ -124,7 +135,7 @@ cdef class VehicleState:
         event_cache = []
 
         last_stop = None
-        print("len: ", len(self._stoplist))
+        #print("len: ", len(self._stoplist))
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
         for i in range(len(self._stoplist) - 1, 0, -1):
             stop = self._stoplist[i]
@@ -152,7 +163,7 @@ cdef class VehicleState:
                 )
                 self._stoplist.remove_nth_elem(i)
 
-        print("len after: ", len(self._stoplist))
+        #print("len after: ", len(self._stoplist))
         # fix event cache order
         event_cache = event_cache[::-1]
 
@@ -203,12 +214,38 @@ cdef class VehicleState:
         # Logging the folloowing in this specific format is crucial for
         # `test/mpi_futures_fleet_state_test.py` to pass
         logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
-        min_cost, new_stoplist, time_windows = self._dispatcher(
-                request,
-                self._stoplist,
-                self._space, self._seat_capacity)
-        self._new_stoplist = new_stoplist
-        return self._vehicle_id, min_cost, time_windows
+    #    min_cost, new_stoplist, time_windows = self._dispatcher(
+    #            request,
+    #            self._stoplist,
+    #            self._space, self._seat_capacity)
+    #    self._new_stoplist = new_stoplist
+    #    return self._vehicle_id, min_cost, time_windows
+    cdef InsertionResult[R2loc] insertion_result_r2loc
+    cdef InsertionResult[int] insertion_result_int
+    if cy_request.loc_type == LocType.R2LOC:
+        insertion_result_r2loc = c_brute_force_total_traveltime_minimizing_dispatcher[R2loc](
+            dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](cy_request._ureq._req_r2loc),
+            dereference(stoplist.ustoplist._stoplist_r2loc),
+            dereference(space.u_space.space_r2loc_ptr), seat_capacity, debug
+        )
+        return insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist),\
+               (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
+                insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+    elif cy_request.loc_type == LocType.INT:
+        insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[int](
+            dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
+            dereference(stoplist.ustoplist._stoplist_int),
+            dereference(space.u_space.space_int_ptr), seat_capacity, debug
+        )
+        return insertion_result_int.min_cost, Stoplist.from_c_int(insertion_result_int.new_stoplist),\
+               (insertion_result_int.EAST_pu, insertion_result_int.LAST_pu,
+                insertion_result_int.EAST_do, insertion_result_int.LAST_do)
+    else:
+        raise ValueError("This line should never have been reached")
+
+
+
+
 
     def select_new_stoplist(self):
         self._stoplist = self._new_stoplist

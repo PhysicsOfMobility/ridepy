@@ -703,9 +703,9 @@ cdef class Stoplist:
         self.ptr_owner = True
         self.loc_type = loc_type
         if self.loc_type == LocType.R2LOC:
-            self.ustoplist._stoplist_r2loc = new vector[CStop[R2loc]](0)
+            self.ustoplist._stoplist_r2loc = make_shared[vector[CStop[R2loc]]](0)
         elif self.loc_type == LocType.INT:
-            self.ustoplist._stoplist_int = new vector[CStop[int]](0)
+            self.ustoplist._stoplist_int = make_shared[vector[CStop[int]]](0)
         else:
             raise ValueError(f"This line should never have been reached: {type(loc_type)}")
 
@@ -764,7 +764,7 @@ cdef class Stoplist:
             raise ValueError("This line should never have been reached")
 
     @staticmethod
-    cdef Stoplist from_c_r2loc(vector[CStop[R2loc]] *cstoplist):
+    cdef Stoplist from_c_r2loc(shared_ptr[vector[CStop[R2loc]]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.R2LOC
@@ -773,7 +773,7 @@ cdef class Stoplist:
         return stoplist
 
     @staticmethod
-    cdef Stoplist from_c_int(vector[CStop[int]] *cstoplist):
+    cdef Stoplist from_c_int(shared_ptr[vector[CStop[int]]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.INT
@@ -818,9 +818,10 @@ cdef class Stoplist:
 
     def __dealloc__(self):
         #print("dealloc stoplist")
-        if self.ptr_owner==False:
-            return
-        if self.loc_type == LocType.R2LOC:
-            free(self.ustoplist._stoplist_r2loc)
-        elif self.loc_type == LocType.INT:
-            free(self.ustoplist._stoplist_int)
+        #if self.ptr_owner==False:
+        #    return
+        #if self.loc_type == LocType.R2LOC:
+        #    free(self.ustoplist._stoplist_r2loc)
+        #elif self.loc_type == LocType.INT:
+        #    free(self.ustoplist._stoplist_int)
+        ...
