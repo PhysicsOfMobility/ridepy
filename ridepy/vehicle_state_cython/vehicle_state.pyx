@@ -202,7 +202,7 @@ cdef class VehicleState:
         return event_cache
 
     def handle_transportation_request_single_vehicle(
-            self, TransportationRequest request
+            self, request
     ) -> SingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could:
@@ -229,7 +229,11 @@ cdef class VehicleState:
     #    return self._vehicle_id, min_cost, time_windows
 
         cdef InsertionResult[R2loc] insertion_result_r2loc = brute_force_total_traveltime_minimizing_dispatcher[R2loc](
-            dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](request._ureq._req_r2loc),
+            make_shared[CTransportationRequest[R2loc]](
+                <int> request.request_id, <double> request.creation_timestamp, <R2loc> request.origin,
+                <R2loc> request.destination, <double> request.pickup_timewindow_min,
+                <double> request.pickup_timewindow_max,
+                <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max),
             dereference(self._stoplist.ustoplist._stoplist_r2loc),
             dereference(self._space.u_space.space_r2loc_ptr),
             self._seat_capacity,
