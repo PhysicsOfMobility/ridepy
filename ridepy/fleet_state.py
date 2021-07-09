@@ -204,7 +204,6 @@ class FleetState(ABC):
             for vehicle_id in initial_locations.keys()
         }
 
-        self._test_dispatcher(TransportationRequestCls)
 
     @classmethod
     def from_fleet(

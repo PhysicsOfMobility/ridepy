@@ -14,16 +14,22 @@ from ridepy.data_structures_cython.data_structures cimport (
     Stoplist,
 )
 from ridepy.data_structures_cython.cdata_structures cimport (
+    InsertionResult,
     TransportationRequest as CTransportationRequest,
+    Request as CRequest,
     Stop as CStop,
-    Stoplist as CStoplist,
-    LocType
+    R2loc
 )
 
 
 
-from ridepy.util.dispatchers_cython cimport simple_ellipse_dispatcher, \
+from libcpp.memory cimport shared_ptr, unique_ptr, make_shared, make_unique
+from ridepy.util.dispatchers_cython.cdispatchers cimport simple_ellipse_dispatcher, \
     brute_force_total_traveltime_minimizing_dispatcher
+from libcpp.memory cimport dynamic_pointer_cast
+from libcpp.utility cimport pair
+from libcpp.vector cimport vector
+from cython.operator cimport dereference
 
 from ridepy.util.spaces_cython.spaces cimport TransportSpace
 
@@ -54,7 +60,8 @@ cdef class VehicleState:
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist _stoplist
-    cdef Stoplist _new_stoplist
+    cdef shared_ptr[vector[CStop[R2loc]]] c_stoplist
+    cdef shared_ptr[vector[CStop[R2loc]]] c_stoplist_new
     cdef TransportSpace _space
     cdef int _vehicle_id
     cdef int _seat_capacity
@@ -220,35 +227,23 @@ cdef class VehicleState:
     #            self._space, self._seat_capacity)
     #    self._new_stoplist = new_stoplist
     #    return self._vehicle_id, min_cost, time_windows
-    cdef InsertionResult[R2loc] insertion_result_r2loc
-    cdef InsertionResult[int] insertion_result_int
-    if cy_request.loc_type == LocType.R2LOC:
-        insertion_result_r2loc = c_brute_force_total_traveltime_minimizing_dispatcher[R2loc](
-            dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](cy_request._ureq._req_r2loc),
-            dereference(stoplist.ustoplist._stoplist_r2loc),
-            dereference(space.u_space.space_r2loc_ptr), seat_capacity, debug
+
+        cdef InsertionResult[R2loc] insertion_result_r2loc = brute_force_total_traveltime_minimizing_dispatcher[R2loc](
+            dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](request._ureq._req_r2loc),
+            dereference(self._stoplist.ustoplist._stoplist_r2loc),
+            dereference(self._space.u_space.space_r2loc_ptr),
+            self._seat_capacity,
         )
-        return insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist),\
+        self.c_stoplist_new = insertion_result_r2loc.new_stoplist
+
+        return self._vehicle_id, insertion_result_r2loc.min_cost, \
                (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
                 insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
-    elif cy_request.loc_type == LocType.INT:
-        insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[int](
-            dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
-            dereference(stoplist.ustoplist._stoplist_int),
-            dereference(space.u_space.space_int_ptr), seat_capacity, debug
-        )
-        return insertion_result_int.min_cost, Stoplist.from_c_int(insertion_result_int.new_stoplist),\
-               (insertion_result_int.EAST_pu, insertion_result_int.LAST_pu,
-                insertion_result_int.EAST_do, insertion_result_int.LAST_do)
-    else:
-        raise ValueError("This line should never have been reached")
-
-
 
 
 
     def select_new_stoplist(self):
-        self._stoplist = self._new_stoplist
+        self._stoplist.ustoplist._stoplist_r2loc = self.c_stoplist_new
 
     def __reduce__(self):
         return self.__class__, \
