@@ -449,7 +449,6 @@ class FleetState(ABC):
         (
             best_vehicle,
             min_cost,
-            new_stoplist,
             (
                 pickup_timewindow_min,
                 pickup_timewindow_max,
@@ -463,8 +462,8 @@ class FleetState(ABC):
         else:
             # modify the best vehicle's stoplist
             # print(f"len of new stoplist={len(new_stoplist)}")
-            self.fleet[best_vehicle].stoplist = new_stoplist
-            print(f"set new stoplist, len: {len(new_stoplist)}")
+            self.fleet[best_vehicle].select_new_stoplist()
+            #print(f"set new stoplist, len: {len(new_stoplist)}")
             #logger.debug("New stoplist: ")
             #logger.debug("[")
             #for stop in new_stoplist:
@@ -487,13 +486,9 @@ class FleetState(ABC):
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: float):
-        events, new_stoplists = zip(
-            *(
-                vehicle_state.fast_forward_time(t)
-                for vehicle_state in self.fleet.values()
-            )
+        events = (
+            vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
         )
-        print([len(i) for i in new_stoplists])
         #for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
             #logger.debug(f"Stoplist of vehicle {vehicle_id} at time {t}: ")
             #logger.debug("[")
@@ -514,21 +509,17 @@ class SlowSimpleFleetState(FleetState):
 
         if req.origin == req.destination:
             return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
-        res = [stuff.handle_transportation_request_single_vehicle(req) for stuff in self.fleet.values()]
-        breakpoint()
-        print("length of solutions @handle: ", [len(i[2]) for i in res])
-        return self._apply_request_solution(req, res)
 
-#        return self._apply_request_solution(
-#            req,
-#            map(
-#                ft.partial(
-#                    self.vehicle_state_class.handle_transportation_request_single_vehicle,
-#                    request=req,
-#                ),
-#                self.fleet.values(),
-#            ),
-#        )
+        return self._apply_request_solution(
+            req,
+            map(
+                ft.partial(
+                    self.vehicle_state_class.handle_transportation_request_single_vehicle,
+                    request=req,
+                ),
+                self.fleet.values(),
+            ),
+        )
 
     def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
         ...

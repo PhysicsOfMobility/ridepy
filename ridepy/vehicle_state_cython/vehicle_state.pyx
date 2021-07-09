@@ -43,6 +43,7 @@ cdef class VehicleState:
     #                stop_i.estimated_arrival_time, stop_i.time_window_min
     #            ) + self.space.t(stop_i.location, stop_j.location)
     cdef Stoplist _stoplist
+    cdef Stoplist _new_stoplist
     cdef TransportSpace _space
     cdef int _vehicle_id
     cdef int _seat_capacity
@@ -82,8 +83,8 @@ cdef class VehicleState:
     property stoplist:
         def __get__(self):
             return self._stoplist
-        def __set__(self, new_stoplist):
-            self._stoplist = new_stoplist
+        #def __set__(self, new_stoplist):
+        #    self._stoplist = new_stoplist
 
     property seat_capacity:
         def __get__(self):
@@ -180,7 +181,7 @@ cdef class VehicleState:
             # stoplist is empty, only CPE is there. set CPE time to current time
             self._stoplist[0].estimated_arrival_time = t
 
-        return event_cache, self._stoplist
+        return event_cache
 
     def handle_transportation_request_single_vehicle(
             self, TransportationRequest request
@@ -202,12 +203,15 @@ cdef class VehicleState:
         # Logging the folloowing in this specific format is crucial for
         # `test/mpi_futures_fleet_state_test.py` to pass
         logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
-        ret = self._vehicle_id, *self._dispatcher(
+        min_cost, new_stoplist, time_windows = self._dispatcher(
                 request,
                 self._stoplist,
                 self._space, self._seat_capacity)
-        print("len after insertion: ", len(ret[2]))
-        return ret
+        self._new_stoplist = new_stoplist
+        return self._vehicle_id, min_cost, time_windows
+
+    def select_new_stoplist(self):
+        self._stoplist = self._new_stoplist
 
     def __reduce__(self):
         return self.__class__, \
