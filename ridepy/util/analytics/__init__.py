@@ -8,7 +8,7 @@ from typing import Iterable, List, Optional, Dict, Any
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
-from ast import literal_eval as make_tuple
+from ast import literal_eval as make_list
 
 from ridepy.data_structures import (
     TransportationRequest,
@@ -482,7 +482,7 @@ def get_stops_and_requests(*, events: str, space: TransportSpace):
     Parameters
     ----------
     events
-        list of all the events returned by the simulation
+        a string containing the list of all the events returned by the simulation in CSV format, created by read_events_json
     space
         transportation space that was used for the simulations
 
@@ -512,7 +512,8 @@ def get_stops_and_requests(*, events: str, space: TransportSpace):
 
     for location_like in ["origin", "destination", "location"]:
         if not is_numeric_dtype(events_df[location_like]):
-            events_df[location_like] = events_df[location_like].apply(lambda x: None if pd.isna(x) else make_tuple(x))
+            # remember that locations can be string reprs of lists like "[0, 0]", we need to convert it to a tuple
+            events_df[location_like] = events_df[location_like].apply(lambda x: None if pd.isna(x) else tuple(make_list(x)))
 
     stops_df = _create_stoplist_dataframe(evs=events_df)
     requests_df = _create_transportation_requests_dataframe(

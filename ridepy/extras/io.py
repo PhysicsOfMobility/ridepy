@@ -234,7 +234,7 @@ def save_events_json(*, jsonl_path: Path, events: Iterable) -> None:
             print(json.dumps(event, cls=EventsJSONEncoder), file=f)
 
 
-def read_events_json(jsonl_path: Path) -> list[Event]:
+def read_events_json(jsonl_path: Path) -> str:
     """
     Read events from JSON lines file, where each line of the file contains a single event.
     For additional detail, see :ref:`Executing Simulations`.
@@ -246,11 +246,13 @@ def read_events_json(jsonl_path: Path) -> list[Event]:
 
     Returns
     -------
-    List of events
+    a string containing the list of events in CSV format, that can be passed on to pd.read_csv
     """
-    jq_command = "keys[0] as $evname | [$evname,.[$evname].request_id,.[$evname].timestamp,.[$evname].vehicle_id,"\
-                 "(.[$evname].location|tostring),(.[$evname].origin|tostring),(.[$evname].destination|tostring),"\
-                 ".[$evname].pickup_timewindow_min,.[$evname].pickup_timewindow_max,.[$evname].delivery_timewindow_min,"\
-                 ".[$evname].delivery_timewindow_max] | @csv"
+    # we will use jq to parse the jsonl into a csv, that can be passed to pandas.read_csv. Since locations can be lists
+    # like [0, 0], we need to be careful while creating the csv representation
+    jq_command = "keys[0] as $evname | .[$evname] as $ev | [$evname,$ev.request_id,$ev.timestamp,$ev.vehicle_id,"\
+                 "($ev.location|tostring),($ev.origin|tostring),($ev.destination|tostring),"\
+                 "$ev.pickup_timewindow_min,$ev.pickup_timewindow_max,$ev.delivery_timewindow_min,"\
+                 "$ev.delivery_timewindow_max] | @csv"
     res = subprocess.run(["jq", "-r", jq_command, str(jsonl_path)], check=True, text=True, capture_output=True)
     return res.stdout
