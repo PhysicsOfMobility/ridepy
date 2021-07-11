@@ -6,6 +6,7 @@ import collections.abc
 import json
 import operator as op
 import functools as ft
+import subprocess
 
 from typing import Iterable
 
@@ -247,8 +248,9 @@ def read_events_json(jsonl_path: Path) -> list[Event]:
     -------
     List of events
     """
-    out = []
-    with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            out.append(json.loads(line, cls=EventsJSONDecoder))
-    return out
+    jq_command = "keys[0] as $evname | [$evname,.[$evname].request_id,.[$evname].timestamp,.[$evname].vehicle_id,"\
+                 "(.[$evname].location|tostring),(.[$evname].origin|tostring),(.[$evname].destination|tostring),"\
+                 ".[$evname].pickup_timewindow_min,.[$evname].pickup_timewindow_max,.[$evname].delivery_timewindow_min,"\
+                 ".[$evname].delivery_timewindow_max] | @csv"
+    res = subprocess.run(["jq", "-r", jq_command, str(jsonl_path)], check=True, text=True, capture_output=True)
+    return res.stdout

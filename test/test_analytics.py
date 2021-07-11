@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 import itertools as it
@@ -33,7 +35,40 @@ from ridepy.util.spaces import Euclidean1D, Euclidean2D
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
 from ridepy.vehicle_state import VehicleState
+from ridepy.extras.io import read_events_json, read_params_json
 
+
+
+def events_to_events_csvstr(events):
+    column_names = [
+        "request_id",
+        "timestamp",
+        "vehicle_id",
+        "location",
+        "origin",
+        "destination",
+        "pickup_timewindow_min",
+        "pickup_timewindow_max",
+        "delivery_timewindow_min",
+        "delivery_timewindow_max",
+    ]
+    location_column_names = ["location", "origin", "destination"]
+    res = ""
+    for event in events:
+        res += str(event.__class__.__name__)
+        for col in column_names:
+            res += ','
+            val = getattr(event, col, None)
+            if val == None:
+                res += '"<NA>"'
+            else:
+                if col in location_column_names:
+                    res += f'"{val}"'
+                else:
+                    res += str(val)
+        res += '\n'
+    return res
+    #return "\n".join(",".join([event.__class__.__name__]+[str for col in column_names]) for event in events)
 
 def test_get_stops_and_requests():
     make_transportation_requests = lambda transp_req_class: [
@@ -208,7 +243,7 @@ def test_get_stops_and_requests():
             VehicleStateEndEvent(vehicle_id=2, timestamp=2, location=(0, 0)),
         ]
 
-        stops, requests = get_stops_and_requests(events=events, space=space)
+        stops, requests = get_stops_and_requests(events=events_to_events_csvstr(events), space=space)
         expected_stops = pd.DataFrame(
             {
                 "vehicle_id": {
@@ -438,7 +473,18 @@ def test_get_stops_and_requests_with_actual_simulation():
 
     events = list(fs.simulate(transportation_requests))
 
-    stops, requests = get_stops_and_requests(events=events, space=space)
+    stops, requests = get_stops_and_requests(events=events_to_events_csvstr(events), space=space)
 
     assert len(stops) == 2020
     assert len(requests) == 1000
+
+def test_profiling():
+    data_dir = Path("test_data/")
+    sim_id = '7009c174dbb7e738e853247b1fb4b853dad720dd0af4e7878c0f775e'
+    get_params = lambda sim_id: read_params_json(data_dir / Path(sim_id + "_params.json"))
+    get_events = lambda sim_id: read_events_json(data_dir / Path(sim_id + ".jsonl"))
+
+    params = get_params(sim_id)
+    events = get_events(sim_id)
+
+    stops, requests = get_stops_and_requests(events=events, space=Euclidean2D())

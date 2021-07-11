@@ -2,10 +2,13 @@ import dataclasses
 from collections import defaultdict
 
 import operator as op
+from io import StringIO
 from typing import Iterable, List, Optional, Dict, Any
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
+from ast import literal_eval as make_tuple
 
 from ridepy.data_structures import (
     TransportationRequest,
@@ -422,7 +425,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     ]
 
 
-def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
+def get_stops_and_requests(*, events: str, space: TransportSpace):
     """
     Prepare two DataFrames, containing stops and requests.
 
@@ -490,8 +493,27 @@ def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
     requests
         dataframe indexed by `request_id` containing all requests
     """
+    column_names = [
+        "event_type",
+        "request_id",
+        "timestamp",
+        "vehicle_id",
+        "location",
+        "origin",
+        "destination",
+        "pickup_timewindow_min",
+        "pickup_timewindow_max",
+        "delivery_timewindow_min",
+        "delivery_timewindow_max",
+    ]
+    events_df = pd.read_csv(StringIO(events), names=column_names, index_col=False).astype(
+        dict(timestamp=float, vehicle_id=float, pickup_timewindow_min=float, pickup_timewindow_max=float,
+             delivery_timewindow_min=float, delivery_timewindow_max=float))
 
-    events_df = _create_events_dataframe(events=events)
+    for location_like in ["origin", "destination", "location"]:
+        if not is_numeric_dtype(events_df[location_like]):
+            events_df[location_like] = events_df[location_like].apply(lambda x: None if pd.isna(x) else make_tuple(x))
+
     stops_df = _create_stoplist_dataframe(evs=events_df)
     requests_df = _create_transportation_requests_dataframe(
         evs=events_df, stops=stops_df, space=space
