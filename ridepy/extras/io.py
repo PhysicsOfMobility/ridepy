@@ -233,7 +233,7 @@ def save_events_json(*, jsonl_path: Path, events: Iterable) -> None:
             print(json.dumps(event, cls=EventsJSONEncoder), file=f)
 
 
-def read_events_json(jsonl_path: Path) -> list[Event]:
+def read_events_json(jsonl_path: Path) -> List[tuple[str, dict]]:
     """
     Read events from JSON lines file, where each line of the file contains a single event.
     For additional detail, see :ref:`Executing Simulations`.
@@ -245,10 +245,9 @@ def read_events_json(jsonl_path: Path) -> list[Event]:
 
     Returns
     -------
-    List of events
+    List of (event_name, event_properties_dict) tuples
     """
     with jsonl_path.open("r", encoding="utf-8") as f:
         json_lines = f.readlines()
 
-    event_types, events = zip(*[next(iter(json.loads(line).items())) for line in json_lines])
-    return event_types, events
+    return [next(iter(json.loads(line).items())) for line in json_lines]

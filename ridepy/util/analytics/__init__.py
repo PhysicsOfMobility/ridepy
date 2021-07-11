@@ -46,15 +46,8 @@ def _create_events_dataframe(events: Iterable[Event]) -> pd.DataFrame:
     -------
     events DataFrame, indexed by integer range
     """
-
-    #return pd.DataFrame(
-    #    map(
-    #        lambda ev: dict(dataclasses.asdict(ev), event_type=ev.__class__.__name__),
-    #        events,
-    #    )
-    #)
-    event_types, events = events
-    return pd.DataFrame(index=event_types, data=events, ).rename_axis(index="event_type").reset_index()
+    event_names, event_values = zip(*events)
+    return pd.DataFrame(index=event_types, data=events).rename_axis(index="event_type").reset_index()
 
 
 def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
