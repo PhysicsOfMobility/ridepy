@@ -247,8 +247,8 @@ def read_events_json(jsonl_path: Path) -> list[Event]:
     -------
     List of events
     """
-    out = []
     with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            out.append(json.loads(line, cls=EventsJSONDecoder))
-    return out
+        json_lines = f.readlines()
+
+    event_types, events = zip(*[next(iter(json.loads(line).items())) for line in json_lines])
+    return event_types, events
