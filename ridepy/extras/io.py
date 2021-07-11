@@ -250,4 +250,4 @@ def read_events_json(jsonl_path: Path) -> list[tuple[str, dict]]:
     with jsonl_path.open("r", encoding="utf-8") as f:
         json_lines = f.readlines()
 
-    return [next(iter(json.loads(line).items())) for line in json_lines]
+    return (next(iter(json.loads(line).items())) for line in json_lines)

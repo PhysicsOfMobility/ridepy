@@ -36,6 +36,7 @@ from ridepy.util.spaces import Euclidean2D
 
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
+from ridepy.util.testing_utils import convert_events_to_dicts
 
 # + tags=[]
 # assume dark background for plots?
@@ -99,7 +100,7 @@ fs = SlowSimpleFleetState(
 # ## Process the results
 
 # + tags=[]
-stops, reqs = get_stops_and_requests(events=events, space=space)
+stops, reqs = get_stops_and_requests(events=convert_events_to_dicts(events), space=space)
 # -
 
 # # Some distributions

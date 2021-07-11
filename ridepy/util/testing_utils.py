@@ -131,3 +131,8 @@ def setup_insertion_data_structures(
     )
 
     return space, request, stoplist, dispatcher
+
+
+def convert_events_to_dicts(events):
+    """From a list of events, outputs what `.io.read_events_json` outputs"""
+    return ((event.__class__.__name__, event.__dict__) for event in events)
