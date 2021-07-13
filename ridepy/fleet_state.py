@@ -484,8 +484,6 @@ class FleetState(ABC):
 
 class SlowSimpleFleetState(FleetState):
     def fast_forward(self, t: float):
-        for vehicle_state in self.fleet.values():
-            vehicle_state.boo()
         events = (
             vehicle_state.fast_forward_time(t) for vehicle_state in self.fleet.values()
         )

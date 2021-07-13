@@ -29,15 +29,14 @@ template <typename Loc> class VehicleState {
 
 public:
   int vehicle_id;
-  std::shared_ptr<vector<Stop<Loc>>> stoplist;
+  vector<Stop<Loc>> stoplist;
   int seat_capacity;
   string dispatcher;
   TransportSpace<Loc> &space;
 
   VehicleState(int vehicle_id, vector<Stop<Loc>> initial_stoplist,
                TransportSpace<Loc> &space, string dispatcher, int seat_capacity)
-      : vehicle_id{vehicle_id}, stoplist{std::make_shared<vector<Stop<Loc>>>(
-                                    initial_stoplist)},
+      : vehicle_id{vehicle_id}, stoplist{initial_stoplist},
         seat_capacity{seat_capacity}, dispatcher{dispatcher}, space{space} {}
 
   ~VehicleState() {}
@@ -69,8 +68,8 @@ public:
     bool any_stop_serviced{false};
     // drop all non-future stops from the stoplist, except for the (outdated)
     // CPE
-    for (int i = stoplist->size() - 1; i > 0; --i) {
-      auto &stop = (*stoplist)[i];
+    for (int i = stoplist.size() - 1; i > 0; --i) {
+      auto &stop = stoplist[i];
       // service the stop at its estimated arrival time
       if (stop.estimated_arrival_time <= t) {
         // as we are iterating backwards, the first stop iterated over is the
@@ -86,7 +85,7 @@ public:
         event_cache.push_back(
             {stop.action, stop.request->request_id, vehicle_id,
              max(stop.estimated_arrival_time, stop.time_window_min)});
-        stoplist->erase(stoplist->begin() + i);
+        stoplist.erase(stoplist.begin() + i);
       }
     }
 
@@ -95,30 +94,30 @@ public:
 
     // if no stop was serviced, the last stop is the outdated CPE
     if (not any_stop_serviced)
-      last_stop = (*stoplist)[0];
+      last_stop = stoplist[0];
 
     // set the occupancy at CPE
-    (*stoplist)[0].occupancy_after_servicing =
+    stoplist[0].occupancy_after_servicing =
         last_stop.occupancy_after_servicing;
 
     // set CPE location to current location as inferred from the time delta to
     // the upcoming stop's CPAT
-    if (stoplist->size() > 1) {
+    if (stoplist.size() > 1) {
       if (last_stop.estimated_arrival_time > t) {
         // still mid-jump from last interpolation, no need to interpolate
         // again
         1 == 1;
       } else {
         auto [loc, jump_time] =
-            space.interp_time(last_stop.location, (*stoplist)[1].location,
-                              (*stoplist)[1].estimated_arrival_time - t);
-        (*stoplist)[0].location = loc;
+            space.interp_time(last_stop.location, stoplist[1].location,
+                              stoplist[1].estimated_arrival_time - t);
+        stoplist[0].location = loc;
         // set CPE time
-        (*stoplist)[0].estimated_arrival_time = t + jump_time;
+        stoplist[0].estimated_arrival_time = t + jump_time;
       }
     } else {
       // stoplist is empty, only CPE is there. set CPE time to current time
-      (*stoplist)[0].estimated_arrival_time = t;
+      stoplist[0].estimated_arrival_time = t;
     }
     return event_cache;
   }
@@ -146,7 +145,7 @@ public:
     if (dispatcher == "brute_force")
       return make_pair(vehicle_id,
                        brute_force_total_traveltime_minimizing_dispatcher<Loc>(
-                           request, *stoplist, space, seat_capacity));
+                           request, stoplist, space, seat_capacity));
   }
 };
 } // namespace cstuff

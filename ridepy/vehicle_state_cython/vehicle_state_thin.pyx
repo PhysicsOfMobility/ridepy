@@ -37,10 +37,11 @@ logger = logging.getLogger(__name__)
 
 
 from ridepy.vehicle_state_cython.cvehicle_state cimport VehicleState as CVehicleState, StopEventSpec
-from libcpp.memory cimport shared_ptr, unique_ptr, make_shared, make_unique
-from libcpp.memory cimport dynamic_pointer_cast
+from libcpp.memory cimport unique_ptr, make_unique
 from libcpp.utility cimport pair
+from libcpp.memory cimport make_shared
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 from cython.operator cimport dereference
 
 cdef extern from "limits.h":
@@ -57,7 +58,8 @@ cdef class VehicleState:
     with its pure-python equivalent `.vehicle_state.VehicleState`.
     """
     cdef Stoplist initial_stoplist
-    cdef shared_ptr[vector[CStop[R2loc]]] c_stoplist_new
+    cdef vector[CStop[R2loc]] c_stoplist_new
+    cdef vector[CStop[R2loc]] c_stoplist
     cdef TransportSpace _space
     cdef int _vehicle_id
     cdef int _seat_capacity
@@ -89,12 +91,12 @@ cdef class VehicleState:
         if space.loc_type == LocType.R2LOC:
             self.loc_type = LocType.R2LOC
             self._uvstate._vstate_r2loc = make_unique[CVehicleState[R2loc]](
-                vehicle_id, dereference(self.initial_stoplist.ustoplist._stoplist_r2loc),
+                vehicle_id, self.initial_stoplist.ustoplist._stoplist_r2loc,
                 dereference(space.u_space.space_r2loc_ptr), "brute_force", seat_capacity)
         elif space.loc_type == LocType.INT:
             self.loc_type = LocType.INT
             self._uvstate._vstate_int = make_unique[CVehicleState[int]](
-                vehicle_id, dereference(self.initial_stoplist.ustoplist._stoplist_int),
+                vehicle_id, self.initial_stoplist.ustoplist._stoplist_int,
                 dereference(space.u_space.space_int_ptr), "brute_force", seat_capacity)
         else:
             raise ValueError("This line should never have been reached")
@@ -180,13 +182,10 @@ cdef class VehicleState:
         #dereference(self._uvstate._vstate_r2loc).stoplist.reset()
         dereference(self._uvstate._vstate_r2loc).stoplist = self.c_stoplist_new
 
-    def boo(self):
-        return Stoplist.from_c_r2loc(self.c_stoplist_new.get())
-
 
     property stoplist:
         def __get__(self):
-            return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist.get())
+            return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist)
 
     property seat_capacity:
         def __get__(self):

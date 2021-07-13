@@ -157,11 +157,11 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
                 << best_dropoff_idx << std::endl;
       std::cout << "Min cost: " << min_cost << std::endl;
     }
-    auto EAST_pu = (*new_stoplist)[best_pickup_idx + 1].time_window_min;
-    auto LAST_pu = (*new_stoplist)[best_pickup_idx + 1].time_window_max;
+    auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
+    auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 
-    auto EAST_do = (*new_stoplist)[best_dropoff_idx + 2].time_window_min;
-    auto LAST_do = (*new_stoplist)[best_dropoff_idx + 2].time_window_max;
+    auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
+    auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
     return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
                                 LAST_pu,      EAST_do,  LAST_do};
   } else {
@@ -337,11 +337,11 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
                 << best_dropoff_idx << std::endl;
       std::cout << "Min cost: " << min_cost << std::endl;
     }
-    auto EAST_pu = (*new_stoplist)[best_pickup_idx + 1].time_window_min;
-    auto LAST_pu = (*new_stoplist)[best_pickup_idx + 1].time_window_max;
+    auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
+    auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 
-    auto EAST_do = (*new_stoplist)[best_dropoff_idx + 2].time_window_min;
-    auto LAST_do = (*new_stoplist)[best_dropoff_idx + 2].time_window_max;
+    auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
+    auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
     return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
                                 LAST_pu,      EAST_do,  LAST_do};
   } else {

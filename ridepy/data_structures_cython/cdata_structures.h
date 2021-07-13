@@ -87,8 +87,8 @@ public:
 };
 
 template <typename Loc> struct InsertionResult {
-  using Stoplist = std::shared_ptr<vector<Stop<Loc>>>;
-  Stoplist new_stoplist = std::make_shared<vector<Stop<Loc>>>(0);
+  using Stoplist = vector<Stop<Loc>>;
+  Stoplist new_stoplist = vector<Stop<Loc>>(0);
   double min_cost = 0;
   double EAST_pu = 0;
   double LAST_pu = INFINITY;
