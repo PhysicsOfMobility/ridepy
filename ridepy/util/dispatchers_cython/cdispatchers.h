@@ -348,5 +348,35 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
   }
 }
+
+enum class AvailableDispatcher {
+  brute_force_total_traveltime_minimizing_dispatcher,
+  simple_ellipse_dispatcher
+};
+
+
+
+template <typename Loc> class Dispatcher {
+public:
+  Dispatcher(const AvailableDispatcher &desired_dispatcher_)
+      : desired_dispatcher{desired_dispatcher_} {}
+  InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) {
+    switch (desired_dispatcher) {
+    case AvailableDispatcher::
+        brute_force_total_traveltime_minimizing_dispatcher:
+      return brute_force_total_traveltime_minimizing_dispatcher(
+          request, stoplist, space, seat_capacity, debug);
+    case AvailableDispatcher::simple_ellipse_dispatcher:
+      return simple_ellipse_dispatcher(request, stoplist, space, seat_capacity,
+                                       debug);
+    }
+  }
+
+private:
+  const AvailableDispatcher desired_dispatcher;
+};
 } // namespace cstuff
 #endif // RIDEPY_CDISPATCHERS_H

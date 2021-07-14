@@ -6,13 +6,13 @@
 #define RIDEPY_CVEHICLE_STATE_H
 
 #include "../../data_structures_cython/cdata_structures.h"
-#include "../dispatchers_cython/cdispatchers.h"
 #include "../spaces_cython/cspaces.h"
+#include "../util/dispatchers_cython/cdispatchers.h"
+#include <functional>
+#include <memory>
 #include <optional>
 #include <tuple>
 #include <utility>
-#include <memory>
-
 
 using namespace std;
 namespace cstuff {
@@ -31,18 +31,19 @@ public:
   int vehicle_id;
   vector<Stop<Loc>> stoplist;
   int seat_capacity;
-  string dispatcher;
+  Dispatcher<Loc> dispatcher;
   TransportSpace<Loc> &space;
 
   VehicleState(int vehicle_id, vector<Stop<Loc>> initial_stoplist,
-               TransportSpace<Loc> &space, string dispatcher, int seat_capacity)
+               TransportSpace<Loc> &space,
+               AvailableDispatcher desired_dispatcher, int seat_capacity)
       : vehicle_id{vehicle_id}, stoplist{initial_stoplist},
-        seat_capacity{seat_capacity}, dispatcher{dispatcher}, space{space} {}
+        seat_capacity{seat_capacity}, space{space}, dispatcher{
+                                                        desired_dispatcher} {}
 
   ~VehicleState() {}
 
-  vector<StopEventSpec>
-  fast_forward_time(double t) {
+  vector<StopEventSpec> fast_forward_time(double t) {
     /*
     Update the vehicle_state to the simulator time `t`.
 
@@ -97,8 +98,7 @@ public:
       last_stop = stoplist[0];
 
     // set the occupancy at CPE
-    stoplist[0].occupancy_after_servicing =
-        last_stop.occupancy_after_servicing;
+    stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing;
 
     // set CPE location to current location as inferred from the time delta to
     // the upcoming stop's CPAT
@@ -142,10 +142,8 @@ public:
     // `test / mpi_futures_fleet_state_test.py` to pass
     // logger.debug(f "Handling request #{request.request_id} with vehicle
     // {self._vehicle_id} from MPI rank {rank}")
-    if (dispatcher == "brute_force")
-      return make_pair(vehicle_id,
-                       brute_force_total_traveltime_minimizing_dispatcher<Loc>(
-                           request, stoplist, space, seat_capacity));
+    return make_pair(vehicle_id,
+                     dispatcher(request, stoplist, space, seat_capacity));
   }
 };
 } // namespace cstuff

@@ -114,16 +114,18 @@ TEST(RidepyTest, integration_fleetstate) {
   auto request_ptr = make_shared<TransportationRequest<R2loc>>(
       42, 1, req_origin, req_dest, 0, inf, 0, inf);
 
+  VehicleState<R2loc> vs{
+      1, stoplist, space,
+      AvailableDispatcher::brute_force_total_traveltime_minimizing_dispatcher,
+      8};
+  auto sz = vs.stoplist.size();
+  auto events = vs.fast_forward_time(500);
+  auto sz2 = vs.stoplist.size();
 
-  VehicleState<R2loc> vs {1, stoplist, space, "brute_force", 8};
-  auto sz = vs.stoplist->size();
-  auto [events, sl] = vs.fast_forward_time(500);
-  auto sz2 = vs.stoplist->size();
-
-  auto [vid, stuff] = vs.handle_transportation_request_single_vehicle(request_ptr);
-  1 ==1 ;
+  auto [vid, stuff] =
+      vs.handle_transportation_request_single_vehicle(request_ptr);
+  1 == 1;
 }
-
 
 TEST(RidepyTest, unittest) {
   Manhattan2D space;
