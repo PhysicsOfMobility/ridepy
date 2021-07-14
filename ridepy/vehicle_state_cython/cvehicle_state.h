@@ -24,6 +24,13 @@ struct StopEventSpec {
   double timestamp;
 };
 
+
+enum class AvailableDispatcher {
+  brute_force_total_traveltime_minimizing_dispatcher,
+  simple_ellipse_dispatcher
+};
+
+
 template <typename Loc> class VehicleState {
   // private:
 
@@ -31,12 +38,12 @@ public:
   int vehicle_id;
   vector<Stop<Loc>> stoplist;
   int seat_capacity;
-  Dispatcher<Loc> dispatcher;
+  AbstractDispatcher<Loc> dispatcher;
   TransportSpace<Loc> &space;
 
   VehicleState(int vehicle_id, vector<Stop<Loc>> initial_stoplist,
                TransportSpace<Loc> &space,
-               AvailableDispatcher desired_dispatcher, int seat_capacity)
+               AbstractDispatcher<Loc> desired_dispatcher, int seat_capacity)
       : vehicle_id{vehicle_id}, stoplist{initial_stoplist},
         seat_capacity{seat_capacity}, space{space}, dispatcher{
                                                         desired_dispatcher} {}

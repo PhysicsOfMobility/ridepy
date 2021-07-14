@@ -349,34 +349,42 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
   }
 }
 
-enum class AvailableDispatcher {
-  brute_force_total_traveltime_minimizing_dispatcher,
-  simple_ellipse_dispatcher
+template <typename Loc> class AbstractDispatcher {
+public:
+  virtual InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) = 0;
+  virtual ~AbstractDispatcher(){};
 };
 
+// Pattern motivated by: https://stackoverflow.com/a/2592270
 
-
-template <typename Loc> class Dispatcher {
+template <typename Loc>
+class BruteForceTotalTravelTimeMinimizingDispatcher
+    : public AbstractDispatcher<Loc> {
 public:
-  Dispatcher(const AvailableDispatcher &desired_dispatcher_)
-      : desired_dispatcher{desired_dispatcher_} {}
   InsertionResult<Loc>
   operator()(std::shared_ptr<TransportationRequest<Loc>> request,
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
-    switch (desired_dispatcher) {
-    case AvailableDispatcher::
-        brute_force_total_traveltime_minimizing_dispatcher:
-      return brute_force_total_traveltime_minimizing_dispatcher(
-          request, stoplist, space, seat_capacity, debug);
-    case AvailableDispatcher::simple_ellipse_dispatcher:
-      return simple_ellipse_dispatcher(request, stoplist, space, seat_capacity,
-                                       debug);
-    }
+    return brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity, debug);
   }
-
-private:
-  const AvailableDispatcher desired_dispatcher;
 };
+
+template <typename Loc>
+class SimpleEllipseDispatcher
+    : public AbstractDispatcher<Loc> {
+public:
+  InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) {
+    return simple_ellipse_dispatcher(
+        request, stoplist, space, seat_capacity, debug);
+  }
+};
+
 } // namespace cstuff
 #endif // RIDEPY_CDISPATCHERS_H
