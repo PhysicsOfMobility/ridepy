@@ -15,9 +15,7 @@ cdef extern from "cvehicle_state.h" namespace 'cstuff':
         int vehicle_id
         double timestamp
 
-    cpdef enum class AvailableDispatcher:
-        brute_force_total_traveltime_minimizing_dispatcher
-        simple_ellipse_dispatcher
+
 
     cdef cppclass VehicleState[Loc]:
         int vehicle_id

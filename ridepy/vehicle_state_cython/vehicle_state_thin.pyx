@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 from ridepy.vehicle_state_cython.cvehicle_state cimport VehicleState as CVehicleState,\
-    StopEventSpec, AvailableDispatcher
+    StopEventSpec
 from libcpp.memory cimport unique_ptr, make_unique
 from libcpp.utility cimport pair
 from libcpp.memory cimport make_shared
@@ -57,6 +57,12 @@ cdef union UVehicleState:
 cdef union UStoplist:
     vector[CStop[R2loc]] c_stoplist_r2loc
     vector[CStop[int]] c_stoplist_int
+
+cdef extern from * namespace 'cstuff':
+     cpdef enum class AvailableDispatcher:
+         brute_force_total_traveltime_minimizing_dispatcher
+         simple_ellipse_dispatcher
+
 
 cdef class VehicleState:
     """
@@ -187,25 +193,23 @@ cdef class VehicleState:
                     <R2loc> request.destination, <double> request.pickup_timewindow_min, <double> request.pickup_timewindow_max,
                     <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max))
 
-            cdef vid = insertion_result_and_vid_r2loc.first
             self._ustoplist_tentative.c_stoplist_r2loc = insertion_result_and_vid_r2loc.second.new_stoplist
 
-            return vid, insertion_result_and_vid_r2loc.second.min_cost, \
+            return insertion_result_and_vid_r2loc.first, insertion_result_and_vid_r2loc.second.min_cost, \
                    (insertion_result_and_vid_r2loc.second.EAST_pu, insertion_result_and_vid_r2loc.second.LAST_pu,
                     insertion_result_and_vid_r2loc.second.EAST_do, insertion_result_and_vid_r2loc.second.LAST_do)
 
         if self.loc_type == LocType.INT:
             insertion_result_and_vid_int = dereference(
             self._uvstate.vstate_int).handle_transportation_request_single_vehicle(
-                make_shared[CTransportationRequest[R2loc]](
-                    <int> request.request_id, <double> request.creation_timestamp, <R2loc> request.origin,
-                    <R2loc> request.destination, <double> request.pickup_timewindow_min, <double> request.pickup_timewindow_max,
+                make_shared[CTransportationRequest[int]](
+                    <int> request.request_id, <double> request.creation_timestamp, <int> request.origin,
+                    <int> request.destination, <double> request.pickup_timewindow_min, <double> request.pickup_timewindow_max,
                     <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max))
 
-            cdef vid = insertion_result_and_vid_int.first
             self._ustoplist_tentative.c_stoplist_int = insertion_result_and_vid_int.second.new_stoplist
 
-            return vid, insertion_result_and_vid_int.second.min_cost, \
+            return insertion_result_and_vid_int.first, insertion_result_and_vid_int.second.min_cost, \
                    (insertion_result_and_vid_int.second.EAST_pu, insertion_result_and_vid_int.second.LAST_pu,
                     insertion_result_and_vid_int.second.EAST_do, insertion_result_and_vid_int.second.LAST_do)
 

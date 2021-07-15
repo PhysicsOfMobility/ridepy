@@ -65,7 +65,7 @@ from ridepy.data_structures_cython import (
 
 from ridepy.vehicle_state import VehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleStateThin
+from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleStateThin, AvailableDispatcher
 
 from ridepy.data_structures import TransportSpace
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
@@ -110,7 +110,7 @@ class FleetState(ABC):
         initial_locations: Union[Dict[int, int], Dict[int, Tuple[float, ...]]],
         vehicle_state_class: Union[Type[VehicleState], Type[CyVehicleState]],
         space: Union[TransportSpace, CyTransportSpace],
-        dispatcher: Dispatcher,
+        dispatcher: AvailableDispatcher,
         seat_capacities: Union[int, Dict[int, int]],
     ):
         """
@@ -205,7 +205,7 @@ class FleetState(ABC):
             for vehicle_id in initial_locations.keys()
         }
 
-        self._test_dispatcher(TransportationRequestCls)
+        #self._test_dispatcher(TransportationRequestCls)
 
     @classmethod
     def from_fleet(
@@ -213,7 +213,7 @@ class FleetState(ABC):
         *,
         fleet: Dict[int, VehicleState],
         space: Union[TransportSpace, CyTransportSpace],
-        dispatcher: Dispatcher,
+        dispatcher: AvailableDispatcher,
         validate: bool = True,
     ):
         """
@@ -282,7 +282,7 @@ class FleetState(ABC):
                     for stop in vehicle_state.stoplist
                 )
 
-            self._test_dispatcher(TransportationRequestCls)
+            #self._test_dispatcher(TransportationRequestCls)
 
         return self
 
