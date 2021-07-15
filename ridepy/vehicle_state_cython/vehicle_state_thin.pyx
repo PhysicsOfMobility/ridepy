@@ -55,8 +55,8 @@ cdef union UVehicleState:
 
 
 cdef union UStoplist:
-    cdef vector[CStop[R2loc]] c_stoplist_r2loc
-    cdef vector[CStop[int]] c_stoplist_int
+    vector[CStop[R2loc]] c_stoplist_r2loc
+    vector[CStop[int]] c_stoplist_int
 
 cdef class VehicleState:
     """
@@ -64,7 +64,7 @@ cdef class VehicleState:
     with its pure-python equivalent `.vehicle_state.VehicleState`.
     """
     cdef Stoplist initial_stoplist
-    cdef UStoplist _ustoplist_new
+    cdef UStoplist _ustoplist_tentative
     cdef UStoplist _ustoplist
     cdef TransportSpace _space
     cdef int _vehicle_id
@@ -129,12 +129,12 @@ cdef class VehicleState:
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
         logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
-
-        if self.loc_type = LocType.R2LOC:
-            cdef vector[StopEventSpec] res = dereference(
+        cdef vector[StopEventSpec] res
+        if self.loc_type == LocType.R2LOC:
+             res = dereference(
                 self._uvstate.vstate_r2loc).fast_forward_time(t)
-        elif self.loc_type = LocType.INT:
-            cdef vector[StopEventSpec] res = dereference(
+        elif self.loc_type == LocType.INT:
+            res = dereference(
                 self._uvstate.vstate_int).fast_forward_time(t)
         else:
             raise ValueError("bla")
@@ -175,25 +175,42 @@ cdef class VehicleState:
         # Logging the folloowing in this specific format is crucial for
         # `test/mpi_futures_fleet_state_test.py` to pass
         logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
+        cdef pair[int, InsertionResult[R2loc]] insertion_result_and_vid_r2loc
+        cdef pair[int, InsertionResult[int]] insertion_result_and_vid_int
+
+
         if self.loc_type == LocType.R2LOC:
-        cdef pair[int, InsertionResult[R2loc]] insertion_result_and_vid_r2loc = dereference(
+            insertion_result_and_vid_r2loc = dereference(
             self._uvstate.vstate_r2loc).handle_transportation_request_single_vehicle(
                 make_shared[CTransportationRequest[R2loc]](
                     <int> request.request_id, <double> request.creation_timestamp, <R2loc> request.origin,
                     <R2loc> request.destination, <double> request.pickup_timewindow_min, <double> request.pickup_timewindow_max,
                     <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max))
 
-        cdef vid = insertion_result_and_vid_r2loc.first
-        cdef InsertionResult[R2loc] insertion_result_r2loc = insertion_result_and_vid_r2loc.second
-        self.c_stoplist_new = insertion_result_r2loc.new_stoplist
+            cdef vid = insertion_result_and_vid_r2loc.first
+            self._ustoplist_tentative.c_stoplist_r2loc = insertion_result_and_vid_r2loc.second.new_stoplist
 
-        return vid, insertion_result_r2loc.min_cost, \
-               (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
-                insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+            return vid, insertion_result_and_vid_r2loc.second.min_cost, \
+                   (insertion_result_and_vid_r2loc.second.EAST_pu, insertion_result_and_vid_r2loc.second.LAST_pu,
+                    insertion_result_and_vid_r2loc.second.EAST_do, insertion_result_and_vid_r2loc.second.LAST_do)
+
+        if self.loc_type == LocType.INT:
+            insertion_result_and_vid_int = dereference(
+            self._uvstate.vstate_int).handle_transportation_request_single_vehicle(
+                make_shared[CTransportationRequest[R2loc]](
+                    <int> request.request_id, <double> request.creation_timestamp, <R2loc> request.origin,
+                    <R2loc> request.destination, <double> request.pickup_timewindow_min, <double> request.pickup_timewindow_max,
+                    <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max))
+
+            cdef vid = insertion_result_and_vid_int.first
+            self._ustoplist_tentative.c_stoplist_int = insertion_result_and_vid_int.second.new_stoplist
+
+            return vid, insertion_result_and_vid_int.second.min_cost, \
+                   (insertion_result_and_vid_int.second.EAST_pu, insertion_result_and_vid_int.second.LAST_pu,
+                    insertion_result_and_vid_int.second.EAST_do, insertion_result_and_vid_int.second.LAST_do)
 
     def select_new_stoplist(self):
-        #dereference(self._uvstate.vstate_r2loc).stoplist.reset()
-        dereference(self._uvstate.vstate_r2loc).stoplist = self.c_stoplist_new
+        dereference(self._uvstate.vstate_r2loc).stoplist = self._ustoplist_tentative.c_stoplist_r2loc
 
 
     property stoplist:
