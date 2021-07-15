@@ -5,8 +5,8 @@
 #ifndef RIDEPY_CVEHICLE_STATE_H
 #define RIDEPY_CVEHICLE_STATE_H
 
-#include "../../data_structures_cython/cdata_structures.h"
-#include "../spaces_cython/cspaces.h"
+#include "../data_structures_cython/cdata_structures.h"
+#include "../util/spaces_cython/cspaces.h"
 #include "../util/dispatchers_cython/cdispatchers.h"
 #include <functional>
 #include <memory>
@@ -38,12 +38,12 @@ public:
   int vehicle_id;
   vector<Stop<Loc>> stoplist;
   int seat_capacity;
-  AbstractDispatcher<Loc> dispatcher;
+  AbstractDispatcher<Loc> &dispatcher;
   TransportSpace<Loc> &space;
 
   VehicleState(int vehicle_id, vector<Stop<Loc>> initial_stoplist,
                TransportSpace<Loc> &space,
-               AbstractDispatcher<Loc> desired_dispatcher, int seat_capacity)
+               AbstractDispatcher<Loc> &desired_dispatcher, int seat_capacity)
       : vehicle_id{vehicle_id}, stoplist{initial_stoplist},
         seat_capacity{seat_capacity}, space{space}, dispatcher{
                                                         desired_dispatcher} {}
@@ -150,7 +150,7 @@ public:
     // logger.debug(f "Handling request #{request.request_id} with vehicle
     // {self._vehicle_id} from MPI rank {rank}")
     return make_pair(vehicle_id,
-                     dispatcher(request, stoplist, space, seat_capacity));
+                     (dispatcher)(request, stoplist, space, seat_capacity));
   }
 };
 } // namespace cstuff

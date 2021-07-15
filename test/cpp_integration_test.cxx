@@ -114,9 +114,10 @@ TEST(RidepyTest, integration_fleetstate) {
   auto request_ptr = make_shared<TransportationRequest<R2loc>>(
       42, 1, req_origin, req_dest, 0, inf, 0, inf);
 
+  auto dispatcher = BruteForceTotalTravelTimeMinimizingDispatcher<R2loc>();
   VehicleState<R2loc> vs{
       1, stoplist, space,
-      BruteForceTotalTravelTimeMinimizingDispatcher<R2loc>(),
+      dispatcher,
       8};
   auto sz = vs.stoplist.size();
   auto events = vs.fast_forward_time(500);
