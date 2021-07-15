@@ -113,7 +113,7 @@ class EventsJSONEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj) | {"event_name": obj.__class__.__name__}
+            return {"event_name": obj.__class__.__name__} | dataclasses.asdict(obj)
         else:
             return json.JSONEncoder.default(self, obj)
 
