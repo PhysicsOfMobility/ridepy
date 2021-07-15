@@ -28,6 +28,9 @@ from ridepy.util.dispatchers import (
 from ridepy.util.dispatchers_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
+
+from ridepy.vehicle_state_cython import AvailableDispatcher
+
 from ridepy.util.testing_utils import stoplist_from_properties
 from ridepy.vehicle_state import VehicleState as py_VehicleState
 from ridepy.vehicle_state_cython import VehicleState as cy_VehicleState
@@ -216,7 +219,7 @@ def test_sanity_in_graph():
             initial_locations={k: 0 for k in range(50)},
             seat_capacities=10,
             space=space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=AvailableDispatcher.brute_force_total_traveltime_minimizing_dispatcher,
             vehicle_state_class=cy_VehicleState,
         )
 

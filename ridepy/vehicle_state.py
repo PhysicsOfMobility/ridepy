@@ -151,7 +151,7 @@ class VehicleState:
             # stoplist is empty, only CPE is there. set CPE time to current time
             self.stoplist[0].estimated_arrival_time = t
 
-        return event_cache, self.stoplist
+        return event_cache
 
     def handle_transportation_request_single_vehicle(
         self, request: TransportationRequest
@@ -176,9 +176,14 @@ class VehicleState:
         logger.debug(
             f"Handling request #{request.request_id} with vehicle {self.vehicle_id} from MPI rank {rank}"
         )
-        return self.vehicle_id, *self.dispatcher(
+        min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do) = self.dispatcher(
             request=request,
             stoplist=self.stoplist,
             space=self.space,
             seat_capacity=self.seat_capacity,
         )
+        self.stoplist_tentative = new_stoplist
+        return self.vehicle_id, min_cost, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+
+    def select_new_stoplist(self):
+        self.stoplist = self.stoplist_tentative

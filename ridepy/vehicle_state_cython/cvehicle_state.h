@@ -5,8 +5,8 @@
 #ifndef RIDEPY_CVEHICLE_STATE_H
 #define RIDEPY_CVEHICLE_STATE_H
 
-#include "../../data_structures_cython/cdata_structures.h"
-#include "../spaces_cython/cspaces.h"
+#include "../data_structures_cython/cdata_structures.h"
+#include "../util/spaces_cython/cspaces.h"
 #include "../util/dispatchers_cython/cdispatchers.h"
 #include <functional>
 #include <memory>
