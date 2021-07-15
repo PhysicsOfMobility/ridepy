@@ -100,7 +100,9 @@ fs = SlowSimpleFleetState(
 # ## Process the results
 
 # + tags=[]
-stops, reqs = get_stops_and_requests(events=convert_events_to_dicts(events), space=space)
+stops, reqs = get_stops_and_requests(
+    events=convert_events_to_dicts(events), space=space
+)
 # -
 
 # # Some distributions
