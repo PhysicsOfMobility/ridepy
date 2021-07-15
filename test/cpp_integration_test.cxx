@@ -116,7 +116,7 @@ TEST(RidepyTest, integration_fleetstate) {
 
   VehicleState<R2loc> vs{
       1, stoplist, space,
-      BruteForceTotalTravelTimeMinimizingDispatcher<R2loc>(),
+      AvailableDispatcher::brute_force_total_traveltime_minimizing_dispatcher,
       8};
   auto sz = vs.stoplist.size();
   auto events = vs.fast_forward_time(500);

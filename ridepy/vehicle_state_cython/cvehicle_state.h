@@ -38,12 +38,12 @@ public:
   int vehicle_id;
   vector<Stop<Loc>> stoplist;
   int seat_capacity;
-  AbstractDispatcher<Loc> dispatcher;
+  AvailableDispatcher dispatcher;
   TransportSpace<Loc> &space;
 
   VehicleState(int vehicle_id, vector<Stop<Loc>> initial_stoplist,
                TransportSpace<Loc> &space,
-               AbstractDispatcher<Loc> desired_dispatcher, int seat_capacity)
+               AvailableDispatcher desired_dispatcher, int seat_capacity)
       : vehicle_id{vehicle_id}, stoplist{initial_stoplist},
         seat_capacity{seat_capacity}, space{space}, dispatcher{
                                                         desired_dispatcher} {}
@@ -149,8 +149,16 @@ public:
     // `test / mpi_futures_fleet_state_test.py` to pass
     // logger.debug(f "Handling request #{request.request_id} with vehicle
     // {self._vehicle_id} from MPI rank {rank}")
-    return make_pair(vehicle_id,
-                     dispatcher(request, stoplist, space, seat_capacity));
+    switch(dispatcher){
+      case AvailableDispatcher::
+        brute_force_total_traveltime_minimizing_dispatcher:
+        return make_pair(vehicle_id, brute_force_total_traveltime_minimizing_dispatcher(
+            request, stoplist, space, seat_capacity));
+      case AvailableDispatcher::
+        simple_ellipse_dispatcher:
+        return make_pair(vehicle_id, simple_ellipse_dispatcher(
+            request, stoplist, space, seat_capacity));
+    }
   }
 };
 } // namespace cstuff
