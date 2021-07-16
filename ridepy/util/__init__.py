@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 import random
 import string
@@ -176,3 +177,7 @@ def make_dict(item, raise_errors: bool = True) -> Dict:
 
 def make_repr(cls, dct):
     return f"{cls}(" + ", ".join((map(lambda s: f"{s[0]}={s[1]!r}", dct.items()))) + ")"
+
+
+def make_sim_id(params_json: str):
+    return hashlib.sha224(params_json.encode("ascii", errors="strict")).hexdigest()

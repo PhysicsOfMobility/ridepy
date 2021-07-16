@@ -81,7 +81,7 @@ simulation. For more detail, see :ref:`JSON IO`.  For each simulation run, a uni
 identfier is generated and the data is stored to ``<uuid>.jsonl`` for the events and
 ``<uuid>_params.json`` for the simulation parameters. The identifier hashes the
 parameter set, thereby allowing to continue an interrupted simulation set run later.
-The IDs generated can be retrieved using `SimulationSet.result_ids`. Alternatively the
+The IDs generated can be retrieved using `SimulationSet.simulation_ids`. Alternatively the
 filenames of the resulting JSONL/JSON files are also directly available through
 `SimulationSet.param_paths` and `SimulationSet.result_paths`.
 

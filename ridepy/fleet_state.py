@@ -462,14 +462,14 @@ class FleetState(ABC):
             # modify the best vehicle's stoplist
             # print(f"len of new stoplist={len(new_stoplist)}")
             self.fleet[best_vehicle].stoplist = new_stoplist
-            logger.debug("New stoplist: ")
-            logger.debug("[")
-            for stop in new_stoplist:
-                logger.debug(
-                    f"Stop({stop.estimated_arrival_time=}, {stop.location=}, {stop.request.request_id=},\n"
-                    f"{stop.action=}, {stop.time_window_min=}, {stop.time_window_max=}),"
-                )
-            logger.debug("]")
+            # logger.debug("New stoplist: ")
+            # logger.debug("[")
+            # for stop in new_stoplist:
+            #     logger.debug(
+            #         f"Stop({stop.estimated_arrival_time=}, {stop.location=}, {stop.request.request_id=},\n"
+            #         f"{stop.action=}, {stop.time_window_min=}, {stop.time_window_max=}),"
+            #     )
+            # logger.debug("]")
             return RequestAcceptanceEvent(
                 request_id=req.request_id,
                 timestamp=self.t,
@@ -490,15 +490,15 @@ class SlowSimpleFleetState(FleetState):
                 for vehicle_state in self.fleet.values()
             )
         )
-        for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
-            logger.debug(f"Stoplist of vehicle {vehicle_id} at time {t}: ")
-            logger.debug("[")
-            for stop in new_stoplist:
-                logger.debug(
-                    f"Stop({stop.estimated_arrival_time=}, {stop.location=}, {stop.request.request_id=},\n"
-                    f"{stop.action=}, {stop.time_window_min=}, {stop.time_window_max=}),"
-                )
-            logger.debug("]")
+        # for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
+        #     logger.debug(f"Stoplist of vehicle {vehicle_id} at time {t}: ")
+        #     logger.debug("[")
+        #     for stop in new_stoplist:
+        #         logger.debug(
+        #             f"Stop({stop.estimated_arrival_time=}, {stop.location=}, {stop.request.request_id=},\n"
+        #             f"{stop.action=}, {stop.time_window_min=}, {stop.time_window_max=}),"
+        #         )
+        #     logger.debug("]")
         # no need to swap the old stoplists of each vehicle with the new (fast-forwarded)
         # stoplists, because vehicle_state_class.fast_forward did that already.
         return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))

@@ -3,6 +3,7 @@ import os
 import re
 
 import itertools as it
+import numpy as np
 
 from ridepy.extras.io import (
     save_params_json,
@@ -64,14 +65,14 @@ def test_simulate(cython, tmp_path, capfd):
     assert 1 < len(set(pids)) <= os.cpu_count()
 
     n_sim = 8
-    assert len(simulation_set.result_ids) == n_sim
+    assert len(simulation_set.simulation_ids) == n_sim
     assert len(simulation_set.param_paths) == n_sim
-    assert len(simulation_set.result_paths) == n_sim
+    assert len(simulation_set.event_paths) == n_sim
     assert len(simulation_set) == n_sim
 
     assert all(
         path.exists()
-        for path in it.chain(simulation_set.param_paths, simulation_set.result_paths)
+        for path in it.chain(simulation_set.param_paths, simulation_set.event_paths)
     )
 
 
@@ -84,7 +85,7 @@ def test_io_simulate(tmp_path):
 
     simulation_set.run()
 
-    evs = read_events_json(simulation_set.result_paths[0])
+    evs = read_events_json(simulation_set.event_paths[0])
     params = read_params_json(simulation_set.param_paths[0])
     stops, requests = get_stops_and_requests(
         space=params["general"]["space"], events=evs
@@ -209,6 +210,52 @@ def test_param_scan_equivalent_to_pure_zip(tmp_path):
         {1: {"c": 100}, 2: {"z": 1000}},
         {1: {"c": 200}, 2: {"z": 2000}},
     ]
+
+
+def test_param_scan_dry_run(tmp_path):
+    get_simulation_set = lambda: SimulationSet(
+        base_params={
+            "general": {"n_vehicles": 1},
+            "request_generator": {
+                "max_pickup_delay": np.inf,
+                "max_delivery_delay_rel": np.inf,
+            },
+        },
+        product_params={"general": {"n_reqs": [5, 10]}},
+        data_dir=tmp_path,
+        debug=True,
+    )
+
+    simulation_set_dry_run = get_simulation_set()
+
+    simulation_set_dry_run.run(dry_run=True)
+
+    for i, (event_path, param_path) in enumerate(
+        zip(simulation_set_dry_run.event_paths, simulation_set_dry_run.param_paths), 1
+    ):
+        assert not param_path.exists()
+        assert not event_path.exists()
+
+    simulation_set = get_simulation_set()
+
+    simulation_set.run()
+
+    for i, (event_path, param_path) in enumerate(
+        zip(simulation_set.event_paths, simulation_set.param_paths), 1
+    ):
+        assert param_path.exists()
+        assert event_path.exists()
+
+        evs = read_events_json(event_path)
+        params = read_params_json(param_path)
+
+        stops, requests = get_stops_and_requests(
+            space=params["general"]["space"], events=evs
+        )
+        assert len(stops) == i * 5 * 2 + 2
+        assert len(requests) == i * 5
+
+    assert simulation_set.simulation_ids == simulation_set_dry_run.simulation_ids
 
 
 def test_simulation_set_validate(tmp_path):
