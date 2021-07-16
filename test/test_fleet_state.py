@@ -34,7 +34,7 @@ from ridepy.util.dispatchers_cython.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.util.spaces import Euclidean2D
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 
@@ -153,8 +153,7 @@ def test_slow_simple_fleet_state_from_fleet():
 
 
 @pytest.mark.parametrize("kind", ["python", "cython"])
-@pytest.mark.parametrize("FleetStateCls", [SlowSimpleFleetState, MPIFuturesFleetState])
-def test_reject_trivial_requests(kind, FleetStateCls):
+def test_reject_trivial_requests(kind):
     if kind == "python":
         space = Euclidean2D()
         dispatcher = brute_force_total_traveltime_minimizing_dispatcher
@@ -170,7 +169,7 @@ def test_reject_trivial_requests(kind, FleetStateCls):
         request_id=42, creation_timestamp=1337.0, origin=(4, 2), destination=(4, 2)
     )
 
-    fs = FleetStateCls(
+    fs = SlowSimpleFleetState(
         initial_locations={0: (0, 0)},
         seat_capacities=1,
         space=space,

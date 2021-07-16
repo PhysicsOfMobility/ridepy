@@ -7,7 +7,7 @@ import numpy as np
 
 from tabulate import tabulate
 
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.data_structures import (
     Stop,
     InternalRequest,
@@ -77,22 +77,6 @@ def test_brute_force_dispatcher_2d():
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(transportation_requests))
-
-
-def test_mpi_futures_fleet_state_simulate():
-    space = Euclidean2D()
-    rg = RandomRequestGenerator(rate=10, space=space)
-    reqs = list(it.islice(rg, 1000))
-    fs = MPIFuturesFleetState(
-        initial_locations={k: (0, 0) for k in range(10)},
-        seat_capacities=1,
-        space=space,
-        dispatcher=taxicab_dispatcher_drive_first,
-        vehicle_state_class=VehicleState,
-    )
-    events = list(fs.simulate(reqs, t_cutoff=20))
-    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
-    # print("\n".join(map(str, events)))
 
 
 def test_with_taxicab_dispatcher_simple_1():

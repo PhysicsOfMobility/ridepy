@@ -39,7 +39,7 @@ from ridepy.data_structures_cython import (
 )
 from ridepy.vehicle_state import VehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.extras.io import (
     create_params_json,
     save_events_json,
@@ -309,7 +309,6 @@ class SimulationSet:
         zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         cython: bool = True,
-        mpi: bool = False,
         debug: bool = False,
         max_workers: Optional[int] = None,
         process_chunksize: int = 1,
@@ -335,8 +334,6 @@ class SimulationSet:
             the simulation set, optional.
         cython
             Use cython.
-        mpi
-            Use MPIFuturesFleetState.
         debug
             Print debug info.
         max_workers
@@ -374,11 +371,7 @@ class SimulationSet:
             TransportationRequestCls = TransportationRequest
             VehicleStateCls = VehicleState
 
-        if mpi:
-            FleetStateCls = MPIFuturesFleetState
-        else:
-            FleetStateCls = SlowSimpleFleetState
-
+        FleetStateCls = SlowSimpleFleetState
         RequestGeneratorCls = RandomRequestGenerator
 
         self.default_base_params = dict(

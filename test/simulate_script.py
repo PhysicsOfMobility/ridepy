@@ -12,7 +12,7 @@ from ridepy.data_structures import (
 from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
 )
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState as PyVehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 from ridepy.util.dispatchers import (
@@ -40,13 +40,12 @@ def simulate_on_r2(
     seat_capacities,
     seed=0,
     request_kwargs={"max_pickup_delay": 3, "max_delivery_delay_rel": 1.9},
-    use_mpi=True,
     use_cython=True,
 ):
     random.seed(seed)
     np.random.seed(seed)
 
-    fleet_state_class = MPIFuturesFleetState if use_mpi else SlowSimpleFleetState
+    fleet_state_class = SlowSimpleFleetState
     dispatcher = (
         cy_brute_force_total_traveltime_minimizing_dispatcher
         if use_cython
@@ -103,7 +102,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--cython", action=argparse.BooleanOptionalAction, default=False
     )
-    parser.add_argument("--mpi", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args()
 
@@ -118,5 +116,4 @@ if __name__ == "__main__":
         seat_capacities=4,
         num_requests=N * 10,
         use_cython=args.cython,
-        use_mpi=args.mpi,
     )

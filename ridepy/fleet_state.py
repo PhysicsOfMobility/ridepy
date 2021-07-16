@@ -4,7 +4,6 @@ from collections import defaultdict
 
 import functools as ft
 import itertools as it
-from collections.abc import Sequence
 import operator as op
 import numpy as np
 
@@ -22,8 +21,6 @@ from typing import (
     Optional,
     Any,
 )
-from mpi4py import MPI
-from mpi4py.futures import MPICommExecutor
 
 import logging
 
@@ -80,7 +77,7 @@ class FleetState(ABC):
     To gain maximum computational efficiency, one can:
 
     * Subclass VehicleState and implement the main methods in Cython.
-    * Implement fast_forward and handle_request using distributed computing e.g. MPI (See MPIFuturesFleetState)
+    * Implement fast_forward and handle_request using distributed computing e.g. MPI
     """
 
     def _test_dispatcher(self, TransportationRequestCls):
@@ -518,49 +515,6 @@ class SlowSimpleFleetState(FleetState):
                 self.fleet.values(),
             ),
         )
-
-    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
-        ...
-
-
-class MPIFuturesFleetState(FleetState):
-    def fast_forward(self, t: float):
-        with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
-            if executor is not None:
-                events, new_stoplists = zip(
-                    *executor.map(
-                        ft.partial(self.vehicle_state_class.fast_forward_time, t=t),
-                        self.fleet.values(),
-                    )
-                )
-                # swap the old stoplists of each vehicle with the new (fast-forwarded) stoplists
-                for vehicle_id, new_stoplist in zip(self.fleet.keys(), new_stoplists):
-                    self.fleet[vehicle_id].stoplist = new_stoplist
-
-                return sorted(
-                    it.chain.from_iterable(events), key=op.attrgetter("timestamp")
-                )
-
-    def handle_transportation_request(
-        self, req: pyTransportationRequest
-    ) -> RequestEvent:
-        if req.origin == req.destination:
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
-
-        with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
-            # the executor is None in all the worker processes. Hence the following if statement
-            # ensures the .map() is called only from the main process.
-            if executor is not None:
-                return self._apply_request_solution(
-                    req,
-                    executor.map(
-                        ft.partial(
-                            self.vehicle_state_class.handle_transportation_request_single_vehicle,
-                            request=req,
-                        ),
-                        self.fleet.values(),
-                    ),
-                )
 
     def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
         ...
