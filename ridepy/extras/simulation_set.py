@@ -1,7 +1,5 @@
 import logging
-import sys
 import os
-import hashlib
 import warnings
 import loky
 
@@ -25,9 +23,9 @@ from pathlib import Path
 
 from ridepy.util import make_sim_id
 from ridepy.util.analytics import (
-    get_stops_and_requests,
     get_system_quantities,
     get_vehicle_quantities,
+    get_stops_and_requests_from_events_dataframe,
 )
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
@@ -51,7 +49,6 @@ from ridepy.extras.io import (
     create_params_json,
     save_events_json,
     read_params_json,
-    read_events_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,10 +60,6 @@ def make_file_path(sim_id: str, directory: Path, suffix: str):
 
 def get_params(directory: Path, sim_id: str, param_path_suffix: str = "_params.json"):
     return read_params_json(make_file_path(sim_id, directory, param_path_suffix))
-
-
-def get_events(directory: Path, sim_id: str, event_path_suffix: str = ".jsonl"):
-    return read_events_json(make_file_path(sim_id, directory, event_path_suffix))
 
 
 def perform_single_analysis(
@@ -107,10 +100,13 @@ def perform_single_analysis(
         params = get_params(data_dir, sim_id, param_path_suffix=param_path_suffix)
         space = params["general"]["space"]
 
-        events = get_events(data_dir, sim_id, event_path_suffix=event_path_suffix)
-
         if "stops" in tasks or "requests" in tasks:
-            stops, requests = get_stops_and_requests(events=events, space=space)
+            stops, requests = get_stops_and_requests_from_events_dataframe(
+                events_df=pd.read_json(
+                    make_file_path(sim_id, data_dir, event_path_suffix), lines=True
+                ),
+                space=space,
+            )
         else:
             stops = pd.read_parquet(stops_path)
             requests = pd.read_parquet(requests_path)
