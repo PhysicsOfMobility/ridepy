@@ -58,6 +58,10 @@ def make_file_path(sim_id: str, directory: Path, suffix: str):
     return directory / f"{sim_id}{suffix}"
 
 
+def get_params(directory: Path, sim_id: str, param_path_suffix: str = "_params.json"):
+    return read_params_json(make_file_path(sim_id, directory, param_path_suffix))
+
+
 def perform_single_analysis(
     sim_id: str,
     data_dir: Path,
@@ -93,7 +97,7 @@ def perform_single_analysis(
 
     system_quantities = {}
     if tasks:
-        params = read_params_json(make_file_path(sim_id, data_dir, param_path_suffix))
+        params = get_params(data_dir, sim_id, param_path_suffix=param_path_suffix)
         space = params["general"]["space"]
 
         if "stops" in tasks or "requests" in tasks:
