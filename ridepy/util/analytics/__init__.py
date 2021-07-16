@@ -1,22 +1,15 @@
-import dataclasses
 from collections import defaultdict
 
 from typing import Iterable, List, Optional, Dict, Any
 
-import operator as op
 import functools as ft
 import numpy as np
 import pandas as pd
 
-from numpy import nan
-
 from ridepy.data_structures import (
-    TransportationRequest,
-    ID,
-    Stop,
     TransportSpace,
 )
-from ridepy.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
+from ridepy.events import VehicleStateEndEvent, VehicleStateBeginEvent
 
 
 def _create_events_dataframe(events: Iterable[dict]) -> pd.DataFrame:
@@ -50,7 +43,7 @@ def _create_events_dataframe(events: Iterable[dict]) -> pd.DataFrame:
     -------
     events DataFrame, indexed by integer range
     """
-    return pd.DataFrame(events).set_index("event_type").reset_index()
+    return pd.DataFrame(events)
 
 
 def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
@@ -644,6 +637,45 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
     return stops
 
 
+def get_stops_and_requests_from_events_dataframe(
+    *, events_df: pd.DataFrame, space: TransportSpace
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Prepare stops and requests dataframes from an events dataframe.
+    For details on the returned dataframes see doc on outside-facing `get_stops_and_requests`.
+
+    Parameters
+    ----------
+    events_df
+        DataFrame indexed
+    space
+
+    Returns
+    -------
+    stops
+        dataframe indexed by `[vehicle_id, timestamp]` containing all stops
+    requests
+        dataframe indexed by `request_id` containing all requests
+    """
+    stops_df = _create_stoplist_dataframe(evs=events_df)
+    requests_df = _create_transportation_requests_dataframe(
+        evs=events_df, stops=stops_df, space=space
+    )
+
+    try:
+        stops_df = _add_locations_to_stoplist_dataframe(
+            reqs=requests_df, stops=stops_df, space=space
+        )
+    except KeyError:  # TODO document this
+        pass
+
+    stops_df = _add_insertion_stats_to_stoplist_dataframe(
+        reqs=requests_df, stops=stops_df, space=space
+    )
+
+    return stops_df, requests_df
+
+
 def get_stops_and_requests(
     *, events: List[dict], space: TransportSpace
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -659,17 +691,42 @@ def get_stops_and_requests(
 
     .. code-block::
 
-        Column           Dtype
-        ------           -----
-        vehicle_id       float64
-        timestamp        float64
-        delta_occupancy  float64
-        request_id       object
-        state_duration   float64
-        occupancy        float64
-        location         Union[float64, int, Tuple[float64]]
-        time_to_next     float64
-        dist_to_next     float64
+        Column                                       Dtype
+        ------                                       -----
+        vehicle_id                                 float64
+        stop_id                                      int64
+        timestamp                                  float64
+        delta_occupancy                            float64
+        request_id                                   int64
+        state_duration                             float64
+        occupancy                                  float64
+        location                                    object
+        dist_to_next                               float64
+        time_to_next                               float64
+        timestamp_submitted                        float64
+        insertion_index                            float64
+        leg_1_dist_service_time                    float64
+        leg_2_dist_service_time                    float64
+        leg_direct_dist_service_time               float64
+        detour_dist_service_time                   float64
+        leg_1_dist_submission_time                 float64
+        leg_2_dist_submission_time                 float64
+        leg_direct_dist_submission_time            float64
+        detour_dist_submission_time                float64
+        stoplist_length_submission_time            float64
+        stoplist_length_service_time               float64
+        avg_segment_dist_submission_time           float64
+        avg_segment_time_submission_time           float64
+        avg_segment_dist_service_time              float64
+        avg_segment_time_service_time              float64
+        system_stoplist_length_submission_time     float64
+        system_stoplist_length_service_time        float64
+        avg_system_segment_dist_submission_time    float64
+        avg_system_segment_time_submission_time    float64
+        avg_system_segment_dist_service_time       float64
+        avg_system_segment_time_service_time       float64
+        relative_insertion_position                float6
+
 
     The `requests` DataFrame returned has the following schema:
 
@@ -716,24 +773,9 @@ def get_stops_and_requests(
         dataframe indexed by `request_id` containing all requests
     """
 
-    events_df = _create_events_dataframe(events=events)
-    stops_df = _create_stoplist_dataframe(evs=events_df)
-    requests_df = _create_transportation_requests_dataframe(
-        evs=events_df, stops=stops_df, space=space
+    return get_stops_and_requests_from_events_dataframe(
+        events_df=_create_events_dataframe(events=events), space=space
     )
-
-    try:
-        stops_df = _add_locations_to_stoplist_dataframe(
-            reqs=requests_df, stops=stops_df, space=space
-        )
-    except KeyError:
-        pass
-
-    stops_df = _add_insertion_stats_to_stoplist_dataframe(
-        reqs=requests_df, stops=stops_df, space=space
-    )
-
-    return stops_df, requests_df
 
 
 def get_vehicle_quantities(stops: pd.DataFrame, requests: pd.DataFrame) -> pd.DataFrame:

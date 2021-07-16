@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 import os
 import re
@@ -18,7 +19,7 @@ from ridepy.extras.spaces import (
 from ridepy.extras.simulation_set import (
     SimulationSet,
 )
-from ridepy.util.analytics import get_stops_and_requests
+from ridepy.util.analytics import get_stops_and_requests, get_stops_and_requests_from_events_dataframe
 from ridepy.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Graph as CyGraph,
@@ -87,10 +88,16 @@ def test_io_simulate(tmp_path):
 
     evs = read_events_json(simulation_set.event_paths[0])
     params = read_params_json(simulation_set.param_paths[0])
-    stops, requests = get_stops_and_requests(
+    stops1, requests1 = get_stops_and_requests(
         space=params["general"]["space"], events=evs
     )
-    print(stops)
+
+    stops2, requests2 = get_stops_and_requests_from_events_dataframe(
+        space=params["general"]["space"], events_df=pd.read_json(simulation_set.event_paths[0], lines=True)
+    )
+
+    pd.testing.assert_frame_equal(stops1, stops2)
+    pd.testing.assert_frame_equal(requests1, requests2)
 
 
 @pytest.mark.parametrize("cython", [True, False])
