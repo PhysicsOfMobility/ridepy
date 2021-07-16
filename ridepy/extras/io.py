@@ -123,6 +123,7 @@ class EventsJSONEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 def create_params_json(*, params: dict, sort=True) -> str:
     """
     Create a dictionary containing simulation parameters to pretty JSON.
