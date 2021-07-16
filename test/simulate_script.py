@@ -26,6 +26,7 @@ from ridepy.util.spaces import Euclidean2D as pyEuclidean2D
 from ridepy.util.spaces_cython import Euclidean2D as cyEuclidean2D
 
 from ridepy.util.analytics import get_stops_and_requests
+from ridepy.util.testing_utils import convert_events_to_dicts
 import logging
 
 sim_logger = logging.getLogger("ridepy")
@@ -83,7 +84,9 @@ def simulate_on_r2(
 
     print(f"Simulating took {tock-tick} seconds")
 
-    stops, requests = get_stops_and_requests(events=events, space=space)
+    stops, requests = get_stops_and_requests(
+        events=convert_events_to_dicts(events), space=space
+    )
     del events
 
     num_requests = len(requests)

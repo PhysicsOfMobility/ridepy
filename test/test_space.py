@@ -56,6 +56,30 @@ def test_Euclidean2D():
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
 
 
+def test_Euclidean2D_smart_vectorize():
+    space = Euclidean2D()
+    df1 = pd.DataFrame(
+        [
+            {"a": (0, 0), "b": (0, 1)},
+            {"a": (0, 0), "b": (0, 0)},
+            {"a": (0, 0), "b": (1, 1)},
+        ]
+    )
+
+    df2 = pd.DataFrame(
+        [
+            {"a": [0, 0], "b": [0, 1]},
+            {"a": [0, 0], "b": [0, 0]},
+            {"a": [0, 0], "b": [1, 1]},
+        ]
+    )
+
+    for df in [df1, df2]:
+        np.testing.assert_array_equal(
+            space.d(df.a.to_list(), df.b.to_list()), np.array([1, 0, m.sqrt(2)])
+        )
+
+
 # @pytest.mark.skip
 def test_grid():
     space = Graph.from_nx(make_nx_grid())

@@ -16,7 +16,7 @@ from ridepy.data_structures import (
 from ridepy.events import Event, VehicleStateEndEvent, VehicleStateBeginEvent
 
 
-def _create_events_dataframe(events: Iterable[Event]) -> pd.DataFrame:
+def _create_events_dataframe(events: Iterable[dict]) -> pd.DataFrame:
     """
     Create a DataFrame of all logged events with their properties at columns.
 
@@ -46,13 +46,7 @@ def _create_events_dataframe(events: Iterable[Event]) -> pd.DataFrame:
     -------
     events DataFrame, indexed by integer range
     """
-
-    return pd.DataFrame(
-        map(
-            lambda ev: dict(dataclasses.asdict(ev), event_type=ev.__class__.__name__),
-            events,
-        )
-    )
+    return pd.DataFrame(events).set_index("event_type").reset_index()
 
 
 def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
@@ -422,7 +416,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     ]
 
 
-def get_stops_and_requests(*, events: List[Event], space: TransportSpace):
+def get_stops_and_requests(*, events: List[dict], space: TransportSpace):
     """
     Prepare two DataFrames, containing stops and requests.
 
