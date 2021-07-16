@@ -19,10 +19,6 @@ from ridepy.util.spaces_cython.spaces cimport TransportSpace
 from typing import List, Union
 from copy import deepcopy
 
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -119,7 +115,6 @@ cdef class VehicleState:
         """
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
-        logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
         event_cache = []
 
         last_stop = None
@@ -199,9 +194,6 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        # Logging the folloowing in this specific format is crucial for
-        # `test/mpi_futures_fleet_state_test.py` to pass
-        logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
         ret = self._vehicle_id, *self._dispatcher(
                 request,
                 self._stoplist,

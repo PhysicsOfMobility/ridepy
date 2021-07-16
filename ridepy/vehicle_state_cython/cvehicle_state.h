@@ -24,13 +24,6 @@ struct StopEventSpec {
   double timestamp;
 };
 
-
-enum class AvailableDispatcher {
-  brute_force_total_traveltime_minimizing_dispatcher,
-  simple_ellipse_dispatcher
-};
-
-
 template <typename Loc> class VehicleState {
   // private:
 
@@ -68,8 +61,6 @@ public:
     */
     // TODO assert that the CPATs are updated and the stops sorted accordingly
     // TODO optionally validate the travel time velocity constraints
-    // logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank
-    // {rank}")
     vector<StopEventSpec> event_cache;
 
     Stop<Loc> last_stop;
@@ -145,10 +136,6 @@ public:
     -------
     The `SingleVehicleSolution` for the respective vehicle.
     */
-    // Logging the following in this specific format is crucial for
-    // `test / mpi_futures_fleet_state_test.py` to pass
-    // logger.debug(f "Handling request #{request.request_id} with vehicle
-    // {self._vehicle_id} from MPI rank {rank}")
     return make_pair(vehicle_id,
                      (dispatcher)(request, stoplist, space, seat_capacity));
   }

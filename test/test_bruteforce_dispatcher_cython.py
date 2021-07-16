@@ -25,12 +25,10 @@ from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcherR2loc
 from ridepy.util.testing_utils import stoplist_from_properties
 from ridepy.vehicle_state import VehicleState as py_VehicleState
-from ridepy.vehicle_state_cython import VehicleState as cy_VehicleState
+from ridepy.vehicle_state_cython import VehicleStateThin as cy_VehicleState
 
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.extras.spaces import make_nx_grid
@@ -101,10 +99,9 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     stoplist = stoplist_from_properties(
         stoplist_properties=stoplist_properties, kind="cython", space=space
     )
-
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = cy_brute_force_total_traveltime_minimizing_dispatcher(
+    cythonic_solution = BruteForceTotalTravelTimeMinimizingDispatcherR2loc()(
         request, stoplist, space, seat_capacity
     )
     cy_min_cost, _, cy_timewindows = cythonic_solution
@@ -164,7 +161,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             initial_locations={7: init_loc},
             seat_capacities=10,
             space=cy_space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcherR2loc(),
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(
@@ -216,7 +213,7 @@ def test_sanity_in_graph():
             initial_locations={k: 0 for k in range(50)},
             seat_capacities=10,
             space=space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcherR2loc(),
             vehicle_state_class=cy_VehicleState,
         )
 

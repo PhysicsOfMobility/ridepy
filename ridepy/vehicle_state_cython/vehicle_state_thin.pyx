@@ -4,7 +4,6 @@ from ridepy.util import MAX_SEAT_CAPACITY
 
 from ridepy.events import PickupEvent, DeliveryEvent, InternalEvent
 from ridepy.data_structures import (
-    Dispatcher,
     SingleVehicleSolution,
     TransportationRequest as pyTransportationRequest,
 )
@@ -22,19 +21,13 @@ from ridepy.data_structures_cython.cdata_structures cimport InsertionResult, \
     Request as CRequest
 
 from ridepy.util.spaces_cython.spaces cimport TransportSpace
+from ridepy.util.dispatchers_cython.dispatchers cimport Dispatcher
 
 from typing import List, Union
 from copy import deepcopy
 
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-
 import logging
 logger = logging.getLogger(__name__)
-
-
-
 
 from ridepy.vehicle_state_cython.cvehicle_state cimport VehicleState as CVehicleState, StopEventSpec
 from libcpp.memory cimport unique_ptr, make_unique
@@ -75,7 +68,7 @@ cdef class VehicleState:
         int vehicle_id,
         initial_stoplist,
         TransportSpace space,
-        dispatcher,
+        Dispatcher dispatcher,
         int seat_capacity,
     ):
         # Create a cython stoplist object from initial_stoplist
@@ -92,12 +85,12 @@ cdef class VehicleState:
             self.loc_type = LocType.R2LOC
             self._uvstate._vstate_r2loc = make_unique[CVehicleState[R2loc]](
                 vehicle_id, self.initial_stoplist.ustoplist._stoplist_r2loc,
-                dereference(space.u_space.space_r2loc_ptr), "brute_force", seat_capacity)
+                dereference(space.u_space.space_r2loc_ptr), dereference(dispatcher.u_dispatcher.dispatcher_r2loc_ptr), seat_capacity)
         elif space.loc_type == LocType.INT:
             self.loc_type = LocType.INT
             self._uvstate._vstate_int = make_unique[CVehicleState[int]](
                 vehicle_id, self.initial_stoplist.ustoplist._stoplist_int,
-                dereference(space.u_space.space_int_ptr), "brute_force", seat_capacity)
+                dereference(space.u_space.space_int_ptr), dereference(dispatcher.u_dispatcher.dispatcher_int_ptr), seat_capacity)
         else:
             raise ValueError("This line should never have been reached")
 
@@ -122,7 +115,6 @@ cdef class VehicleState:
         """
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
-        logger.debug(f"Fast forwarding vehicle {self._vehicle_id} from MPI rank {rank}")
 
         cdef vector[StopEventSpec] res = dereference(
             self._uvstate._vstate_r2loc).fast_forward_time(t)
@@ -160,9 +152,6 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        # Logging the folloowing in this specific format is crucial for
-        # `test/mpi_futures_fleet_state_test.py` to pass
-        logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
         cdef pair[int, InsertionResult[R2loc]] insertion_result_and_vid_r2loc = dereference(
             self._uvstate._vstate_r2loc).handle_transportation_request_single_vehicle(
                 make_shared[CTransportationRequest[R2loc]](

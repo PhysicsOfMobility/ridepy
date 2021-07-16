@@ -12,6 +12,12 @@ from ridepy.util.dispatchers_cython.cdispatchers cimport \
     brute_force_total_traveltime_minimizing_dispatcher as c_brute_force_total_traveltime_minimizing_dispatcher, \
     simple_ellipse_dispatcher as c_simple_ellipse_dispatcher
 
+from .cdispatchers cimport (
+AbstractDispatcher as CAbstractDispatcher,
+BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
+SimpleEllipseDispatcher as CSimpleEllipseDispatcher,
+)
+
 # Just like we did in data_structures_cython.Stop, we would have liked to have an union holding
 # InsertionResult[R2loc] and InsertionResult[int] inside brute_force_total_traveltime_minimizing_dispatcher. However,
 # that is nontrivial because any non-POD union member needs to have explicitly defined constructor and copy constructor
@@ -73,3 +79,60 @@ cpdef simple_ellipse_dispatcher(TransportationRequest cy_request, Stoplist stopl
     else:
         raise ValueError("This line should never have been reached")
 
+
+cdef class Dispatcher:
+    def __init__(self, loc_type):
+        if loc_type == LocType.INT:
+            self.loc_type = LocType.INT
+        elif loc_type == LocType.R2LOC:
+            self.loc_type = LocType.R2LOC
+        else:
+            raise ValueError("This line should never have been reached")
+
+
+cdef class BruteForceTotalTravelTimeMinimizingDispatcherR2loc(Dispatcher):
+    def __cinit__(self):
+        self.loc_type = LocType.R2LOC
+        self.derived_ptr = self.u_dispatcher.dispatcher_r2loc_ptr = new CBruteForceTotalTravelTimeMinimizingDispatcher[R2loc]()
+
+    def __init__(self, *args, **kwargs):
+        Dispatcher.__init__(self, loc_type=LocType.R2LOC)
+
+    def __call__(self, TransportationRequest cy_request, Stoplist stoplist, TransportSpace space, int seat_capacity, bint debug = False ):
+
+
+    def __dealloc__(self):
+        del self.derived_ptr
+
+cdef class BruteForceTotalTravelTimeMinimizingDispatcherInt(Dispatcher):
+    def __cinit__(self):
+        self.loc_type = LocType.INT
+        self.derived_ptr = self.u_dispatcher.dispatcher_int_ptr = new CBruteForceTotalTravelTimeMinimizingDispatcher[int]()
+
+    def __init__(self, *args, **kwargs):
+        Dispatcher.__init__(self, loc_type=LocType.INT)
+
+    def __dealloc__(self):
+        del self.derived_ptr
+
+cdef class SimpleEllipseDispatcherR2loc(Dispatcher):
+    def __cinit__(self):
+        self.loc_type = LocType.R2LOC
+        self.derived_ptr = self.u_dispatcher.dispatcher_r2loc_ptr = new CSimpleEllipseDispatcher[R2loc]()
+
+    def __init__(self, *args, **kwargs):
+        Dispatcher.__init__(self, loc_type=LocType.R2LOC)
+
+    def __dealloc__(self):
+        del self.derived_ptr
+
+cdef class SimpleEllipseDispatcherInt(Dispatcher):
+    def __cinit__(self):
+        self.loc_type = LocType.INT
+        self.derived_ptr = self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[int]()
+
+    def __init__(self, *args, **kwargs):
+        Dispatcher.__init__(self, loc_type=LocType.INT)
+
+    def __dealloc__(self):
+        del self.derived_ptr

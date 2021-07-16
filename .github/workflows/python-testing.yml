@@ -29,7 +29,7 @@ jobs:
 
     - name: Install system dependencies using apt
       run: |
-        sudo apt-get update && sudo apt-get -y install openmpi-bin openmpi-common libopenmpi-dev libboost-all-dev build-essential
+        sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
 
 
     - name: Install Dependencies
@@ -40,10 +40,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -vvv --junitxml=test-junit-reports/result.xml test/
-
-    - name: Test OpenMPI stuff
-      run: |
-        mpirun --host localhost:4 -n 4  python -m mpi4py.futures test/mpi_futures_fleet_state_test.py
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1.9
