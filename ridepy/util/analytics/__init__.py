@@ -1,11 +1,14 @@
 import dataclasses
 from collections import defaultdict
 
-import operator as op
 from typing import Iterable, List, Optional, Dict, Any
 
+import operator as op
+import functools as ft
 import numpy as np
 import pandas as pd
+
+from numpy import nan
 
 from ridepy.data_structures import (
     TransportationRequest,
@@ -22,21 +25,22 @@ def _create_events_dataframe(events: Iterable[dict]) -> pd.DataFrame:
 
     The schema of the returned DataFrame is the following, where
     the index is an unnamed integer range index.
-    ```
-    Column                   Dtype
-    ------                   -----
-    request_id               int64
-    timestamp                float64
-    vehicle_id               float64
-    event_type               object
-    location                 Union[int, float64, Tuple[float64]]
-    origin                   Union[int, float64, Tuple[float64]]
-    destination              Union[int, float64, Tuple[float64]]
-    pickup_timewindow_min    float64
-    pickup_timewindow_max    float64
-    delivery_timewindow_min  float64
-    delivery_timewindow_max  float64
-    ```
+
+    .. code-block::
+
+        Column                   Dtype
+        ------                   -----
+        request_id               int64
+        timestamp                float64
+        vehicle_id               float64
+        event_type               object
+        location                 Union[int, float64, Tuple[float64]]
+        origin                   Union[int, float64, Tuple[float64]]
+        destination              Union[int, float64, Tuple[float64]]
+        pickup_timewindow_min    float64
+        pickup_timewindow_max    float64
+        delivery_timewindow_min  float64
+        delivery_timewindow_max  float64
 
     Parameters
     ----------
@@ -59,16 +63,17 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     The schema of the returned DataFrame is the following, where
     `vehicle_id` and `timestamp` are MultiIndex levels.
 
-    Column           Dtype
-    ------           -----
-    vehicle_id       float64
-    timestamp        float64
-    delta_occupancy  float64
-    request_id       object
-    state_duration   float64
-    occupancy        float64
-    location         Union[float64, int, Tuple[float64]]
-    ```
+    .. code-block::
+
+        Column           Dtype
+        ------           -----
+        vehicle_id       float64
+        timestamp        float64
+        delta_occupancy  float64
+        request_id       object
+        state_duration   float64
+        occupancy        float64
+        location         Union[float64, int, Tuple[float64]]
 
     Parameters
     ----------
@@ -178,34 +183,35 @@ def _create_transportation_requests_dataframe(
 
     The schema of the returned DataFrame is the following,
     where `request_id` is the index.
-    ```
-    Column                               Dtype
-    ------                               -----
-    request_id                            int64
-    (submitted, timestamp)                float64
-    (submitted, origin)                   float64
-    (submitted, destination)              float64
-    (submitted, pickup_timewindow_min)    float64
-    (submitted, pickup_timewindow_max)    float64
-    (submitted, delivery_timewindow_min)  float64
-    (submitted, delivery_timewindow_max)  float64
-    (submitted, direct_travel_distance)   float64
-    (submitted, direct_travel_time)       float64
-    (accepted, timestamp)                 float64
-    (accepted, origin)                    float64
-    (accepted, destination)               float64
-    (accepted, pickup_timewindow_min)     float64
-    (accepted, pickup_timewindow_max)     float64
-    (accepted, delivery_timewindow_min)   float64
-    (accepted, delivery_timewindow_max)   float64
-    (rejected, timestamp)                 float64
-    (inferred, relative_travel_time)      float64
-    (inferred, travel_time)               float64
-    (inferred, waiting_time)              float64
-    (serviced, timestamp_dropoff)         float64
-    (serviced, timestamp_pickup)          float64
-    (serviced, vehicle_id)                float64
-    ```
+
+    .. code-block::
+
+        Column                               Dtype
+        ------                               -----
+        request_id                            int64
+        (submitted, timestamp)                float64
+        (submitted, origin)                   float64
+        (submitted, destination)              float64
+        (submitted, pickup_timewindow_min)    float64
+        (submitted, pickup_timewindow_max)    float64
+        (submitted, delivery_timewindow_min)  float64
+        (submitted, delivery_timewindow_max)  float64
+        (submitted, direct_travel_distance)   float64
+        (submitted, direct_travel_time)       float64
+        (accepted, timestamp)                 float64
+        (accepted, origin)                    float64
+        (accepted, destination)               float64
+        (accepted, pickup_timewindow_min)     float64
+        (accepted, pickup_timewindow_max)     float64
+        (accepted, delivery_timewindow_min)   float64
+        (accepted, delivery_timewindow_max)   float64
+        (rejected, timestamp)                 float64
+        (inferred, relative_travel_time)      float64
+        (inferred, travel_time)               float64
+        (inferred, waiting_time)              float64
+        (serviced, timestamp_dropoff)         float64
+        (serviced, timestamp_pickup)          float64
+        (serviced, vehicle_id)                float64
 
     Parameters
     ----------
@@ -338,21 +344,22 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     Add non-internal stops' locations to the stoplist DataFrame as inferred
     from the *accepted* requests.
 
-    The schema of the returned DataFrame is the following, where
+    The schema of the returned DataFrame is a superset of the following, where
     `vehicle_id` and `timestamp` are MultiIndex levels.
-    ```
-    Column           Dtype
-    ------           -----
-    vehicle_id       float64
-    timestamp        float64
-    delta_occupancy  float64
-    request_id       object
-    state_duration   float64
-    occupancy        float64
-    location         Union[float64, int, Tuple[float64]]
-    time_to_next     float64
-    dist_to_next     float64
-    ```
+
+    .. code-block::
+
+        Column           Dtype
+        ------           -----
+        vehicle_id       float64
+        timestamp        float64
+        delta_occupancy  float64
+        request_id       object
+        state_duration   float64
+        occupancy        float64
+        location         Union[float64, int, Tuple[float64]]
+        time_to_next     float64
+        dist_to_next     float64
 
     Parameters
     ----------
@@ -416,7 +423,230 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     ]
 
 
-def get_stops_and_requests(*, events: List[dict], space: TransportSpace):
+def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
+    """
+
+    The schema of the returned DataFrame is a superset of the following, where
+    `vehicle_id` and `timestamp` are MultiIndex levels.
+
+    .. code-block::
+
+        Column                                       Dtype
+        ------                                       -----
+        vehicle_id                                 float64
+        stop_id                                      int64
+        timestamp                                  float64
+        delta_occupancy                            float64
+        request_id                                   int64
+        state_duration                             float64
+        occupancy                                  float64
+        location                                    object
+        dist_to_next                               float64
+        time_to_next                               float64
+        timestamp_submitted                        float64
+        insertion_index                            float64
+        leg_1_dist_service_time                    float64
+        leg_2_dist_service_time                    float64
+        leg_direct_dist_service_time               float64
+        detour_dist_service_time                   float64
+        leg_1_dist_submission_time                 float64
+        leg_2_dist_submission_time                 float64
+        leg_direct_dist_submission_time            float64
+        detour_dist_submission_time                float64
+        stoplist_length_submission_time            float64
+        stoplist_length_service_time               float64
+        avg_segment_dist_submission_time           float64
+        avg_segment_time_submission_time           float64
+        avg_segment_dist_service_time              float64
+        avg_segment_time_service_time              float64
+        system_stoplist_length_submission_time     float64
+        system_stoplist_length_service_time        float64
+        avg_system_segment_dist_submission_time    float64
+        avg_system_segment_time_submission_time    float64
+        avg_system_segment_dist_service_time       float64
+        avg_system_segment_time_service_time       float64
+        relative_insertion_position                float64
+
+
+
+    Parameters
+    ----------
+    reqs
+        requests  DataFrame
+    stops
+        stops DataFrame missing stop locations for non-internal stops
+
+    Returns
+    -------
+    stoplist DataFrame with added stop locations indexed by `vehicle_id` and `timestamp`
+    """
+
+    stops = pd.merge(
+        stops,
+        reqs.submitted.timestamp,
+        how="left",
+        left_on="request_id",
+        right_index=True,
+        suffixes=(None, "_submitted"),
+    )
+    actual_stops = stops.dropna(subset=("timestamp_submitted",))
+
+    def _properties_at_time(stop, full_sl, scope):
+        t = stop["timestamp"]
+        ts = stop["timestamp_submitted"]
+        pu = True if stop["delta_occupancy"] > 0 else False
+
+        get_i_pu = lambda _sl, stop: (_sl["request_id"] == stop["request_id"]).argmax()
+        get_i_do = (
+            lambda _sl, stop: len(_sl)
+            - (_sl["request_id"] == stop["request_id"])[::-1].argmax()
+            - 1
+        )
+
+        sl = full_sl[
+            (full_sl["timestamp_submitted"] <= t) & (t <= full_sl["timestamp"])
+        ]
+
+        sl_s = full_sl[
+            (full_sl["timestamp_submitted"] <= ts) & (ts <= full_sl["timestamp"])
+        ]
+
+        if pu:
+            i_pu_sl = get_i_pu(sl, stop)
+            i_pu_sl_s = get_i_pu(sl_s, stop)
+            i_do_sl_s = get_i_do(sl_s, stop)
+
+            idx_pu = sl_s.iloc[i_pu_sl_s].name
+            idx_do = sl_s.iloc[i_do_sl_s].name
+            assert idx_pu == stop.name
+
+            i_stop_sl = i_pu_sl
+            i_stop_sl_s = i_pu_sl_s
+        else:
+            i_do_sl = get_i_do(sl, stop)
+
+            i_pu_sl_s = get_i_pu(sl_s, stop)
+            i_do_sl_s = get_i_do(sl_s, stop)
+
+            idx_pu = sl_s.iloc[i_pu_sl_s].name
+            idx_do = sl_s.iloc[i_do_sl_s].name
+            assert idx_do == stop.name
+
+            i_stop_sl = i_do_sl
+            i_stop_sl_s = i_do_sl_s
+
+        res = {}
+
+        if scope != "system":
+            res["insertion_index"] = len(sl_s[sl_s["timestamp"] < t])
+
+            def _get_legs(i_stop, _sl, time_desc):
+                l_sl = len(_sl)
+                if i_stop == 0 == l_sl - 1:
+                    stop_leg_1 = 0
+                    stop_leg_2 = 0
+                    stop_leg_d = 0
+                elif i_stop == 0:
+                    stop_leg_1 = 0
+                    stop_leg_2 = space.d(
+                        stop["location"], _sl.iloc[i_stop + 1]["location"]
+                    )
+                    stop_leg_d = stop_leg_1
+                elif i_stop == l_sl - 1:
+                    stop_leg_1 = space.d(
+                        _sl.iloc[i_stop - 1]["location"], stop["location"]
+                    )
+                    stop_leg_2 = 0
+                    stop_leg_d = stop_leg_2
+                else:
+                    stop_leg_1 = space.d(
+                        _sl.iloc[i_stop - 1]["location"], stop["location"]
+                    )
+                    stop_leg_2 = space.d(
+                        stop["location"], _sl.iloc[i_stop + 1]["location"]
+                    )
+                    stop_leg_d = space.d(
+                        _sl.iloc[i_stop - 1]["location"],
+                        _sl.iloc[i_stop + 1]["location"],
+                    )
+
+                stop_detour = stop_leg_1 + stop_leg_2 - stop_leg_d
+
+                return {
+                    f"leg_1_dist_{time_desc}_time": stop_leg_1,
+                    f"leg_2_dist_{time_desc}_time": stop_leg_2,
+                    f"leg_direct_dist_{time_desc}_time": stop_leg_d,
+                    f"detour_dist_{time_desc}_time": stop_detour,
+                }
+
+            res |= _get_legs(i_stop_sl, sl, "service")
+            res |= _get_legs(i_stop_sl_s, sl_s, "submission")
+
+        if pu:
+            sl.drop([idx_pu, idx_do], inplace=True)
+            sl_s.drop([idx_pu, idx_do], inplace=True)
+        else:
+            sl.drop(idx_do, inplace=True)
+            sl_s.drop([idx_pu, idx_do], inplace=True)
+
+        res[
+            f"{'system_' if scope=='system' else ''}stoplist_length_submission_time"
+        ] = len(sl_s)
+        res[
+            f"{'system_' if scope=='system' else ''}stoplist_length_service_time"
+        ] = len(sl)
+
+        res[
+            f"avg_{'system_' if scope=='system' else ''}segment_dist_submission_time"
+        ] = sl_s["dist_to_next"].mean()
+        res[
+            f"avg_{'system_' if scope=='system' else ''}segment_time_submission_time"
+        ] = sl_s["time_to_next"].mean()
+
+        res[
+            f"avg_{'system_' if scope=='system' else ''}segment_dist_service_time"
+        ] = sl["dist_to_next"].mean()
+        res[
+            f"avg_{'system_' if scope=='system' else ''}segment_time_service_time"
+        ] = sl["time_to_next"].mean()
+
+        return res
+
+    stops = stops.merge(
+        actual_stops.groupby("vehicle_id").apply(
+            lambda df: df.apply(
+                ft.partial(_properties_at_time, full_sl=df, scope="vehicle"),
+                axis=1,
+                result_type="expand",
+            )
+        ),
+        left_index=True,
+        right_index=True,
+        how="left",
+    )
+
+    stops = stops.merge(
+        actual_stops.apply(
+            ft.partial(_properties_at_time, full_sl=stops, scope="system"),
+            axis=1,
+            result_type="expand",
+        ),
+        left_index=True,
+        right_index=True,
+        how="left",
+    )
+
+    with pd.option_context("mode.use_inf_as_na", True):
+        stops["relative_insertion_position"] = (
+            stops["insertion_index"] / stops["stoplist_length_submission_time"]
+        ).fillna(1)
+
+    return stops
+
+
+def get_stops_and_requests(
+    *, events: List[dict], space: TransportSpace
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Prepare two DataFrames, containing stops and requests.
 
@@ -426,49 +656,50 @@ def get_stops_and_requests(*, events: List[dict], space: TransportSpace):
     #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
 
     The `stops` DataFrame returned has the following schema:
-    ```
-    Column           Dtype
-    ------           -----
-    vehicle_id       float64
-    timestamp        float64
-    delta_occupancy  float64
-    request_id       object
-    state_duration   float64
-    occupancy        float64
-    location         Union[float64, int, Tuple[float64]]
-    time_to_next     float64
-    dist_to_next     float64
-    ```
+
+    .. code-block::
+
+        Column           Dtype
+        ------           -----
+        vehicle_id       float64
+        timestamp        float64
+        delta_occupancy  float64
+        request_id       object
+        state_duration   float64
+        occupancy        float64
+        location         Union[float64, int, Tuple[float64]]
+        time_to_next     float64
+        dist_to_next     float64
 
     The `requests` DataFrame returned has the following schema:
 
-    ```
-    Column                               Dtype
-    ------                               -----
-    (submitted, timestamp)                float64
-    (submitted, origin)                   Union[float64, int, Tuple[float64]]
-    (submitted, destination)              Union[float64, int, Tuple[float64]]
-    (submitted, pickup_timewindow_min)    float64
-    (submitted, pickup_timewindow_max)    float64
-    (submitted, delivery_timewindow_min)  float64
-    (submitted, delivery_timewindow_max)  float64
-    (submitted, direct_travel_distance)   float64
-    (submitted, direct_travel_time)       float64
-    (accepted, timestamp)                 float64
-    (accepted, origin)                    Union[float64, int, Tuple[float64]]
-    (accepted, destination)               Union[float64, int, Tuple[float64]]
-    (accepted, pickup_timewindow_min)     float64
-    (accepted, pickup_timewindow_max)     float64
-    (accepted, delivery_timewindow_min)   float64
-    (accepted, delivery_timewindow_max)   float64
-    (rejected, timestamp)                 float64
-    (inferred, relative_travel_time)      float64
-    (inferred, travel_time)               float64
-    (inferred, waiting_time)              float64
-    (serviced, timestamp_dropoff)         float64
-    (serviced, timestamp_pickup)          float64
-    (serviced, vehicle_id)                float64
-    ```
+    .. code-block::
+
+        Column                               Dtype
+        ------                               -----
+        (submitted, timestamp)                float64
+        (submitted, origin)                   Union[float64, int, Tuple[float64]]
+        (submitted, destination)              Union[float64, int, Tuple[float64]]
+        (submitted, pickup_timewindow_min)    float64
+        (submitted, pickup_timewindow_max)    float64
+        (submitted, delivery_timewindow_min)  float64
+        (submitted, delivery_timewindow_max)  float64
+        (submitted, direct_travel_distance)   float64
+        (submitted, direct_travel_time)       float64
+        (accepted, timestamp)                 float64
+        (accepted, origin)                    Union[float64, int, Tuple[float64]]
+        (accepted, destination)               Union[float64, int, Tuple[float64]]
+        (accepted, pickup_timewindow_min)     float64
+        (accepted, pickup_timewindow_max)     float64
+        (accepted, delivery_timewindow_min)   float64
+        (accepted, delivery_timewindow_max)   float64
+        (rejected, timestamp)                 float64
+        (inferred, relative_travel_time)      float64
+        (inferred, travel_time)               float64
+        (inferred, waiting_time)              float64
+        (serviced, timestamp_dropoff)         float64
+        (serviced, timestamp_pickup)          float64
+        (serviced, vehicle_id)                float64
 
     Parameters
     ----------
@@ -498,4 +729,297 @@ def get_stops_and_requests(*, events: List[dict], space: TransportSpace):
     except KeyError:
         pass
 
+    stops_df = _add_insertion_stats_to_stoplist_dataframe(
+        reqs=requests_df, stops=stops_df, space=space
+    )
+
     return stops_df, requests_df
+
+
+def get_vehicle_quantities(stops: pd.DataFrame, requests: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute various quantities aggregated **per vehicle**.
+
+    Currently the following observables are returned:
+
+    - avg_occupancy
+    - avg_segment_dist
+    - avg_segment_time
+    - total_dist_driven
+    - total_time_driven
+    - avg_direct_dist
+    - avg_direct_time
+    - total_direct_dist
+    - total_direct_time
+    - efficiency_dist
+    - efficiency_time
+    - avg_system_stoplist_length_service_time
+    - avg_system_stoplist_length_submission_time
+    - avg_stoplist_length_service_time
+    - avg_stoplist_length_submission_time
+
+    Parameters
+    ----------
+    stops
+        Stops dataframe
+    requests
+        Requests dataframe
+
+    Returns
+    -------
+    ``pd.DataFrame`` containing the aforementioned observables as columns, indexed by ``vehicle_id``
+    """
+    serviced_requests = (
+        requests[requests[("rejected", "timestamp")].isna()]
+        if ("rejected", "timestamp") in requests
+        else requests
+    )
+
+    avg_occupancy = stops.groupby("vehicle_id").apply(
+        lambda gdf: (gdf["occupancy"] * gdf["state_duration"]).sum()
+        / gdf["state_duration"].sum()
+    )
+
+    avg_segment_dist = stops.groupby("vehicle_id")["dist_to_next"].mean()
+    avg_segment_time = stops.groupby("vehicle_id")["time_to_next"].mean()
+
+    total_dist_driven = stops.groupby("vehicle_id")["dist_to_next"].sum()
+    total_time_driven = stops.groupby("vehicle_id")["time_to_next"].sum()
+
+    avg_direct_dist = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
+        lambda gdf: gdf.submitted.direct_travel_distance.mean()
+    )
+
+    avg_direct_time = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
+        lambda gdf: gdf.submitted.direct_travel_time.mean()
+    )
+
+    total_direct_dist = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
+        lambda gdf: gdf.submitted.direct_travel_distance.sum()
+    )
+
+    total_direct_time = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
+        lambda gdf: gdf.submitted.direct_travel_time.sum()
+    )
+
+    efficiency_dist = total_direct_dist / total_dist_driven
+    efficiency_time = total_direct_time / total_time_driven
+
+    avg_system_stoplist_length_service_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (
+            gdf["system_stoplist_length_service_time"] * gdf["state_duration"]
+        ).sum()
+        / gdf["state_duration"].sum()
+    )
+    avg_system_stoplist_length_submission_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (
+            gdf["system_stoplist_length_submission_time"] * gdf["state_duration"]
+        ).sum()
+        / gdf["state_duration"].sum()
+    )
+
+    avg_stoplist_length_service_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (gdf["stoplist_length_service_time"] * gdf["state_duration"]).sum()
+        / gdf["state_duration"].sum()
+    )
+    avg_stoplist_length_submission_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (
+            gdf["stoplist_length_submission_time"] * gdf["state_duration"]
+        ).sum()
+        / gdf["state_duration"].sum()
+    )
+
+    return pd.DataFrame(
+        dict(
+            avg_occupancy=avg_occupancy,
+            avg_segment_dist=avg_segment_dist,
+            avg_segment_time=avg_segment_time,
+            total_dist_driven=total_dist_driven,
+            total_time_driven=total_time_driven,
+            avg_direct_dist=avg_direct_dist,
+            avg_direct_time=avg_direct_time,
+            total_direct_dist=total_direct_dist,
+            total_direct_time=total_direct_time,
+            efficiency_dist=efficiency_dist,
+            efficiency_time=efficiency_time,
+            avg_system_stoplist_length_service_time=avg_system_stoplist_length_service_time,
+            avg_system_stoplist_length_submission_time=avg_system_stoplist_length_submission_time,
+            avg_stoplist_length_service_time=avg_stoplist_length_service_time,
+            avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
+        )
+    ).rename_axis("vehicle_id")
+
+
+def get_system_quantities(
+    stops: pd.DataFrame,
+    requests: pd.DataFrame,
+    params: Optional[dict[str, dict[str, Any]]] = None,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Compute various quantities aggregated for the entire simulation.
+
+    Currently the following observables are returned:
+
+    - avg_occupancy
+    - avg_segment_dist
+    - avg_segment_time
+    - total_dist_driven
+    - total_time_driven
+    - avg_direct_dist
+    - avg_direct_time
+    - total_direct_dist
+    - total_direct_time
+    - efficiency_dist
+    - efficiency_time
+    - avg_system_stoplist_length_service_time
+    - avg_system_stoplist_length_submission_time
+    - avg_stoplist_length_service_time
+    - avg_stoplist_length_submission_time
+    - avg_waiting_time
+    - rejection_ratio
+    - median_stoplist_length
+    - avg_detour
+    - (n_vehicles)
+    - (request_rate)
+    - (velocity)
+
+    Parameters
+    ----------
+    stops
+        Stops dataframe
+    requests
+        Requests dataframe
+    params
+        Optional, adds more data (the fields in parentheses) to the result for convenience purposes
+
+    Returns
+    -------
+    dict containing the aforementioned observables
+
+    Parameters
+    ----------
+    stops
+        Stops dataframe
+    requests
+        Requests dataframe
+
+    Returns
+    -------
+    dict containing the aforementioned observables
+    """
+    serviced_requests = (
+        requests[requests[("rejected", "timestamp")].isna()]
+        if ("rejected", "timestamp") in requests
+        else requests
+    )
+
+    avg_occupancy = (stops["occupancy"] * stops["state_duration"]).sum() / stops[
+        "state_duration"
+    ].sum()
+
+    avg_segment_dist = stops["dist_to_next"].mean()
+    avg_segment_time = stops["time_to_next"].mean()
+
+    total_dist_driven = stops["dist_to_next"].sum()
+    total_time_driven = stops["time_to_next"].sum()
+
+    avg_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].mean()
+    avg_direct_time = serviced_requests[("submitted", "direct_travel_time")].mean()
+
+    total_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].sum()
+    total_direct_time = serviced_requests[("submitted", "direct_travel_time")].sum()
+
+    efficiency_dist = total_direct_dist / total_dist_driven
+    efficiency_time = total_direct_time / total_time_driven
+
+    avg_waiting_time = serviced_requests.inferred.waiting_time.mean()
+
+    rejection_ratio = 1 - len(serviced_requests) / len(requests)
+
+    _stops = stops.dropna(
+        subset=(
+            "system_stoplist_length_service_time",
+            "system_stoplist_length_submission_time",
+        )
+    )
+    avg_system_stoplist_length_service_time = (
+        _stops["system_stoplist_length_service_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    avg_system_stoplist_length_submission_time = (
+        _stops["system_stoplist_length_submission_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    # not sure if it is necessary to do it again...
+    _stops = stops.dropna(
+        subset=("stoplist_length_service_time", "stoplist_length_submission_time")
+    )
+
+    avg_stoplist_length_submission_time = (
+        _stops["stoplist_length_submission_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    avg_stoplist_length_service_time = (
+        _stops["stoplist_length_service_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    stops["event_type"] = stops["delta_occupancy"].map({1.0: "pickup", -1.0: "dropoff"})
+
+    submission_events = requests.loc[
+        :, [("submitted", "timestamp"), ("serviced", "vehicle_id")]
+    ].dropna()
+    submission_events.columns = ["timestamp", "vehicle_id"]
+    submission_events = (
+        submission_events.reset_index()
+        .set_index(["vehicle_id", "timestamp"])
+        .sort_index()
+        .assign(event_type="submission")
+    )
+
+    event_log = pd.concat(
+        [
+            stops[["event_type", "request_id"]],
+            submission_events,
+        ],
+        axis="index",
+    ).sort_index()
+
+    median_stoplist_length = (
+        event_log["event_type"]
+        .map(dict(submission=2, pickup=-1, dropoff=-1))
+        .cumsum()
+        .median()
+    )
+
+    avg_detour = requests["inferred", "relative_travel_time"].mean()
+
+    res = dict(
+        avg_occupancy=avg_occupancy,
+        avg_segment_dist=avg_segment_dist,
+        avg_segment_time=avg_segment_time,
+        total_dist_driven=total_dist_driven,
+        total_time_driven=total_time_driven,
+        avg_direct_dist=avg_direct_dist,
+        avg_direct_time=avg_direct_time,
+        total_direct_dist=total_direct_dist,
+        total_direct_time=total_direct_time,
+        efficiency_dist=efficiency_dist,
+        efficiency_time=efficiency_time,
+        avg_system_stoplist_length_service_time=avg_system_stoplist_length_service_time,
+        avg_system_stoplist_length_submission_time=avg_system_stoplist_length_submission_time,
+        avg_stoplist_length_service_time=avg_stoplist_length_service_time,
+        avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
+        avg_waiting_time=avg_waiting_time,
+        rejection_ratio=rejection_ratio,
+        median_stoplist_length=median_stoplist_length,
+        avg_detour=avg_detour,
+    )
+
+    if params:
+        res |= dict(
+            n_vehicles=params["general"]["n_vehicles"],
+            request_rate=params["request_generator"]["rate"],
+            velocity=params["general"]["space"].velocity,
+        )
+
+    return res

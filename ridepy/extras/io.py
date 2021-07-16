@@ -1,19 +1,19 @@
 import dataclasses
-
 import importlib
-
 import collections.abc
 import json
+
 import operator as op
+import numpy as np
 import functools as ft
 
 from typing import Iterable
+from pathlib import Path
 
+import ridepy.events
 from ridepy.data_structures import TransportSpace
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
-import ridepy.events
 from ridepy.events import Event
-from pathlib import Path
 
 
 class ParamsJSONEncoder(json.JSONEncoder):
@@ -45,6 +45,12 @@ class ParamsJSONEncoder(json.JSONEncoder):
             return f"{obj.__module__}.{obj.__name__}"
         elif isinstance(obj, Path):
             return str(obj.expanduser().resolve())
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
         else:
             return json.JSONEncoder.default(self, obj)
 
@@ -118,7 +124,7 @@ class EventsJSONEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
-def create_params_json(*, params: dict) -> str:
+def create_params_json(*, params: dict, sort=True) -> str:
     """
     Create a dictionary containing simulation parameters to pretty JSON.
     Parameter dictionaries may contain anything that is supported
@@ -129,7 +135,13 @@ def create_params_json(*, params: dict) -> str:
     ----------
     params
         dictionary containing the params to save
+    sort
+        if sort is True, sort the dict recursively to ensure consistent order.
     """
+    if sort:
+        params = dict(sorted(params.items(), key=op.itemgetter(0)))
+        for outer_key, inner_dict in params.items():
+            params[outer_key] = dict(sorted(inner_dict.items(), key=op.itemgetter(0)))
     return json.dumps(params, indent=4, cls=ParamsJSONEncoder)
 
 

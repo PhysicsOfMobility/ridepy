@@ -2,12 +2,13 @@ import logging
 import sys
 import os
 import hashlib
-
-import concurrent.futures
+import warnings
+import loky
 
 import operator as op
 import functools as ft
 import itertools as it
+import pandas as pd
 
 from collections import defaultdict
 from copy import deepcopy
@@ -22,6 +23,12 @@ from typing import (
 )
 from pathlib import Path
 
+from ridepy.util import make_sim_id
+from ridepy.util.analytics import (
+    get_stops_and_requests,
+    get_system_quantities,
+    get_vehicle_quantities,
+)
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
 )
@@ -43,9 +50,102 @@ from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
 from ridepy.extras.io import (
     create_params_json,
     save_events_json,
+    read_params_json,
+    read_events_json,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def make_file_path(sim_id: str, directory: Path, suffix: str):
+    return directory / f"{sim_id}{suffix}"
+
+
+def get_params(directory: Path, sim_id: str, param_path_suffix: str = "_params.json"):
+    return read_params_json(make_file_path(sim_id, directory, param_path_suffix))
+
+
+def get_events(directory: Path, sim_id: str, event_path_suffix: str = ".jsonl"):
+    return read_events_json(make_file_path(sim_id, directory, event_path_suffix))
+
+
+def perform_single_analysis(
+    sim_id: str,
+    data_dir: Path,
+    param_path_suffix: str = "_params.json",
+    event_path_suffix: str = ".jsonl",
+    update_existing: bool = False,
+    run_missing: bool = True,
+    return_system_quantities: bool = True,
+    stops_path_suffix: str = "_stops.pq",
+    requests_path_suffix: str = "_requests.pq",
+    vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
+) -> tuple[str, dict]:
+    stops_path = make_file_path(sim_id, data_dir, stops_path_suffix)
+    requests_path = make_file_path(sim_id, data_dir, requests_path_suffix)
+    vehicle_quantities_path = make_file_path(
+        sim_id, data_dir, vehicle_quantities_path_suffix
+    )
+
+    tasks = set()
+
+    if update_existing:
+        tasks |= {"stops", "requests", "vehicle_quantities", "system_quantities"}
+    elif run_missing:
+        if not stops_path.exists():
+            tasks.add("stops")
+        if not requests_path.exists():
+            tasks.add("requests")
+        if not vehicle_quantities_path.exists():
+            tasks.add("vehicle_quantities")
+
+    if return_system_quantities:
+        tasks.add("system_quantities")
+
+    system_quantities = {}
+    if tasks:
+        params = get_params(data_dir, sim_id, param_path_suffix=param_path_suffix)
+        space = params["general"]["space"]
+
+        events = get_events(data_dir, sim_id, event_path_suffix=event_path_suffix)
+
+        if "stops" in tasks or "requests" in tasks:
+            stops, requests = get_stops_and_requests(events=events, space=space)
+        else:
+            stops = pd.read_parquet(stops_path)
+            requests = pd.read_parquet(requests_path)
+
+        if "vehicle_quantities" in tasks:
+            vehicle_quantities = get_vehicle_quantities(stops, requests)
+            vehicle_quantities.to_parquet(vehicle_quantities_path)
+
+        if "system_quantities" in tasks:
+            system_quantities = get_system_quantities(stops, requests, params)
+
+        if "stops" in tasks:
+            if space.n_dim > 1:
+                stops["location"] = stops[~stops["location"].isna()]["location"].map(
+                    list
+                )
+            stops.to_parquet(stops_path)
+
+        if "requests" in tasks:
+            if space.n_dim > 1:
+                requests["submitted", "origin"] = requests[
+                    ~requests["submitted", "origin"].isna()
+                ]["submitted", "origin"].map(list)
+                requests["accepted", "origin"] = requests[
+                    ~requests["accepted", "origin"].isna()
+                ]["accepted", "origin"].map(list)
+                requests["submitted", "destination"] = requests[
+                    ~requests["accepted", "destination"].isna()
+                ]["submitted", "destination"].map(list)
+                requests["accepted", "destination"] = requests[
+                    ~requests["accepted", "destination"].isna()
+                ]["accepted", "destination"].map(list)
+            requests.to_parquet(requests_path)
+
+    return sim_id, system_quantities
 
 
 def perform_single_simulation(
@@ -55,7 +155,8 @@ def perform_single_simulation(
     jsonl_chunksize: int = 1000,
     debug: bool = False,
     param_path_suffix: str = "_params.json",
-    result_path_suffix: str = ".jsonl",
+    event_path_suffix: str = ".jsonl",
+    dry_run: bool = False,
 ) -> str:
     """
     Execute a single simulation run based on a parameter dictionary
@@ -79,26 +180,28 @@ def perform_single_simulation(
         - ``request_generator``
             - ``RequestGeneratorCls``
     data_dir
-        Existing directory in which to store parameters and results.
+        Existing directory in which to store parameters and events.
     jsonl_chunksize
         Number of simulation events to keep in memory before writing them to disk at once.
     debug
         Print debug info to stdout.
     param_path_suffix
-        Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
-    result_path_suffix
-        Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
+        Parameters will be stored under "data_dir/<simulation_id><suffix>"
+    event_path_suffix
+        Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
+    dry_run
+        If True, do not actually simulate. Just pretend to and return the corresponding ID.
 
     Returns
     -------
-
+    simulation ID
     """
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
 
     params_json = create_params_json(params=params)
-    sim_id = hashlib.sha224(params_json.encode("ascii", errors="strict")).hexdigest()
-    result_path = data_dir / f"{sim_id}{result_path_suffix}"
+    sim_id = make_sim_id(params_json)
+    event_path = data_dir / f"{sim_id}{event_path_suffix}"
     param_path = data_dir / f"{sim_id}{param_path_suffix}"
 
     if param_path.exists():
@@ -112,11 +215,11 @@ def perform_single_simulation(
         logger.info(
             f"No pre-existing param json exists for {params_json=} at {param_path=}, running simulation"
         )
-        if result_path.exists():
+        if event_path.exists():
             logger.info(
-                f"Potentially incomplete simulation data exists at {result_path=}, this will be overwritten"
+                f"Potentially incomplete simulation data exists at {event_path=}, this will be overwritten"
             )
-            result_path.unlink()
+            event_path.unlink()
 
     space = params["general"]["space"]
     RequestGeneratorCls = params["request_generator"].pop("RequestGeneratorCls")
@@ -141,18 +244,20 @@ def perform_single_simulation(
     if debug:
         print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
-    if params["general"]["n_reqs"] is not None:
-        simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
-    elif params["general"]["t_cutoff"] is not None:
-        simulation = fs.simulate(rg, t_cutoff=params["general"]["t_cutoff"])
-    else:
-        raise ValueError("must either specify n_reqs or t_cutoff")
+    if not dry_run:
+        if params["general"]["n_reqs"] is not None:
+            simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
+        elif params["general"]["t_cutoff"] is not None:
+            simulation = fs.simulate(rg, t_cutoff=params["general"]["t_cutoff"])
+        else:
+            raise ValueError("must either specify n_reqs or t_cutoff")
 
-    while chunk := list(it.islice(simulation, jsonl_chunksize)):
-        save_events_json(jsonl_path=result_path, events=chunk)
+        while chunk := list(it.islice(simulation, jsonl_chunksize)):
+            save_events_json(jsonl_path=event_path, events=chunk)
 
-    with open(str(param_path), "w") as f:
-        f.write(params_json)
+        with open(str(param_path), "w") as f:
+            f.write(params_json)
+
     return sim_id
 
 
@@ -164,8 +269,9 @@ def simulate_parameter_combinations(
     max_workers: Optional[int] = None,
     process_chunksize: int = 1,
     jsonl_chunksize: int = 1000,
-    result_path_suffix: str = ".jsonl",
+    event_path_suffix: str = ".jsonl",
     param_path_suffix: str = "_params.json",
+    dry_run: bool = False,
 ):
     """
     Run simulations for different parameter combinations using multiprocessing.
@@ -175,7 +281,7 @@ def simulate_parameter_combinations(
     param_combinations
         An iterable of parameter configurations. For more detail see :ref:`Executing Simulations`
     data_dir
-        Directory in which to store the parameters and results.
+        Directory in which to store the parameters and events.
     debug
         Print debug info.
     max_workers
@@ -186,15 +292,17 @@ def simulate_parameter_combinations(
     jsonl_chunksize
         Maximum number of events to keep in memory before saving to disk
     param_path_suffix
-        Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
-    result_path_suffix
-        Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
+        Parameters will be stored under "data_dir/<simulation_id><suffix>"
+    event_path_suffix
+        Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
+    dry_run
+        If True, do not actually simulate. Just pretend to and return the corresponding IDs.
 
     Returns
     -------
         List of simulation IDs. See the docstring of `.SimulationSet` for more detail.
     """
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+    with loky.get_reusable_executor(max_workers=max_workers) as executor:
         sim_ids = list(
             executor.map(
                 ft.partial(
@@ -203,7 +311,8 @@ def simulate_parameter_combinations(
                     jsonl_chunksize=jsonl_chunksize,
                     data_dir=data_dir,
                     param_path_suffix=param_path_suffix,
-                    result_path_suffix=result_path_suffix,
+                    event_path_suffix=event_path_suffix,
+                    dry_run=dry_run,
                 ),
                 param_combinations,
                 chunksize=process_chunksize,
@@ -287,14 +396,14 @@ class SimulationSet:
     @property
     def data_dir(self) -> Path:
         """
-        Get directory in which to store the parameters and results.
+        Get directory in which to store the parameters and events.
         """
         return self._data_dir
 
     @data_dir.setter
     def data_dir(self, data_dir: Union[str, Path]) -> None:
         """
-        Set directory in which to store the parameters and results.
+        Set directory in which to store the parameters and events.
         Will be created if not existent.
         """
         data_dir = Path(data_dir)
@@ -314,7 +423,7 @@ class SimulationSet:
         max_workers: Optional[int] = None,
         process_chunksize: int = 1,
         jsonl_chunksize: int = 1000,
-        result_path_suffix: str = ".jsonl",
+        event_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
         validate: bool = True,
     ) -> None:
@@ -323,7 +432,7 @@ class SimulationSet:
         Parameters
         ----------
         data_dir
-            Directory in which to store the parameters and results.
+            Directory in which to store the parameters and events.
         base_params
             Dictionary setting parameters that are kept constant throughout the simulation set, optional.
         zip_params
@@ -347,9 +456,9 @@ class SimulationSet:
         jsonl_chunksize
             Maximum number of events to keep in memory before saving to disk
         param_path_suffix
-            Parameters will be stored under "data_dir/<simulation_id><param_path_suffix>"
-        result_path_suffix
-            Simulation results will be stored under "data_dir/<simulation_id><result_path_suffix>"
+            Parameters will be stored under "data_dir/<simulation_id><suffix>"
+        event_path_suffix
+            Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
         validate
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
         """
@@ -360,7 +469,7 @@ class SimulationSet:
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = data_dir
 
-        self._result_path_suffix = result_path_suffix
+        self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
 
         if cython:
@@ -434,15 +543,17 @@ class SimulationSet:
         self._zip_params = zip_params
         self._product_params = product_params
 
-        self._result_ids = None
+        self._simulation_ids = None
+
+        self.system_quantities_path = None
 
     @property
-    def result_ids(self) -> list[str]:
+    def simulation_ids(self) -> list[str]:
         """
-        Get simulation result IDs.
+        Get simulation IDs.
         """
-        # protect result ids
-        return self._result_ids if self._result_ids is not None else []
+        # protect simulation ids
+        return self._simulation_ids if self._simulation_ids is not None else []
 
     @property
     def param_paths(self) -> list[Path]:
@@ -450,18 +561,18 @@ class SimulationSet:
         Get list of JSON parameter files.
         """
         return [
-            self.data_dir / f"{result_id}{self._param_path_suffix}"
-            for result_id in self.result_ids
+            self.data_dir / f"{simulation_id}{self._param_path_suffix}"
+            for simulation_id in self.simulation_ids
         ]
 
     @property
-    def result_paths(self) -> list[Path]:
+    def event_paths(self) -> list[Path]:
         """
         Get list of resulting output event JSON Lines file paths.
         """
         return [
-            self.data_dir / f"{result_id}{self._result_path_suffix}"
-            for result_id in self.result_ids
+            self.data_dir / f"{simulation_id}{self._event_path_suffix}"
+            for simulation_id in self.simulation_ids
         ]
 
     @staticmethod
@@ -539,43 +650,105 @@ class SimulationSet:
     def __next__(self):
         return next(self._param_combinations)
 
-    def run(self):
+    def run(self, dry_run=False):
         """
         Run the simulations configured through `base_params`, `zip_params` and `product_params` using
         multiprocessing. The parameters and resulting output events are written to disk
         in JSON/JSON Lines format. For more detail see :ref:`Executing Simulations`.
 
         Access simulations results
-            - by id: `SimulationSet.result_ids`
+            - by id: `SimulationSet.simulation_ids`
             - by parameter file `SimulationSet.param_paths`
-            - by result file `SimulationSet.result_paths`
+            - by event file `SimulationSet.event_paths`
+
+        Parameters
+        ----------
+        dry_run
+            If True, do not actually simulate.
         """
 
-        self._result_ids = simulate_parameter_combinations(
+        self._simulation_ids = simulate_parameter_combinations(
             param_combinations=iter(self),
             data_dir=self.data_dir,
             debug=self.debug,
             max_workers=self.max_workers,
             process_chunksize=self.process_chunksize,
             jsonl_chunksize=self.jsonl_chunksize,
-            result_path_suffix=self._result_path_suffix,
+            event_path_suffix=self._event_path_suffix,
             param_path_suffix=self._param_path_suffix,
+            dry_run=dry_run,
         )
 
     def __len__(self) -> int:
         """
         Number of simulations performed when calling `SimulationSet.run`.
         """
+        len_ = 1
         if self._zip_params:
-            zip_part = len(next(iter(next(iter(self._zip_params.values())).values())))
+            len_ *= len(next(iter(next(iter(self._zip_params.values())).values())))
+        if self._product_params:
+            len_ *= ft.reduce(
+                op.mul,
+                (
+                    len(inner_value)
+                    for inner_dict in self._product_params.values()
+                    for inner_value in inner_dict.values()
+                ),
+            )
+        if not (self._zip_params or self._product_params):
+            len_ = 0
+
+        return len_
+
+    def run_analytics(
+        self,
+        update_existing: bool = False,
+        run_missing: bool = True,
+        stops_path_suffix: str = "_stops.pq",
+        requests_path_suffix: str = "_requests.pq",
+        vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
+        system_quantities_filename: str = "system_quantities.pq",
+    ):
+        self.system_quantities_path = self.data_dir / system_quantities_filename
+
+        if not self.simulation_ids:
+            warnings.warn(
+                "no simulations have been run (simulation_ids empty)", UserWarning
+            )
         else:
-            zip_part = 1
-        product_part = ft.reduce(
-            op.mul,
-            (
-                len(inner_value)
-                for inner_dict in self._product_params.values()
-                for inner_value in inner_dict.values()
-            ),
-        )
-        return zip_part * product_part
+            return_system_quantities = (
+                not self.system_quantities_path.exists() and run_missing
+            )
+
+            with loky.get_reusable_executor(max_workers=self.max_workers) as executor:
+                sim_ids, system_quantities = zip(
+                    *list(
+                        executor.map(
+                            ft.partial(
+                                perform_single_analysis,
+                                data_dir=self.data_dir,
+                                update_existing=update_existing,
+                                run_missing=run_missing,
+                                return_system_quantities=return_system_quantities,
+                                param_path_suffix=self._param_path_suffix,
+                                event_path_suffix=self._event_path_suffix,
+                                stops_path_suffix=stops_path_suffix,
+                                requests_path_suffix=requests_path_suffix,
+                                vehicle_quantities_path_suffix=vehicle_quantities_path_suffix,
+                            ),
+                            self.simulation_ids,
+                            chunksize=self.process_chunksize,
+                        )
+                    )
+                )
+
+            if list(sim_ids) != self.simulation_ids:
+                warnings.warn(
+                    "Simulation IDs and IDs analytics were computed for do not match. Something's not right.",
+                    UserWarning,
+                )
+
+            if return_system_quantities:
+                system_quantities_df = pd.DataFrame(system_quantities, index=sim_ids)
+                system_quantities_df.rename_axis("simulation_id", inplace=True)
+                system_quantities_df.to_parquet(self.system_quantities_path)
