@@ -74,7 +74,7 @@ def test_Euclidean2D_smart_vectorize():
         ]
     )
 
-    for df in [df1,df2]:
+    for df in [df1, df2]:
         np.testing.assert_array_equal(
             space.d(df.a.to_list(), df.b.to_list()), np.array([1, 0, m.sqrt(2)])
         )

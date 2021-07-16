@@ -1,3 +1,5 @@
+import dataclasses
+
 from ridepy.data_structures import Location, TransportSpace, Stoplist, Dispatcher
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
 from ridepy.util.dispatchers_cython import (
@@ -135,4 +137,7 @@ def setup_insertion_data_structures(
 
 def convert_events_to_dicts(events):
     """From a list of events, outputs what `.io.read_events_json` outputs"""
-    return ((event.__class__.__name__, event.__dict__) for event in events)
+    return (
+        {"event_type": event.__class__.__name__} | dataclasses.asdict(event)
+        for event in events
+    )
