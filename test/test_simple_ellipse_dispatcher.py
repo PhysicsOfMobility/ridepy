@@ -10,7 +10,9 @@ from ridepy.events import (
     PickupEvent,
     DeliveryEvent,
 )
-from ridepy.util.testing_utils_cython import simple_ellipse_dispatcher
+from ridepy.util.testing_utils_cython import (
+    SimpleEllipseDispatcher as CySimpleEllipseDispatcher,
+)
 from ridepy.extras.spaces import make_nx_grid
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces_cython import Euclidean2D, Graph
@@ -34,18 +36,13 @@ def test_append_to_empty_stoplist(kind):
 
     # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [[(0, 0), 0, 0, inf]]
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
@@ -72,19 +69,14 @@ def test_inserted_at_the_middle(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -112,12 +104,7 @@ def test_capacity_constraint(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -127,7 +114,7 @@ def test_capacity_constraint(kind):
     ##############################
     # vehicle large enough
     ##############################
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=2
     )
     assert new_stoplist[1].location == request.origin
@@ -137,7 +124,7 @@ def test_capacity_constraint(kind):
     ##############################
     # vehicle not large enough
     ##############################
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=1
     )
     assert new_stoplist[-2].location == request.origin
@@ -169,19 +156,14 @@ def test_inserted_at_the_middle_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request,
         stoplist,
         space,
@@ -206,19 +188,14 @@ def test_inserted_at_the_middle_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request,
         stoplist,
         space,
@@ -243,19 +220,14 @@ def test_inserted_at_the_middle_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request,
         stoplist,
         space,
@@ -291,18 +263,13 @@ def test_inserted_separately(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -334,18 +301,13 @@ def test_same_location_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
@@ -381,18 +343,13 @@ def test_inserted_separately_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
@@ -414,18 +371,13 @@ def test_inserted_separately_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
@@ -447,18 +399,13 @@ def test_inserted_separately_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10, max_relative_detour=1
     )
 
@@ -490,18 +437,13 @@ def test_dropoff_appended(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -531,18 +473,13 @@ def test_pickup_and_dropoff_appended(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (
-        space,
-        request,
-        stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
-    ) = setup_insertion_data_structures(
+    (space, request, stoplist, _,) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = simple_ellipse_dispatcher(loc_type=space.loc_type)(
+    min_cost, new_stoplist, *_ = CySimpleEllipseDispatcher(loc_type=space.loc_type)(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin

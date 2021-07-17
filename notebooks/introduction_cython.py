@@ -27,9 +27,7 @@ import matplotlib.pyplot as plt
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state_cython import VehicleState
 
-from ridepy.util.dispatchers_cython import (
-    BruteForceTotalTravelTimeMinimizingDispatcher as brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
 
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces_cython import Euclidean2D
@@ -89,7 +87,7 @@ fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
     space=space,
-    dispatcher=brute_force_total_traveltime_minimizing_dispatcher(space.loc_type),
+    dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(space.loc_type),
     vehicle_state_class=VehicleState,
 )
 # -

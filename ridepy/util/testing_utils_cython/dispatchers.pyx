@@ -34,7 +34,7 @@ from ridepy.util.dispatchers_cython.cdispatchers cimport (
 
 
 # This cpdef is crucial, otherwise we can't use this function from both python  and cython
-cdef class brute_force_total_traveltime_minimizing_dispatcher:
+cdef class BruteForceTotalTravelTimeMinimizingDispatcher:
     cdef LocType loc_type
 
     def __init__(self, loc_type):
@@ -72,7 +72,7 @@ cdef class brute_force_total_traveltime_minimizing_dispatcher:
         else:
             raise ValueError("This line should never have been reached")
 
-cdef class simple_ellipse_dispatcher:
+cdef class SimpleEllipseDispatcher:
     cdef LocType loc_type
 
     def __init__(self, loc_type):

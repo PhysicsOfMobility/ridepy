@@ -22,11 +22,9 @@ from typing import (
 )
 from pathlib import Path
 
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.dispatchers_cython import (
-    BruteForceTotalTravelTimeMinimizingDispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.spaces import Euclidean2D
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
@@ -362,12 +360,12 @@ class SimulationSet:
 
         if cython:
             SpaceObj = CyEuclidean2D()
-            dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+            dispatcher = CyBruteForceTotalTravelTimeMinimizingDispatcher
             TransportationRequestCls = CyTransportationRequest
             VehicleStateCls = CyVehicleState
         else:
             SpaceObj = Euclidean2D()
-            dispatcher = brute_force_total_traveltime_minimizing_dispatcher
+            dispatcher = BruteForceTotalTravelTimeMinimizingDispatcher
             TransportationRequestCls = TransportationRequest
             VehicleStateCls = VehicleState
 

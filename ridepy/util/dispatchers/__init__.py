@@ -38,7 +38,7 @@ def statefulDispatcher(f):
 
 
 @statefulDispatcher
-def taxicab_dispatcher_drive_first(
+def TaxicabDispatcherDriveFirst(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
@@ -113,7 +113,7 @@ def taxicab_dispatcher_drive_first(
 
 
 @statefulDispatcher
-def brute_force_total_traveltime_minimizing_dispatcher(
+def BruteForceTotalTravelTimeMinimizingDispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,

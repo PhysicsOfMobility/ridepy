@@ -28,11 +28,9 @@ from ridepy.util.testing_utils import setup_insertion_data_structures
 from ridepy.vehicle_state import VehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
-from ridepy.util.dispatchers_cython.dispatchers import (
-    BruteForceTotalTravelTimeMinimizingDispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 
 from ridepy.fleet_state import SlowSimpleFleetState
@@ -45,8 +43,8 @@ def test_slow_simple_fleet_state_initialization():
     test_space = [
         [Euclidean2D(), CyEuclidean2D()],
         [
-            brute_force_total_traveltime_minimizing_dispatcher,
-            cy_brute_force_total_traveltime_minimizing_dispatcher,
+            BruteForceTotalTravelTimeMinimizingDispatcher,
+            CyBruteForceTotalTravelTimeMinimizingDispatcher,
         ],
         [VehicleState, CyVehicleState],
     ]
@@ -104,8 +102,8 @@ def test_slow_simple_fleet_state_from_fleet():
     test_space = [
         [py_space, cy_space],
         [
-            brute_force_total_traveltime_minimizing_dispatcher,
-            cy_brute_force_total_traveltime_minimizing_dispatcher,
+            BruteForceTotalTravelTimeMinimizingDispatcher,
+            CyBruteForceTotalTravelTimeMinimizingDispatcher,
         ],
         [VehicleState, CyVehicleState],
         [Stop, CyStop],
@@ -158,11 +156,11 @@ def test_slow_simple_fleet_state_from_fleet():
 def test_reject_trivial_requests(kind):
     if kind == "python":
         space = Euclidean2D()
-        dispatcher = brute_force_total_traveltime_minimizing_dispatcher
+        dispatcher = BruteForceTotalTravelTimeMinimizingDispatcher
         VehicleStateCls = VehicleState
     elif kind == "cython":
         space = CyEuclidean2D()
-        dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+        dispatcher = CyBruteForceTotalTravelTimeMinimizingDispatcher
         VehicleStateCls = CyVehicleState
     else:
         raise ValueError(f"unknown {kind=}")

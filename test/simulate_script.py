@@ -18,12 +18,9 @@ from ridepy.extras.spaces import make_nx_grid
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState as PyVehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.dispatchers_cython import (
-    # brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
-    BruteForceTotalTravelTimeMinimizingDispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean2D as pyEuclidean2D, Graph as PyGraph
@@ -53,12 +50,12 @@ def simulate(
     fleet_state_class = SlowSimpleFleetState
     dispatcher = (
         (
-            cy_brute_force_total_traveltime_minimizing_dispatcher(LocType.INT)
+            CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.INT)
             if use_graph
-            else cy_brute_force_total_traveltime_minimizing_dispatcher(LocType.R2LOC)
+            else CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)
         )
         if use_cython
-        else py_brute_force_total_traveltime_minimizing_dispatcher
+        else BruteForceTotalTravelTimeMinimizingDispatcher
     )
     if use_graph:
         space = (
