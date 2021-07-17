@@ -84,7 +84,7 @@ fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
     space=space,
-    dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+    dispatcher=brute_force_total_traveltime_minimizing_dispatcher(),
     vehicle_state_class=VehicleState,
 )
 # -
@@ -129,4 +129,3 @@ reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
 
 # + tags=[]
 plot_occupancy_hist(stops)
-# -

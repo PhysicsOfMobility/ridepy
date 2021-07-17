@@ -432,7 +432,7 @@ def test_get_stops_and_requests_with_actual_simulation():
         initial_locations={k: 0 for k in range(10)},
         seat_capacities=10,
         space=space,
-        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        dispatcher=brute_force_total_traveltime_minimizing_dispatcher(),
         vehicle_state_class=VehicleState,
     )
 

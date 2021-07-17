@@ -23,6 +23,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def statefulDispatcher(f):
+    class StatefulDispatcher:
+        __name__ = f.__name__
+        __qualname__ = f.__qualname__
+
+        def __init__(self, loc_type=None):
+            self.loc_type = loc_type
+
+        def __call__(self, *args,**kwargs):
+            return f(*args, **kwargs)
+
+    return StatefulDispatcher
+
+@statefulDispatcher
 def taxicab_dispatcher_drive_first(
     request: TransportationRequest,
     stoplist: Stoplist,
@@ -97,6 +111,7 @@ def taxicab_dispatcher_drive_first(
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
 
 
+@statefulDispatcher
 def brute_force_total_traveltime_minimizing_dispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,

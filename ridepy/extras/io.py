@@ -33,7 +33,7 @@ class ParamsJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         # request generator?
         if isinstance(obj, type):
-            return f"{obj.__module__}.{obj.__name__}"
+            return f"{obj.__module__}.{obj.__qualname__}"
         # TransportSpace?
         elif isinstance(obj, (TransportSpace, CyTransportSpace)):
             # TODO in future, large networks might be saved in another file to be reused

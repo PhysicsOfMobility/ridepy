@@ -32,7 +32,7 @@ def test_slow_simple_fleet_state_simulate():
         initial_locations={k: (0, 0) for k in range(10)},
         seat_capacities=1,
         space=space,
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=taxicab_dispatcher_drive_first(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
@@ -48,7 +48,7 @@ def test_events_sorted():
         initial_locations={k: (0, 0) for k in range(10)},
         seat_capacities=1,
         space=space,
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=taxicab_dispatcher_drive_first(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
@@ -68,12 +68,12 @@ def test_brute_force_dispatcher_2d():
         space=space,
         max_pickup_delay=20,
     )
-    transportation_requests = list(it.islice(rg, 1000))
+    transportation_requests = list(it.islice(rg, 100))
     fs = SlowSimpleFleetState(
         initial_locations={k: (0, 0) for k in range(50)},
         seat_capacities=10,
         space=space,
-        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        dispatcher=brute_force_total_traveltime_minimizing_dispatcher(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(transportation_requests))
@@ -117,7 +117,7 @@ def test_with_taxicab_dispatcher_simple_1():
         initial_locations={k: 0 for k in range(10)},
         seat_capacities=1,
         space=Euclidean1D(),
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=taxicab_dispatcher_drive_first(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
@@ -174,7 +174,7 @@ def test_with_taxicab_everyone_delivered_zero_delay():
         initial_locations={k: 0 for k in range(10)},
         seat_capacities=1,
         space=Euclidean1D(),
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=taxicab_dispatcher_drive_first(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
@@ -223,7 +223,7 @@ def test_with_taxicab_one_taxi_delivered_with_delay():
         initial_locations={0: 0},
         seat_capacities=1,
         space=Euclidean1D(),
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=taxicab_dispatcher_drive_first(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))

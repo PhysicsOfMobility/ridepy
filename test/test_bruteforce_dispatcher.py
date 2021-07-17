@@ -521,7 +521,7 @@ def test_sanity_in_graph():
             initial_locations={k: 0 for k in range(50)},
             seat_capacities=10,
             space=space,
-            dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=brute_force_total_traveltime_minimizing_dispatcher(),
             vehicle_state_class=VehicleState,
         )
 

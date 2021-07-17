@@ -130,4 +130,4 @@ def setup_insertion_data_structures(
         stoplist_properties=stoplist_properties, space=space, kind=kind
     )
 
-    return space, request, stoplist, dispatcher
+    return space, request, stoplist, dispatcher(loc_type=space.loc_type)
