@@ -92,7 +92,7 @@ def test_io_simulate(tmp_path):
     print(stops)
 
 
-@pytest.mark.parametrize("cython", [ False])
+@pytest.mark.parametrize("cython", [True, False])
 def test_io_params(cython, tmp_path):
     param_path = tmp_path / f"params.json"
 

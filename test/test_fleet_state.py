@@ -39,6 +39,7 @@ from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.util.spaces import Euclidean2D
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 
+
 @pytest.mark.xfail(reason="c++ dispatcher not callable from python")
 def test_slow_simple_fleet_state_initialization():
     test_space = [

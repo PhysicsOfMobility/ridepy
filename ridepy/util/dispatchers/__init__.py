@@ -31,10 +31,11 @@ def statefulDispatcher(f):
         def __init__(self, loc_type=None):
             self.loc_type = loc_type
 
-        def __call__(self, *args,**kwargs):
+        def __call__(self, *args, **kwargs):
             return f(*args, **kwargs)
 
     return StatefulDispatcher
+
 
 @statefulDispatcher
 def taxicab_dispatcher_drive_first(

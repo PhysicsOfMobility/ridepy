@@ -28,7 +28,7 @@ from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state_cython import VehicleStateThin as VehicleState
 
 from ridepy.util.dispatchers_cython import (
-    BruteForceTotalTravelTimeMinimizingDispatcher as brute_force_total_traveltime_minimizing_dispatcher
+    BruteForceTotalTravelTimeMinimizingDispatcher as brute_force_total_traveltime_minimizing_dispatcher,
 )
 
 from ridepy.util.request_generators import RandomRequestGenerator
@@ -37,6 +37,7 @@ from ridepy.data_structures_cython import TransportationRequest
 
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
+
 # from ridepy.util.testing_utils import convert_events_to_dicts
 
 # + tags=[]
