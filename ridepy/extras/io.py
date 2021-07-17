@@ -1,11 +1,11 @@
 import dataclasses
-
 import importlib
-
-import collections.abc
 import json
+import collections.abc
+
 import operator as op
 import functools as ft
+import numpy as np
 
 from typing import Iterable
 
@@ -45,6 +45,12 @@ class ParamsJSONEncoder(json.JSONEncoder):
             return f"{obj.__module__}.{obj.__name__}"
         elif isinstance(obj, Path):
             return str(obj.expanduser().resolve())
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
         else:
             return json.JSONEncoder.default(self, obj)
 
