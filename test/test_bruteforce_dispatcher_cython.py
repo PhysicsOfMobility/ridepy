@@ -161,7 +161,9 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             initial_locations={7: init_loc},
             seat_capacities=10,
             space=cy_space,
-            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(loc_type=cy_space.loc_type),
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(
+                loc_type=cy_space.loc_type
+            ),
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(

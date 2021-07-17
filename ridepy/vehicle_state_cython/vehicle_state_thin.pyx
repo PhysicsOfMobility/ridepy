@@ -105,7 +105,13 @@ cdef class VehicleState:
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
 
-        cdef vector[StopEventSpec] res = dereference(self._uvstate._vstate_r2loc).fast_forward_time(t)
+        cdef vector[StopEventSpec] res
+        if self.loc_type == LocType.R2LOC:
+            res = dereference(self._uvstate._vstate_r2loc).fast_forward_time(t)
+        elif self.loc_type == LocType.INT:
+            res = dereference(self._uvstate._vstate_int).fast_forward_time(t)
+        else:
+            raise ValueError("This line should never have been reached")
 
         #stop_event_specc, stoplist = res[0],
         event_cache = []

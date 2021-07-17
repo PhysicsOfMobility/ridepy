@@ -37,7 +37,7 @@ sim_logger.setLevel(logging.CRITICAL)
 sim_logger.handlers[0].setLevel(logging.CRITICAL)
 
 
-def simulate_on_r2(
+def simulate(
     num_vehicles,
     rate,
     num_requests,
@@ -45,19 +45,29 @@ def simulate_on_r2(
     seed=0,
     request_kwargs={"max_pickup_delay": 3, "max_delivery_delay_rel": 1.9},
     use_cython=True,
+    use_graph=False,
 ):
     random.seed(seed)
     np.random.seed(seed)
 
     fleet_state_class = SlowSimpleFleetState
     dispatcher = (
-        # cy_brute_force_total_traveltime_minimizing_dispatcher(LocType.R2LOC)
-        cy_brute_force_total_traveltime_minimizing_dispatcher(LocType.INT)
+        (
+            cy_brute_force_total_traveltime_minimizing_dispatcher(LocType.INT)
+            if use_graph
+            else cy_brute_force_total_traveltime_minimizing_dispatcher(LocType.R2LOC)
+        )
         if use_cython
         else py_brute_force_total_traveltime_minimizing_dispatcher
     )
-    # space = cyEuclidean2D() if use_cython else pyEuclidean2D()
-    space = CyGraph.from_nx(make_nx_grid()) if use_cython else PyGraph.from_nx(make_nx_grid())
+    if use_graph:
+        space = (
+            CyGraph.from_nx(make_nx_grid())
+            if use_cython
+            else PyGraph.from_nx(make_nx_grid())
+        )
+    else:
+        space = cyEuclidean2D() if use_cython else pyEuclidean2D()
     vehicle_state_class = CyVehicleState if use_cython else PyVehicleState
     request_class = CyTransportationRequest if use_cython else PyTransportationRequest
 
@@ -80,7 +90,7 @@ def simulate_on_r2(
     )
 
     reqs = list(it.islice(rg, num_requests))
-    breakpoint()
+
     sim_logger.debug(f"Request 0 from the generator: {reqs[0]}")
     tick = time()
     events = list(ssfs.simulate(reqs))
@@ -108,6 +118,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--cython", action=argparse.BooleanOptionalAction, default=False
     )
+    parser.add_argument("--graph", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args()
 
@@ -116,10 +127,11 @@ if __name__ == "__main__":
         sim_logger.handlers[0].setLevel(logging.DEBUG)
 
     N = args.num_vehicles
-    stops, requests = simulate_on_r2(
+    stops, requests = simulate(
         num_vehicles=N,
         rate=N * 1.5,
         seat_capacities=4,
         num_requests=N * 10,
         use_cython=args.cython,
+        use_graph=args.graph,
     )
