@@ -1,9 +1,11 @@
 import random
+import pytest
 
 import numpy as np
+import itertools as it
+
 from numpy import inf, isclose
 from time import time
-import itertools as it
 from pandas.core.common import flatten
 
 from ridepy.data_structures_cython import Stoplist as CyStoplist
@@ -34,6 +36,7 @@ from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.extras.spaces import make_nx_grid
 
 
+@pytest.mark.xfail(reason="c++ dispatcher not callable from python")
 def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     """
     Tests that the pure pythonic and cythonic brute force dispatcher produces identical results.

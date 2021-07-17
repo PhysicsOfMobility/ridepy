@@ -17,6 +17,7 @@ from ridepy.data_structures_cython import (
     InternalRequest as CyInternalRequest,
     StopAction as CyStopAction,
 )
+from ridepy.data_structures_cython.data_structures import LocType
 from ridepy.events import (
     VehicleStateBeginEvent,
     RequestSubmissionEvent,
@@ -25,20 +26,20 @@ from ridepy.events import (
 )
 from ridepy.util.testing_utils import setup_insertion_data_structures
 from ridepy.vehicle_state import VehicleState
-from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
+from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleState
 
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
 )
 from ridepy.util.dispatchers_cython.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.util.spaces import Euclidean2D
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 
-
+@pytest.mark.xfail(reason="c++ dispatcher not callable from python")
 def test_slow_simple_fleet_state_initialization():
     test_space = [
         [Euclidean2D(), CyEuclidean2D()],
@@ -53,7 +54,7 @@ def test_slow_simple_fleet_state_initialization():
         testable = lambda: SlowSimpleFleetState(
             initial_locations={0: (0, 0), 1: (1, 1)},
             space=space,
-            dispatcher=dispatcher,
+            dispatcher=dispatcher(loc_type=space.loc_type),
             seat_capacities=8,
             vehicle_state_class=VehicleStateCls,
         )
@@ -173,7 +174,7 @@ def test_reject_trivial_requests(kind):
         initial_locations={0: (0, 0)},
         seat_capacities=1,
         space=space,
-        dispatcher=dispatcher,
+        dispatcher=dispatcher(loc_type=space.loc_type),
         vehicle_state_class=VehicleStateCls,
     )
 

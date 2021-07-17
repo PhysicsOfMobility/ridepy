@@ -11,7 +11,7 @@ import networkx as nx
 import itertools as it
 from scipy.spatial import distance as spd
 
-from ridepy.data_structures import TransportSpace, ID
+from ridepy.data_structures import TransportSpace, ID, LocType
 from ridepy.util import smartVectorize, make_repr
 
 
@@ -133,6 +133,7 @@ class Euclidean2D(Euclidean):
         velocity: float = 1,
     ):
         super().__init__(n_dim=2, coord_range=coord_range, velocity=velocity)
+        self.loc_type = LocType.R2LOC
 
     def _coord_sub(self, u, v):
         return u[0] - v[0], u[1] - v[1]
@@ -172,6 +173,7 @@ class Manhattan2D(TransportSpace):
         """
         self.n_dim = 2
         self.velocity = velocity
+        self.loc_type = LocType.R2LOC
 
         if coord_range is not None:
             assert len(coord_range) == 2, (
@@ -271,6 +273,7 @@ class Graph(TransportSpace):
             (u, v, {"distance": w}) for (u, v), w in zip(edges, weights)
         )
 
+        self.loc_type = LocType.INT
         self.velocity = velocity
         self._update_distance_cache()
 
