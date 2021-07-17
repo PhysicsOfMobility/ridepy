@@ -139,4 +139,3 @@ reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[-0.5:5.5:7j])
 plot_occupancy_hist(stops)
 
 # + tags=[]
-

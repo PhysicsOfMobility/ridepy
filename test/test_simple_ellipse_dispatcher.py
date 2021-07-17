@@ -10,7 +10,7 @@ from ridepy.events import (
     PickupEvent,
     DeliveryEvent,
 )
-from ridepy.util.dispatchers_cython import simple_ellipse_dispatcher
+from ridepy.util.testing_utils_cython import simple_ellipse_dispatcher
 from ridepy.extras.spaces import make_nx_grid
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces_cython import Euclidean2D, Graph

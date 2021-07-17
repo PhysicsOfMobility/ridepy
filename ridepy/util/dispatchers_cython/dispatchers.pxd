@@ -1,14 +1,6 @@
 # distutils: language=c++
 
-from .cdispatchers cimport (
-    AbstractDispatcher as CAbstractDispatcher,
-    BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
-    SimpleEllipseDispatcher as CSimpleEllipseDispatcher,
-)
-
-from ridepy.util.spaces_cython.spaces cimport Euclidean2D, TransportSpace
-from ridepy.data_structures_cython.data_structures cimport TransportationRequest, Stoplist
-
+from .cdispatchers cimport AbstractDispatcher as CAbstractDispatcher
 from ridepy.data_structures_cython.data_structures cimport LocType, R2loc
 
 

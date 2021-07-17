@@ -1,6 +1,6 @@
 from ridepy.data_structures import Location, TransportSpace, Stoplist, Dispatcher
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
-from ridepy.util.dispatchers_cython import (
+from ridepy.util.testing_utils_cython import (
     brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from ridepy.util.spaces_cython import spaces as cyspaces

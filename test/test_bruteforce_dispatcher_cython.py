@@ -27,6 +27,9 @@ from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
+from ridepy.util.testing_utils_cython import (
+    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+)
 from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.testing_utils import stoplist_from_properties
 from ridepy.vehicle_state import VehicleState as py_VehicleState
@@ -36,7 +39,6 @@ from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.extras.spaces import make_nx_grid
 
 
-@pytest.mark.xfail(reason="c++ dispatcher not callable from python")
 def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     """
     Tests that the pure pythonic and cythonic brute force dispatcher produces identical results.
@@ -75,7 +77,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
-    pythonic_solution = py_brute_force_total_traveltime_minimizing_dispatcher(
+    pythonic_solution = py_brute_force_total_traveltime_minimizing_dispatcher()(
         request, stoplist, space, seat_capacity
     )
     py_min_cost, _, py_timewindows = pythonic_solution
@@ -104,9 +106,9 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     )
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = BruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)(
-        request, stoplist, space, seat_capacity
-    )
+    cythonic_solution = cy_brute_force_total_traveltime_minimizing_dispatcher(
+        LocType.R2LOC
+    )(request, stoplist, space, seat_capacity)
     cy_min_cost, _, cy_timewindows = cythonic_solution
     tock = time()
     print(
