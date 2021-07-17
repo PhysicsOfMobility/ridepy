@@ -17,7 +17,7 @@ from ridepy.data_structures_cython.data_structures import LocType
 from ridepy.extras.spaces import make_nx_grid
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState as PyVehicleState
-from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleState
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )

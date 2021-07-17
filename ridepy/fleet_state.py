@@ -62,7 +62,6 @@ from ridepy.data_structures_cython import (
 
 from ridepy.vehicle_state import VehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleStateThin
 
 from ridepy.data_structures import TransportSpace
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
@@ -144,7 +143,7 @@ class FleetState(ABC):
             logger.debug(
                 f"Creating FleetState with vehicle state class {vehicle_state_class}"
             )
-        elif issubclass(vehicle_state_class, (CyVehicleState, CyVehicleStateThin)):
+        elif issubclass(vehicle_state_class, CyVehicleState):
             StopCls = CyStop
             StopActionCls = CyStopAction
             InternalRequestCls = CyInternalRequest

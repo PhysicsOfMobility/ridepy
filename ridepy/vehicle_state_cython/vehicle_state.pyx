@@ -3,18 +3,22 @@
 from ridepy.util import MAX_SEAT_CAPACITY
 
 from ridepy.events import PickupEvent, DeliveryEvent, InternalEvent
-from ridepy.data_structures import (
-    Dispatcher,
-    SingleVehicleSolution,
-)
+from ridepy.data_structures import  (TransportationRequest as pyTransportationRequest,SingleVehicleSolution as pySingleVehicleSolution)
 from ridepy.data_structures_cython.data_structures cimport (
     TransportationRequest,
     Stop,
     StopAction,
     Stoplist,
+    LocType
 )
 
+from ridepy.data_structures_cython.cdata_structures cimport R2loc, Stop as CStop
+from ridepy.data_structures_cython.cdata_structures cimport SingleVehicleSolution, \
+    TransportationRequest as CTransportationRequest, \
+    Request as CRequest
+
 from ridepy.util.spaces_cython.spaces cimport TransportSpace
+from ridepy.util.dispatchers_cython.dispatchers cimport Dispatcher
 
 from typing import List, Union
 from copy import deepcopy
@@ -22,80 +26,65 @@ from copy import deepcopy
 import logging
 logger = logging.getLogger(__name__)
 
+from ridepy.vehicle_state_cython.cvehicle_state cimport VehicleState as CVehicleState, StopEventSpec
+from libcpp.memory cimport unique_ptr, make_unique
+from libcpp.utility cimport pair
+from libcpp.memory cimport make_shared
+from libcpp.vector cimport vector
+from libcpp.string cimport string
+from cython.operator cimport dereference
 
 cdef extern from "limits.h":
     cdef int INT_MAX
+
+
+cdef union _UVehicleState:
+    unique_ptr[CVehicleState[R2loc]] _vstate_r2loc
+    unique_ptr[CVehicleState[int]] _vstate_int
 
 cdef class VehicleState:
     """
     Single vehicle insertion logic is implemented in Cython here. Can be used interchangeably
     with its pure-python equivalent `.vehicle_state.VehicleState`.
     """
-
-    #    def recompute_arrival_times_drive_first(self):
-    #        # update CPATs
-    #        for stop_i, stop_j in zip(self.stoplist, self.stoplist[1:]):
-    #            stop_j.estimated_arrival_time = max(
-    #                stop_i.estimated_arrival_time, stop_i.time_window_min
-    #            ) + self.space.t(stop_i.location, stop_j.location)
-    cdef Stoplist _stoplist
-    cdef TransportSpace _space
-    cdef int _vehicle_id
-    cdef int _seat_capacity
-    cdef object _dispatcher
+    cdef Stoplist initial_stoplist
+    cdef _UVehicleState _uvstate
+    cdef LocType loc_type
 
     def __init__(
         self,
         #*, # haven't figured out yet how to get __reduce__+unpickling to work with keyword-only
         # arguments, hence we have to support __init__ with positional arguments for the time being
-        vehicle_id,
-        initial_stoplist: Union[List[Stop], Stoplist],
-        space: TransportSpace,
-        dispatcher: Dispatcher,
-        seat_capacity: int,
+        int vehicle_id,
+        initial_stoplist,
+        TransportSpace space,
+        Dispatcher dispatcher,
+        int seat_capacity,
     ):
-        self._vehicle_id = vehicle_id
-        """
-        See the docstring of `.vehicle_state.VehicleState` for details of the parameters.
-        """
-        self._vehicle_id = vehicle_id
-        # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
         # Create a cython stoplist object from initial_stoplist
         if isinstance(initial_stoplist, Stoplist):
             # if a `data_structures_cython.Stoplist` object, no need to re-create the cythonic stoplist
-            self._stoplist = initial_stoplist
+            self.initial_stoplist = initial_stoplist
         else:
             # assume that a python list of `data_structures_cython.Stop` objects are being passed
             # create a `data_structures_cython.Stoplist` object
-            self._stoplist = Stoplist(initial_stoplist, space.loc_type)
-        self._space = space
-        self._dispatcher = dispatcher
+            self.initial_stoplist = Stoplist(initial_stoplist, space.loc_type)
         if seat_capacity > INT_MAX:
             raise ValueError("Cannot use seat_capacity bigger that C++'s INT_MAX")
-        self._seat_capacity = seat_capacity
-        logger.info(f"Created VehicleState with space of type {type(self._space)}")
+        if space.loc_type == LocType.R2LOC:
+            self.loc_type = LocType.R2LOC
+            self._uvstate._vstate_r2loc = make_unique[CVehicleState[R2loc]](
+                vehicle_id, self.initial_stoplist.ustoplist._stoplist_r2loc,
+                dereference(space.u_space.space_r2loc_ptr), dereference(dispatcher.u_dispatcher.dispatcher_r2loc_ptr), seat_capacity)
+        elif space.loc_type == LocType.INT:
+            self.loc_type = LocType.INT
+            self._uvstate._vstate_int = make_unique[CVehicleState[int]](
+                vehicle_id, self.initial_stoplist.ustoplist._stoplist_int,
+                dereference(space.u_space.space_int_ptr), dereference(dispatcher.u_dispatcher.dispatcher_int_ptr), seat_capacity)
+        else:
+            raise ValueError("This line should never have been reached")
 
-    property stoplist:
-        def __get__(self):
-            return self._stoplist
-        def __set__(self, new_stoplist):
-            self._stoplist = new_stoplist
 
-    property seat_capacity:
-        def __get__(self):
-            return self._seat_capacity
-
-    property vehicle_id:
-        def __get__(self):
-            return self._vehicle_id
-
-    property space:
-        def __get__(self):
-            return self._space
-
-    property dispatcher:
-        def __get__(self):
-            return self._dispatcher
 
     def fast_forward_time(self, t: float) -> Tuple[List[StopEvent], List[Stop]]:
         """
@@ -115,71 +104,34 @@ cdef class VehicleState:
         """
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
+
+        cdef vector[StopEventSpec] res
+        if self.loc_type == LocType.R2LOC:
+            res = dereference(self._uvstate._vstate_r2loc).fast_forward_time(t)
+        elif self.loc_type == LocType.INT:
+            res = dereference(self._uvstate._vstate_int).fast_forward_time(t)
+        else:
+            raise ValueError("This line should never have been reached")
+
+        #stop_event_specc, stoplist = res[0],
         event_cache = []
+        cdef StopEventSpec evspec
 
-        last_stop = None
-
-        # drop all non-future stops from the stoplist, except for the (outdated) CPE
-        for i in range(len(self._stoplist) - 1, 0, -1):
-            stop = self._stoplist[i]
-            # service the stop at its estimated arrival time
-            if stop.estimated_arrival_time <= t:
-                # as we are iterating backwards, the first stop iterated over is the last one serviced
-                if last_stop is None:
-                    # this deepcopy is necessary because otherwise after removing elements from stoplist,
-                    # last_stop will point to the wrong element.  See the failing test as well:
-                    # test.test_data_structures_cython.test_stoplist_getitem_and_elem_removal_consistent
-                    last_stop = deepcopy(stop)
-
-                event_cache.append(
-                    {
+        for ev in res:
+            event_cache.append({
                         StopAction.pickup: PickupEvent,
                         StopAction.dropoff: DeliveryEvent,
                         StopAction.internal: InternalEvent,
-                    }[stop.action](
-                        request_id=stop.request.request_id,
-                        vehicle_id=self._vehicle_id,
-                        timestamp=max(
-                            stop.estimated_arrival_time, stop.time_window_min
-                        ),
-                    )
-                )
-                self._stoplist.remove_nth_elem(i)
+                        }[ev.action](
+                        request_id=ev.request_id,
+                        vehicle_id=ev.vehicle_id,
+                        timestamp=ev.timestamp))
 
-
-        # fix event cache order
-        event_cache = event_cache[::-1]
-
-        # if no stop was serviced, the last stop is the outdated CPE
-        if last_stop is None:
-            last_stop = self._stoplist[0]
-
-        # set the occupancy at CPE
-        self._stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
-
-        # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-        if len(self._stoplist) > 1:
-            if last_stop.estimated_arrival_time > t:
-                # still mid-jump from last interpolation, no need to interpolate
-                # again
-                pass
-            else:
-                self._stoplist[0].location, jump_time = self._space.interp_time(
-                    u=last_stop.location,
-                    v=self._stoplist[1].location,
-                    time_to_dest=self._stoplist[1].estimated_arrival_time - t,
-                )
-                # set CPE time
-                self._stoplist[0].estimated_arrival_time = t + jump_time
-        else:
-            # stoplist is empty, only CPE is there. set CPE time to current time
-            self._stoplist[0].estimated_arrival_time = t
-
-        return event_cache, self._stoplist
+        return event_cache
 
     def handle_transportation_request_single_vehicle(
-            self, TransportationRequest request
-    ) -> SingleVehicleSolution:
+            self, request: pyTransportationRequest
+    ) -> pySingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could:
 
@@ -194,18 +146,84 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        ret = self._vehicle_id, *self._dispatcher(
-                request,
-                self._stoplist,
-                self._space, self._seat_capacity)
-        return ret
+        cdef SingleVehicleSolution single_vehicle_solution
 
-    def __reduce__(self):
-        return self.__class__, \
-            (
-                self._vehicle_id,
-                self._stoplist.to_pys(),
-                self._space,
-                self._dispatcher,
-                self._seat_capacity
+        if self.loc_type == LocType.R2LOC:
+            single_vehicle_solution = (
+                dereference(self._uvstate._vstate_r2loc).handle_transportation_request_single_vehicle(
+                    make_shared[CTransportationRequest[R2loc]](
+                        <int> request.request_id,
+                        <double> request.creation_timestamp,
+                        <R2loc> request.origin,
+                        <R2loc> request.destination,
+                        <double> request.pickup_timewindow_min,
+                        <double> request.pickup_timewindow_max,
+                        <double> request.delivery_timewindow_min,
+                        <double> request.delivery_timewindow_max
+                    )
+                )
             )
+        elif self.loc_type == LocType.INT:
+            single_vehicle_solution = (
+                dereference(self._uvstate._vstate_int).handle_transportation_request_single_vehicle(
+                    make_shared[CTransportationRequest[int]](
+                        <int> request.request_id,
+                        <double> request.creation_timestamp,
+                        <int> request.origin,
+                        <int> request.destination,
+                        <double> request.pickup_timewindow_min,
+                        <double> request.pickup_timewindow_max,
+                        <double> request.delivery_timewindow_min,
+                        <double> request.delivery_timewindow_max
+                    )
+                )
+            )
+        else:
+            raise ValueError("This line should never have been reached")
+
+
+        return (
+            self.vehicle_id,
+            single_vehicle_solution.min_cost,
+            (
+                single_vehicle_solution.EAST_pu,
+                single_vehicle_solution.LAST_pu,
+                single_vehicle_solution.EAST_do,
+                single_vehicle_solution.LAST_do
+            )
+        )
+
+    def select_new_stoplist(self):
+        if self.loc_type == LocType.R2LOC:
+            return dereference(self._uvstate._vstate_r2loc).select_new_stoplist()
+        elif self.loc_type == LocType.INT:
+            return dereference(self._uvstate._vstate_int).select_new_stoplist()
+        else:
+            raise ValueError("This line should never have been reached")
+
+    property stoplist:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist)
+            elif self.loc_type == LocType.INT:
+                return Stoplist.from_c_int(dereference(self._uvstate._vstate_int).stoplist)
+            else:
+                raise ValueError("This line should never have been reached")
+
+    property seat_capacity:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return dereference(self._uvstate._vstate_r2loc).seat_capacity
+            elif self.loc_type == LocType.INT:
+                return dereference(self._uvstate._vstate_int).seat_capacity
+            else:
+                raise ValueError("This line should never have been reached")
+
+    property vehicle_id:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return dereference(self._uvstate._vstate_r2loc).vehicle_id
+            elif self.loc_type == LocType.INT:
+                return dereference(self._uvstate._vstate_int).vehicle_id
+            else:
+                raise ValueError("This line should never have been reached")

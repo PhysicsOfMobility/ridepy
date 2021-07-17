@@ -38,7 +38,7 @@ from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
 )
 from ridepy.vehicle_state import VehicleState
-from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleState
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.extras.io import (
     create_params_json,

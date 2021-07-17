@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 # + tags=[]
 from ridepy.fleet_state import SlowSimpleFleetState
-from ridepy.vehicle_state_cython import VehicleStateThin as VehicleState
+from ridepy.vehicle_state_cython import VehicleState
 
 from ridepy.util.dispatchers_cython import (
     BruteForceTotalTravelTimeMinimizingDispatcher as brute_force_total_traveltime_minimizing_dispatcher,

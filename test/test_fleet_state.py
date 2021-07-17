@@ -26,7 +26,7 @@ from ridepy.events import (
 )
 from ridepy.util.testing_utils import setup_insertion_data_structures
 from ridepy.vehicle_state import VehicleState
-from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleState
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
 
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher,
