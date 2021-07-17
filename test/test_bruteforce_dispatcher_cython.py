@@ -156,7 +156,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         ######################################################
         # CYTHON
         ######################################################
-        breakpoint()
+
         ssfs = SlowSimpleFleetState(
             initial_locations={7: init_loc},
             seat_capacities=10,
@@ -215,7 +215,7 @@ def test_sanity_in_graph():
             initial_locations={k: 0 for k in range(50)},
             seat_capacities=10,
             space=space,
-            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcherInt(),
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(LocType.INT),
             vehicle_state_class=cy_VehicleState,
         )
 
