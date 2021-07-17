@@ -222,9 +222,7 @@ class TransportSpace(ABC):
 Stoplist = List[Stop]
 """A list of `.Stop` objects. Specifies completely the current position and future actions a vehicle will make."""
 
-SingleVehicleSolution = Tuple[
-    float, Optional[Stoplist], Tuple[float, float, float, float]
-]
+SingleVehicleSolution = Tuple[ID, float, Tuple[float, float, float, float]]
 """cost, new_stoplist, (pickup_timewindow_min, pickup_timewindow_max, delivery_timewindow_min, 
 delivery_timewindow_max).
 

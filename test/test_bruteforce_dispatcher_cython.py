@@ -25,8 +25,10 @@ from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcherR2loc, \
-    BruteForceTotalTravelTimeMinimizingDispatcherInt
+from ridepy.util.dispatchers_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcherR2loc,
+    BruteForceTotalTravelTimeMinimizingDispatcherInt,
+)
 from ridepy.util.testing_utils import stoplist_from_properties
 from ridepy.vehicle_state import VehicleState as py_VehicleState
 from ridepy.vehicle_state_cython import VehicleStateThin as cy_VehicleState
@@ -157,7 +159,6 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         ######################################################
         # CYTHON
         ######################################################
-
         ssfs = SlowSimpleFleetState(
             initial_locations={7: init_loc},
             seat_capacities=10,
@@ -172,6 +173,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             rate=1.5,
         )
         cy_reqs = list(it.islice(rg, n_reqs))
+        breakpoint()
         cy_events = list(ssfs.simulate(cy_reqs))
 
         ######################################################
