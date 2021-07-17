@@ -14,12 +14,13 @@ from ridepy.data_structures_cython import (
 )
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState as PyVehicleState
-from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
+from ridepy.vehicle_state_cython import VehicleStateThin as CyVehicleState
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    # brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcherR2loc as cy_brute_force_total_traveltime_minimizing_dispatcher,
 )
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean2D as pyEuclidean2D
@@ -47,7 +48,7 @@ def simulate_on_r2(
 
     fleet_state_class = SlowSimpleFleetState
     dispatcher = (
-        cy_brute_force_total_traveltime_minimizing_dispatcher
+        cy_brute_force_total_traveltime_minimizing_dispatcher()
         if use_cython
         else py_brute_force_total_traveltime_minimizing_dispatcher
     )

@@ -98,9 +98,6 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcherR2loc(Dispatcher):
     def __init__(self, *args, **kwargs):
         Dispatcher.__init__(self, loc_type=LocType.R2LOC)
 
-    def __call__(self, TransportationRequest cy_request, Stoplist stoplist, TransportSpace space, int seat_capacity, bint debug = False ):
-
-
     def __dealloc__(self):
         del self.derived_ptr
 

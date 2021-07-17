@@ -92,12 +92,13 @@ class FleetState(ABC):
                 space=self.space, request_class=TransportationRequestCls
             )
             req = next(iter(rg))
-            self.dispatcher(
-                req,
-                vehicle.stoplist,
-                self.space,
-                vehicle.seat_capacity,
-            )
+            # TODO
+            # self.dispatcher(
+            #     req,
+            #     vehicle.stoplist,
+            #     self.space,
+            #     vehicle.seat_capacity,
+            # )
         except Exception as e:
             raise TypeError(f"unsuitable dispatcher, error was:\n{e}")
 
@@ -495,6 +496,7 @@ class SlowSimpleFleetState(FleetState):
         #    logger.debug("]")
         # no need to swap the old stoplists of each vehicle with the new (fast-forwarded)
         # stoplists, because vehicle_state_class.fast_forward did that already.
+
         return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
 
     def handle_transportation_request(
