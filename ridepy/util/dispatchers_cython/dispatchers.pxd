@@ -24,15 +24,3 @@ cdef union UDispatcher:
 cdef class Dispatcher:
     cdef UDispatcher u_dispatcher
     cdef readonly LocType loc_type
-
-cdef class BruteForceTotalTravelTimeMinimizingDispatcherR2loc(Dispatcher):
-    cdef CBruteForceTotalTravelTimeMinimizingDispatcher[R2loc] *derived_ptr
-
-cdef class BruteForceTotalTravelTimeMinimizingDispatcherInt(Dispatcher):
-    cdef CBruteForceTotalTravelTimeMinimizingDispatcher[int] *derived_ptr
-
-cdef class SimpleEllipseDispatcherR2loc(Dispatcher):
-    cdef CSimpleEllipseDispatcher[R2loc] *derived_ptr
-
-cdef class SimpleEllipseDispatcherInt(Dispatcher):
-    cdef CSimpleEllipseDispatcher[int] *derived_ptr

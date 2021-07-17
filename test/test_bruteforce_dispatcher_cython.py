@@ -25,10 +25,7 @@ from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.dispatchers import (
     brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
 )
-from ridepy.util.dispatchers_cython import (
-    BruteForceTotalTravelTimeMinimizingDispatcherR2loc,
-    BruteForceTotalTravelTimeMinimizingDispatcherInt,
-)
+from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.testing_utils import stoplist_from_properties
 from ridepy.vehicle_state import VehicleState as py_VehicleState
 from ridepy.vehicle_state_cython import VehicleStateThin as cy_VehicleState
@@ -104,7 +101,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     )
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = BruteForceTotalTravelTimeMinimizingDispatcherR2loc()(
+    cythonic_solution = BruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)(
         request, stoplist, space, seat_capacity
     )
     cy_min_cost, _, cy_timewindows = cythonic_solution
@@ -159,11 +156,12 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         ######################################################
         # CYTHON
         ######################################################
+        breakpoint()
         ssfs = SlowSimpleFleetState(
             initial_locations={7: init_loc},
             seat_capacities=10,
             space=cy_space,
-            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcherR2loc(),
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(loc_type=cy_space.loc_type),
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(
@@ -173,7 +171,6 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             rate=1.5,
         )
         cy_reqs = list(it.islice(rg, n_reqs))
-        breakpoint()
         cy_events = list(ssfs.simulate(cy_reqs))
 
         ######################################################

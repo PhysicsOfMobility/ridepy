@@ -3,10 +3,7 @@
 from ridepy.util import MAX_SEAT_CAPACITY
 
 from ridepy.events import PickupEvent, DeliveryEvent, InternalEvent
-from ridepy.data_structures import (
-    SingleVehicleSolution,
-    TransportationRequest as pyTransportationRequest,
-)
+from ridepy.data_structures import  (TransportationRequest as pyTransportationRequest,SingleVehicleSolution as pySingleVehicleSolution)
 from ridepy.data_structures_cython.data_structures cimport (
     TransportationRequest,
     Stop,
@@ -16,7 +13,7 @@ from ridepy.data_structures_cython.data_structures cimport (
 )
 
 from ridepy.data_structures_cython.cdata_structures cimport R2loc, Stop as CStop
-from ridepy.data_structures_cython.cdata_structures cimport InsertionResult, \
+from ridepy.data_structures_cython.cdata_structures cimport SingleVehicleSolution, \
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
 
@@ -51,13 +48,6 @@ cdef class VehicleState:
     with its pure-python equivalent `.vehicle_state.VehicleState`.
     """
     cdef Stoplist initial_stoplist
-    cdef vector[CStop[R2loc]] c_stoplist_new
-    cdef vector[CStop[R2loc]] c_stoplist
-    cdef TransportSpace _space
-    cdef int _vehicle_id
-    cdef int _seat_capacity
-    cdef object _dispatcher
-
     cdef _UVehicleState _uvstate
     cdef LocType loc_type
 
@@ -94,7 +84,6 @@ cdef class VehicleState:
         else:
             raise ValueError("This line should never have been reached")
 
-        logger.info(f"Created VehicleState with space of type {type(self._space)}")
 
 
     def fast_forward_time(self, t: float) -> Tuple[List[StopEvent], List[Stop]]:
@@ -116,8 +105,7 @@ cdef class VehicleState:
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
 
-        cdef vector[StopEventSpec] res = dereference(
-            self._uvstate._vstate_r2loc).fast_forward_time(t)
+        cdef vector[StopEventSpec] res = dereference(self._uvstate._vstate_r2loc).fast_forward_time(t)
 
         #stop_event_specc, stoplist = res[0],
         event_cache = []
@@ -137,7 +125,7 @@ cdef class VehicleState:
 
     def handle_transportation_request_single_vehicle(
             self, request: pyTransportationRequest
-    ) -> SingleVehicleSolution:
+    ) -> pySingleVehicleSolution:
         """
         The computational bottleneck. An efficient simulator could:
 
@@ -152,30 +140,84 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        cdef pair[int, InsertionResult[R2loc]] insertion_result_and_vid_r2loc = dereference(
-            self._uvstate._vstate_r2loc).handle_transportation_request_single_vehicle(
-                make_shared[CTransportationRequest[R2loc]](
-                    <int> request.request_id, <double> request.creation_timestamp, <R2loc> request.origin,
-                    <R2loc> request.destination, <double> request.pickup_timewindow_min, <double> request.pickup_timewindow_max,
-                    <double> request.delivery_timewindow_min, <double> request.delivery_timewindow_max))
+        cdef SingleVehicleSolution single_vehicle_solution
 
-        cdef vid = insertion_result_and_vid_r2loc.first
-        cdef InsertionResult[R2loc] insertion_result_r2loc = insertion_result_and_vid_r2loc.second
-        self.c_stoplist_new = insertion_result_r2loc.new_stoplist
+        if self.loc_type == LocType.R2LOC:
+            single_vehicle_solution = (
+                dereference(self._uvstate._vstate_r2loc).handle_transportation_request_single_vehicle(
+                    make_shared[CTransportationRequest[R2loc]](
+                        <int> request.request_id,
+                        <double> request.creation_timestamp,
+                        <R2loc> request.origin,
+                        <R2loc> request.destination,
+                        <double> request.pickup_timewindow_min,
+                        <double> request.pickup_timewindow_max,
+                        <double> request.delivery_timewindow_min,
+                        <double> request.delivery_timewindow_max
+                    )
+                )
+            )
+        elif self.loc_type == LocType.INT:
+            single_vehicle_solution = (
+                dereference(self._uvstate._vstate_int).handle_transportation_request_single_vehicle(
+                    make_shared[CTransportationRequest[int]](
+                        <int> request.request_id,
+                        <double> request.creation_timestamp,
+                        <int> request.origin,
+                        <int> request.destination,
+                        <double> request.pickup_timewindow_min,
+                        <double> request.pickup_timewindow_max,
+                        <double> request.delivery_timewindow_min,
+                        <double> request.delivery_timewindow_max
+                    )
+                )
+            )
+        else:
+            raise ValueError("This line should never have been reached")
 
-        return vid, insertion_result_r2loc.min_cost, \
-               (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
-                insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+
+        return (
+            self.vehicle_id,
+            single_vehicle_solution.min_cost,
+            (
+                single_vehicle_solution.EAST_pu,
+                single_vehicle_solution.LAST_pu,
+                single_vehicle_solution.EAST_do,
+                single_vehicle_solution.LAST_do
+            )
+        )
 
     def select_new_stoplist(self):
-        #dereference(self._uvstate._vstate_r2loc).stoplist.reset()
-        dereference(self._uvstate._vstate_r2loc).stoplist = self.c_stoplist_new
-
+        if self.loc_type == LocType.R2LOC:
+            return dereference(self._uvstate._vstate_r2loc).select_new_stoplist()
+        elif self.loc_type == LocType.INT:
+            return dereference(self._uvstate._vstate_int).select_new_stoplist()
+        else:
+            raise ValueError("This line should never have been reached")
 
     property stoplist:
         def __get__(self):
-            return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist)
+            if self.loc_type == LocType.R2LOC:
+                return Stoplist.from_c_r2loc(dereference(self._uvstate._vstate_r2loc).stoplist)
+            elif self.loc_type == LocType.INT:
+                return Stoplist.from_c_int(dereference(self._uvstate._vstate_int).stoplist)
+            else:
+                raise ValueError("This line should never have been reached")
 
     property seat_capacity:
         def __get__(self):
-            return dereference(self._uvstate._vstate_r2loc).seat_capacity
+            if self.loc_type == LocType.R2LOC:
+                return dereference(self._uvstate._vstate_r2loc).seat_capacity
+            elif self.loc_type == LocType.INT:
+                return dereference(self._uvstate._vstate_int).seat_capacity
+            else:
+                raise ValueError("This line should never have been reached")
+
+    property vehicle_id:
+        def __get__(self):
+            if self.loc_type == LocType.R2LOC:
+                return dereference(self._uvstate._vstate_r2loc).vehicle_id
+            elif self.loc_type == LocType.INT:
+                return dereference(self._uvstate._vstate_int).vehicle_id
+            else:
+                raise ValueError("This line should never have been reached")

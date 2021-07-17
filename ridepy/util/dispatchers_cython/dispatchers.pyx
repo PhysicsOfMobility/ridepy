@@ -82,54 +82,46 @@ cpdef simple_ellipse_dispatcher(TransportationRequest cy_request, Stoplist stopl
 
 cdef class Dispatcher:
     def __init__(self, loc_type):
-        if loc_type == LocType.INT:
-            self.loc_type = LocType.INT
-        elif loc_type == LocType.R2LOC:
-            self.loc_type = LocType.R2LOC
+        self.loc_type = loc_type
+
+
+cdef class BruteForceTotalTravelTimeMinimizingDispatcher(Dispatcher):
+    def __cinit__(self, loc_type):
+        if loc_type == LocType.R2LOC:
+            self.u_dispatcher.dispatcher_r2loc_ptr = new CBruteForceTotalTravelTimeMinimizingDispatcher[R2loc]()
+        elif loc_type == LocType.INT:
+            self.u_dispatcher.dispatcher_int_ptr = new CBruteForceTotalTravelTimeMinimizingDispatcher[int]()
         else:
             raise ValueError("This line should never have been reached")
 
-
-cdef class BruteForceTotalTravelTimeMinimizingDispatcherR2loc(Dispatcher):
-    def __cinit__(self):
-        self.loc_type = LocType.R2LOC
-        self.derived_ptr = self.u_dispatcher.dispatcher_r2loc_ptr = new CBruteForceTotalTravelTimeMinimizingDispatcher[R2loc]()
-
-    def __init__(self, *args, **kwargs):
-        Dispatcher.__init__(self, loc_type=LocType.R2LOC)
+    def __init__(self, loc_type):
+        Dispatcher.__init__(self, loc_type=loc_type)
 
     def __dealloc__(self):
-        del self.derived_ptr
+        if self.loc_type == LocType.R2LOC:
+            del self.u_dispatcher.dispatcher_r2loc_ptr
+        elif self.loc_type == LocType.INT:
+            del self.u_dispatcher.dispatcher_int_ptr
+        else:
+            raise ValueError("This line should never have been reached")
 
-cdef class BruteForceTotalTravelTimeMinimizingDispatcherInt(Dispatcher):
-    def __cinit__(self):
-        self.loc_type = LocType.INT
-        self.derived_ptr = self.u_dispatcher.dispatcher_int_ptr = new CBruteForceTotalTravelTimeMinimizingDispatcher[int]()
+cdef class SimpleEllipseDispatcher(Dispatcher):
+    def __cinit__(self, loc_type):
+        if loc_type == LocType.R2LOC:
+            self.u_dispatcher.dispatcher_r2loc_ptr = new CSimpleEllipseDispatcher[R2loc]()
+        elif loc_type == LocType.INT:
+            self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[int]()
+        else:
+            raise ValueError("This line should never have been reached")
 
-    def __init__(self, *args, **kwargs):
-        Dispatcher.__init__(self, loc_type=LocType.INT)
-
-    def __dealloc__(self):
-        del self.derived_ptr
-
-cdef class SimpleEllipseDispatcherR2loc(Dispatcher):
-    def __cinit__(self):
-        self.loc_type = LocType.R2LOC
-        self.derived_ptr = self.u_dispatcher.dispatcher_r2loc_ptr = new CSimpleEllipseDispatcher[R2loc]()
-
-    def __init__(self, *args, **kwargs):
-        Dispatcher.__init__(self, loc_type=LocType.R2LOC)
+    def __init__(self, loc_type):
+        Dispatcher.__init__(self, loc_type=loc_type)
 
     def __dealloc__(self):
-        del self.derived_ptr
+        if self.loc_type == LocType.R2LOC:
+            del self.u_dispatcher.dispatcher_r2loc_ptr
+        elif self.loc_type == LocType.INT:
+            del self.u_dispatcher.dispatcher_int_ptr
+        else:
+            raise ValueError("This line should never have been reached")
 
-cdef class SimpleEllipseDispatcherInt(Dispatcher):
-    def __cinit__(self):
-        self.loc_type = LocType.INT
-        self.derived_ptr = self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[int]()
-
-    def __init__(self, *args, **kwargs):
-        Dispatcher.__init__(self, loc_type=LocType.INT)
-
-    def __dealloc__(self):
-        del self.derived_ptr

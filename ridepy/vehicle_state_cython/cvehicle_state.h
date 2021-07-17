@@ -30,6 +30,7 @@ template <typename Loc> class VehicleState {
 public:
   int vehicle_id;
   vector<Stop<Loc>> stoplist;
+  vector<Stop<Loc>> stoplist_new;
   int seat_capacity;
   AbstractDispatcher<Loc> &dispatcher;
   TransportSpace<Loc> &space;
@@ -120,7 +121,7 @@ public:
     return event_cache;
   }
 
-  pair<int, InsertionResult<Loc>> handle_transportation_request_single_vehicle(
+  SingleVehicleSolution handle_transportation_request_single_vehicle(
       std::shared_ptr<TransportationRequest<Loc>> request) {
     /*
     The computational bottleneck. An efficient simulator could:
@@ -136,8 +137,21 @@ public:
     -------
     The `SingleVehicleSolution` for the respective vehicle.
     */
-    return make_pair(vehicle_id,
-                     (dispatcher)(request, stoplist, space, seat_capacity));
+    InsertionResult<Loc> insertion_result = dispatcher(request, stoplist, space, seat_capacity);
+    stoplist_new = insertion_result.new_stoplist;
+    SingleVehicleSolution single_vehicle_solution  = {
+        vehicle_id,
+        insertion_result.min_cost,
+        insertion_result.EAST_pu,
+        insertion_result.LAST_pu,
+        insertion_result.EAST_do,
+        insertion_result.LAST_do
+    };
+    return single_vehicle_solution;
+  }
+
+  void select_new_stoplist() {
+    stoplist = stoplist_new;
   }
 };
 } // namespace cstuff

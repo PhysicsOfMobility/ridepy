@@ -5,7 +5,7 @@ from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
 from libcpp.utility cimport pair
 from ridepy.data_structures_cython.cdata_structures cimport (
-    InsertionResult, TransportationRequest, Stop, StopAction)
+     SingleVehicleSolution, TransportationRequest, Stop, StopAction)
 from ridepy.util.spaces_cython.cspaces cimport TransportSpace
 
 cdef extern from "cvehicle_state.h" namespace 'cstuff':
@@ -26,5 +26,6 @@ cdef extern from "cvehicle_state.h" namespace 'cstuff':
                      TransportSpace[Loc] &space, string dispatcher, int seat_capacity)
 
         vector[StopEventSpec] fast_forward_time(double t)
-        pair[int, InsertionResult[Loc]] handle_transportation_request_single_vehicle(
+        SingleVehicleSolution handle_transportation_request_single_vehicle(
               shared_ptr[TransportationRequest[Loc]] request)
+        void select_new_stoplist()
