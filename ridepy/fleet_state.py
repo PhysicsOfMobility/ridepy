@@ -309,11 +309,13 @@ class FleetState(ABC):
         self.t = 0
 
         for vehicle_id, fleet_state in self.fleet.items():
-            yield VehicleStateBeginEvent(
-                vehicle_id=vehicle_id,
-                timestamp=self.t,
-                location=fleet_state.stoplist[0].location,
-            )
+            yield {
+                "event_type": "VehicleStateBeginEvent",
+                "vehicle_id": vehicle_id,
+                "timestamp": self.t,
+                "location": fleet_state.stoplist[0].location,
+                "request_id": -100,
+            }
 
         for n_req, request in enumerate(requests):
             # advance clock to req_epoch
@@ -326,16 +328,17 @@ class FleetState(ABC):
             yield from self.fast_forward(self.t)
 
             if isinstance(request, (TransportationRequest, CyTransportationRequest)):
-                yield RequestSubmissionEvent(
-                    request_id=request.request_id,
-                    timestamp=self.t,
-                    origin=request.origin,
-                    destination=request.destination,
-                    pickup_timewindow_min=request.pickup_timewindow_min,
-                    pickup_timewindow_max=request.pickup_timewindow_max,
-                    delivery_timewindow_min=request.delivery_timewindow_min,
-                    delivery_timewindow_max=request.delivery_timewindow_max,
-                )
+                yield {
+                    "event_type": "RequestSubmissionEvent",
+                    "request_id": request.request_id,
+                    "timestamp": self.t,
+                    "origin": request.origin,
+                    "destination": request.destination,
+                    "pickup_timewindow_min": request.pickup_timewindow_min,
+                    "pickup_timewindow_max": request.pickup_timewindow_max,
+                    "delivery_timewindow_min": request.delivery_timewindow_min,
+                    "delivery_timewindow_max": request.delivery_timewindow_max,
+                }
 
             # handle the current request
             if isinstance(request, (pyTransportationRequest, CyTransportationRequest)):
@@ -358,11 +361,13 @@ class FleetState(ABC):
         yield from self.fast_forward(self.t)
 
         for vehicle_id, fleet_state in self.fleet.items():
-            yield VehicleStateEndEvent(
-                vehicle_id=vehicle_id,
-                timestamp=self.t,
-                location=fleet_state.stoplist[0].location,
-            )
+            yield {
+                "event_type": "VehicleStateEndEvent",
+                "vehicle_id": vehicle_id,
+                "timestamp": self.t,
+                "location": fleet_state.stoplist[0].location,
+                "request_id": -200,
+            }
 
     @abstractmethod
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
@@ -454,21 +459,26 @@ class FleetState(ABC):
         ) = min(all_solutions, key=op.itemgetter(1))
         logger.debug(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
         if min_cost == np.inf:  # no solution was found
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+            return {
+                "event_type": "RequestRejectionEvent",
+                "timestamp": self.t,
+                "request_id": req.request_id,
+            }
         else:
             # modify the best vehicle's stoplist
             self.fleet[best_vehicle].select_new_stoplist()
 
-            return RequestAcceptanceEvent(
-                request_id=req.request_id,
-                timestamp=self.t,
-                origin=req.origin,
-                destination=req.destination,
-                pickup_timewindow_min=pickup_timewindow_min,
-                pickup_timewindow_max=pickup_timewindow_max,
-                delivery_timewindow_min=dropoff_timewindow_min,
-                delivery_timewindow_max=dropoff_timewindow_max,
-            )
+            return {
+                "event_type": "RequestAcceptanceEvent",
+                "timestamp": self.t,
+                "request_id": req.request_id,
+                "origin": req.origin,
+                "destination": req.destination,
+                "pickup_timewindow_min": pickup_timewindow_min,
+                "pickup_timewindow_max": pickup_timewindow_max,
+                "dropoff_timewindow_min": dropoff_timewindow_min,
+                "dropoff_timewindow_max": dropoff_timewindow_max,
+            }
 
 
 class SlowSimpleFleetState(FleetState):
@@ -480,7 +490,7 @@ class SlowSimpleFleetState(FleetState):
         # no need to swap the old stoplists of each vehicle with the new (fast-forwarded)
         # stoplists, because vehicle_state_class.fast_forward did that already.
 
-        return sorted(it.chain.from_iterable(events), key=op.attrgetter("timestamp"))
+        return sorted(it.chain.from_iterable(events), key=op.itemgetter("timestamp"))
 
     def handle_transportation_request(
         self, req: pyTransportationRequest
@@ -488,7 +498,11 @@ class SlowSimpleFleetState(FleetState):
         logger.debug(f"Handling Request: {req}")
 
         if req.origin == req.destination:
-            return RequestRejectionEvent(request_id=req.request_id, timestamp=self.t)
+            return {
+                "event_type": "RequestRejectionEvent",
+                "timestamp": self.t,
+                "request_id": req.request_id,
+            }
 
         return self._apply_request_solution(
             req,

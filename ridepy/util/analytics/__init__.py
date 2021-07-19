@@ -111,8 +111,8 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
     # and last stops in every stoplist.
     def fix_start_stop_order(df):
         # get absolute current positions of the BEGIN/END stops
-        i_start = (df["request_id"] == VehicleStateBeginEvent.request_id).argmax()
-        i_stop = (df["request_id"] == VehicleStateEndEvent.request_id).argmax()
+        i_start = (df["request_id"] == -100).argmax()
+        i_stop = (df["request_id"] == -200).argmax()
 
         # get dataframe's integer index values for the dummy stops
         idx = df.index.to_list()

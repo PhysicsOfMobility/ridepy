@@ -5,7 +5,8 @@ from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
 from libcpp.utility cimport pair
 from ridepy.data_structures_cython.cdata_structures cimport (
-     SingleVehicleSolution, TransportationRequest, Stop, StopAction)
+     SingleVehicleSolution, TransportationRequest, Stop)
+from ridepy.data_structures_cython.data_structures cimport StopAction
 from ridepy.util.spaces_cython.cspaces cimport TransportSpace
 
 cdef extern from "cvehicle_state.h" namespace 'cstuff':

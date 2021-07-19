@@ -31,7 +31,6 @@ from ridepy.util.analytics import (
     get_vehicle_quantities,
 )
 from ridepy.util.analytics.plotting import plot_occupancy_hist
-from ridepy.util.testing_utils import convert_events_to_dicts
 from ridepy.vehicle_state import VehicleState
 
 
@@ -87,130 +86,225 @@ def test_get_stops_and_requests_and_get_quantities():
         [Euclidean2D(), CyEuclidean2D()],
     ):
         events = [
-            VehicleStateBeginEvent(vehicle_id=0, timestamp=0, location=(0, 0)),
-            VehicleStateBeginEvent(vehicle_id=1, timestamp=0, location=(0, 0)),
-            VehicleStateBeginEvent(vehicle_id=2, timestamp=0, location=(0, 0)),
-            RequestSubmissionEvent(
-                request_id=0,
-                timestamp=0,
-                origin=transportation_requests[0].origin,
-                destination=transportation_requests[0].destination,
-                pickup_timewindow_min=transportation_requests[0].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[0].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            {
+                "event_type": "VehicleStateBeginEvent",
+                "vehicle_id": 0,
+                "timestamp": 0,
+                "location": (0, 0),
+                "request_id": -100,
+            },
+            {
+                "event_type": "VehicleStateBeginEvent",
+                "vehicle_id": 1,
+                "timestamp": 0,
+                "location": (0, 0),
+                "request_id": -100,
+            },
+            {
+                "event_type": "VehicleStateBeginEvent",
+                "vehicle_id": 2,
+                "timestamp": 0,
+                "location": (0, 0),
+                "request_id": -100,
+            },
+            {
+                "event_type": "RequestSubmissionEvent",
+                "request_id": 0,
+                "timestamp": 0,
+                "origin": transportation_requests[0].origin,
+                "destination": transportation_requests[0].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    0
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    0
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     0
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     0
                 ].delivery_timewindow_max,
-            ),
-            RequestAcceptanceEvent(
-                request_id=0,
-                timestamp=0,
-                origin=transportation_requests[0].origin,
-                destination=transportation_requests[0].destination,
-                pickup_timewindow_min=transportation_requests[0].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[0].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            },
+            {
+                "event_type": "RequestAcceptanceEvent",
+                "request_id": 0,
+                "timestamp": 0,
+                "origin": transportation_requests[0].origin,
+                "destination": transportation_requests[0].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    0
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    0
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     0
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     0
                 ].delivery_timewindow_max,
-            ),
-            RequestSubmissionEvent(
-                request_id=1,
-                timestamp=0,
-                origin=transportation_requests[1].origin,
-                destination=transportation_requests[1].destination,
-                pickup_timewindow_min=transportation_requests[1].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[1].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            },
+            {
+                "event_type": "RequestSubmissionEvent",
+                "request_id": 1,
+                "timestamp": 0,
+                "origin": transportation_requests[1].origin,
+                "destination": transportation_requests[1].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    1
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    1
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     1
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     1
                 ].delivery_timewindow_max,
-            ),
-            RequestAcceptanceEvent(
-                request_id=1,
-                timestamp=0,
-                origin=transportation_requests[1].origin,
-                destination=transportation_requests[1].destination,
-                pickup_timewindow_min=transportation_requests[1].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[1].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            },
+            {
+                "event_type": "RequestAcceptanceEvent",
+                "request_id": 1,
+                "timestamp": 0,
+                "origin": transportation_requests[1].origin,
+                "destination": transportation_requests[1].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    1
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    1
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     1
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     1
                 ].delivery_timewindow_max,
-            ),
-            RequestSubmissionEvent(
-                request_id=2,
-                timestamp=0,
-                origin=transportation_requests[2].origin,
-                destination=transportation_requests[2].destination,
-                pickup_timewindow_min=transportation_requests[2].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[2].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            },
+            {
+                "event_type": "RequestSubmissionEvent",
+                "request_id": 2,
+                "timestamp": 0,
+                "origin": transportation_requests[2].origin,
+                "destination": transportation_requests[2].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    2
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    2
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     2
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     2
                 ].delivery_timewindow_max,
-            ),
-            RequestAcceptanceEvent(
-                request_id=2,
-                timestamp=0,
-                origin=transportation_requests[2].origin,
-                destination=transportation_requests[2].destination,
-                pickup_timewindow_min=transportation_requests[2].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[2].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            },
+            {
+                "event_type": "RequestAcceptanceEvent",
+                "request_id": 2,
+                "timestamp": 0,
+                "origin": transportation_requests[2].origin,
+                "destination": transportation_requests[2].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    2
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    2
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     2
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     2
                 ].delivery_timewindow_max,
-            ),
-            RequestSubmissionEvent(
-                request_id=3,
-                timestamp=2,
-                origin=transportation_requests[3].origin,
-                destination=transportation_requests[3].destination,
-                pickup_timewindow_min=transportation_requests[3].pickup_timewindow_min,
-                pickup_timewindow_max=transportation_requests[3].pickup_timewindow_max,
-                delivery_timewindow_min=transportation_requests[
+            },
+            {
+                "event_type": "RequestSubmissionEvent",
+                "request_id": 3,
+                "timestamp": 2,
+                "origin": transportation_requests[3].origin,
+                "destination": transportation_requests[3].destination,
+                "pickup_timewindow_min": transportation_requests[
+                    3
+                ].pickup_timewindow_min,
+                "pickup_timewindow_max": transportation_requests[
+                    3
+                ].pickup_timewindow_max,
+                "delivery_timewindow_min": transportation_requests[
                     3
                 ].delivery_timewindow_min,
-                delivery_timewindow_max=transportation_requests[
+                "delivery_timewindow_max": transportation_requests[
                     3
                 ].delivery_timewindow_max,
-            ),
-            RequestRejectionEvent(request_id=3, timestamp=2),
-            PickupEvent(request_id=0, timestamp=0, vehicle_id=0),
-            PickupEvent(request_id=1, timestamp=0.1, vehicle_id=0),
-            DeliveryEvent(request_id=1, timestamp=0.2, vehicle_id=0),
-            DeliveryEvent(request_id=0, timestamp=0.3, vehicle_id=0),
-            PickupEvent(request_id=2, timestamp=1, vehicle_id=1),
-            DeliveryEvent(request_id=2, timestamp=2, vehicle_id=1),
-            VehicleStateEndEvent(
-                vehicle_id=0,
-                timestamp=2,
-                location=transportation_requests[0].destination,
-            ),
-            VehicleStateEndEvent(
-                vehicle_id=1,
-                timestamp=2,
-                location=transportation_requests[2].destination,
-            ),
-            VehicleStateEndEvent(vehicle_id=2, timestamp=2, location=(0, 0)),
+            },
+            {
+                "event_type": "RequestRejectionEvent",
+                "timestamp": 2,
+                "request_id": 3,
+            },
+            {
+                "event_type": "PickupEvent",
+                "timestamp": 0,
+                "request_id": 0,
+                "vehicle_id": 0,
+            },
+            {
+                "event_type": "PickupEvent",
+                "timestamp": 0.1,
+                "request_id": 1,
+                "vehicle_id": 0,
+            },
+            {
+                "event_type": "DeliveryEvent",
+                "timestamp": 0.2,
+                "request_id": 1,
+                "vehicle_id": 0,
+            },
+            {
+                "event_type": "DeliveryEvent",
+                "timestamp": 0.3,
+                "request_id": 0,
+                "vehicle_id": 0,
+            },
+            {
+                "event_type": "PickupEvent",
+                "timestamp": 1,
+                "request_id": 2,
+                "vehicle_id": 1,
+            },
+            {
+                "event_type": "DeliveryEvent",
+                "timestamp": 2,
+                "request_id": 2,
+                "vehicle_id": 1,
+            },
+            {
+                "event_type": "VehicleStateEndEvent",
+                "timestamp": 2,
+                "vehicle_id": 0,
+                "location": transportation_requests[0].destination,
+                "request_id": -200,
+            },
+            {
+                "event_type": "VehicleStateEndEvent",
+                "timestamp": 2,
+                "vehicle_id": 1,
+                "location": transportation_requests[2].destination,
+                "request_id": -200,
+            },
+            {
+                "event_type": "VehicleStateEndEvent",
+                "timestamp": 2,
+                "vehicle_id": 2,
+                "location": (0, 0),
+                "request_id": -200,
+            },
         ]
 
-        stops, requests = get_stops_and_requests(
-            events=convert_events_to_dicts(events), space=space
-        )
+        stops, requests = get_stops_and_requests(events=events, space=space)
         expected_stops = pd.DataFrame(
             {
                 "vehicle_id": {
@@ -830,9 +924,7 @@ def test_get_stops_and_requests_with_actual_simulation():
 
     events = list(fs.simulate(transportation_requests))
 
-    stops, requests = get_stops_and_requests(
-        events=convert_events_to_dicts(events), space=space
-    )
+    stops, requests = get_stops_and_requests(events=events, space=space)
 
     assert len(stops) == 2020
     assert len(requests) == 1000

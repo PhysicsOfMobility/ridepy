@@ -119,14 +119,30 @@ cdef class VehicleState:
         cdef StopEventSpec evspec
 
         for ev in res:
-            event_cache.append({
-                        StopAction.pickup: PickupEvent,
-                        StopAction.dropoff: DeliveryEvent,
-                        StopAction.internal: InternalEvent,
-                        }[ev.action](
-                        request_id=ev.request_id,
-                        vehicle_id=ev.vehicle_id,
-                        timestamp=ev.timestamp))
+            if ev.action == StopAction.pickup:
+                stop_event = {
+                    "event_type": "PickupEvent",
+                    "timestamp": ev.timestamp,
+                    "request_id": ev.request_id,
+                    "vehicle_id": ev.vehicle_id,
+                }
+            elif ev.action == StopAction.dropoff:
+                stop_event = {
+                    "event_type": "DeliveryEvent",
+                    "timestamp": ev.timestamp,
+                    "request_id": ev.request_id,
+                    "vehicle_id": ev.vehicle_id,
+                }
+            elif ev.action == StopAction.internal:
+                stop_event = {
+                    "event_type": "InternalEvent",
+                    "timestamp": ev.timestamp,
+                    "vehicle_id": ev.vehicle_id,
+                }
+            else:
+                raise ValueError(f"Unknown StopAction={ev.action}")
+
+            event_cache.append(stop_event)
 
         return event_cache
 

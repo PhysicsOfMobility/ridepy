@@ -188,8 +188,8 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         for num, (cev, pev) in enumerate(zip(cy_events, py_events)):
             assert type(cev) == type(pev)
             assert np.allclose(
-                list(flatten(list(pev.__dict__.values()))),
-                list(flatten(list(cev.__dict__.values()))),
+                list(flatten([v for k, v in pev.items() if k != "event_type"])),
+                list(flatten([v for k, v in cev.items() if k != "event_type"])),
                 rtol=1e-4,
             )
 
@@ -227,15 +227,19 @@ def test_sanity_in_graph():
         events = list(fs.simulate(transportation_requests))
 
         rejections = set(
-            ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
+            ev["request_id"]
+            for ev in events
+            if ev["event_type"] == "RequestRejectionEvent"
         )
         pickup_times = {
-            ev.request_id: ev.timestamp for ev in events if isinstance(ev, PickupEvent)
+            ev["request_id"]: ev["timestamp"]
+            for ev in events
+            if ev["event_type"] == "PickupEvent"
         }
         delivery_times = {
-            ev.request_id: ev.timestamp
+            ev["request_id"]: ev["timestamp"]
             for ev in events
-            if isinstance(ev, DeliveryEvent)
+            if ev["event_type"] == "DeliveryEvent"
         }
 
         for req in transportation_requests:
