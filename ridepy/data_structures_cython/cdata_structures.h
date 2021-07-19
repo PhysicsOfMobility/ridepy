@@ -95,6 +95,16 @@ template <typename Loc> struct InsertionResult {
   double EAST_do = 0;
   double LAST_do = INFINITY;
 };
+
+struct SingleVehicleSolution {
+  int vehicle_id = 0;
+  double min_cost = 0;
+  double EAST_pu = 0;
+  double LAST_pu = INFINITY;
+  double EAST_do = 0;
+  double LAST_do = INFINITY;
+};
+
 } // namespace cstuff
 
 #endif // RIDEPY_CDATA_STRUCTURES_H

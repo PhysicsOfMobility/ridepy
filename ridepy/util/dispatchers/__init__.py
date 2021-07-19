@@ -23,7 +23,55 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def taxicab_dispatcher_drive_first(
+"""
+This module contains pure python dispatchers. These are callable from python and should be used for testing purposes
+and small scale simulations where computing performance is not of primary concern. 
+For larger scale simulations, use Cython dispatchers. Note that these can not be called from python directly, but 
+through the `.vehicle_state_cython.VehicleState` class.
+"""
+
+
+def dispatcherclass(f):
+    """
+    Use this decorator to create a callable Dispatcher class from a pure function. Use this to conveniently turn
+    a pure function mapping a stoplist and a request to an updated stoplist into a dispatcher usable with ridepy.
+
+    In principle, using dispatcher objects allow for easy configuration of dispatcher behavior. After instantiation
+    of an object ``dispatcher`` the original dispatcher function is available
+    as ``dispatcher(...)``. Currently on initiating a dispatcher object, ``loc_type`` can
+    be supplied for interface compatibility with Cython dispatchers.
+
+    Use like
+
+    .. code-block:: python
+
+        @dispatcherclass
+        def MyFancyDispatcher(
+            request: TransportationRequest,
+            stoplist: Stoplist,
+            space: TransportSpace,
+            seat_capacity: int,
+        ) -> SingleVehicleSolution:
+            ...
+
+    """
+
+    class DispatcherClass:
+        __name__ = f.__name__
+        __qualname__ = f.__qualname__
+        __doc__ = f.__doc__
+
+        def __init__(self, loc_type=None):
+            self.loc_type = loc_type
+
+        def __call__(self, *args, **kwargs):
+            return f(*args, **kwargs)
+
+    return DispatcherClass
+
+
+@dispatcherclass
+def TaxicabDispatcherDriveFirst(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
@@ -32,6 +80,9 @@ def taxicab_dispatcher_drive_first(
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by simply appending the necessary stops to the existing stoplist.
+
+    This pure function is turned into a callable class by the decorator `.dispatcherclass` whose __init__ accepts
+    optional arguments, see the docstring of `.dispatcherclass` for details.
 
     See the dispatcher interface in :ref:`desc_dispatcher` for details.
 
@@ -97,7 +148,8 @@ def taxicab_dispatcher_drive_first(
     return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
 
 
-def brute_force_total_traveltime_minimizing_dispatcher(
+@dispatcherclass
+def BruteForceTotalTravelTimeMinimizingDispatcher(
     request: TransportationRequest,
     stoplist: Stoplist,
     space: TransportSpace,
@@ -107,9 +159,11 @@ def brute_force_total_traveltime_minimizing_dispatcher(
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by minimizing the total driving time.
 
-    See the dispatcher interface in :ref:`desc_dispatcher` for details.
+    This pure function is turned into a callable class by the decorator `.dispatcherclass` whose __init__ accepts
+    optional arguments, see the docstring of `.dispatcherclass` for details.
 
     See the dispatcher interface in :ref:`desc_dispatcher` for details.
+
 
     Parameters
     ----------

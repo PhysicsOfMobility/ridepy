@@ -27,9 +27,7 @@ import matplotlib.pyplot as plt
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state_cython import VehicleState
 
-from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
 
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces_cython import Euclidean2D
@@ -88,7 +86,7 @@ fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
     space=space,
-    dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+    dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(space.loc_type),
     vehicle_state_class=VehicleState,
 )
 # -
@@ -105,7 +103,8 @@ fs = SlowSimpleFleetState(
 
 # + tags=[]
 stops, reqs = get_stops_and_requests(
-    events=convert_events_to_dicts(events), space=Euclidean2D()
+    events=convert_events_to_dicts(events),
+    space=Euclidean2D(),
 )
 # -
 
@@ -136,4 +135,3 @@ reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
 
 # + tags=[]
 plot_occupancy_hist(stops)
-# -

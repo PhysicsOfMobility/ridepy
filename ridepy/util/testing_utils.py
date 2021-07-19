@@ -2,8 +2,8 @@ import dataclasses
 
 from ridepy.data_structures import Location, TransportSpace, Stoplist, Dispatcher
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
-from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+from ridepy.util.testing_utils_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.spaces_cython import spaces as cyspaces
 from typing import Literal, Iterable, Union, Callable, Sequence
@@ -11,9 +11,7 @@ from typing import Literal, Iterable, Union, Callable, Sequence
 from ridepy import data_structures as pyds, data_structures_cython as cyds
 from ridepy import data_structures_cython as cyds
 from ridepy.util import spaces as pyspaces
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 
 
 def stoplist_from_properties(
@@ -114,11 +112,11 @@ def setup_insertion_data_structures(
     if kind == "python":
         spaces = pyspaces
         ds = pyds
-        dispatcher = py_brute_force_total_traveltime_minimizing_dispatcher
+        dispatcher = BruteForceTotalTravelTimeMinimizingDispatcher
     elif kind == "cython":
         spaces = cyspaces
         ds = cyds
-        dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+        dispatcher = CyBruteForceTotalTravelTimeMinimizingDispatcher
     else:
         raise ValueError(f"Supplied invalid {kind=}, must be 'python' or 'cython'")
 
@@ -132,7 +130,7 @@ def setup_insertion_data_structures(
         stoplist_properties=stoplist_properties, space=space, kind=kind
     )
 
-    return space, request, stoplist, dispatcher
+    return space, request, stoplist, dispatcher(loc_type=space.loc_type)
 
 
 def convert_events_to_dicts(events):

@@ -1,9 +1,11 @@
 import random
+import pytest
 
 import numpy as np
+import itertools as it
+
 from numpy import inf, isclose
 from time import time
-import itertools as it
 from pandas.core.common import flatten
 
 from ridepy.data_structures_cython import Stoplist as CyStoplist
@@ -22,11 +24,12 @@ from ridepy.util import spaces as pyspaces
 from ridepy.util.spaces_cython import spaces as cyspaces
 from ridepy.util.request_generators import RandomRequestGenerator
 
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
+)
+from ridepy.util.testing_utils_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.testing_utils import stoplist_from_properties
 from ridepy.vehicle_state import VehicleState as py_VehicleState
@@ -74,7 +77,7 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
 
     tick = time()
     # min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
-    pythonic_solution = py_brute_force_total_traveltime_minimizing_dispatcher(
+    pythonic_solution = BruteForceTotalTravelTimeMinimizingDispatcher()(
         request, stoplist, space, seat_capacity
     )
     py_min_cost, _, py_timewindows = pythonic_solution
@@ -96,15 +99,14 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     )
 
     # Note: we need to create a Cythonic stoplist object here because we cannot pass a python list to
-    # cy_brute_force_total_traveltime_minimizing_dispatcher
+    # CyBruteForceTotalTravelTimeMinimizingDispatcher
     space = cyspaces.Euclidean2D()
     stoplist = stoplist_from_properties(
         stoplist_properties=stoplist_properties, kind="cython", space=space
     )
-
     tick = time()
     # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
-    cythonic_solution = cy_brute_force_total_traveltime_minimizing_dispatcher(
+    cythonic_solution = CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)(
         request, stoplist, space, seat_capacity
     )
     cy_min_cost, _, cy_timewindows = cythonic_solution
@@ -144,7 +146,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             initial_locations={7: init_loc},
             seat_capacities=10,
             space=py_space,
-            dispatcher=py_brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
             vehicle_state_class=py_VehicleState,
         )
         rg = RandomRequestGenerator(
@@ -164,7 +166,9 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
             initial_locations={7: init_loc},
             seat_capacities=10,
             space=cy_space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=CBruteForceTotalTravelTimeMinimizingDispatcher(
+                loc_type=cy_space.loc_type
+            ),
             vehicle_state_class=cy_VehicleState,
         )
         rg = RandomRequestGenerator(
@@ -216,7 +220,7 @@ def test_sanity_in_graph():
             initial_locations={k: 0 for k in range(50)},
             seat_capacities=10,
             space=space,
-            dispatcher=cy_brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=CBruteForceTotalTravelTimeMinimizingDispatcher(LocType.INT),
             vehicle_state_class=cy_VehicleState,
         )
 

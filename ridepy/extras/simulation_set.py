@@ -27,11 +27,9 @@ from ridepy.util.analytics import (
     get_vehicle_quantities,
     get_stops_and_requests_from_events_dataframe,
 )
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.spaces import Euclidean2D
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
@@ -44,7 +42,7 @@ from ridepy.data_structures_cython import (
 )
 from ridepy.vehicle_state import VehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.extras.io import (
     create_params_json,
     save_events_json,
@@ -231,7 +229,7 @@ def perform_single_simulation(
             for vehicle_id in range(params["general"]["n_vehicles"])
         },
         space=space,
-        dispatcher=params["general"]["dispatcher"],
+        dispatcher=params["general"]["dispatcher"](loc_type=space.loc_type),
         seat_capacities=params["general"]["seat_capacity"],
         vehicle_state_class=params["general"]["VehicleStateCls"],
     )
@@ -414,7 +412,6 @@ class SimulationSet:
         zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         cython: bool = True,
-        mpi: bool = False,
         debug: bool = False,
         max_workers: Optional[int] = None,
         process_chunksize: int = 1,
@@ -440,8 +437,6 @@ class SimulationSet:
             the simulation set, optional.
         cython
             Use cython.
-        mpi
-            Use MPIFuturesFleetState.
         debug
             Print debug info.
         max_workers
@@ -470,20 +465,16 @@ class SimulationSet:
 
         if cython:
             SpaceObj = CyEuclidean2D()
-            dispatcher = cy_brute_force_total_traveltime_minimizing_dispatcher
+            dispatcher = CyBruteForceTotalTravelTimeMinimizingDispatcher
             TransportationRequestCls = CyTransportationRequest
             VehicleStateCls = CyVehicleState
         else:
             SpaceObj = Euclidean2D()
-            dispatcher = brute_force_total_traveltime_minimizing_dispatcher
+            dispatcher = BruteForceTotalTravelTimeMinimizingDispatcher
             TransportationRequestCls = TransportationRequest
             VehicleStateCls = VehicleState
 
-        if mpi:
-            FleetStateCls = MPIFuturesFleetState
-        else:
-            FleetStateCls = SlowSimpleFleetState
-
+        FleetStateCls = SlowSimpleFleetState
         RequestGeneratorCls = RandomRequestGenerator
 
         self.default_base_params = dict(

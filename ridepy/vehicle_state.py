@@ -17,12 +17,6 @@ from .data_structures import (
 )
 from .events import PickupEvent, DeliveryEvent, InternalEvent, StopEvent
 
-from mpi4py import MPI
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -93,7 +87,6 @@ class VehicleState:
         """
         # TODO assert that the CPATs are updated and the stops sorted accordingly
         # TODO optionally validate the travel time velocity constraints
-        logger.debug(f"Fast forwarding vehicle {self.vehicle_id} from MPI rank {rank}")
 
         event_cache = []
 
@@ -151,7 +144,7 @@ class VehicleState:
             # stoplist is empty, only CPE is there. set CPE time to current time
             self.stoplist[0].estimated_arrival_time = t
 
-        return event_cache, self.stoplist
+        return event_cache
 
     def handle_transportation_request_single_vehicle(
         self, request: TransportationRequest
@@ -171,14 +164,14 @@ class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        # Logging the folloowing in this specific format is crucial for
-        # `test/mpi_futures_fleet_state_test.py` to pass
-        logger.debug(
-            f"Handling request #{request.request_id} with vehicle {self.vehicle_id} from MPI rank {rank}"
-        )
-        return self.vehicle_id, *self.dispatcher(
+
+        cost, self.stoplist_new, (EAST_pu, LAST_pu, EAST_do, LAST_do) = self.dispatcher(
             request=request,
             stoplist=self.stoplist,
             space=self.space,
             seat_capacity=self.seat_capacity,
         )
+        return self.vehicle_id, cost, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+
+    def select_new_stoplist(self):
+        self.stoplist = self.stoplist_new

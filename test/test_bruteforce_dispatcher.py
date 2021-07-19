@@ -10,9 +10,7 @@ from ridepy.events import (
     PickupEvent,
     DeliveryEvent,
 )
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.extras.spaces import make_nx_grid
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean2D, Graph
@@ -40,14 +38,14 @@ def test_append_to_empty_stoplist(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[-2].location == request.origin
@@ -79,7 +77,7 @@ def test_no_solution_found(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -91,7 +89,7 @@ def test_no_solution_found(kind):
         min_cost,
         new_stoplist,
         timewindows,
-    ) = brute_force_total_traveltime_minimizing_dispatcher(
+    ) = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert np.isinf(min_cost)
@@ -117,14 +115,14 @@ def test_no_solution_found(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert not np.isinf(min_cost)
@@ -154,7 +152,7 @@ def test_append_due_to_timewindow(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -162,7 +160,7 @@ def test_append_due_to_timewindow(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert np.allclose(new_stoplist[-2].location, request.origin)
@@ -201,7 +199,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -209,7 +207,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -227,7 +225,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -235,7 +233,7 @@ def test_timewindow_violation_at_dropoff_checked(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -266,7 +264,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -274,7 +272,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[2].location == request.origin
@@ -287,7 +285,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -295,7 +293,7 @@ def test_timewindow_violation_at_pickup_checked(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -326,7 +324,7 @@ def test_inserted_at_the_middle(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -334,7 +332,7 @@ def test_inserted_at_the_middle(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -368,14 +366,14 @@ def test_inserted_separately(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
         kind=kind,
     )
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -414,7 +412,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -425,7 +423,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
     for s, cap in zip(stoplist, [0, 1, 0, 1]):
         s.occupancy_after_servicing = cap
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=1
     )
     assert new_stoplist[1].location == request.origin
@@ -436,7 +434,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -448,7 +446,7 @@ def test_not_inserted_separately_dueto_capacity_constraint(kind):
     for s, cap in zip(stoplist, [1, 1, 1, 0]):
         s.occupancy_after_servicing = cap
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=1
     )
     assert new_stoplist[4].location == request.origin
@@ -480,7 +478,7 @@ def test_stoplist_not_modified_inplace(kind):
         space,
         request,
         stoplist,
-        brute_force_total_traveltime_minimizing_dispatcher,
+        brute_force_total_travel_time_minimizing_dispatcher,
     ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
@@ -488,7 +486,7 @@ def test_stoplist_not_modified_inplace(kind):
         kind=kind,
     )
 
-    min_cost, new_stoplist, *_ = brute_force_total_traveltime_minimizing_dispatcher(
+    min_cost, new_stoplist, *_ = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert new_stoplist[1].location == request.origin
@@ -521,7 +519,7 @@ def test_sanity_in_graph():
             initial_locations={k: 0 for k in range(50)},
             seat_capacities=10,
             space=space,
-            dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+            dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
             vehicle_state_class=VehicleState,
         )
 

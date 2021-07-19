@@ -12,18 +12,19 @@ from ridepy.data_structures import (
 from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
 )
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.data_structures_cython.data_structures import LocType
+
+from ridepy.extras.spaces import make_nx_grid
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState as PyVehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher as py_brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher as cy_brute_force_total_traveltime_minimizing_dispatcher,
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.request_generators import RandomRequestGenerator
-from ridepy.util.spaces import Euclidean2D as pyEuclidean2D
-from ridepy.util.spaces_cython import Euclidean2D as cyEuclidean2D
+from ridepy.util.spaces import Euclidean2D as pyEuclidean2D, Graph as PyGraph
+from ridepy.util.spaces_cython import Euclidean2D as cyEuclidean2D, Graph as CyGraph
 
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.testing_utils import convert_events_to_dicts
@@ -34,26 +35,37 @@ sim_logger.setLevel(logging.CRITICAL)
 sim_logger.handlers[0].setLevel(logging.CRITICAL)
 
 
-def simulate_on_r2(
+def simulate(
     num_vehicles,
     rate,
     num_requests,
     seat_capacities,
     seed=0,
     request_kwargs={"max_pickup_delay": 3, "max_delivery_delay_rel": 1.9},
-    use_mpi=True,
     use_cython=True,
+    use_graph=False,
 ):
     random.seed(seed)
     np.random.seed(seed)
 
-    fleet_state_class = MPIFuturesFleetState if use_mpi else SlowSimpleFleetState
+    fleet_state_class = SlowSimpleFleetState
     dispatcher = (
-        cy_brute_force_total_traveltime_minimizing_dispatcher
+        (
+            CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.INT)
+            if use_graph
+            else CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)
+        )
         if use_cython
-        else py_brute_force_total_traveltime_minimizing_dispatcher
+        else BruteForceTotalTravelTimeMinimizingDispatcher
     )
-    space = cyEuclidean2D() if use_cython else pyEuclidean2D()
+    if use_graph:
+        space = (
+            CyGraph.from_nx(make_nx_grid())
+            if use_cython
+            else PyGraph.from_nx(make_nx_grid())
+        )
+    else:
+        space = cyEuclidean2D() if use_cython else pyEuclidean2D()
     vehicle_state_class = CyVehicleState if use_cython else PyVehicleState
     request_class = CyTransportationRequest if use_cython else PyTransportationRequest
 
@@ -68,7 +80,7 @@ def simulate_on_r2(
     )
 
     rg = RandomRequestGenerator(
-        space=pyEuclidean2D(),
+        space=space,
         rate=rate,
         request_class=request_class,
         seed=seed,
@@ -106,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--cython", action=argparse.BooleanOptionalAction, default=False
     )
-    parser.add_argument("--mpi", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--graph", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args()
 
@@ -115,11 +127,11 @@ if __name__ == "__main__":
         sim_logger.handlers[0].setLevel(logging.DEBUG)
 
     N = args.num_vehicles
-    stops, requests = simulate_on_r2(
+    stops, requests = simulate(
         num_vehicles=N,
         rate=N * 1.5,
         seat_capacities=4,
         num_requests=N * 10,
         use_cython=args.cython,
-        use_mpi=args.mpi,
+        use_graph=args.graph,
     )

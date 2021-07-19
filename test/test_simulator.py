@@ -7,7 +7,7 @@ import numpy as np
 
 from tabulate import tabulate
 
-from ridepy.fleet_state import SlowSimpleFleetState, MPIFuturesFleetState
+from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.data_structures import (
     Stop,
     InternalRequest,
@@ -16,8 +16,8 @@ from ridepy.data_structures import (
 )
 from ridepy.events import PickupEvent, DeliveryEvent, StopEvent
 from ridepy.util.dispatchers import (
-    taxicab_dispatcher_drive_first,
-    brute_force_total_traveltime_minimizing_dispatcher,
+    TaxicabDispatcherDriveFirst,
+    BruteForceTotalTravelTimeMinimizingDispatcher,
 )
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean1D, Euclidean2D
@@ -32,7 +32,7 @@ def test_slow_simple_fleet_state_simulate():
         initial_locations={k: (0, 0) for k in range(10)},
         seat_capacities=1,
         space=space,
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=TaxicabDispatcherDriveFirst(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
@@ -48,7 +48,7 @@ def test_events_sorted():
         initial_locations={k: (0, 0) for k in range(10)},
         seat_capacities=1,
         space=space,
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=TaxicabDispatcherDriveFirst(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
@@ -68,31 +68,15 @@ def test_brute_force_dispatcher_2d():
         space=space,
         max_pickup_delay=20,
     )
-    transportation_requests = list(it.islice(rg, 1000))
+    transportation_requests = list(it.islice(rg, 100))
     fs = SlowSimpleFleetState(
         initial_locations={k: (0, 0) for k in range(50)},
         seat_capacities=10,
         space=space,
-        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(transportation_requests))
-
-
-def test_mpi_futures_fleet_state_simulate():
-    space = Euclidean2D()
-    rg = RandomRequestGenerator(rate=10, space=space)
-    reqs = list(it.islice(rg, 1000))
-    fs = MPIFuturesFleetState(
-        initial_locations={k: (0, 0) for k in range(10)},
-        seat_capacities=1,
-        space=space,
-        dispatcher=taxicab_dispatcher_drive_first,
-        vehicle_state_class=VehicleState,
-    )
-    events = list(fs.simulate(reqs, t_cutoff=20))
-    # print([event.vehicle_id for event in events if isinstance(event, PickupEvent)])
-    # print("\n".join(map(str, events)))
 
 
 def test_with_taxicab_dispatcher_simple_1():
@@ -133,7 +117,7 @@ def test_with_taxicab_dispatcher_simple_1():
         initial_locations={k: 0 for k in range(10)},
         seat_capacities=1,
         space=Euclidean1D(),
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=TaxicabDispatcherDriveFirst(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
@@ -190,7 +174,7 @@ def test_with_taxicab_everyone_delivered_zero_delay():
         initial_locations={k: 0 for k in range(10)},
         seat_capacities=1,
         space=Euclidean1D(),
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=TaxicabDispatcherDriveFirst(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))
@@ -239,7 +223,7 @@ def test_with_taxicab_one_taxi_delivered_with_delay():
         initial_locations={0: 0},
         seat_capacities=1,
         space=Euclidean1D(),
-        dispatcher=taxicab_dispatcher_drive_first,
+        dispatcher=TaxicabDispatcherDriveFirst(),
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs))

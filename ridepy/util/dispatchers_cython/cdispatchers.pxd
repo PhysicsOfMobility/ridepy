@@ -21,3 +21,12 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
           double max_relative_detour,
           bint debug
     )
+
+    cdef cppclass AbstractDispatcher[Loc]:
+        AbstractDispatcher()
+
+    cdef cppclass BruteForceTotalTravelTimeMinimizingDispatcher[Loc](AbstractDispatcher[Loc]):
+        BruteForceTotalTravelTimeMinimizingDispatcher()
+
+    cdef cppclass SimpleEllipseDispatcher[Loc](AbstractDispatcher[Loc]):
+        SimpleEllipseDispatcher()

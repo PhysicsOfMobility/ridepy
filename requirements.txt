@@ -1,5 +1,4 @@
-decorator<5
-mpi4py
+decorator
 networkx
 numpy
 pandas
@@ -8,7 +7,6 @@ tabulate
 notebook
 jupytext
 matplotlib
-wurlitzer
 cython==3.0a6
 loky
 typer

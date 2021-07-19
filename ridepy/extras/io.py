@@ -4,16 +4,14 @@ import collections.abc
 import json
 
 import operator as op
-import numpy as np
 import functools as ft
+import numpy as np
 
 from typing import Iterable
 from pathlib import Path
 
-import ridepy.events
 from ridepy.data_structures import TransportSpace
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
-from ridepy.events import Event
 
 
 class ParamsJSONEncoder(json.JSONEncoder):
@@ -33,7 +31,7 @@ class ParamsJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         # request generator?
         if isinstance(obj, type):
-            return f"{obj.__module__}.{obj.__name__}"
+            return f"{obj.__module__}.{obj.__qualname__}"
         # TransportSpace?
         elif isinstance(obj, (TransportSpace, CyTransportSpace)):
             # TODO in future, large networks might be saved in another file to be reused

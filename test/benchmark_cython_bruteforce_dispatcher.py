@@ -18,9 +18,7 @@ from ridepy.data_structures_cython import (
 )
 
 from ridepy.util.spaces_cython import Euclidean2D, Manhattan2D
-from ridepy.util.dispatchers_cython import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.vehicle_state_cython import VehicleState
 
 import logging
@@ -68,7 +66,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         initial_stoplist=stoplist,
         space=space,
         dispatcher=ft.partial(
-            brute_force_total_traveltime_minimizing_dispatcher,
+            BruteForceTotalTravelTimeMinimizingDispatcher,
             debug=sim_logger.getEffectiveLevel() <= logging.INFO,
         ),
         seat_capacity=1000,

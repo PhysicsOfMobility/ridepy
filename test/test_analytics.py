@@ -22,9 +22,7 @@ from ridepy.data_structures_cython import (
 )
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 from ridepy.fleet_state import SlowSimpleFleetState
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean1D, Euclidean2D
 from ridepy.util.analytics import (
@@ -826,7 +824,7 @@ def test_get_stops_and_requests_with_actual_simulation():
         initial_locations={k: 0 for k in range(10)},
         seat_capacities=10,
         space=space,
-        dispatcher=brute_force_total_traveltime_minimizing_dispatcher,
+        dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
         vehicle_state_class=VehicleState,
     )
 
