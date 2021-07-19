@@ -526,15 +526,19 @@ def test_sanity_in_graph():
         events = list(fs.simulate(transportation_requests))
 
         rejections = set(
-            ev.request_id for ev in events if isinstance(ev, RequestRejectionEvent)
+            ev["request_id"]
+            for ev in events
+            if ev["event_type"] == "RequestRejectionEvent"
         )
         pickup_times = {
-            ev.request_id: ev.timestamp for ev in events if isinstance(ev, PickupEvent)
+            ev["request_id"]: ev["timestamp"]
+            for ev in events
+            if ev["event_type"] == "PickupEvent"
         }
         delivery_times = {
-            ev.request_id: ev.timestamp
+            ev["request_id"]: ev["timestamp"]
             for ev in events
-            if isinstance(ev, DeliveryEvent)
+            if ev["event_type"] == "DeliveryEvent"
         }
 
         assert len(transportation_requests) > len(rejections)

@@ -178,23 +178,36 @@ def test_reject_trivial_requests(kind):
     )
 
     ground_truth = [
-        VehicleStateBeginEvent(
-            timestamp=0, vehicle_id=0, location=(0, 0), request_id=-100
-        ),
-        RequestSubmissionEvent(
-            timestamp=1337.0,
-            request_id=42,
-            origin=(4, 2),
-            destination=(4, 2),
-            pickup_timewindow_min=0,
-            pickup_timewindow_max=inf,
-            delivery_timewindow_min=0,
-            delivery_timewindow_max=inf,
-        ),
-        RequestRejectionEvent(timestamp=1337.0, request_id=42),
-        VehicleStateEndEvent(
-            timestamp=1337.0, vehicle_id=0, location=(0, 0), request_id=-200
-        ),
+        {
+            "event_type": "VehicleStateBeginEvent",
+            "vehicle_id": 0,
+            "timestamp": 0,
+            "location": (0, 0),
+            "request_id": -100,
+        },
+        {
+            "event_type": "RequestSubmissionEvent",
+            "timestamp": 1337.0,
+            "request_id": 42,
+            "origin": (4, 2),
+            "destination": (4, 2),
+            "pickup_timewindow_min": 0,
+            "pickup_timewindow_max": inf,
+            "delivery_timewindow_min": 0,
+            "delivery_timewindow_max": inf,
+        },
+        {
+            "event_type": "RequestRejectionEvent",
+            "timestamp": 1337.0,
+            "request_id": 42,
+        },
+        {
+            "event_type": "VehicleStateEndEvent",
+            "timestamp": 1337.0,
+            "vehicle_id": 0,
+            "location": (0, 0),
+            "request_id": -200,
+        },
     ]
 
     events = list(fs.simulate([trivial_request]))

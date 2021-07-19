@@ -1,23 +1,43 @@
-from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Union, TypedDict
 
 from ridepy.data_structures import ID
 
 
-@dataclass
-class Event:
+class Event(TypedDict):
     """
     The base event class. Must hold a timestamp.
+
+    .. code-block:: python
+
+        event = {
+            "event_type": "Event",
+            "timestamp": ...,
+        }
+
     """
 
+    event_type: str
     timestamp: float
 
 
-@dataclass
 class RequestSubmissionEvent(Event):
     """
-    Commitment of the system to fulfil a request given
-    the returned spatio-temporal constraints.
+    Submission of a request with specific spatio-temporal constraints to the system.
+
+    .. code-block:: python
+
+        request_submission_event = {
+            "event_type": "RequestSubmissionEvent",
+            "timestamp": ...,
+            "request_id": ...,
+            "origin": ...,
+            "destination": ...,
+            "pickup_timewindow_min": ...,
+            "pickup_timewindow_max": ...,
+            "dropoff_timewindow_min": ...,
+            "dropoff_timewindow_max": ...,
+        }
+
     """
 
     request_id: ID
@@ -29,11 +49,25 @@ class RequestSubmissionEvent(Event):
     delivery_timewindow_max: float
 
 
-@dataclass
 class RequestAcceptanceEvent(Event):
     """
     Commitment of the system to fulfil a request given
     the returned spatio-temporal constraints.
+
+    .. code-block:: python
+
+        request_acceptance_event = {
+            "event_type": "RequestAcceptanceEvent",
+            "timestamp": ...,
+            "request_id": ...,
+            "origin": ...,
+            "destination": ...,
+            "pickup_timewindow_min": ...,
+            "pickup_timewindow_max": ...,
+            "dropoff_timewindow_min": ...,
+            "dropoff_timewindow_max": ...,
+        }
+
     """
 
     request_id: ID
@@ -45,54 +79,112 @@ class RequestAcceptanceEvent(Event):
     delivery_timewindow_max: float
 
 
-@dataclass
 class RequestRejectionEvent(Event):
     """
     Inability of the system to fulfil a request.
+
+    .. code-block:: python
+
+        request_rejection_event = {
+            "event_type": "RequestRejectionEvent",
+            "timestamp": ...,
+            "request_id": ...,
+        }
+
     """
 
     request_id: ID
 
 
-@dataclass
 class PickupEvent(Event):
     """
     Successful pick-up action.
+
+    .. code-block:: python
+
+        pickup_event = {
+            "event_type": "PickupEvent",
+            "timestamp": ...,
+            "request_id": ...,
+            "vehicle_id": ...,
+        }
+
     """
 
     request_id: ID
     vehicle_id: ID
 
 
-@dataclass
 class DeliveryEvent(Event):
     """
     Successful drop-off action.
+
+    .. code-block:: python
+
+        delivery_event = {
+            "event_type": "DeliveryEvent",
+            "timestamp": ...,
+            "request_id": ...,
+            "vehicle_id": ...,
+        }
+
     """
 
     request_id: ID
     vehicle_id: ID
 
 
-@dataclass
 class InternalEvent(Event):
     """
     Successful internal action.
+
+    .. code-block:: python
+
+        internal_event = {
+            "event_type": "InternalEvent",
+            "timestamp": ...,
+            "vehicle_id": ...,
+        }
+
     """
 
     vehicle_id: ID
 
 
-@dataclass
 class VehicleStateBeginEvent(InternalEvent):
+    """
+    .. code-block:: python
+
+        vehicle_state_begin_event = {
+            "event_type": "VehicleStateBeginEvent",
+            "timestamp": ...,
+            "vehicle_id": ...,
+            "location": ...,
+            "request_id": -100,
+        }
+
+    """
+
     location: Any
-    request_id: ID = -100
+    request_id: ID
 
 
-@dataclass
 class VehicleStateEndEvent(InternalEvent):
+    """
+    .. code-block:: python
+
+        vehicle_state_end_event = {
+            "event_type": "VehicleStateEndEvent",
+            "timestamp": ...,
+            "vehicle_id": ...,
+            "location": ...,
+            "request_id": -200,
+        }
+
+    """
+
     location: Any
-    request_id: ID = -200
+    request_id: ID
 
 
 RequestEvent = Union[

@@ -102,17 +102,30 @@ class VehicleState:
                 if last_stop is None:
                     last_stop = stop
 
-                event_cache.append(
-                    {
-                        StopAction.pickup: PickupEvent,
-                        StopAction.dropoff: DeliveryEvent,
-                        StopAction.internal: InternalEvent,
-                    }[stop.action](
-                        request_id=stop.request.request_id,
-                        vehicle_id=self.vehicle_id,
-                        timestamp=service_time,
-                    )
-                )
+                if stop.action == StopAction.pickup:
+                    stop_event = {
+                        "event_type": "PickupEvent",
+                        "timestamp": service_time,
+                        "request_id": stop.request.request_id,
+                        "vehicle_id": self.vehicle_id,
+                    }
+                elif stop.action == StopAction.dropoff:
+                    stop_event = {
+                        "event_type": "DeliveryEvent",
+                        "timestamp": service_time,
+                        "request_id": stop.request.request_id,
+                        "vehicle_id": self.vehicle_id,
+                    }
+                elif stop.action == StopAction.internal:
+                    stop_event = {
+                        "event_type": "InternalEvent",
+                        "timestamp": service_time,
+                        "vehicle_id": self.vehicle_id,
+                    }
+                else:
+                    raise ValueError(f"Unknown StopAction={stop.action}")
+
+                event_cache.append(stop_event)
 
                 del self.stoplist[i]
 

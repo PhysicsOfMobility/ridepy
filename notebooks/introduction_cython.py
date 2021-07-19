@@ -35,7 +35,6 @@ from ridepy.data_structures_cython import TransportationRequest
 
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
-from ridepy.util.testing_utils import convert_events_to_dicts
 
 # + tags=[]
 # assume dark background for plots?
@@ -75,7 +74,7 @@ rg = RandomRequestGenerator(
 )
 
 # create iterator yielding 100 random requests
-transportation_requests = it.islice(rg, 100)
+transportation_requests = it.islice(rg, 1000)
 # -
 
 
@@ -103,7 +102,7 @@ fs = SlowSimpleFleetState(
 
 # + tags=[]
 stops, reqs = get_stops_and_requests(
-    events=convert_events_to_dicts(events),
+    events=events,
     space=Euclidean2D(),
 )
 # -

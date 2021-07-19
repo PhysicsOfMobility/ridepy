@@ -52,9 +52,7 @@ def test_events_sorted():
         vehicle_state_class=VehicleState,
     )
     events = list(fs.simulate(reqs, t_cutoff=20))
-    evs = pd.DataFrame(
-        map(lambda ev: dict(ev.__dict__, event_type=ev.__class__.__name__), events)
-    )
+    evs = pd.DataFrame(events)
 
     assert all(
         evs.sort_values(["timestamp", "vehicle_id", "request_id"]).index == evs.index
@@ -122,12 +120,12 @@ def test_with_taxicab_dispatcher_simple_1():
     )
     events = list(fs.simulate(reqs))
 
-    stop_events = list(
-        filter(lambda x: isinstance(x, (PickupEvent, DeliveryEvent)), events)
-    )
+    stop_events = [
+        ev for ev in events if ev["event_type"] in ["PickupEvent", "DeliveryEvent"]
+    ]
 
     vehicle_id_idxs = dict(
-        zip(sorted(set(map(op.attrgetter("vehicle_id"), stop_events))), it.count(1))
+        zip(sorted(set(map(op.itemgetter("vehicle_id"), stop_events))), it.count(1))
     )
 
     output_list = [
@@ -135,10 +133,10 @@ def test_with_taxicab_dispatcher_simple_1():
     ]
 
     for row, event in zip(output_list, stop_events):
-        row[0] = f"{event.timestamp:.2f}"
+        row[0] = f"{event['timestamp']:.2f}"
         row[
-            vehicle_id_idxs[event.vehicle_id]
-        ] = f"{'pu' if isinstance(event, PickupEvent) else 'do'} {event.request_id}"
+            vehicle_id_idxs[event["vehicle_id"]]
+        ] = f"{'pu' if event['event_type']== 'PickupEvent' else 'do'} {event['request_id']}"
 
     print()
     print(
@@ -179,11 +177,17 @@ def test_with_taxicab_everyone_delivered_zero_delay():
     )
     events = list(fs.simulate(reqs))
 
-    pickup_events = [event for event in events if isinstance(event, PickupEvent)]
-    delivery_events = [event for event in events if isinstance(event, DeliveryEvent)]
+    pickup_events = [event for event in events if event["event_type"] == "PickupEvent"]
+    delivery_events = [
+        event for event in events if event["event_type"] == "DeliveryEvent"
+    ]
 
-    actual_req_pickup_times = {pu.request_id: pu.timestamp for pu in pickup_events}
-    actual_req_delivery_times = {pu.request_id: pu.timestamp for pu in delivery_events}
+    actual_req_pickup_times = {
+        pu["request_id"]: pu["timestamp"] for pu in pickup_events
+    }
+    actual_req_delivery_times = {
+        pu["request_id"]: pu["timestamp"] for pu in delivery_events
+    }
 
     desired_req_pickup_times = {
         req.request_id: req.pickup_timewindow_min for req in reqs
@@ -228,11 +232,17 @@ def test_with_taxicab_one_taxi_delivered_with_delay():
     )
     events = list(fs.simulate(reqs))
 
-    pickup_events = [event for event in events if isinstance(event, PickupEvent)]
-    delivery_events = [event for event in events if isinstance(event, DeliveryEvent)]
+    pickup_events = [event for event in events if event["event_type"] == "PickupEvent"]
+    delivery_events = [
+        event for event in events if event["event_type"] == "DeliveryEvent"
+    ]
 
-    actual_req_pickup_times = {pu.request_id: pu.timestamp for pu in pickup_events}
-    actual_req_delivery_times = {pu.request_id: pu.timestamp for pu in delivery_events}
+    actual_req_pickup_times = {
+        pu["request_id"]: pu["timestamp"] for pu in pickup_events
+    }
+    actual_req_delivery_times = {
+        pu["request_id"]: pu["timestamp"] for pu in delivery_events
+    }
 
     correct_req_pickup_times = {req.request_id: req.request_id * 2 for req in reqs}
     # all the requests are from 0 to 1 -> direct travel time is 1
