@@ -4,11 +4,11 @@ import jupytext
 
 from pathlib import Path
 
-from .simulate_script import simulate_on_r2
+from .simulate_script import simulate
 
 
 def test_simulate_script():
-    simulate_on_r2(num_vehicles=10, rate=10, num_requests=1000, seat_capacities=4)
+    simulate(num_vehicles=10, rate=10, num_requests=1000, seat_capacities=4)
 
 
 def test_notebooks(tmp_path):

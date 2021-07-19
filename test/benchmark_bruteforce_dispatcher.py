@@ -11,9 +11,7 @@ from ridepy.data_structures import (
     TransportationRequest,
 )
 from ridepy.util.spaces import Euclidean2D
-from ridepy.util.dispatchers import (
-    brute_force_total_traveltime_minimizing_dispatcher,
-)
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 from ridepy.util.testing_utils import stoplist_from_properties
 
 import logging
@@ -49,7 +47,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         delivery_timewindow_max=inf,
     )
     tick = time()
-    brute_force_total_traveltime_minimizing_dispatcher(
+    BruteForceTotalTravelTimeMinimizingDispatcher(
         request, stoplist, space, seat_capacity=10
     )
     tock = time()

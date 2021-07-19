@@ -54,3 +54,11 @@ cdef extern from "cdata_structures.h" namespace 'cstuff':
         double EAST_do
         double LAST_do
 
+    cdef cppclass SingleVehicleSolution:
+        int vehicle_id
+        double min_cost
+        double EAST_pu
+        double LAST_pu
+        double EAST_do
+        double LAST_do
+

@@ -1,1 +1,2 @@
-add_library(dispatchers cdispatchers.h cdispatchers_utils.h)
+add_library(dispatchers INTERFACE)
+target_include_directories(dispatchers INTERFACE ./)

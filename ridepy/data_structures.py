@@ -222,13 +222,16 @@ class TransportSpace(ABC):
 Stoplist = List[Stop]
 """A list of `.Stop` objects. Specifies completely the current position and future actions a vehicle will make."""
 
-SingleVehicleSolution = Tuple[
-    float, Optional[Stoplist], Tuple[float, float, float, float]
-]
-"""cost, new_stoplist, (pickup_timewindow_min, pickup_timewindow_max, delivery_timewindow_min, 
-delivery_timewindow_max).
+SingleVehicleSolution = Tuple[ID, float, Tuple[float, float, float, float]]
+"""vehicle_id, cost, (
+    pickup_timewindow_min,
+    pickup_timewindow_max,
+    delivery_timewindow_min, 
+    delivery_timewindow_max,
+)
 
-This is what the `Dispatcher` returns. In case no solution is found, the cost is :math:`\infty` and the other elements are `None`.
+This is what `VehicleState.handle_transportation_request_single_vehicle` returns. 
+In case no solution is found, the cost is :math:`\infty` and the timewindow variables are `None`.
 """
 
 Dispatcher = Callable[

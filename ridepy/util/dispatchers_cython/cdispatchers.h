@@ -348,5 +348,42 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
     return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
   }
 }
+
+template <typename Loc> class AbstractDispatcher {
+public:
+  virtual InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) = 0;
+  virtual ~AbstractDispatcher(){};
+};
+
+// Pattern motivated by: https://stackoverflow.com/a/2592270
+
+template <typename Loc>
+class BruteForceTotalTravelTimeMinimizingDispatcher
+    : public AbstractDispatcher<Loc> {
+public:
+  InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) {
+    return brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity, debug);
+  }
+};
+
+template <typename Loc>
+class SimpleEllipseDispatcher : public AbstractDispatcher<Loc> {
+public:
+  InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) {
+    return simple_ellipse_dispatcher(request, stoplist, space, seat_capacity,
+                                     debug);
+  }
+};
+
 } // namespace cstuff
 #endif // RIDEPY_CDISPATCHERS_H

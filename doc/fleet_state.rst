@@ -24,23 +24,14 @@ strategies for performing the core computations.
 
 Different implementations of the `FleetState` interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Two different implementations of this base class are included:
+The following implementation of this base class is included:
 
 `SlowSimpleFleetState`
     Performs all computations in a single process without any
     paralllelization.
-`MPIFuturesFleetState`
-    Uses `mpi4py.futures
-    <https://mpi4py.readthedocs.io/en/stable/mpi4py.futures.html>`_ to
-    parallelize the computations.
 
-These two implementations will produce identical output (i.e. sequence of `Event`
-objects) if the input parameters are identical. The users are of course free to
-implement their own subclass of `FleetState` in order to parallelize the core
+The users are of course free to implement their own subclass of `FleetState` in order to parallelize the core
 computations differently, e.g. by using job schedulers or multiprocessing. 
 
 .. autoclass:: SlowSimpleFleetState
-    :members:
-
-.. autoclass:: MPIFuturesFleetState
     :members:
