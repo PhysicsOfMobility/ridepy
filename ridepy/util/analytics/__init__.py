@@ -487,9 +487,6 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
     actual_stops = stops.dropna(subset=("timestamp_submitted",))
 
     def _properties_at_time(stop, full_sl, scope):
-        pstop = stop.copy()
-        psl = full_sl.copy()
-
         lo = stop["location"]
 
         stop = stop[
@@ -642,7 +639,7 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
     #
     #         """
     #     )
-    # breakpoint()
+
     stops = stops.merge(
         actual_stops.groupby("vehicle_id").apply(
             lambda df: df.apply(
