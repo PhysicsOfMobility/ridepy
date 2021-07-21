@@ -3,6 +3,8 @@ from collections import defaultdict
 from typing import Iterable, List, Optional, Dict, Any
 
 import functools as ft
+
+import Cython
 import numpy as np
 import pandas as pd
 
@@ -485,45 +487,85 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
     actual_stops = stops.dropna(subset=("timestamp_submitted",))
 
     def _properties_at_time(stop, full_sl, scope):
-        t = stop["timestamp"]
-        ts = stop["timestamp_submitted"]
-        pu = True if stop["delta_occupancy"] > 0 else False
+        pstop = stop.copy()
+        psl = full_sl.copy()
 
-        get_i_pu = lambda _sl, stop: (_sl["request_id"] == stop["request_id"]).argmax()
+        lo = stop["location"]
+
+        stop = stop[
+            [
+                "timestamp",
+                "delta_occupancy",
+                "request_id",
+                "state_duration",
+                "occupancy",
+                "dist_to_next",
+                "time_to_next",
+                "timestamp_submitted",
+            ]
+        ].to_numpy(dtype="f8")
+
+        locations = np.array(full_sl["location"].to_list())
+
+        full_sl = full_sl.reset_index()[
+            [
+                "vehicle_id",
+                "stop_id",
+                "timestamp",
+                "delta_occupancy",
+                "request_id",
+                "state_duration",
+                "occupancy",
+                "dist_to_next",
+                "time_to_next",
+                "timestamp_submitted",
+            ]
+        ].to_numpy(dtype="f8")
+
+        [
+            VEHICLE_ID,
+            STOP_ID,
+            TIMESTAMP,
+            DELTA_OCCUPANCY,
+            REQUEST_ID,
+            STATE_DURATION,
+            OCCUPANCY,
+            DIST_TO_NEXT,
+            TIME_TO_NEXT,
+            TIMESTAMP_SUBMITTED,
+        ] = range(10)
+
+        t = stop[TIMESTAMP - 2]
+        ts = stop[TIMESTAMP_SUBMITTED - 2]
+        pu = True if stop[DELTA_OCCUPANCY - 2] > 0 else False
+        rid = stop[REQUEST_ID - 2]
+
+        get_i_pu = lambda _sl, rid: np.argmax(_sl[:, REQUEST_ID] == rid)
         get_i_do = (
-            lambda _sl, stop: len(_sl)
-            - (_sl["request_id"] == stop["request_id"])[::-1].argmax()
-            - 1
+            lambda _sl, rid: len(_sl) - np.argmax((_sl[:, REQUEST_ID] == rid)[::-1]) - 1
         )
 
-        sl = full_sl[
-            (full_sl["timestamp_submitted"] <= t) & (t <= full_sl["timestamp"])
-        ]
+        mask = (full_sl[:, TIMESTAMP_SUBMITTED] <= t) & (t <= full_sl[:, TIMESTAMP])
+        sl = full_sl[mask]
+        loc = locations[mask]
 
-        sl_s = full_sl[
-            (full_sl["timestamp_submitted"] <= ts) & (ts <= full_sl["timestamp"])
-        ]
+        mask_s = (full_sl[:, TIMESTAMP_SUBMITTED] <= ts) & (ts <= full_sl[:, TIMESTAMP])
+        sl_s = full_sl[mask_s]
+        loc_s = locations[mask_s]
 
         if pu:
-            i_pu_sl = get_i_pu(sl, stop)
-            i_pu_sl_s = get_i_pu(sl_s, stop)
-            i_do_sl_s = get_i_do(sl_s, stop)
-
-            idx_pu = sl_s.iloc[i_pu_sl_s].name
-            idx_do = sl_s.iloc[i_do_sl_s].name
-            assert idx_pu == stop.name
+            i_pu_sl = get_i_pu(sl, rid)
+            i_do_sl = get_i_do(sl, rid)
+            i_pu_sl_s = get_i_pu(sl_s, rid)
+            i_do_sl_s = get_i_do(sl_s, rid)
 
             i_stop_sl = i_pu_sl
             i_stop_sl_s = i_pu_sl_s
         else:
-            i_do_sl = get_i_do(sl, stop)
+            i_do_sl = get_i_do(sl, rid)
 
-            i_pu_sl_s = get_i_pu(sl_s, stop)
-            i_do_sl_s = get_i_do(sl_s, stop)
-
-            idx_pu = sl_s.iloc[i_pu_sl_s].name
-            idx_do = sl_s.iloc[i_do_sl_s].name
-            assert idx_do == stop.name
+            i_pu_sl_s = get_i_pu(sl_s, rid)
+            i_do_sl_s = get_i_do(sl_s, rid)
 
             i_stop_sl = i_do_sl
             i_stop_sl_s = i_do_sl_s
@@ -531,36 +573,28 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
         res = {}
 
         if scope != "system":
-            res["insertion_index"] = len(sl_s[sl_s["timestamp"] < t])
+            res["insertion_index"] = len(sl_s[sl_s[:, TIMESTAMP] < t])
 
-            def _get_legs(i_stop, _sl, time_desc):
-                l_sl = len(_sl)
+            def _get_legs(i_stop, _loc, time_desc):
+                l_sl = len(_loc)
                 if i_stop == 0 == l_sl - 1:
                     stop_leg_1 = 0
                     stop_leg_2 = 0
                     stop_leg_d = 0
                 elif i_stop == 0:
                     stop_leg_1 = 0
-                    stop_leg_2 = space.d(
-                        stop["location"], _sl.iloc[i_stop + 1]["location"]
-                    )
+                    stop_leg_2 = space.d(lo, _loc[i_stop + 1])
                     stop_leg_d = stop_leg_1
                 elif i_stop == l_sl - 1:
-                    stop_leg_1 = space.d(
-                        _sl.iloc[i_stop - 1]["location"], stop["location"]
-                    )
+                    stop_leg_1 = space.d(_loc[i_stop - 1], lo)
                     stop_leg_2 = 0
                     stop_leg_d = stop_leg_2
                 else:
-                    stop_leg_1 = space.d(
-                        _sl.iloc[i_stop - 1]["location"], stop["location"]
-                    )
-                    stop_leg_2 = space.d(
-                        stop["location"], _sl.iloc[i_stop + 1]["location"]
-                    )
+                    stop_leg_1 = space.d(_loc[i_stop - 1], lo)
+                    stop_leg_2 = space.d(lo, _loc[i_stop + 1])
                     stop_leg_d = space.d(
-                        _sl.iloc[i_stop - 1]["location"],
-                        _sl.iloc[i_stop + 1]["location"],
+                        _loc[i_stop - 1],
+                        _loc[i_stop + 1],
                     )
 
                 stop_detour = stop_leg_1 + stop_leg_2 - stop_leg_d
@@ -572,15 +606,15 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
                     f"detour_dist_{time_desc}_time": stop_detour,
                 }
 
-            res |= _get_legs(i_stop_sl, sl, "service")
-            res |= _get_legs(i_stop_sl_s, sl_s, "submission")
+            res |= _get_legs(i_stop_sl, loc, "service")
+            res |= _get_legs(i_stop_sl_s, loc_s, "submission")
 
         if pu:
-            sl.drop([idx_pu, idx_do], inplace=True)
-            sl_s.drop([idx_pu, idx_do], inplace=True)
+            sl = np.delete(sl, [i_pu_sl, i_do_sl], axis=0)
         else:
-            sl.drop(idx_do, inplace=True)
-            sl_s.drop([idx_pu, idx_do], inplace=True)
+            sl = np.delete(sl, i_do_sl, axis=0)
+
+        sl_s = np.delete(sl_s, [i_pu_sl_s, i_do_sl_s], axis=0)
 
         res[
             f"{'system_' if scope=='system' else ''}stoplist_length_submission_time"
@@ -591,20 +625,28 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
 
         res[
             f"avg_{'system_' if scope=='system' else ''}segment_dist_submission_time"
-        ] = sl_s["dist_to_next"].mean()
+        ] = np.mean(sl_s[:, DIST_TO_NEXT])
         res[
             f"avg_{'system_' if scope=='system' else ''}segment_time_submission_time"
-        ] = sl_s["time_to_next"].mean()
+        ] = np.mean(sl_s[:, TIME_TO_NEXT])
 
         res[
             f"avg_{'system_' if scope=='system' else ''}segment_dist_service_time"
-        ] = sl["dist_to_next"].mean()
+        ] = np.mean(sl[:, DIST_TO_NEXT])
         res[
             f"avg_{'system_' if scope=='system' else ''}segment_time_service_time"
-        ] = sl["time_to_next"].mean()
+        ] = np.mean(sl[:, TIME_TO_NEXT])
 
         return res
 
+    # def _properties_at_time(stop, full_sl, scope):
+    #     return Cython.inline(
+    #         """
+    #         print(scope)
+    #
+    #         """
+    #     )
+    # breakpoint()
     stops = stops.merge(
         actual_stops.groupby("vehicle_id").apply(
             lambda df: df.apply(
