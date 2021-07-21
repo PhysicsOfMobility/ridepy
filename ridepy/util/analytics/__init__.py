@@ -507,10 +507,8 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
 
         locations = np.array(full_sl["location"].to_list())
 
-        full_sl = full_sl.reset_index()[
+        full_sl = full_sl[
             [
-                "vehicle_id",
-                "stop_id",
                 "timestamp",
                 "delta_occupancy",
                 "request_id",
@@ -523,8 +521,6 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
         ].to_numpy(dtype="f8")
 
         [
-            VEHICLE_ID,
-            STOP_ID,
             TIMESTAMP,
             DELTA_OCCUPANCY,
             REQUEST_ID,
@@ -533,12 +529,12 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
             DIST_TO_NEXT,
             TIME_TO_NEXT,
             TIMESTAMP_SUBMITTED,
-        ] = range(10)
+        ] = range(8)
 
-        t = stop[TIMESTAMP - 2]
-        ts = stop[TIMESTAMP_SUBMITTED - 2]
-        pu = True if stop[DELTA_OCCUPANCY - 2] > 0 else False
-        rid = stop[REQUEST_ID - 2]
+        t = stop[TIMESTAMP]
+        ts = stop[TIMESTAMP_SUBMITTED]
+        pu = True if stop[DELTA_OCCUPANCY] > 0 else False
+        rid = stop[REQUEST_ID]
 
         get_i_pu = lambda _sl, rid: np.argmax(_sl[:, REQUEST_ID] == rid)
         get_i_do = (
