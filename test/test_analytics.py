@@ -83,7 +83,7 @@ def test_get_stops_and_requests_and_get_quantities():
             make_transportation_requests,
             [TransportationRequest, CyTransportationRequest],
         ),
-        [Euclidean2D(), CyEuclidean2D()],
+        [CyEuclidean2D(), CyEuclidean2D()],
     ):
         events = [
             {

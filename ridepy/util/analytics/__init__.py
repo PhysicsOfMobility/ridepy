@@ -487,7 +487,70 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
     )
     actual_stops = stops.dropna(subset=("timestamp_submitted",))
 
-    foo = stop_properties(stops)
+    stops_ = actual_stops.drop("location", axis=1).reset_index().to_numpy(dtype="f8")
+    locs_ = np.array(actual_stops["location"].to_list(), dtype="f8")
+    foo = pd.DataFrame(
+        stop_properties(
+            stops_,
+            locs_,
+            space,
+        ),
+        columns=[
+            "system_stoplist_length_submission_time",
+            "system_stoplist_length_service_time",
+            "avg_system_segment_dist_submission_time",
+            "avg_system_segment_time_submission_time",
+            "avg_system_segment_dist_service_time",
+            "avg_system_segment_time_service_time",
+            "stoplist_length_submission_time",
+            "stoplist_length_service_time",
+            "avg_segment_dist_submission_time",
+            "avg_segment_time_submission_time",
+            "avg_segment_dist_service_time",
+            "avg_segment_time_service_time",
+            "leg_1_dist_submission_time",
+            "leg_2_dist_submission_time",
+            "leg_direct_dist_submission_time",
+            "detour_dist_submission_time",
+            "leg_1_dist_service_time",
+            "leg_2_dist_service_time",
+            "leg_direct_dist_service_time",
+            "detour_dist_service_time",
+            "insertion_index",
+        ],
+        index=actual_stops.index,
+    )[
+        [
+            "insertion_index",
+            "leg_1_dist_service_time",
+            "leg_2_dist_service_time",
+            "leg_direct_dist_service_time",
+            "detour_dist_service_time",
+            "leg_1_dist_submission_time",
+            "leg_2_dist_submission_time",
+            "leg_direct_dist_submission_time",
+            "detour_dist_submission_time",
+            "stoplist_length_submission_time",
+            "stoplist_length_service_time",
+            "avg_segment_dist_submission_time",
+            "avg_segment_time_submission_time",
+            "avg_segment_dist_service_time",
+            "avg_segment_time_service_time",
+            "system_stoplist_length_submission_time",
+            "system_stoplist_length_service_time",
+            "avg_system_segment_dist_submission_time",
+            "avg_system_segment_time_submission_time",
+            "avg_system_segment_dist_service_time",
+            "avg_system_segment_time_service_time",
+        ]
+    ]
+
+    stops = stops.merge(
+        foo,
+        left_index=True,
+        right_index=True,
+        how="left",
+    )
 
     # stops = stops.merge(
     #     actual_stops.groupby("vehicle_id").apply(ft.partial(stop_properties, scope='vehicle', space=space)),
