@@ -204,6 +204,7 @@ cpdef np.ndarray stop_properties(
             True
         )[:6]
 
+    cdef int vid
     for vid in np.unique(stoplist[:, VEHICLE_ID]):
         vehicle_mask = stoplist[:, VEHICLE_ID] == vid
         vsl = stoplist[vehicle_mask]
