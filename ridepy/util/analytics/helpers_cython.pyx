@@ -1,3 +1,7 @@
+# distutils: language = c++
+# cython: linetrace=True
+
+
 import numpy as np
 cimport numpy as np
 from ridepy.data_structures_cython import LocType
@@ -101,14 +105,36 @@ cdef np.ndarray properties_at_stop(
         TIMESTAMP_SUBMITTED,
     ] = range(10)
 
+    cdef int i = 0, j = 0, k = 0
+    cdef int sl_len = len(stoplist)
 
-    mask = (stoplist[:, TIMESTAMP_SUBMITTED] <= t) & (t <= stoplist[:, TIMESTAMP])
-    sl = stoplist[mask]
-    loc = locations[mask]
+    sl = np.empty((sl_len, 10))
+    loc = np.empty((sl_len, 2)) # TODO loc type
 
-    mask_s = (stoplist[:, TIMESTAMP_SUBMITTED] <= ts) & (ts <= stoplist[:, TIMESTAMP])
-    sl_s = stoplist[mask_s]
-    loc_s = locations[mask_s]
+    sl_s = np.empty((sl_len, 10))
+    loc_s = np.empty((sl_len, 2)) # TODO loc type
+
+    cdef double t_, ts_
+    for i in range(sl_len):
+        t_ = stoplist[i, TIMESTAMP]
+        ts_ = stoplist[i, TIMESTAMP_SUBMITTED]
+
+        if ts_ <= t <= t_:
+            sl[j] = stoplist[i]
+            loc[j] = locations[i]
+            j += 1
+
+        if ts_ <= ts <= t_:
+            sl_s[k] = stoplist[i]
+            loc_s[k] = locations[i]
+            k += 1
+
+
+    sl = sl[:j]
+    loc = loc[:j]
+
+    sl_s = sl_s[:k]
+    loc_s = loc_s[:k]
 
     if pu:
         i_pu_sl = get_i_pu(sl[:, REQUEST_ID], rid)
@@ -191,6 +217,7 @@ cpdef np.ndarray stop_properties(
 
     cdef int n = len(stoplist)
     cdef np.ndarray res = np.full((n, 21), np.nan)
+    cdef int i
     for i in range(n):
         res[i, :6] = properties_at_stop(
             stoplist[i, TIMESTAMP],
