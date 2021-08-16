@@ -9,6 +9,8 @@ import operator as op
 
 from pathlib import Path
 
+import loky
+
 from ridepy.extras.io import read_params_json, create_params_json, ParamsJSONDecoder
 from ridepy.extras.simulation_set import SimulationSet, make_file_path
 from ridepy.util import make_sim_id
@@ -105,11 +107,38 @@ def update_filenames(target_directory_path: Path):
                 )
 
 
-def update_events_files(target_directory_path: Path, remove_old: bool = False):
+def _update_events_file(
+    sim_id, get_events_path, get_old_events_path, jq_inf, jq_options, jq_expr
+):
+    events_path = get_events_path(sim_id)
+    old_events_path = get_old_events_path(sim_id)
+
+    shutil.move(events_path, old_events_path)
+
+    print(f"Reformatting {sim_id}...", end="", flush=True)
+    try:
+        subprocess.run(
+            ["jq", *jq_options, jq_expr, str(old_events_path)],
+            stdout=events_path.open("w"),
+            check=True,
+        )
+        subprocess.run(
+            ["sed", "-i", f"s/{jq_inf}/Infinity/g", f"{events_path}"], check=True
+        )
+
+        print("done.")
+    except:
+        print("FAILED.")
+        shutil.move(old_events_path, events_path)
+    else:
+        old_events_path.unlink()
+
+
+def update_events_files(target_directory_path: Path, max_workers=7):
     sim_ids = (
         events_path.stem
         for events_path in target_directory_path.glob("*.jsonl")
-        if "_old" not in str(events_path)
+        if not os.path.islink(events_path)
     )
 
     get_events_path = ft.partial(
@@ -119,24 +148,26 @@ def update_events_files(target_directory_path: Path, remove_old: bool = False):
         make_file_path, directory=target_directory_path, suffix="_old.jsonl"
     )
 
-    jq_options = ["-r", "-c"]
+    jq_options = ["-r", "-c", "-e"]
     jq_expr = "{event_type:keys[0]}+.[keys[0]]"
 
-    for sim_id in sim_ids:
-        events_path = get_events_path(sim_id)
-        old_events_path = get_old_events_path(sim_id)
+    jq_inf = (
+        subprocess.run(["jq", "."], input=b"Infinity", capture_output=True)
+        .stdout.decode()
+        .strip()
+    )
 
-        shutil.move(events_path, old_events_path)
-
-        print(f"Reformatting {sim_id}...", end="", flush=True)
-        try:
-            assert subprocess.run(
-                ["jq", *jq_options, jq_expr, str(old_events_path)],
-                stdout=events_path.open("w"),
+    with loky.get_reusable_executor(max_workers=max_workers) as executor:
+        list(
+            executor.map(
+                ft.partial(
+                    _update_events_file,
+                    get_events_path=get_events_path,
+                    get_old_events_path=get_old_events_path,
+                    jq_inf=jq_inf,
+                    jq_options=jq_options,
+                    jq_expr=jq_expr,
+                ),
+                sim_ids,
             )
-            print("done.")
-        except:
-            shutil.move(old_events_path, events_path)
-        else:
-            if remove_old:
-                old_events_path.unlink()
+        )

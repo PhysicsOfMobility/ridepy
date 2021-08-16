@@ -33,7 +33,6 @@ def update_events_files(
     directory: Optional[Path] = typer.Option(
         None, dir_okay=True, file_okay=False, exists=True
     ),
-    remove_old: bool = False,
 ):
     """
     Update events files (*.jsonl) to current, flattened structure
@@ -43,7 +42,7 @@ def update_events_files(
     else:
         directory = Path(directory).expanduser()
 
-    _update_events_files(directory, remove_old)
+    _update_events_files(directory)
 
 
 @cli.callback()
