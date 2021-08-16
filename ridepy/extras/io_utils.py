@@ -54,7 +54,21 @@ def update_filenames(target_directory_path: Path):
 
         old_params_json = old_params_path.read_text(encoding="U8")
 
-        params_json = old_params_json.replace("thesimulator", "ridepy")
+        params_json = (
+            old_params_json.replace("thesimulator", "ridepy")
+            .replace(
+                "brute_force_total_traveltime_minimizing_dispatcher",
+                "BruteForceTotalTravelTimeMinimizingDispatcher",
+            )
+            .replace(
+                "simple_ellipse_dispatcher",
+                "SimpleEllipseDispatcher",
+            )
+            .replace(
+                "taxicab_dispatcher_drive_first",
+                "TaxicabDispatcherDriveFirst",
+            )
+        )
 
         params = json.loads(params_json, cls=ParamsJSONDecoder)
         for outer_key, default_inner_dict in new_default_base_params.items():
