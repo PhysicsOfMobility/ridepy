@@ -669,10 +669,6 @@ def get_stops_and_requests_from_events_dataframe(
     except KeyError:  # TODO document this
         pass
 
-    stops_df = _add_insertion_stats_to_stoplist_dataframe(
-        reqs=requests_df, stops=stops_df, space=space
-    )
-
     return stops_df, requests_df
 
 

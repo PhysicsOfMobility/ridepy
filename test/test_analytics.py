@@ -29,6 +29,7 @@ from ridepy.util.analytics import (
     get_stops_and_requests,
     get_system_quantities,
     get_vehicle_quantities,
+    _add_insertion_stats_to_stoplist_dataframe,
 )
 from ridepy.util.analytics.plotting import plot_occupancy_hist
 from ridepy.vehicle_state import VehicleState
@@ -305,6 +306,10 @@ def test_get_stops_and_requests_and_get_quantities():
         ]
 
         stops, requests = get_stops_and_requests(events=events, space=space)
+        stops = _add_insertion_stats_to_stoplist_dataframe(
+            reqs=requests, stops=stops, space=space
+        )
+
         expected_stops = pd.DataFrame(
             {
                 "vehicle_id": {
