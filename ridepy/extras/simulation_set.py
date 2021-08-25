@@ -2,6 +2,7 @@ import logging
 import os
 import warnings
 import loky
+from time import time
 
 import operator as op
 import functools as ft
@@ -66,8 +67,8 @@ def perform_single_analysis(
     param_path_suffix: str = "_params.json",
     event_path_suffix: str = ".jsonl",
     update_existing: bool = False,
-    run_missing: bool = True,
-    return_system_quantities: bool = True,
+    compute_system_quantities: bool = True,
+    compute_vehicle_quantities: bool = True,
     stops_path_suffix: str = "_stops.pq",
     requests_path_suffix: str = "_requests.pq",
     vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
@@ -82,16 +83,14 @@ def perform_single_analysis(
 
     if update_existing:
         tasks |= {"stops", "requests", "vehicle_quantities", "system_quantities"}
-    elif run_missing:
-        if not stops_path.exists():
-            tasks.add("stops")
-        if not requests_path.exists():
-            tasks.add("requests")
-        if not vehicle_quantities_path.exists():
-            tasks.add("vehicle_quantities")
-
-    if return_system_quantities:
+    if not stops_path.exists():
+        tasks.add("stops")
+    if not requests_path.exists():
+        tasks.add("requests")
+    if compute_system_quantities:
         tasks.add("system_quantities")
+    if compute_vehicle_quantities and not vehicle_quantities_path.exists():
+        tasks.add("vehicle_quantities")
 
     system_quantities = {}
     if tasks:
@@ -192,7 +191,7 @@ def perform_single_simulation(
     """
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
-
+    tick = time()
     params_json = create_params_json(params=params)
     sim_id = make_sim_id(params_json)
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
@@ -251,7 +250,9 @@ def perform_single_simulation(
 
         with open(str(param_path), "w") as f:
             f.write(params_json)
-
+    tock = time()
+    if debug:
+        print(f"Simulation run on process {os.getpid()} took {tock-tick} seconds\n")
     return sim_id
 
 
@@ -690,9 +691,9 @@ class SimulationSet:
     def run_analytics(
         self,
         update_existing: bool = False,
-        run_missing: bool = True,
         stops_path_suffix: str = "_stops.pq",
         requests_path_suffix: str = "_requests.pq",
+        only_stops_and_requests: bool = False,  # only compute stops and requests
         vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
         system_quantities_filename: str = "system_quantities.pq",
     ):
@@ -703,9 +704,13 @@ class SimulationSet:
                 "no simulations have been run (simulation_ids empty)", UserWarning
             )
         else:
-            return_system_quantities = (
-                not self.system_quantities_path.exists() and run_missing
-            )
+            if only_stops_and_requests:
+                compute_system_quantities = compute_vehicle_quantities = False
+            else:
+                compute_vehicle_quantities = True
+                compute_system_quantities = (
+                    not self.system_quantities_path.exists() or update_existing
+                )
 
             with loky.get_reusable_executor(max_workers=self.max_workers) as executor:
                 sim_ids, system_quantities = zip(
@@ -715,8 +720,8 @@ class SimulationSet:
                                 perform_single_analysis,
                                 data_dir=self.data_dir,
                                 update_existing=update_existing,
-                                run_missing=run_missing,
-                                return_system_quantities=return_system_quantities,
+                                compute_system_quantities=compute_system_quantities,
+                                compute_vehicle_quantities=compute_vehicle_quantities,
                                 param_path_suffix=self._param_path_suffix,
                                 event_path_suffix=self._event_path_suffix,
                                 stops_path_suffix=stops_path_suffix,
@@ -735,7 +740,7 @@ class SimulationSet:
                     UserWarning,
                 )
 
-            if return_system_quantities:
+            if compute_system_quantities:
                 system_quantities_df = pd.DataFrame(system_quantities, index=sim_ids)
                 system_quantities_df.rename_axis("simulation_id", inplace=True)
                 system_quantities_df.to_parquet(self.system_quantities_path)

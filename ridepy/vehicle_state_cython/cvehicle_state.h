@@ -140,7 +140,7 @@ public:
     InsertionResult<Loc> insertion_result =
         dispatcher(request, stoplist, space, seat_capacity);
     stoplist_new = insertion_result.new_stoplist;
-    SingleVehicleSolution single_vehicle_solution {vehicle_id,
+    SingleVehicleSolution single_vehicle_solution{vehicle_id,
                                                   insertion_result.min_cost,
                                                   insertion_result.EAST_pu,
                                                   insertion_result.LAST_pu,

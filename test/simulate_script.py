@@ -112,9 +112,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--num_vehicles", "-N", type=int, default=10, help="number of vehicles"
     )
-    parser.add_argument(
-        "--cython", action=argparse.BooleanOptionalAction, default=False
-    )
+    parser.add_argument("--cython", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--graph", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args()
