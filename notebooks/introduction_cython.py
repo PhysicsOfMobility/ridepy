@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.0
+#       jupytext_version: 1.11.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -96,17 +96,12 @@ fs = SlowSimpleFleetState(
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
 # -
-
 # ## Process the results
 
 
 # + tags=[]
-stops, reqs = get_stops_and_requests(
-    events=events,
-    space=Euclidean2D(),
-)
+# %time stops, reqs = get_stops_and_requests( events=events, space=Euclidean2D())
 # -
-
 # # Some distributions
 # ## Relative travel times
 
@@ -134,3 +129,4 @@ reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
 
 # + tags=[]
 plot_occupancy_hist(stops)
+# -
