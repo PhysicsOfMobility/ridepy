@@ -170,16 +170,17 @@ def perform_single_simulation(
 
         - ``general``
             - either ``n_reqs``  or ``t_cutoff``
-            - ``n_vehicles``
             - ``seat_capacity``
-            - ``initial_location``
+            - (``initial_location`` and ``n_vehicles``) or ``initial_locations``
             - ``space``
-            - ``dispatcher``
             - ``TransportationRequestCls``
             - ``VehicleStateCls``
             - ``FleetStateCls``
         - ``request_generator``
             - ``RequestGeneratorCls``
+        - ``dispatcher``
+            - ``dispatcher_class``
+            - ...
     data_dir
         Existing directory in which to store parameters and events.
     jsonl_chunksize
@@ -230,13 +231,35 @@ def perform_single_simulation(
         **params["request_generator"],
     )
 
-    fs = params["general"]["FleetStateCls"](
-        initial_locations={
+    dispatcher = params["dispatcher"].pop("dispatcher_class")
+    if (
+        params["general"].get("n_vehicles") is not None
+        and params["general"].get("initial_location") is not None
+    ):
+        initial_locations = {
             vehicle_id: params["general"]["initial_location"]
             for vehicle_id in range(params["general"]["n_vehicles"])
-        },
+        }
+
+        if params["general"].get("initial_locations") is not None:
+            warnings.warn(f"disregarding {params['general']['initial_locations']=}")
+
+    elif params["general"].get("initial_locations") is not None:
+        initial_locations = params["general"]["initial_locations"]
+
+        if params["general"].get("initial_location") is not None:
+            warnings.warn(f"disregarding {params['general']['initial_location']=}")
+        if params["general"].get("n_vehicles") is not None:
+            warnings.warn(f"disregarding {params['general']['n_vehicles']=}")
+    else:
+        raise ValueError(
+            "must either specify 'n_vehicles' and 'initial_location' or 'initial_locations'"
+        )
+
+    fs = params["general"]["FleetStateCls"](
+        initial_locations=initial_locations,
         space=space,
-        dispatcher=params["general"]["dispatcher"](loc_type=space.loc_type),
+        dispatcher=dispatcher(loc_type=space.loc_type, **params["dispatcher"]),
         seat_capacities=params["general"]["seat_capacity"],
         vehicle_state_class=params["general"]["VehicleStateCls"],
     )
@@ -493,12 +516,13 @@ class SimulationSet:
                 space=SpaceObj,
                 n_vehicles=10,
                 initial_location=(0, 0),
+                initial_locations=None,
                 seat_capacity=8,
-                dispatcher=dispatcher,
                 TransportationRequestCls=TransportationRequestCls,
                 VehicleStateCls=VehicleStateCls,
                 FleetStateCls=FleetStateCls,
             ),
+            dispatcher=dict(dispatcher_class=dispatcher),
             request_generator=dict(
                 RequestGeneratorCls=RequestGeneratorCls,
                 rate=10,
@@ -519,7 +543,10 @@ class SimulationSet:
             ), "invalid outer key"
 
             # assert no unknown inner keys
-            for outer_key in set(self.default_base_params) - {"request_generator"}:
+            for outer_key in set(self.default_base_params) - {
+                "request_generator",
+                "dispatcher",
+            }:
                 assert not (
                     set(base_params.get(outer_key, {}))
                     | set(zip_params.get(outer_key, {}))
