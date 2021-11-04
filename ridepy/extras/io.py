@@ -83,9 +83,11 @@ class ParamsJSONDecoder(json.JSONDecoder):
                     module, cls = dct[cls_str].rsplit(".", 1)
                     dct[cls_str] = getattr(importlib.import_module(module), cls)
 
-            if "dispatcher" in dct:
-                module, cls = dct["dispatcher"].rsplit(".", 1)
-                dct["dispatcher"] = getattr(importlib.import_module(module), cls)
+            if "dispatcher_callable" in dct:
+                module, cls = dct["dispatcher_callable"].rsplit(".", 1)
+                dct["dispatcher_callable"] = getattr(
+                    importlib.import_module(module), cls
+                )
 
             if "space" in dct:
                 path, kwargs = next(iter(dct["space"].items()))

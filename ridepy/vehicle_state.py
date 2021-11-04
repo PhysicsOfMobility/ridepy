@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import Optional, SupportsFloat, List
+from typing import Optional, SupportsFloat, List, Iterable, Any, Sequence
 
 from .data_structures import (
     Request,
@@ -49,6 +49,7 @@ class VehicleState:
         space: TransportSpace,
         dispatcher: Dispatcher,
         seat_capacity: int,
+        dispatcher_kwargs: Optional[dict[str, Any]] = None,
     ):
         """
         Parameters
@@ -64,6 +65,8 @@ class VehicleState:
         loc_type
         dispatcher
             see the docstring of `.FleetState`.
+        dispatcher_kwargs
+            additional keyword arguments to supply to the dispatcher
         """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
@@ -72,6 +75,7 @@ class VehicleState:
         self.space = space
         self.dispatcher = dispatcher
         self.seat_capacity = seat_capacity
+        self.dispatcher_kwargs = dispatcher_kwargs or {}
 
         logger.info(f"Created VehicleState with space of type {type(self.space)}")
 
@@ -181,4 +185,5 @@ class VehicleState:
             stoplist=self.stoplist,
             space=self.space,
             seat_capacity=self.seat_capacity,
+            **self.dispatcher_kwargs,
         )

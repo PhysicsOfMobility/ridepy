@@ -16,7 +16,7 @@ from ridepy.data_structures_cython.data_structures cimport (
 
 from ridepy.util.spaces_cython.spaces cimport TransportSpace
 
-from typing import List, Union
+from typing import List, Union, Any, Iterable, Optional, Sequence
 from copy import deepcopy
 
 from mpi4py import MPI
@@ -47,6 +47,7 @@ cdef class VehicleState:
     cdef int _vehicle_id
     cdef int _seat_capacity
     cdef object _dispatcher
+    cdef dict _dispatcher_kwargs
 
     def __init__(
         self,
@@ -57,6 +58,7 @@ cdef class VehicleState:
         space: TransportSpace,
         dispatcher: Dispatcher,
         seat_capacity: int,
+        dispatcher_kwargs: Optional[dict[str,Any]] = None,
     ):
         self._vehicle_id = vehicle_id
         """
@@ -74,10 +76,14 @@ cdef class VehicleState:
             self._stoplist = Stoplist(initial_stoplist, space.loc_type)
         self._space = space
         self._dispatcher = dispatcher
+        self._dispatcher_kwargs = dispatcher_kwargs or {}
+
         if seat_capacity > INT_MAX:
             raise ValueError("Cannot use seat_capacity bigger that C++'s INT_MAX")
         self._seat_capacity = seat_capacity
+
         logger.info(f"Created VehicleState with space of type {type(self._space)}")
+
 
     property stoplist:
         def __get__(self):
@@ -100,6 +106,10 @@ cdef class VehicleState:
     property dispatcher:
         def __get__(self):
             return self._dispatcher
+
+    property dispatcher_kwargs:
+        def __get__(self):
+            return self._dispatcher_kwargs
 
     def fast_forward_time(self, t: float) -> Tuple[List[StopEvent], List[Stop]]:
         """
@@ -199,13 +209,16 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        # Logging the folloowing in this specific format is crucial for
+        # Logging the following in this specific format is crucial for
         # `test/mpi_futures_fleet_state_test.py` to pass
         logger.debug(f"Handling request #{request.request_id} with vehicle {self._vehicle_id} from MPI rank {rank}")
         ret = self._vehicle_id, *self._dispatcher(
-                request,
-                self._stoplist,
-                self._space, self._seat_capacity)
+            request,
+            self._stoplist,
+            self._space,
+            self._seat_capacity,
+            **self._dispatcher_kwargs
+        )
         return ret
 
     def __reduce__(self):
