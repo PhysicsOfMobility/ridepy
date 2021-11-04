@@ -58,7 +58,7 @@ evf = lambda S, f, **arg: (S, f(S, **arg))
 # # Configure the simulation and supply initial values
 
 # + tags=[]
-n_buses = 1000
+n_buses = 50
 
 initial_location = (0, 0)
 
@@ -74,7 +74,7 @@ rg = RandomRequestGenerator(
 )
 
 # create iterator yielding 100 random requests
-transportation_requests = it.islice(rg, 100000)
+transportation_requests = it.islice(rg, 1000)
 # -
 
 
