@@ -376,12 +376,16 @@ public:
 template <typename Loc>
 class SimpleEllipseDispatcher : public AbstractDispatcher<Loc> {
 public:
+  double max_relative_detour;
+  SimpleEllipseDispatcher(double max_relative_detour = 0) {
+    this->max_relative_detour = max_relative_detour;
+  }
   InsertionResult<Loc>
   operator()(std::shared_ptr<TransportationRequest<Loc>> request,
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
     return simple_ellipse_dispatcher(request, stoplist, space, seat_capacity,
-                                     debug);
+                                     max_relative_detour, debug);
   }
 };
 
