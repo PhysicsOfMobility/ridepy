@@ -124,18 +124,26 @@ def perform_single_analysis(
 
         if "requests" in tasks:
             if space.n_dim > 1:
-                requests["submitted", "origin"] = requests[
-                    ~requests["submitted", "origin"].isna()
-                ]["submitted", "origin"].map(list)
-                requests["accepted", "origin"] = requests[
-                    ~requests["accepted", "origin"].isna()
-                ]["accepted", "origin"].map(list)
-                requests["submitted", "destination"] = requests[
-                    ~requests["accepted", "destination"].isna()
-                ]["submitted", "destination"].map(list)
-                requests["accepted", "destination"] = requests[
-                    ~requests["accepted", "destination"].isna()
-                ]["accepted", "destination"].map(list)
+                if ("submitted", "origin") in requests:
+                    requests["submitted", "origin"] = requests[
+                        ~requests["submitted", "origin"].isna()
+                    ]["submitted", "origin"].map(list)
+
+                if ("accepted", "origin") in requests:
+                    requests["accepted", "origin"] = requests[
+                        ~requests["accepted", "origin"].isna()
+                    ]["accepted", "origin"].map(list)
+
+                if ("submitted", "destination") in requests:
+                    requests["submitted", "destination"] = requests[
+                        ~requests["submitted", "destination"].isna()
+                    ]["submitted", "destination"].map(list)
+
+                if ("accepted", "destination") in requests:
+                    requests["accepted", "destination"] = requests[
+                        ~requests["accepted", "destination"].isna()
+                    ]["accepted", "destination"].map(list)
+
             requests.to_parquet(requests_path)
 
     return sim_id, system_quantities
