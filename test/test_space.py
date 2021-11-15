@@ -432,38 +432,31 @@ def test_graph_relabeling_deepcopy():
 
 def test_random_point_generation():
     ### DEFINE SPACES ###
-    py_graph = Graph.from_nx(make_nx_star_graph())
-    cy_graph = CyGraph.from_nx(make_nx_star_graph())
+    py_graph = Graph.from_nx(make_nx_star_graph(), seed=42)
+    cy_graph = CyGraph.from_nx(make_nx_star_graph(), seed=42)
 
-    py_R1L2 = Euclidean1D()
+    py_R1L2 = Euclidean1D(seed=42)
 
-    py_R2L2 = Euclidean2D()
-    cy_R2L2 = CyEuclidean2D()
+    py_R2L2 = Euclidean2D(seed=42)
+    cy_R2L2 = CyEuclidean2D(seed=42)
 
-    cy_R2L1 = CyManhattan2D()
+    cy_R2L1 = CyManhattan2D(seed=42)
 
-    py_R3L2 = Euclidean(n_dim=3)
+    py_R3L2 = Euclidean(n_dim=3, seed=42)
 
     ### GENERATE ###
-    random.seed(42)
     py_graph_loc = py_graph.random_point()
-    random.seed(42)
     cy_graph_loc = cy_graph.random_point()
     assert py_graph_loc == cy_graph_loc
 
-    random.seed(42)
     py_R1L2_loc = py_R1L2.random_point()
 
-    random.seed(42)
     py_R2L2_loc = py_R2L2.random_point()
-    random.seed(42)
     cy_R2L2_loc = cy_R2L2.random_point()
     assert py_R2L2_loc == cy_R2L2_loc
 
-    random.seed(42)
     cy_R2L1_loc = cy_R2L1.random_point()
 
-    random.seed(42)
     py_R3L2_loc = py_R3L2.random_point()
 
     ### TEST FORMAT ###
@@ -482,26 +475,26 @@ def test_random_point_generation():
     assert all(isinstance(x, float) for x in py_R3L2_loc)
 
     ### TEST SEED ###
-    random.seed(42)
-    assert py_graph_loc == py_graph.random_point()
+    py_graph_2 = Graph.from_nx(make_nx_star_graph(), seed=42)
+    assert py_graph_loc == py_graph_2.random_point()
 
-    random.seed(42)
-    assert cy_graph_loc == cy_graph.random_point()
+    cy_graph_2 = CyGraph.from_nx(make_nx_star_graph(), seed=42)
+    assert cy_graph_loc == cy_graph_2.random_point()
 
-    random.seed(42)
-    assert py_R1L2_loc == py_R1L2.random_point()
+    py_R1L2_2 = Euclidean1D(seed=42)
+    assert py_R1L2_loc == py_R1L2_2.random_point()
 
-    random.seed(42)
-    assert py_R2L2_loc == py_R2L2.random_point()
+    py_R2L2_2 = Euclidean2D(seed=42)
+    assert py_R2L2_loc == py_R2L2_2.random_point()
 
-    random.seed(42)
-    assert cy_R2L2_loc == cy_R2L2.random_point()
+    cy_R2L2_2 = CyEuclidean2D(seed=42)
+    assert cy_R2L2_loc == cy_R2L2_2.random_point()
 
-    random.seed(42)
-    assert cy_R2L1_loc == cy_R2L1.random_point()
+    cy_R2L1_2 = CyManhattan2D(seed=42)
+    assert cy_R2L1_loc == cy_R2L1_2.random_point()
 
-    random.seed(42)
-    assert py_R3L2_loc == py_R3L2.random_point()
+    py_R3L2_2 = Euclidean(n_dim=3, seed=42)
+    assert py_R3L2_loc == py_R3L2_2.random_point()
 
 
 def test_caching_in_boost_graph_space():

@@ -55,8 +55,9 @@ class RandomRequestGenerator:
             see class docstring
         """
 
-        self.np_rng = np.random.default_rng(seed=seed)
-        # self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.np_rng = np.random.default_rng(seed=self.seed)
+        # self.py_rng = random.Random(seed)
 
         self.transport_space = space
         self.rate = rate

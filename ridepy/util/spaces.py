@@ -45,7 +45,8 @@ class Euclidean(TransportSpace):
         self.n_dim = n_dim
         self.velocity = velocity
 
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
         if coord_range is not None:
             assert len(coord_range) == n_dim, (
@@ -185,7 +186,8 @@ class Manhattan2D(TransportSpace):
         self.velocity = velocity
         self.loc_type = LocType.R2LOC
 
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
         if coord_range is not None:
             assert len(coord_range) == 2, (
@@ -276,7 +278,8 @@ class Graph(TransportSpace):
             seed for random number generator, i.e. for choosing random points on the space.
         """
 
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
         self.G = nx.Graph()
         self.G.add_nodes_from(vertices)
@@ -383,7 +386,8 @@ class Graph(TransportSpace):
         )
         self.velocity = velocity
         self._update_distance_cache()
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
         return self
 
@@ -488,6 +492,7 @@ class Graph(TransportSpace):
             self.edges,
             self.weights,
             self.velocity,
+            self.seed,
         )
 
 
@@ -520,7 +525,8 @@ class DiGraph(Graph):
             seed for random number generator, i.e. for choosing random points on the space.
         """
 
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
         if weights is None:
             weights = 1
@@ -569,7 +575,9 @@ class DiGraph(Graph):
         )
         self.velocity = velocity
         self._update_distance_cache()
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
+
         return self
 
     def __repr__(self):

@@ -118,7 +118,7 @@ cdef class Euclidean2D(TransportSpace):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
-    def __init__(self, seed:int=42, *args,  **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+    def __init__(self, *args,  seed:int=42, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
         Parameters
         ----------
@@ -129,7 +129,8 @@ cdef class Euclidean2D(TransportSpace):
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
 
-        self.py_rng = random.Random(seed=seed)
+        self.seed =seed
+        self.py_rng = random.Random(self.seed)
 
         coord_range = kwargs.get('coord_range')
 
@@ -155,7 +156,7 @@ cdef class Euclidean2D(TransportSpace):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
     def __reduce__(self):
-        return self.__class__, (self.velocity, )
+        return self.__class__, (self.velocity, self.seed)
 
 
 cdef class Manhattan2D(TransportSpace):
@@ -166,7 +167,7 @@ cdef class Manhattan2D(TransportSpace):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
 
-    def __init__(self, seed:int=42, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+    def __init__(self,  *args, seed:int=42, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
         Parameters
         ----------
@@ -177,7 +178,8 @@ cdef class Manhattan2D(TransportSpace):
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
 
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
         coord_range = kwargs.get('coord_range')
         if coord_range is not None:
@@ -202,14 +204,14 @@ cdef class Manhattan2D(TransportSpace):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
     def __reduce__(self):
-        return self.__class__, (self.velocity, )
+        return self.__class__, (self.velocity, self.seed)
 
 
 cdef class Graph(TransportSpace):
     """
     Weighted directed graph with integer node labels.
     """
-    def __cinit__(self, vertices, edges, weights=None, double velocity=1):
+    def __cinit__(self, vertices, edges, weights=None, double velocity=1, *args, **kwargs):
         self.loc_type = LocType.INT
 
         if weights is None:
@@ -224,7 +226,7 @@ cdef class Graph(TransportSpace):
                 velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges, <vector[double]>weights
             )
 
-    def __init__(self, seed:int=42, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+    def __init__(self, *args, seed:int=42, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
         Parameters
         ----------
@@ -243,7 +245,8 @@ cdef class Graph(TransportSpace):
             seed for random number generator, i.e. for choosing random points on the space.
         """
         TransportSpace.__init__(self, loc_type=LocType.INT)
-        self.py_rng = random.Random(seed=seed)
+        self.seed = seed
+        self.py_rng = random.Random(self.seed)
 
     def __dealloc__(self):
         del self.derived_ptr
@@ -325,6 +328,7 @@ cdef class Graph(TransportSpace):
                  self.edges,
                  self.weights,
                  self.velocity,
+                 self.seed,
             )
 
     def asdict(self):
@@ -333,4 +337,5 @@ cdef class Graph(TransportSpace):
             edges=self.edges,
             weights=self.weights,
             velocity=self.velocity,
+            seed=self.seed,
         )

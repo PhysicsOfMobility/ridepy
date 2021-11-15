@@ -27,12 +27,18 @@ cdef class TransportSpace:
 cdef class Euclidean2D(TransportSpace):
     cdef CEuclidean2D *derived_ptr
     cdef readonly vector[pair[float, float]] coord_range
+    cdef int seed
+    cdef object py_rng
 
 
 cdef class Manhattan2D(TransportSpace):
     cdef CManhattan2D *derived_ptr
     cdef readonly vector[pair[float, float]] coord_range
+    cdef int seed
+    cdef object py_rng
 
 
 cdef class Graph(TransportSpace):
     cdef CGraphSpace[int] *derived_ptr
+    cdef int seed
+    cdef object py_rng
