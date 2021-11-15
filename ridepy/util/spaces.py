@@ -25,6 +25,7 @@ class Euclidean(TransportSpace):
         n_dim: int = 1,
         coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
         velocity: float = 1,
+        seed: int = 42,
     ):
         """
         Initialize n-dimensional Euclidean space with constant velocity.
@@ -38,9 +39,13 @@ class Euclidean(TransportSpace):
             where x_i represents the ith dimension.
         velocity
             constant scaling factor as discriminator between distance and travel time
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
         self.n_dim = n_dim
         self.velocity = velocity
+
+        self.py_rng = random.Random(seed=seed)
 
         if coord_range is not None:
             assert len(coord_range) == n_dim, (
@@ -87,7 +92,7 @@ class Euclidean(TransportSpace):
         )
 
     def random_point(self):
-        return tuple(random.uniform(a, b) for a, b in self.coord_range)
+        return tuple(self.py_rng.uniform(a, b) for a, b in self.coord_range)
 
     def asdict(self):
         return dict(
@@ -103,8 +108,9 @@ class Euclidean1D(Euclidean):
         self,
         coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
         velocity: float = 1,
+        seed: int = 42,
     ):
-        super().__init__(n_dim=1, coord_range=coord_range, velocity=velocity)
+        super().__init__(n_dim=1, coord_range=coord_range, velocity=velocity, seed=seed)
 
     def interp_dist(self, u, v, dist_to_dest):
         return v - (v - u) * dist_to_dest / self.d(u, v), 0
@@ -117,7 +123,7 @@ class Euclidean1D(Euclidean):
         return abs(v - u)
 
     def random_point(self):
-        return random.uniform(self.coord_range[0][0], self.coord_range[0][1])
+        return self.py_rng.uniform(self.coord_range[0][0], self.coord_range[0][1])
 
     def asdict(self):
         return dict(coord_range=self.coord_range, velocity=self.velocity)
@@ -131,8 +137,9 @@ class Euclidean2D(Euclidean):
         self,
         coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
         velocity: float = 1,
+        seed: int = 42,
     ):
-        super().__init__(n_dim=2, coord_range=coord_range, velocity=velocity)
+        super().__init__(n_dim=2, coord_range=coord_range, velocity=velocity, seed=seed)
         self.loc_type = LocType.R2LOC
 
     def _coord_sub(self, u, v):
@@ -161,6 +168,7 @@ class Manhattan2D(TransportSpace):
         self,
         coord_range: List[Tuple[Union[int, float], Union[int, float]]] = None,
         velocity: float = 1,
+        seed: int = 42,
     ):
         """
         Parameters
@@ -170,10 +178,14 @@ class Manhattan2D(TransportSpace):
             where x_i represents the ith dimension.
         velocity
             constant scaling factor as discriminator between distance and travel time
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
         self.n_dim = 2
         self.velocity = velocity
         self.loc_type = LocType.R2LOC
+
+        self.py_rng = random.Random(seed=seed)
 
         if coord_range is not None:
             assert len(coord_range) == 2, (
@@ -214,7 +226,7 @@ class Manhattan2D(TransportSpace):
         )
 
     def random_point(self):
-        return tuple(random.uniform(a, b) for a, b in self.coord_range)
+        return tuple(self.py_rng.uniform(a, b) for a, b in self.coord_range)
 
     def asdict(self):
         return dict(coord_range=self.coord_range, velocity=self.velocity)
@@ -242,6 +254,7 @@ class Graph(TransportSpace):
         edges: Sequence[Tuple[int, int]],
         weights: Union[None, float, Sequence[float]] = None,
         velocity: float = 1,
+        seed: int = 42,
     ):
         """
         Weighted undirected graph with integer vertex labels
@@ -259,7 +272,12 @@ class Graph(TransportSpace):
             - if a sequence is supplied, this will be mapped onto the edge sequence
         velocity
             constant velocity to compute travel time, optional.
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
+
+        self.py_rng = random.Random(seed=seed)
+
         self.G = nx.Graph()
         self.G.add_nodes_from(vertices)
 
@@ -279,13 +297,15 @@ class Graph(TransportSpace):
 
     @staticmethod
     def _prepare_copy_of_nx_graph(*, G, make_attribute_distance, directed=False):
+        rng = random.Random()
+
         if not directed:
             graph_class = nx.Graph
         else:
             graph_class = nx.DiGraph
 
         if not all(
-            isinstance(u, int) for u in random.sample(list(G.nodes()), k=min(5, len(G)))
+            isinstance(u, int) for u in rng.sample(list(G.nodes()), k=min(5, len(G)))
         ):
             warnings.warn(
                 "Heuristic determined non-int node labels. Converting to int, "
@@ -337,6 +357,7 @@ class Graph(TransportSpace):
         G: nx.Graph,
         velocity: float = 1,
         make_attribute_distance: str = "distance",
+        seed: int = 42,
     ):
         """
         Create a graph space from networkx graph
@@ -349,6 +370,8 @@ class Graph(TransportSpace):
         make_attribute_distance
             attribute to rename to "distance" and use as such
             If None is supplied, the resulting graph is unweighted (unit edge length).
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
 
         Returns
         -------
@@ -360,6 +383,8 @@ class Graph(TransportSpace):
         )
         self.velocity = velocity
         self._update_distance_cache()
+        self.py_rng = random.Random(seed=seed)
+
         return self
 
     @smartVectorize
@@ -444,7 +469,7 @@ class Graph(TransportSpace):
         return list(nx.get_edge_attributes(self.G, "distance").values())
 
     def random_point(self):
-        return random.choice(self.vertices)
+        return self.py_rng.choice(self.vertices)
 
     def __repr__(self):
         return f"Graph(..., velocity={self.velocity})"
@@ -473,6 +498,7 @@ class DiGraph(Graph):
         edges: Sequence[Tuple[int, int]],
         weights: Union[None, float, Sequence[float]],
         velocity: float = 1,
+        seed: int = 42,
     ):
         """
         Weighted directed graph with integer vertex labels
@@ -490,7 +516,18 @@ class DiGraph(Graph):
             - if a sequence is supplied, this will be mapped onto the edge sequence
         velocity
             constant velocity to compute travel time, optional.
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
+
+        self.py_rng = random.Random(seed=seed)
+
+        if weights is None:
+            weights = 1
+
+        if isinstance(weights, (int, float)):
+            weights = it.repeat(float(weights))
+
         self.G = nx.DiGraph()
         self.G.add_nodes_from(vertices)
         self.G.add_edges_from(
@@ -506,6 +543,7 @@ class DiGraph(Graph):
         G: nx.Graph,
         velocity: float = 1,
         make_attribute_distance: str = "distance",
+        seed: int = 42,
     ):
         """
         Create a graph space from networkx directed graph
@@ -518,6 +556,8 @@ class DiGraph(Graph):
         make_attribute_distance
             attribute to rename to "distance" and use as such
             If None is supplied, the resulting graph is unweighted (unit edge length).
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
 
         Returns
         -------
@@ -529,6 +569,7 @@ class DiGraph(Graph):
         )
         self.velocity = velocity
         self._update_distance_cache()
+        self.py_rng = random.Random(seed=seed)
         return self
 
     def __repr__(self):

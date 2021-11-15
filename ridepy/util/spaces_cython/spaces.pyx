@@ -118,14 +118,19 @@ cdef class Euclidean2D(TransportSpace):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
-    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+    def __init__(self, seed:int=42, *args,  **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
         Parameters
         ----------
         velocity
             constant velocity to compute travel time, optional. default: 1
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+
+        self.py_rng = random.Random(seed=seed)
+
         coord_range = kwargs.get('coord_range')
 
         if coord_range is not None:
@@ -144,7 +149,7 @@ cdef class Euclidean2D(TransportSpace):
         return f"Euclidean2D(velocity={self.velocity})"
 
     def random_point(self):
-        return tuple(random.uniform(a, b) for a, b in self.coord_range)
+        return tuple(self.py_rng.uniform(a, b) for a, b in self.coord_range)
 
     def asdict(self):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
@@ -161,14 +166,18 @@ cdef class Manhattan2D(TransportSpace):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
 
-    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+    def __init__(self, seed:int=42, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
         Parameters
         ----------
         velocity
             constant velocity to compute travel time, optional. default: 1
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+
+        self.py_rng = random.Random(seed=seed)
 
         coord_range = kwargs.get('coord_range')
         if coord_range is not None:
@@ -187,7 +196,7 @@ cdef class Manhattan2D(TransportSpace):
         return f"Manhattan2D(velocity={self.velocity})"
 
     def random_point(self):
-        return tuple(random.uniform(a, b) for a, b in self.coord_range)
+        return tuple(self.py_rng.uniform(a, b) for a, b in self.coord_range)
 
     def asdict(self):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
@@ -215,7 +224,7 @@ cdef class Graph(TransportSpace):
                 velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges, <vector[double]>weights
             )
 
-    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
+    def __init__(self, seed:int=42, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
         Parameters
         ----------
@@ -230,8 +239,11 @@ cdef class Graph(TransportSpace):
             - if a sequence is supplied, this will be mapped onto the edge sequence
         velocity
             constant velocity to compute travel time, optional. default: 1
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
         """
         TransportSpace.__init__(self, loc_type=LocType.INT)
+        self.py_rng = random.Random(seed=seed)
 
     def __dealloc__(self):
         del self.derived_ptr
@@ -253,7 +265,11 @@ cdef class Graph(TransportSpace):
 
     @classmethod
     def from_nx(
-            cls, G, velocity: float = 1.0, make_attribute_distance: Optional[str] = "distance"
+            cls,
+            G,
+            velocity: float = 1.0,
+            make_attribute_distance: Optional[str] = "distance",
+            seed:int=42
     ):
         """
         Create a Graph from a networkx.Graph with a mandatory distance edge attribute.
@@ -267,17 +283,21 @@ cdef class Graph(TransportSpace):
         make_attribute_distance
             name of the nx.DiGraph edge attribute used as distance between nodes.
             If None is supplied, the resulting graph is unweighted (unit edge length).
+        seed
+            seed for random number generator, i.e. for choosing random points on the space.
 
         Returns
         -------
         Graph instance
         """
+        rng = random.Random()
+
         if not isinstance(G, nx.Graph):
             raise TypeError(f"Must supply nx.Graph, not {type(G)}")
         elif G.is_directed():
             raise TypeError(f"Must supply undirected graph")
 
-        if not all(isinstance(u, int) for u in random.sample(list(G.nodes()), k=min(5, len(G)))):
+        if not all(isinstance(u, int) for u in rng.sample(list(G.nodes()), k=min(5, len(G)))):
             warnings.warn("Heuristic determined non-int node labels. Converting to int", UserWarning)
             G = nx.relabel.convert_node_labels_to_integers(G)
 
@@ -290,11 +310,12 @@ cdef class Graph(TransportSpace):
             vertices=list(G.nodes()),
             edges=list(G.edges()),
             weights=weights,
-            velocity=velocity
+            velocity=velocity,
+            seed=seed
         )
 
     def random_point(self):
-        return random.choice(self.vertices)
+        return self.py_rng.choice(self.vertices)
 
 
     def __reduce__(self):

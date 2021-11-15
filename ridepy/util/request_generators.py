@@ -54,9 +54,9 @@ class RandomRequestGenerator:
         max_delivery_delay_rel
             see class docstring
         """
-        if seed is not None:
-            np.random.seed(seed)
-            random.seed(seed)
+
+        self.np_rng = np.random.default_rng(seed=seed)
+        # self.py_rng = random.Random(seed=seed)
 
         self.transport_space = space
         self.rate = rate
@@ -72,7 +72,7 @@ class RandomRequestGenerator:
         return self
 
     def __next__(self):
-        self.now += np.random.exponential(1 / self.rate)
+        self.now += self.np_rng.exponential(1 / self.rate)
         self.request_index += 1
 
         while True:
