@@ -29,4 +29,4 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
         BruteForceTotalTravelTimeMinimizingDispatcher()
 
     cdef cppclass SimpleEllipseDispatcher[Loc](AbstractDispatcher[Loc]):
-        SimpleEllipseDispatcher()
+        SimpleEllipseDispatcher(double)

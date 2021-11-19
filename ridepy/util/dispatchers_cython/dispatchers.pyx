@@ -10,7 +10,7 @@ SimpleEllipseDispatcher as CSimpleEllipseDispatcher,
 
 
 cdef class Dispatcher:
-    def __init__(self, loc_type):
+    def __init__(self, loc_type, *args, **kwargs):
         self.loc_type = loc_type
 
     def __dealloc__(self):
@@ -40,10 +40,10 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher(Dispatcher):
 
 
 cdef class SimpleEllipseDispatcher(Dispatcher):
-    def __cinit__(self, loc_type):
+    def __cinit__(self, loc_type, max_relative_detour=0):
         if loc_type == LocType.R2LOC:
-            self.u_dispatcher.dispatcher_r2loc_ptr = new CSimpleEllipseDispatcher[R2loc]()
+            self.u_dispatcher.dispatcher_r2loc_ptr = new CSimpleEllipseDispatcher[R2loc](max_relative_detour)
         elif loc_type == LocType.INT:
-            self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[int]()
+            self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[int](max_relative_detour)
         else:
             raise ValueError("This line should never have been reached")
