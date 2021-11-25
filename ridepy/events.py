@@ -34,8 +34,8 @@ class RequestSubmissionEvent(Event):
             "destination": ...,
             "pickup_timewindow_min": ...,
             "pickup_timewindow_max": ...,
-            "dropoff_timewindow_min": ...,
-            "dropoff_timewindow_max": ...,
+            "delivery_timewindow_min": ...,
+            "delivery_timewindow_max": ...,
         }
 
     """
@@ -64,8 +64,8 @@ class RequestAcceptanceEvent(Event):
             "destination": ...,
             "pickup_timewindow_min": ...,
             "pickup_timewindow_max": ...,
-            "dropoff_timewindow_min": ...,
-            "dropoff_timewindow_max": ...,
+            "delivery_timewindow_min": ...,
+            "delivery_timewindow_max": ...,
         }
 
     """

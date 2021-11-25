@@ -453,8 +453,8 @@ class FleetState(ABC):
             (
                 pickup_timewindow_min,
                 pickup_timewindow_max,
-                dropoff_timewindow_min,
-                dropoff_timewindow_max,
+                delivery_timewindow_min,
+                delivery_timewindow_max,
             ),
         ) = min(all_solutions, key=op.itemgetter(1))
         logger.debug(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
@@ -476,8 +476,8 @@ class FleetState(ABC):
                 "destination": req.destination,
                 "pickup_timewindow_min": pickup_timewindow_min,
                 "pickup_timewindow_max": pickup_timewindow_max,
-                "dropoff_timewindow_min": dropoff_timewindow_min,
-                "dropoff_timewindow_max": dropoff_timewindow_max,
+                "delivery_timewindow_min": delivery_timewindow_min,
+                "delivery_timewindow_max": delivery_timewindow_max,
             }
 
 
