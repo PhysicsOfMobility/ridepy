@@ -162,7 +162,7 @@ template <typename Loc>
 double time_from_current_stop_to_next(const std::vector<Stop<Loc>> &stoplist,
                                       int i, TransportSpace<Loc> &space) {
   if (i < static_cast<int>(stoplist.size() - 1))
-    return space.d(stoplist[i].location, stoplist[i + 1].location);
+    return space.t(stoplist[i].location, stoplist[i + 1].location);
   else
     return 0;
 }
