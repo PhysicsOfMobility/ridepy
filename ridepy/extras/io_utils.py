@@ -22,7 +22,7 @@ def update_filenames(target_directory_path: Path):
     this will try to update the simulation ids/base names to the id scheme of the current version of ridepy.
 
     The process is non-invasive in that it either creates symlinks or creates new files. The existing
-    files are neither renamed nor is their content modified.
+    files are not renamed nor is their content modified.
 
     Parameters
     ----------
@@ -48,7 +48,7 @@ def update_filenames(target_directory_path: Path):
         old_params_path = get_params_path(old_id)
         old_events_path = get_events_path(old_id)
 
-        if not old_params_path:
+        if not old_params_path.exists():
             warnings.warn(
                 f"parameter file for simulation id {old_id} missing, skipping"
             )
@@ -73,6 +73,7 @@ def update_filenames(target_directory_path: Path):
         )
 
         params = json.loads(params_json, cls=ParamsJSONDecoder)
+
         for outer_key, default_inner_dict in new_default_base_params.items():
             params[outer_key] = params.get(outer_key, default_inner_dict)
             for inner_key, inner_value in default_inner_dict.items():
@@ -80,12 +81,16 @@ def update_filenames(target_directory_path: Path):
                     inner_key, default_inner_dict.get(inner_key)
                 )
 
+        if "general" in params and "dispatcher" in params["general"]:
+            params["dispatcher"]["dispatcher_class"] = params["general"]["dispatcher"]
+            del params["general"]["dispatcher"]
+
         new_params_json = create_params_json(params=params)
         new_id = make_sim_id(new_params_json)
         new_params_path = get_params_path(new_id)
         new_events_path = get_events_path(new_id)
 
-        if new_params_json == old_params_json:
+        if new_params_json == old_params_json and old_params_path != new_params_path:
             try:
                 os.symlink(old_params_path, new_params_path)
             except FileExistsError:
@@ -95,9 +100,13 @@ def update_filenames(target_directory_path: Path):
         else:
             new_params_path.write_text(new_params_json)
 
-        if not old_events_path:
+        if not old_events_path.exists():
             warnings.warn(f"{old_events_path} missing, skipping")
             continue
+        elif old_events_path == new_events_path:
+            warnings.warn(
+                f"events file for simulation id {old_id} already up to date, skipping"
+            )
         else:
             try:
                 os.symlink(old_events_path, new_events_path)

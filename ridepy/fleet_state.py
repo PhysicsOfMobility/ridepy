@@ -79,28 +79,6 @@ class FleetState(ABC):
     * Implement fast_forward and handle_request using distributed computing e.g. MPI
     """
 
-    def _test_dispatcher(self, TransportationRequestCls):
-        """
-        Internal function used to perform a quick sanity check on whether the dispatcher
-        is behaving well with the types used in the fleet.
-        Raises if this does not seem to be the case.
-        """
-        try:
-            vehicle = next(iter(self.fleet.values()))
-            rg = RandomRequestGenerator(
-                space=self.space, request_class=TransportationRequestCls
-            )
-            req = next(iter(rg))
-            # TODO
-            # self.dispatcher(
-            #     req,
-            #     vehicle.stoplist,
-            #     self.space,
-            #     vehicle.seat_capacity,
-            # )
-        except Exception as e:
-            raise TypeError(f"unsuitable dispatcher, error was:\n{e}")
-
     def __init__(
         self,
         *,
@@ -202,8 +180,6 @@ class FleetState(ABC):
             for vehicle_id in initial_locations.keys()
         }
 
-        self._test_dispatcher(TransportationRequestCls)
-
     @classmethod
     def from_fleet(
         cls,
@@ -278,8 +254,6 @@ class FleetState(ABC):
                     )
                     for stop in vehicle_state.stoplist
                 )
-
-            self._test_dispatcher(TransportationRequestCls)
 
         return self
 
