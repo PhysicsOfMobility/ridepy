@@ -1,4 +1,4 @@
-|Code style: black|   |Docs: passing|
+|Code style: black| |Tests| |Docs: passing|
 
 ridepy
 ============
@@ -131,3 +131,6 @@ General Things
 
 .. |Docs: passing| image:: https://img.shields.io/docsrs/built
    :target: https://physicsofmobility.gitlab.io/ridepy/
+
+.. |Tests| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml/badge.svg
+   :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml
