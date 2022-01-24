@@ -1031,6 +1031,13 @@ def get_system_quantities(
 
     avg_detour = requests["inferred", "relative_travel_time"].mean()
 
+    total_system_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: gdf.loc[gdf["request_id"] == -200, "timestamp"].item()
+                    - gdf.loc[gdf["request_id"] == -100, "timestamp"].item()
+    ).sum()
+
+    avg_request_rate = len(requests) / total_system_time
+
     res = {}
     if params:
         if params["general"]["n_vehicles"] is not None:
@@ -1039,17 +1046,19 @@ def get_system_quantities(
             n_vehicles = len(params["general"]["initial_locations"])
         res |= dict(
             n_vehicles=n_vehicles,
-            request_rate=params["request_generator"]["rate"],
-            max_pickup_delay=params["request_generator"]["max_pickup_delay"],
-            max_delivery_delay_rel=params["request_generator"][
-                "max_delivery_delay_rel"
-            ],
-            velocity=params["general"]["space"].velocity,
+            theoretical_request_rate=params.get("request_generator", {}).get(
+                "rate", np.nan
+            ),
+            max_pickup_delay=params.get("request_generator", {}).get(
+                "max_pickup_delay", np.nan
+            ),
+            max_delivery_delay_rel=params.get("request_generator", {}).get(
+                "max_delivery_delay_rel", np.nan
+            ),
+            velocity=params.get("general", {}).get("space").velocity,
         )
 
-    load = (res["request_rate"] * avg_direct_dist) / (
-        res["velocity"] * res["n_vehicles"]
-    )
+    load = (avg_request_rate * avg_direct_dist) / (res["velocity"] * res["n_vehicles"])
 
     res |= dict(
         avg_occupancy=avg_occupancy,
@@ -1071,6 +1080,7 @@ def get_system_quantities(
         rejection_ratio=rejection_ratio,
         median_stoplist_length=median_stoplist_length,
         avg_detour=avg_detour,
+        avg_request_rate=avg_request_rate,
         load=load,
     )
 

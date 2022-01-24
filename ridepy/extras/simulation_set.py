@@ -525,10 +525,6 @@ class SimulationSet:
             dispatcher=dict(dispatcher_class=dispatcher),
             request_generator=dict(
                 RequestGeneratorCls=RequestGeneratorCls,
-                rate=10,
-                max_pickup_delay=3,
-                max_delivery_delay_rel=1.9,
-                seed=42,
             ),
         )
 

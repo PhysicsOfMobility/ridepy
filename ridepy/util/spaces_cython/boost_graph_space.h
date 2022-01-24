@@ -32,7 +32,7 @@ private:
   vector<int> _predecessors;
   vector<double> _weights;
   pred_cache_t pred_cache{
-      1000}; // the cache size could be set at initialization
+      10000}; // the cache size could be set at initialization
 
   void cached_dijkstra(int u_idx) {
     if (pred_cache.contains(u_idx)) {
