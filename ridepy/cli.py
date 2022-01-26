@@ -13,12 +13,19 @@ cli = typer.Typer()
 
 @cli.command()
 def update_filenames(
-    directory: Optional[Path] = typer.Option(
+    directory: Optional[Path] = typer.Argument(
         None, dir_okay=True, file_okay=False, exists=True
     )
 ):
     """
-    Update filenames to current simulation ids.
+    Update filenames and JSON structure to up-to-date simulation ids.
+
+    This reads all `.json` files, tries to parse the possibly
+    outdated format and generates a simulation id according
+    to the current scheme. Afterwards, new JSON files are stored using the
+    current format at `<new id>.json`.
+    The simulation data files ending with `.jsonl` are not modified. Instead,
+    symbolic links are created, pointing from `<new id>.jsonl` to `<old id>.jsonl`.
     """
     if directory is None:
         directory = Path.cwd()
@@ -35,7 +42,7 @@ def update_events_files(
     ),
 ):
     """
-    Update events files (*.jsonl) to current, flattened structure
+    Update events files (*.jsonl) to current, flattened structure.
     """
     if directory is None:
         directory = Path.cwd()

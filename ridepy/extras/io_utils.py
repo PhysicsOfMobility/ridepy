@@ -10,6 +10,7 @@ import operator as op
 from pathlib import Path
 
 import loky
+from tqdm import tqdm
 
 from ridepy.extras.io import read_params_json, create_params_json, ParamsJSONDecoder
 from ridepy.extras.simulation_set import SimulationSet, make_file_path
@@ -44,7 +45,7 @@ def update_filenames(target_directory_path: Path):
 
     new_default_base_params = SimulationSet(data_dir=Path()).default_base_params
 
-    for old_id in old_ids:
+    for old_id in tqdm(old_ids):
         old_params_path = get_params_path(old_id)
         old_events_path = get_events_path(old_id)
 
@@ -70,6 +71,11 @@ def update_filenames(target_directory_path: Path):
                 "taxicab_dispatcher_drive_first",
                 "TaxicabDispatcherDriveFirst",
             )
+            .replace("TransportationRequestCls", "transportation_request_cls")
+            .replace("VehicleStateCls", "vehicle_state_cls")
+            .replace("FleetStateCls", "fleet_state_cls")
+            .replace("RequestGeneratorCls", "request_generator_cls")
+            .replace("dispatcher_class", "dispatcher_cls")
         )
 
         params = json.loads(params_json, cls=ParamsJSONDecoder)
@@ -82,7 +88,7 @@ def update_filenames(target_directory_path: Path):
                 )
 
         if "general" in params and "dispatcher" in params["general"]:
-            params["dispatcher"]["dispatcher_class"] = params["general"]["dispatcher"]
+            params["dispatcher"]["dispatcher_cls"] = params["general"]["dispatcher"]
             del params["general"]["dispatcher"]
 
         new_params_json = create_params_json(params=params)

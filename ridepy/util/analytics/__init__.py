@@ -377,8 +377,8 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     #       this must be changed.
     #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
     locations.index = locations.index.set_levels(
-        locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
-        1,
+        levels=locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
+        level=1,
     )
 
     # finally fill the locations missing in the stops dataframe by joining on request_id and delta_occupancy
@@ -961,6 +961,7 @@ def get_system_quantities(
     total_dist_driven = stops["dist_to_next"].sum()
     total_time_driven = stops["time_to_next"].sum()
 
+    avg_direct_dist_submitted = requests[("submitted", "direct_travel_distance")].mean()
     avg_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].mean()
     avg_direct_time = serviced_requests[("submitted", "direct_travel_time")].mean()
 
@@ -1031,10 +1032,14 @@ def get_system_quantities(
 
     avg_detour = requests["inferred", "relative_travel_time"].mean()
 
-    total_system_time = stops.groupby("vehicle_id").apply(
-        lambda gdf: gdf.loc[gdf["request_id"] == -200, "timestamp"].item()
-                    - gdf.loc[gdf["request_id"] == -100, "timestamp"].item()
-    ).sum()
+    total_system_time = (
+        stops.groupby("vehicle_id")
+        .apply(
+            lambda gdf: gdf.loc[gdf["request_id"] == -200, "timestamp"].item()
+            - gdf.loc[gdf["request_id"] == -100, "timestamp"].item()
+        )
+        .sum()
+    )
 
     avg_request_rate = len(requests) / total_system_time
 
@@ -1058,7 +1063,8 @@ def get_system_quantities(
             velocity=params.get("general", {}).get("space").velocity,
         )
 
-    load = (avg_request_rate * avg_direct_dist) / (res["velocity"] * res["n_vehicles"])
+    load_submitted = (avg_request_rate * avg_direct_dist_submitted) / (res["velocity"] * res["n_vehicles"])
+    load_serviced = (avg_request_rate * avg_direct_dist) / (res["velocity"] * res["n_vehicles"])
 
     res |= dict(
         avg_occupancy=avg_occupancy,
@@ -1081,7 +1087,8 @@ def get_system_quantities(
         median_stoplist_length=median_stoplist_length,
         avg_detour=avg_detour,
         avg_request_rate=avg_request_rate,
-        load=load,
+        load_submitted=load_submitted,
+        load_serviced=load_serviced,
     )
 
     return res
