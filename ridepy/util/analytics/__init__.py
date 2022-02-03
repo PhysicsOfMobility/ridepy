@@ -962,7 +962,9 @@ def get_system_quantities(
     total_time_driven = stops["time_to_next"].sum()
 
     avg_direct_dist_submitted = requests[("submitted", "direct_travel_distance")].mean()
-    avg_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].mean()
+    avg_direct_dist_serviced = serviced_requests[
+        ("submitted", "direct_travel_distance")
+    ].mean()
     avg_direct_time = serviced_requests[("submitted", "direct_travel_time")].mean()
 
     total_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].sum()
@@ -1040,39 +1042,45 @@ def get_system_quantities(
         )
         .sum()
     )
-
-    avg_request_rate = len(requests) / total_system_time
+    n_vehicles = len(stops.index.levels[0])
+    n_vehicles_used = (requests.groupby(('serviced', 'vehicle_id')).count().iloc[:, 0] > 0).sum()
+    avg_request_rate_submitted = len(requests) / (total_system_time / n_vehicles)
+    avg_request_rate_serviced = len(serviced_requests) / (total_system_time / n_vehicles)
 
     res = {}
     if params:
-        if params["general"]["n_vehicles"] is not None:
-            n_vehicles = params["general"]["n_vehicles"]
-        else:
-            n_vehicles = len(params["general"]["initial_locations"])
+        theoretical_request_rate = params.get("request_generator", {}).get(
+            "rate", np.nan
+        )
+        velocity = params.get("general", {}).get("space").velocity
         res |= dict(
             n_vehicles=n_vehicles,
-            theoretical_request_rate=params.get("request_generator", {}).get(
-                "rate", np.nan
-            ),
+            theoretical_request_rate=theoretical_request_rate,
             max_pickup_delay=params.get("request_generator", {}).get(
                 "max_pickup_delay", np.nan
             ),
             max_delivery_delay_rel=params.get("request_generator", {}).get(
                 "max_delivery_delay_rel", np.nan
             ),
-            velocity=params.get("general", {}).get("space").velocity,
+            velocity=velocity,
+            load_theoretical=(theoretical_request_rate * avg_direct_dist_submitted) / (velocity * n_vehicles),
         )
 
-    load_submitted = (avg_request_rate * avg_direct_dist_submitted) / (res["velocity"] * res["n_vehicles"])
-    load_serviced = (avg_request_rate * avg_direct_dist) / (res["velocity"] * res["n_vehicles"])
+    load_submitted = (avg_request_rate_submitted * avg_direct_dist_submitted) / (
+        res["velocity"] * res["n_vehicles"]
+    )
+    load_serviced = (avg_request_rate_serviced * avg_direct_dist_serviced) / (
+        res["velocity"] * res["n_vehicles"]
+    )
 
     res |= dict(
         avg_occupancy=avg_occupancy,
+        n_vehicles_used=n_vehicles_used,
         avg_segment_dist=avg_segment_dist,
         avg_segment_time=avg_segment_time,
         total_dist_driven=total_dist_driven,
         total_time_driven=total_time_driven,
-        avg_direct_dist=avg_direct_dist,
+        avg_direct_dist=avg_direct_dist_serviced,
         avg_direct_time=avg_direct_time,
         total_direct_dist=total_direct_dist,
         total_direct_time=total_direct_time,
@@ -1086,7 +1094,8 @@ def get_system_quantities(
         rejection_ratio=rejection_ratio,
         median_stoplist_length=median_stoplist_length,
         avg_detour=avg_detour,
-        avg_request_rate=avg_request_rate,
+        avg_request_rate_submitted=avg_request_rate_submitted,
+        avg_request_rate_serviced=avg_request_rate_serviced,
         load_submitted=load_submitted,
         load_serviced=load_serviced,
     )
