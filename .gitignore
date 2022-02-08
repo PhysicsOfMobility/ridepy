@@ -9,6 +9,7 @@ __pycache__/
 .idea
 core
 doc/_build
+cmake-build-debug
 
 # C extensions
 *.so

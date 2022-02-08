@@ -1,7 +1,3 @@
-//
-// Created by Debsankha Manik on 13.12.20.
-//
-
 #ifndef RIDEPY_CDISPATCHERS_H
 #define RIDEPY_CDISPATCHERS_H
 
@@ -189,6 +185,234 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
       break;
     }
 
+    return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
+                                LAST_pu,      EAST_do,  LAST_do};
+  } else {
+    return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
+  }
+}
+
+template <typename Loc>
+InsertionResult<Loc>
+brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
+    std::shared_ptr<TransportationRequest<Loc>> request,
+    vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
+    bool debug = false,
+    ExternalCost external_cost = ExternalCost::absolute_detour,
+    double merge_radius = 1.) {
+  /*
+  Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
+  by minimizing the total driving time.
+
+  Parameters
+  ----------
+  request
+    request to be serviced
+  stoplist
+    stoplist of the vehicle, to be mapped to a new stoplist
+  space
+    transport space the vehicle is operating on
+  debug
+    Print debug info
+  external_cost
+    - absolute_detour: ``absolute pickup detour + absolute dropoff detour``
+    - finishing_time: ``new_stoplist[-1].CPAT``
+    - total_route_time: ``new_stoplist[-1].CPAT - new_stoplist[0].CPAT``
+
+  Returns
+  -------
+
+  */
+  double min_cost = INFINITY;
+
+  // Warning: i,j refers to the indices where the new stop would be inserted. So
+  // i-1/j-1 is the index of the stop preceding the stop to be inserted.
+  pair<int, int> best_insertion{0, 0};
+
+  Loc origin;
+  Loc destination;
+
+  int i = -1;
+
+  for (auto &stop_before_pickup : stoplist) {
+    i++; // The first iteration of the loop: i = 0
+
+    if (stop_before_pickup.occupancy_after_servicing == seat_capacity) {
+      // Inserting here will violate capacity constraint
+      continue;
+    }
+
+    for (bool merge_pickup : {false, true}) {
+      double CPAT_pu;
+      double time_to_pickup;
+
+      if (merge_pickup) {
+        if (space.t(request->origin, stop_before_pickup) <= merge_radius) {
+          origin = stop_before_pickup;
+          CPAT_pu = stop_before_pickup.estimated_arrival_time;
+          time_to_pickup = 0.;
+        } else
+          // can't merge stop, too far
+          continue;
+      } else {
+        time_to_pickup = space.t(stop_before_pickup.location, origin);
+        CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup);
+        origin = request->origin;
+      }
+
+      // check for request's pickup timewindow violation
+
+      if (CPAT_pu > request->pickup_timewindow_max)
+        continue;
+
+      auto EAST_pu = request->pickup_timewindow_min;
+
+      ///////////////////////////////////////////////////////////////////////////
+      // Dropoff immediately (adjacent insertion)
+      ///////////////////////////////////////////////////////////////////////////
+      auto CPAT_do =
+          max(EAST_pu, CPAT_pu) + space.t(origin, request->destination);
+
+      // check for request's dropoff timewindow violation
+      if (CPAT_do > request->delivery_timewindow_max)
+        continue;
+
+      auto EAST_do = request->delivery_timewindow_min;
+
+      // Compute the insertion cost
+      auto time_to_dropoff = space.t(origin, request->destination);
+      auto time_from_dropoff = time_to_stop_after_insertion(
+          stoplist, request->destination, i, space);
+      auto original_pickup_edge_length =
+          time_from_current_stop_to_next(stoplist, i, space);
+      auto total_cost = (time_to_pickup + time_to_dropoff + time_from_dropoff -
+                         original_pickup_edge_length);
+
+      if (total_cost < min_cost) {
+        // Check for constraint violations at later points
+        auto cpat_at_next_stop =
+            max(CPAT_do, request->delivery_timewindow_min) + time_from_dropoff;
+        if (!(is_timewindow_violated_dueto_insertion(stoplist, i,
+                                                     cpat_at_next_stop))) {
+          best_insertion = {i, i};
+          min_cost = total_cost;
+        }
+      }
+
+      ///////////////////////////////////////////////////////////////////////////
+      // Try dropoff not immediately after pickup (non-adjacent insertion)
+      ///////////////////////////////////////////////////////////////////////////
+      auto time_from_pickup =
+          time_to_stop_after_insertion(stoplist, origin, i, space);
+      auto cpat_at_next_stop =
+          (max(CPAT_pu, request->pickup_timewindow_min) + time_from_pickup);
+      if (is_timewindow_violated_dueto_insertion(stoplist, i,
+                                                 cpat_at_next_stop))
+        continue;
+      auto pickup_cost =
+          (time_to_pickup + time_from_pickup - original_pickup_edge_length);
+
+      double delta_cpat = 0;
+      if (i < static_cast<int>(stoplist.size() - 1))
+        delta_cpat = cpat_at_next_stop - stoplist[i + 1].estimated_arrival_time;
+
+      int j = i;
+      for (auto stop_before_dropoff = stoplist.begin() + i + 1;
+           stop_before_dropoff != stoplist.end(); ++stop_before_dropoff) {
+        j++;
+        // first iteration: dropoff after j=(i+1)'th stop. pickup was
+        // after i'th stop. Need to check for seat capacity constraints.
+        // Note the loop: the constraint was not violated after servicing the
+        // previous stop (otherwise we wouldn't've reached this line). Need to
+        // check that the constraint is not violated due to the action at this
+        // stop (stop_before_dropoff)
+        if (stop_before_dropoff->occupancy_after_servicing == seat_capacity) {
+          // Capacity is violated. We need to break off this loop because no
+          // insertion either here or at a later stop is permitted
+          break;
+        }
+        for (bool merge_dropoff : {false, true}) {
+
+          if (merge_dropoff and space.t(request->destination,
+                                        stop_before_dropoff) <= merge_radius)
+            destination = stop_before_dropoff;
+          else
+            destination = request->destination;
+
+          time_to_dropoff = space.t(stop_before_dropoff->location, destination);
+
+          CPAT_do = cpat_of_inserted_stop(*stop_before_dropoff, time_to_dropoff,
+                                          delta_cpat);
+
+          if (CPAT_do > request->delivery_timewindow_max)
+            break; // cannot insert later b/c triangle inequality
+
+          // Compute drop-off cost
+          time_from_dropoff =
+              time_to_stop_after_insertion(stoplist, destination, j, space);
+          auto original_dropoff_edge_length =
+              time_from_current_stop_to_next(stoplist, j, space);
+          auto dropoff_cost = (time_to_dropoff + time_from_dropoff -
+                               original_dropoff_edge_length);
+
+          // Sum to total insertion cost
+          total_cost = pickup_cost + dropoff_cost;
+
+          if (total_cost < min_cost) {
+            // cost has decreased. check for constraint violations at later
+            // stops
+            cpat_at_next_stop =
+                (max(CPAT_do, request->delivery_timewindow_min) +
+                 time_from_dropoff);
+
+            if (!(is_timewindow_violated_dueto_insertion(stoplist, j,
+                                                         cpat_at_next_stop))) {
+              // We have found a valid solution that reduces the cost.
+              // This is the new optimal.
+              best_insertion = {i, j};
+              min_cost = total_cost;
+            }
+          }
+        }
+        // We will try inserting the drop-off at a later stop
+        // the delta_cpat is important to compute correctly for the next stop,
+        // it may have changed if we had any slack time at this one.
+        auto new_departure_time =
+            max(stop_before_dropoff->estimated_arrival_time + delta_cpat,
+                stop_before_dropoff->time_window_min);
+        delta_cpat = new_departure_time -
+                     stop_before_dropoff->estimated_departure_time();
+      }
+    }
+  }
+  if (min_cost < INFINITY) {
+    int best_pickup_idx = best_insertion.first;
+    int best_dropoff_idx = best_insertion.second;
+    auto new_stoplist = insert_request_to_stoplist_drive_first(
+        stoplist, request, best_pickup_idx, best_dropoff_idx, space);
+    if (debug) {
+      std::cout << "Best insertion: " << best_pickup_idx << ", "
+                << best_dropoff_idx << std::endl;
+      std::cout << "Min cost: " << min_cost << std::endl;
+    }
+    auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
+    auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
+
+    auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
+    auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
+
+    switch (external_cost) {
+    case ExternalCost::absolute_detour:
+      break;
+    case ExternalCost::finishing_time:
+      min_cost = new_stoplist.back().estimated_arrival_time;
+      break;
+    case ExternalCost::total_route_time:
+      min_cost = new_stoplist.back().estimated_arrival_time -
+                 new_stoplist.at(1).estimated_arrival_time;
+      break;
+    }
+    // TODO: Need to return the modified origin/destinations for the analytics
     return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
                                 LAST_pu,      EAST_do,  LAST_do};
   } else {
@@ -393,8 +617,7 @@ class BruteForceTotalTravelTimeMinimizingDispatcher
 public:
   ExternalCost external_cost;
   BruteForceTotalTravelTimeMinimizingDispatcher(
-      ExternalCost external_cost=ExternalCost::absolute_detour
-  ) {
+      ExternalCost external_cost = ExternalCost::absolute_detour) {
     this->external_cost = external_cost;
   }
   InsertionResult<Loc>
@@ -402,6 +625,24 @@ public:
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
     return brute_force_total_traveltime_minimizing_dispatcher(
+        request, stoplist, space, seat_capacity, debug, external_cost);
+  }
+};
+
+template <typename Loc>
+class BruteForceTotalTravelTimeMinimizingDispatcherStopMerging
+    : public AbstractDispatcher<Loc> {
+public:
+  ExternalCost external_cost;
+  BruteForceTotalTravelTimeMinimizingDispatcherStopMerging(
+      ExternalCost external_cost = ExternalCost::absolute_detour) {
+    this->external_cost = external_cost;
+  }
+  InsertionResult<Loc>
+  operator()(std::shared_ptr<TransportationRequest<Loc>> request,
+             vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
+             int seat_capacity, bool debug = false) {
+    return brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
         request, stoplist, space, seat_capacity, debug, external_cost);
   }
 };
