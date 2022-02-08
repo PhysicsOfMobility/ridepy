@@ -243,22 +243,21 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
     }
 
     for (bool merge_pickup : {false, true}) {
-      double CPAT_pu;
       double time_to_pickup;
 
       if (merge_pickup) {
         if (space.t(request->origin, stop_before_pickup) <= merge_radius) {
           origin = stop_before_pickup;
-          CPAT_pu = stop_before_pickup.estimated_arrival_time;
           time_to_pickup = 0.;
         } else
           // can't merge stop, too far
           continue;
       } else {
         time_to_pickup = space.t(stop_before_pickup.location, origin);
-        CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup);
         origin = request->origin;
       }
+
+      auto CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup);
 
       // check for request's pickup timewindow violation
 
@@ -333,13 +332,18 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
         }
         for (bool merge_dropoff : {false, true}) {
 
-          if (merge_dropoff and space.t(request->destination,
-                                        stop_before_dropoff) <= merge_radius)
-            destination = stop_before_dropoff;
-          else
+          if (merge_dropoff) {
+            if (space.t(request->destination, stop_before_dropoff) <=
+                merge_radius) {
+              destination = stop_before_dropoff;
+              time_to_dropoff = 0.;
+            } else
+              continue;
+          } else {
             destination = request->destination;
-
-          time_to_dropoff = space.t(stop_before_dropoff->location, destination);
+            time_to_dropoff =
+                space.t(stop_before_dropoff->location, destination);
+          }
 
           CPAT_do = cpat_of_inserted_stop(*stop_before_dropoff, time_to_dropoff,
                                           delta_cpat);
