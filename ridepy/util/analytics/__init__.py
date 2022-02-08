@@ -1043,9 +1043,13 @@ def get_system_quantities(
         .sum()
     )
     n_vehicles = len(stops.index.levels[0])
-    n_vehicles_used = (requests.groupby(('serviced', 'vehicle_id')).count().iloc[:, 0] > 0).sum()
+    n_vehicles_used = (
+        requests.groupby(("serviced", "vehicle_id")).count().iloc[:, 0] > 0
+    ).sum()
     avg_request_rate_submitted = len(requests) / (total_system_time / n_vehicles)
-    avg_request_rate_serviced = len(serviced_requests) / (total_system_time / n_vehicles)
+    avg_request_rate_serviced = len(serviced_requests) / (
+        total_system_time / n_vehicles
+    )
 
     res = {}
     if params:
@@ -1063,7 +1067,8 @@ def get_system_quantities(
                 "max_delivery_delay_rel", np.nan
             ),
             velocity=velocity,
-            load_theoretical=(theoretical_request_rate * avg_direct_dist_submitted) / (velocity * n_vehicles),
+            load_theoretical=(theoretical_request_rate * avg_direct_dist_submitted)
+            / (velocity * n_vehicles),
         )
 
     load_submitted = (avg_request_rate_submitted * avg_direct_dist_submitted) / (
