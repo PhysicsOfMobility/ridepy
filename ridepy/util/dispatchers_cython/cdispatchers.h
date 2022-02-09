@@ -260,7 +260,8 @@ brute_force_total_traveltime_minimizing_stop_merging_dispatcher(
       double time_to_pickup;
 
       if (merge_pickup) {
-        walking_distance_origin = space.t(request->origin, stop_before_pickup.location);
+        walking_distance_origin =
+            space.t(request->origin, stop_before_pickup.location);
         if (walking_distance_origin <= merge_radius) {
           origin = stop_before_pickup.location;
           time_to_pickup = 0;
@@ -687,7 +688,8 @@ public:
   ExternalCost external_cost;
   double merge_radius;
   BruteForceTotalTravelTimeMinimizingStopMergingDispatcher(
-      ExternalCost external_cost = ExternalCost::absolute_detour, double merge_radius=1.) {
+      ExternalCost external_cost = ExternalCost::absolute_detour,
+      double merge_radius = 1.) {
     this->external_cost = external_cost;
     this->merge_radius = merge_radius;
   }
@@ -696,7 +698,8 @@ public:
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
     return brute_force_total_traveltime_minimizing_stop_merging_dispatcher(
-        request, stoplist, space, seat_capacity, debug, external_cost, merge_radius);
+        request, stoplist, space, seat_capacity, debug, external_cost,
+        merge_radius);
   }
 };
 

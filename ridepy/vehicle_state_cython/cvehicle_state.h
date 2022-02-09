@@ -140,14 +140,15 @@ public:
     InsertionResult<Loc> insertion_result =
         dispatcher(request, stoplist, space, seat_capacity);
     stoplist_new = insertion_result.new_stoplist;
-    SingleVehicleSolution<Loc> single_vehicle_solution{vehicle_id,
-                                                  insertion_result.min_cost,
-                                                  insertion_result.EAST_pu,
-                                                  insertion_result.LAST_pu,
-                                                  insertion_result.EAST_do,
-                                                  insertion_result.LAST_do,
-                                                  insertion_result.accepted_origin,
-                                                  insertion_result.accepted_destination};
+    SingleVehicleSolution<Loc> single_vehicle_solution{
+        vehicle_id,
+        insertion_result.min_cost,
+        insertion_result.EAST_pu,
+        insertion_result.LAST_pu,
+        insertion_result.EAST_do,
+        insertion_result.LAST_do,
+        insertion_result.accepted_origin,
+        insertion_result.accepted_destination};
     return single_vehicle_solution;
   }
 
