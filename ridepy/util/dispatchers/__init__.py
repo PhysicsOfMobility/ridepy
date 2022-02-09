@@ -105,15 +105,10 @@ def TaxicabDispatcherDriveFirst(
     # TODO: When we have multi-passenger requests, this dispatcher needs to be changed and
     # include capacity constraints. Currently, taxi := single seat
     assert seat_capacity == 1
-    CPAT_pu = (
-        max(
-            stoplist[-1].estimated_arrival_time,
-            stoplist[-1].time_window_min
-            if stoplist[-1].time_window_min is not None
-            else 0,
-        )
-        + space.t(stoplist[-1].location, request.origin)
-    )
+    CPAT_pu = max(
+        stoplist[-1].estimated_arrival_time,
+        stoplist[-1].time_window_min if stoplist[-1].time_window_min is not None else 0,
+    ) + space.t(stoplist[-1].location, request.origin)
     EAST_pu = request.pickup_timewindow_min
     CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request.origin, request.destination)
     LAST_pu = (
