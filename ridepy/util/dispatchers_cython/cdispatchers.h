@@ -202,7 +202,7 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
 
 template <typename Loc>
 InsertionResult<Loc>
-brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
+brute_force_total_traveltime_minimizing_stop_merging_dispatcher(
     std::shared_ptr<TransportationRequest<Loc>> request,
     vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
     bool debug = false,
@@ -260,9 +260,9 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
       double time_to_pickup;
 
       if (merge_pickup) {
-        walking_distance_origin = space.t(request->origin, stop_before_pickup);
+        walking_distance_origin = space.t(request->origin, stop_before_pickup.location);
         if (walking_distance_origin <= merge_radius) {
-          origin = stop_before_pickup;
+          origin = stop_before_pickup.location;
           time_to_pickup = 0;
         } else
           // can't merge stop, too far
@@ -352,9 +352,9 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
 
           if (merge_dropoff) {
             walking_distance_destination =
-                space.t(request->destination, stop_before_dropoff);
+                space.d(request->destination, stop_before_dropoff->location);
             if (walking_distance_destination <= merge_radius) {
-              destination = stop_before_dropoff;
+              destination = stop_before_dropoff->location;
               time_to_dropoff = 0.;
             } else
               continue;
@@ -362,7 +362,7 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
             walking_distance_destination = 0;
             destination = request->destination;
             time_to_dropoff =
-                space.t(stop_before_dropoff->location, destination);
+                space.d(stop_before_dropoff->location, destination);
           }
 
           CPAT_do = cpat_of_inserted_stop(*stop_before_dropoff, time_to_dropoff,
@@ -681,20 +681,22 @@ public:
 };
 
 template <typename Loc>
-class BruteForceTotalTravelTimeMinimizingDispatcherStopMerging
+class BruteForceTotalTravelTimeMinimizingStopMergingDispatcher
     : public AbstractDispatcher<Loc> {
 public:
   ExternalCost external_cost;
-  BruteForceTotalTravelTimeMinimizingDispatcherStopMerging(
-      ExternalCost external_cost = ExternalCost::absolute_detour) {
+  double merge_radius;
+  BruteForceTotalTravelTimeMinimizingStopMergingDispatcher(
+      ExternalCost external_cost = ExternalCost::absolute_detour, double merge_radius=1.) {
     this->external_cost = external_cost;
+    this->merge_radius = merge_radius;
   }
   InsertionResult<Loc>
   operator()(std::shared_ptr<TransportationRequest<Loc>> request,
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
-    return brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
-        request, stoplist, space, seat_capacity, debug, external_cost);
+    return brute_force_total_traveltime_minimizing_stop_merging_dispatcher(
+        request, stoplist, space, seat_capacity, debug, external_cost, merge_radius);
   }
 };
 
