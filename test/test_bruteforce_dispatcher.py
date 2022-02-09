@@ -88,13 +88,13 @@ def test_no_solution_found(kind):
     (
         min_cost,
         new_stoplist,
-        timewindows,
+        (pu_EAST, pu_LAST, do_EAST, do_LAST, accepted_origin, accepted_destination),
     ) = brute_force_total_travel_time_minimizing_dispatcher(
         request, stoplist, space, seat_capacity=10
     )
     assert np.isinf(min_cost)
     assert not new_stoplist  # an empty `Stoplist` for cython, None for python
-    assert np.isnan(timewindows).all()
+    assert np.isnan((pu_EAST, pu_LAST, do_EAST, do_LAST)).all()
 
     # But the same shouldn't occur if the tw_max were higher:
     stoplist_properties = [

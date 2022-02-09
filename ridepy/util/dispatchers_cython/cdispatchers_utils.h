@@ -50,7 +50,7 @@ std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
   assuming a drive-first strategy.
   */
 
-  // We don't want to modify stoplist in place. Make a copy.
+  // We don't want to modify the stoplist in place. Make a copy.
   std::vector<Stop<Loc>> new_stoplist{stoplist}; // TODO: NEED TO copy?
   // Handle the pickup
   auto &stop_before_pickup = new_stoplist[pickup_idx];

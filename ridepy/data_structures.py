@@ -7,6 +7,8 @@ from typing import Any, Optional, Union, Tuple, List, Callable
 
 ID = Union[str, int]
 
+Location = Union[Tuple[float, float], int]
+
 
 @dataclass
 class Request:
@@ -222,12 +224,14 @@ class TransportSpace(ABC):
 Stoplist = List[Stop]
 """A list of `.Stop` objects. Specifies completely the current position and future actions a vehicle will make."""
 
-SingleVehicleSolution = Tuple[ID, float, Tuple[float, float, float, float]]
+SingleVehicleSolution = Tuple[ID, float, float, float, float, Location, Location]
 """vehicle_id, cost, (
     pickup_timewindow_min,
     pickup_timewindow_max,
     delivery_timewindow_min, 
     delivery_timewindow_max,
+    accepted_origin,
+    accepted_destination
 )
 
 This is what `VehicleState.handle_transportation_request_single_vehicle` returns. 
@@ -244,5 +248,3 @@ Dispatcher = Callable[
     SingleVehicleSolution,
 ]
 """Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""
-
-Location = Union[int, float, tuple[float]]

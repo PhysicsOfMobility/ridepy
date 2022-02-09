@@ -178,13 +178,21 @@ class VehicleState:
             The `SingleVehicleSolution` for the respective vehicle.
         """
 
-        cost, self.stoplist_new, (EAST_pu, LAST_pu, EAST_do, LAST_do) = self.dispatcher(
+        (
+            cost,
+            self.stoplist_new,
+            (EAST_pu, LAST_pu, EAST_do, LAST_do, accepted_origin, accepted_destination),
+        ) = self.dispatcher(
             request=request,
             stoplist=self.stoplist,
             space=self.space,
             seat_capacity=self.seat_capacity,
         )
-        return self.vehicle_id, cost, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+        return (
+            self.vehicle_id,
+            cost,
+            (EAST_pu, LAST_pu, EAST_do, LAST_do, accepted_origin, accepted_destination),
+        )
 
     def select_new_stoplist(self):
         self.stoplist = self.stoplist_new

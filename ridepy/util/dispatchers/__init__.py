@@ -145,7 +145,11 @@ def TaxicabDispatcherDriveFirst(
             time_window_max=LAST_do,
         ),
     ]
-    return cost, stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+    return (
+        cost,
+        stoplist,
+        (EAST_pu, LAST_pu, EAST_do, LAST_do, request.origin, request.destination),
+    )
 
 
 @dispatcherclass
@@ -316,6 +320,14 @@ def BruteForceTotalTravelTimeMinimizingDispatcher(
             new_stoplist[best_dropoff_idx + 2].time_window_min,
             new_stoplist[best_dropoff_idx + 2].time_window_max,
         )
-        return min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
+        return (
+            min_cost,
+            new_stoplist,
+            (EAST_pu, LAST_pu, EAST_do, LAST_do, request.origin, request.destination),
+        )
     else:
-        return min_cost, None, (np.nan, np.nan, np.nan, np.nan)
+        return (
+            min_cost,
+            None,
+            (np.nan, np.nan, np.nan, np.nan, request.origin, request.destination),
+        )

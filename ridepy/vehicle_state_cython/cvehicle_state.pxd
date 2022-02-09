@@ -33,7 +33,7 @@ cdef extern from "cvehicle_state.h" namespace 'cstuff':
 
         vector[StopEventSpec] fast_forward_time(double t)
 
-        SingleVehicleSolution handle_transportation_request_single_vehicle(
+        SingleVehicleSolution[Loc] handle_transportation_request_single_vehicle(
                 shared_ptr[TransportationRequest[Loc]] request
         )
 

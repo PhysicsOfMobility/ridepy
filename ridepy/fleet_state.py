@@ -429,6 +429,8 @@ class FleetState(ABC):
                 pickup_timewindow_max,
                 delivery_timewindow_min,
                 delivery_timewindow_max,
+                accepted_origin,
+                accepted_destination,
             ),
         ) = min(all_solutions, key=op.itemgetter(1))
         logger.debug(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
@@ -446,8 +448,8 @@ class FleetState(ABC):
                 "event_type": "RequestAcceptanceEvent",
                 "timestamp": self.t,
                 "request_id": req.request_id,
-                "origin": req.origin,
-                "destination": req.destination,
+                "origin": accepted_origin,
+                "destination": accepted_destination,
                 "pickup_timewindow_min": pickup_timewindow_min,
                 "pickup_timewindow_max": pickup_timewindow_max,
                 "delivery_timewindow_min": delivery_timewindow_min,
@@ -479,8 +481,8 @@ class SlowSimpleFleetState(FleetState):
             }
 
         return self._apply_request_solution(
-            req,
-            map(
+            req=req,
+            all_solutions=map(
                 ft.partial(
                     self.vehicle_state_class.handle_transportation_request_single_vehicle,
                     request=req,

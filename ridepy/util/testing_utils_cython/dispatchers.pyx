@@ -71,7 +71,8 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher:
             )
             return insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist), \
                    (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
-                    insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+                    insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do,
+                    insertion_result_r2loc.accepted_origin, insertion_result_r2loc.accepted_destination)
         elif self.loc_type == LocType.INT:
             insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[int](
                 dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
@@ -80,7 +81,8 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher:
             )
             return insertion_result_int.min_cost, Stoplist.from_c_int(insertion_result_int.new_stoplist), \
                    (insertion_result_int.EAST_pu, insertion_result_int.LAST_pu,
-                    insertion_result_int.EAST_do, insertion_result_int.LAST_do)
+                    insertion_result_int.EAST_do, insertion_result_int.LAST_do,
+                    insertion_result_int.accepted_origin, insertion_result_int.accepted_destination)
         else:
             raise ValueError("This line should never have been reached")
 
@@ -111,7 +113,8 @@ cdef class SimpleEllipseDispatcher:
             )
             return insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist), \
                    (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
-                    insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+                    insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do,
+                    insertion_result_r2loc.accepted_origin, insertion_result_r2loc.accepted_destination)
         elif self.loc_type == LocType.INT:
             insertion_result_int = c_simple_ellipse_dispatcher[int](
                 dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
@@ -120,7 +123,8 @@ cdef class SimpleEllipseDispatcher:
             )
             return insertion_result_int.min_cost, Stoplist.from_c_int(insertion_result_int.new_stoplist), \
                    (insertion_result_int.EAST_pu, insertion_result_int.LAST_pu,
-                    insertion_result_int.EAST_do, insertion_result_int.LAST_do)
+                    insertion_result_int.EAST_do, insertion_result_int.LAST_do,
+                    insertion_result_int.accepted_origin, insertion_result_int.accepted_destination)
         else:
             raise ValueError("This line should never have been reached")
 

@@ -80,7 +80,18 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     pythonic_solution = BruteForceTotalTravelTimeMinimizingDispatcher()(
         request, stoplist, space, seat_capacity
     )
-    py_min_cost, _, py_timewindows = pythonic_solution
+    (
+        py_min_cost,
+        _,
+        (
+            py_pu_EAST,
+            py_pu_LAST,
+            py_do_EAST,
+            py_do_LAST,
+            py_accepted_origin,
+            py_accepted_destination,
+        ),
+    ) = pythonic_solution
     tock = time()
     print(
         f"Computing insertion into {len_stoplist}-element stoplist with pure pythonic dispatcher took: {tock - tick} seconds"
@@ -109,14 +120,30 @@ def test_equivalence_cython_and_python_bruteforce_dispatcher(seed=42):
     cythonic_solution = CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)(
         request, stoplist, space, seat_capacity
     )
-    cy_min_cost, _, cy_timewindows = cythonic_solution
+    (
+        cy_min_cost,
+        _,
+        (
+            cy_pu_EAST,
+            cy_pu_LAST,
+            cy_do_EAST,
+            cy_do_LAST,
+            cy_accepted_origin,
+            cy_accepted_destination,
+        ),
+    ) = cythonic_solution
     tock = time()
     print(
         f"Computing insertion into {len_stoplist}-element stoplist with cythonic dispatcher took: {tock-tick} seconds"
     )
 
     assert np.isclose(py_min_cost, cy_min_cost)
-    assert np.allclose(py_timewindows, cy_timewindows)
+    assert np.allclose(
+        (cy_pu_EAST, cy_pu_LAST, cy_do_EAST, cy_do_LAST),
+        (cy_pu_EAST, cy_pu_LAST, cy_do_EAST, cy_do_LAST),
+    )
+    assert tuple(py_accepted_origin) == cy_accepted_origin
+    assert tuple(py_accepted_destination) == cy_accepted_destination
 
 
 def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):

@@ -94,15 +94,19 @@ template <typename Loc> struct InsertionResult {
   double LAST_pu = INFINITY;
   double EAST_do = 0;
   double LAST_do = INFINITY;
+  Loc accepted_origin;
+  Loc accepted_destination;
 };
 
-struct SingleVehicleSolution {
+template <typename Loc> struct SingleVehicleSolution {
   int vehicle_id = 0;
   double min_cost = 0;
   double EAST_pu = 0;
   double LAST_pu = INFINITY;
   double EAST_do = 0;
   double LAST_do = INFINITY;
+  Loc accepted_origin;
+  Loc accepted_destination;
 };
 
 } // namespace cstuff

@@ -163,10 +163,12 @@ cdef class VehicleState:
         -------
             The `SingleVehicleSolution` for the respective vehicle.
         """
-        cdef SingleVehicleSolution single_vehicle_solution
+
+        cdef SingleVehicleSolution[R2loc] single_vehicle_solution_r2loc
+        cdef SingleVehicleSolution[int] single_vehicle_solution_int
 
         if self.loc_type == LocType.R2LOC:
-            single_vehicle_solution = (
+            single_vehicle_solution_r2loc = (
                 dereference(self._uvstate._vstate_r2loc).handle_transportation_request_single_vehicle(
                     make_shared[CTransportationRequest[R2loc]](
                         <int> request.request_id,
@@ -180,8 +182,20 @@ cdef class VehicleState:
                     )
                 )
             )
+            return (
+                self.vehicle_id,
+                single_vehicle_solution_r2loc.min_cost,
+                (
+                    single_vehicle_solution_r2loc.EAST_pu,
+                    single_vehicle_solution_r2loc.LAST_pu,
+                    single_vehicle_solution_r2loc.EAST_do,
+                    single_vehicle_solution_r2loc.LAST_do,
+                    single_vehicle_solution_r2loc.accepted_origin,
+                    single_vehicle_solution_r2loc.accepted_destination
+                )
+            )
         elif self.loc_type == LocType.INT:
-            single_vehicle_solution = (
+            single_vehicle_solution_int = (
                 dereference(self._uvstate._vstate_int).handle_transportation_request_single_vehicle(
                     make_shared[CTransportationRequest[int]](
                         <int> request.request_id,
@@ -195,20 +209,23 @@ cdef class VehicleState:
                     )
                 )
             )
+            return (
+                self.vehicle_id,
+                single_vehicle_solution_int.min_cost,
+                (
+                    single_vehicle_solution_int.EAST_pu,
+                    single_vehicle_solution_int.LAST_pu,
+                    single_vehicle_solution_int.EAST_do,
+                    single_vehicle_solution_int.LAST_do,
+                    single_vehicle_solution_int.accepted_origin,
+                    single_vehicle_solution_int.accepted_destination
+                )
+            )
         else:
             raise ValueError("This line should never have been reached")
 
 
-        return (
-            self.vehicle_id,
-            single_vehicle_solution.min_cost,
-            (
-                single_vehicle_solution.EAST_pu,
-                single_vehicle_solution.LAST_pu,
-                single_vehicle_solution.EAST_do,
-                single_vehicle_solution.LAST_do
-            )
-        )
+
 
     def select_new_stoplist(self):
         if self.loc_type == LocType.R2LOC:

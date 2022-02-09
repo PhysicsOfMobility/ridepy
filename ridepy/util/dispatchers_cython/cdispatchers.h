@@ -185,10 +185,18 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
       break;
     }
 
-    return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
-                                LAST_pu,      EAST_do,  LAST_do};
+    return InsertionResult<Loc>{
+        new_stoplist, min_cost, EAST_pu,         LAST_pu,
+        EAST_do,      LAST_do,  request->origin, request->destination};
   } else {
-    return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
+    return InsertionResult<Loc>{{},
+                                INFINITY,
+                                NAN,
+                                NAN,
+                                NAN,
+                                NAN,
+                                request->origin,
+                                request->destination};
   }
 }
 
@@ -232,6 +240,12 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
   Loc origin;
   Loc destination;
 
+  Loc accepted_origin;
+  Loc accepted_destination;
+
+  double walking_distance_origin;
+  double walking_distance_destination;
+
   int i = -1;
 
   for (auto &stop_before_pickup : stoplist) {
@@ -246,13 +260,15 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
       double time_to_pickup;
 
       if (merge_pickup) {
-        if (space.t(request->origin, stop_before_pickup) <= merge_radius) {
+        walking_distance_origin = space.t(request->origin, stop_before_pickup);
+        if (walking_distance_origin <= merge_radius) {
           origin = stop_before_pickup;
-          time_to_pickup = 0.;
+          time_to_pickup = 0;
         } else
           // can't merge stop, too far
           continue;
       } else {
+        walking_distance_origin = 0;
         time_to_pickup = space.t(stop_before_pickup.location, origin);
         origin = request->origin;
       }
@@ -295,6 +311,8 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
                                                      cpat_at_next_stop))) {
           best_insertion = {i, i};
           min_cost = total_cost;
+          accepted_origin = origin;
+          accepted_destination = request->destination;
         }
       }
 
@@ -333,13 +351,15 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
         for (bool merge_dropoff : {false, true}) {
 
           if (merge_dropoff) {
-            if (space.t(request->destination, stop_before_dropoff) <=
-                merge_radius) {
+            walking_distance_destination =
+                space.t(request->destination, stop_before_dropoff);
+            if (walking_distance_destination <= merge_radius) {
               destination = stop_before_dropoff;
               time_to_dropoff = 0.;
             } else
               continue;
           } else {
+            walking_distance_destination = 0;
             destination = request->destination;
             time_to_dropoff =
                 space.t(stop_before_dropoff->location, destination);
@@ -359,8 +379,12 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
           auto dropoff_cost = (time_to_dropoff + time_from_dropoff -
                                original_dropoff_edge_length);
 
-          // Sum to total insertion cost
-          total_cost = pickup_cost + dropoff_cost;
+          // Total insertion cost
+          if (walking_distance_origin + walking_distance_destination >
+              space.d(request->origin, request->destination))
+            total_cost = INFINITY;
+          else
+            total_cost = pickup_cost + dropoff_cost;
 
           if (total_cost < min_cost) {
             // cost has decreased. check for constraint violations at later
@@ -375,6 +399,8 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
               // This is the new optimal.
               best_insertion = {i, j};
               min_cost = total_cost;
+              accepted_origin = origin;
+              accepted_destination = destination;
             }
           }
         }
@@ -392,13 +418,19 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
   if (min_cost < INFINITY) {
     int best_pickup_idx = best_insertion.first;
     int best_dropoff_idx = best_insertion.second;
+
+    request->origin = accepted_origin;
+    request->destination = accepted_destination;
+
     auto new_stoplist = insert_request_to_stoplist_drive_first(
         stoplist, request, best_pickup_idx, best_dropoff_idx, space);
+
     if (debug) {
       std::cout << "Best insertion: " << best_pickup_idx << ", "
                 << best_dropoff_idx << std::endl;
       std::cout << "Min cost: " << min_cost << std::endl;
     }
+
     auto EAST_pu = new_stoplist[best_pickup_idx + 1].time_window_min;
     auto LAST_pu = new_stoplist[best_pickup_idx + 1].time_window_max;
 
@@ -417,11 +449,18 @@ brute_force_total_traveltime_minimizing_dispatcher_stop_merging(
       break;
     }
     // TODO: Need to return the modified origin/destinations for the analytics
-    return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
-                                LAST_pu,      EAST_do,  LAST_do};
-  } else {
-    return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
-  }
+    return InsertionResult<Loc>{
+        new_stoplist, min_cost, EAST_pu,         LAST_pu,
+        EAST_do,      LAST_do,  accepted_origin, accepted_destination};
+  } else
+    return InsertionResult<Loc>{{},
+                                INFINITY,
+                                NAN,
+                                NAN,
+                                NAN,
+                                NAN,
+                                request->origin,
+                                request->destination};
 }
 
 template <typename Loc>
@@ -597,10 +636,18 @@ simple_ellipse_dispatcher(std::shared_ptr<TransportationRequest<Loc>> request,
 
     auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
     auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
-    return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
-                                LAST_pu,      EAST_do,  LAST_do};
+    return InsertionResult<Loc>{
+        new_stoplist, min_cost, EAST_pu,         LAST_pu,
+        EAST_do,      LAST_do,  request->origin, request->destination};
   } else {
-    return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
+    return InsertionResult<Loc>{{},
+                                min_cost,
+                                NAN,
+                                NAN,
+                                NAN,
+                                NAN,
+                                request->origin,
+                                request->destination};
   }
 }
 

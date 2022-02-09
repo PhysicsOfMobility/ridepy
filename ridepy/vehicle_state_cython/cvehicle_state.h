@@ -121,7 +121,7 @@ public:
     return event_cache;
   }
 
-  SingleVehicleSolution handle_transportation_request_single_vehicle(
+  SingleVehicleSolution<Loc> handle_transportation_request_single_vehicle(
       std::shared_ptr<TransportationRequest<Loc>> request) {
     /*
     The computational bottleneck. An efficient simulator could:
@@ -140,12 +140,14 @@ public:
     InsertionResult<Loc> insertion_result =
         dispatcher(request, stoplist, space, seat_capacity);
     stoplist_new = insertion_result.new_stoplist;
-    SingleVehicleSolution single_vehicle_solution{vehicle_id,
+    SingleVehicleSolution<Loc> single_vehicle_solution{vehicle_id,
                                                   insertion_result.min_cost,
                                                   insertion_result.EAST_pu,
                                                   insertion_result.LAST_pu,
                                                   insertion_result.EAST_do,
-                                                  insertion_result.LAST_do};
+                                                  insertion_result.LAST_do,
+                                                  insertion_result.accepted_origin,
+                                                  insertion_result.accepted_destination};
     return single_vehicle_solution;
   }
 
