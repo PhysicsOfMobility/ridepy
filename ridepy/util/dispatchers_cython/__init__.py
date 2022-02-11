@@ -1,5 +1,6 @@
 from .dispatchers import (
     BruteForceTotalTravelTimeMinimizingDispatcher,
+    BruteForceTotalTravelTimeMinimizingStopMergingDispatcher,
     SimpleEllipseDispatcher,
 )
 
