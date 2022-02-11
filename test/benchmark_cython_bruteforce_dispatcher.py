@@ -19,8 +19,12 @@ from ridepy.data_structures_cython import (
 
 from ridepy.util.spaces_cython import Euclidean2D, Manhattan2D
 from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.testing_utils_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
+)
 from ridepy.vehicle_state_cython import VehicleState
 
+from ridepy.util.testing_utils import stoplist_from_properties
 import logging
 
 sim_logger = logging.getLogger("ridepy")
@@ -28,27 +32,10 @@ sim_logger.setLevel(logging.DEBUG)
 sim_logger.handlers[0].setLevel(logging.DEBUG)
 
 
-def stoplist_from_properties(stoplist_properties):
-    return [
-        Stop(
-            location=loc,
-            request=InternalRequest(
-                request_id=randint(0, 100), creation_timestamp=0, location=(0, 0)
-            ),
-            action=StopAction.internal,
-            estimated_arrival_time=cpat,
-            occupancy_after_servicing=0,
-            time_window_min=tw_min,
-            time_window_max=tw_max,
-        )
-        for loc, cpat, tw_min, tw_max in stoplist_properties
-    ]
-
-
 def benchmark_insertion_into_long_stoplist(seed=0):
     space = Euclidean2D(1)
     # space = Manhattan2D(1)
-    n = 1000
+    n = 10000
     rnd = np.random.RandomState(seed)
     stop_locations = rnd.uniform(low=0, high=100, size=(n, 2))
     arrival_times = np.cumsum(
@@ -60,15 +47,16 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         [stop_loc, CPAT, 0, inf]
         for stop_loc, CPAT in zip(stop_locations, arrival_times)
     ]
-    stoplist = stoplist_from_properties(stoplist_properties)
+    stoplist = stoplist_from_properties(
+        stoplist_properties=stoplist_properties, kind="cython", space=space
+    )
+    # vehicle_id, new_stoplist, (min_cost, EAST_pu, LAST_pu, EAST_do, LAST_do)
+
     vs = VehicleState(
         vehicle_id=12,
         initial_stoplist=stoplist,
         space=space,
-        dispatcher=ft.partial(
-            BruteForceTotalTravelTimeMinimizingDispatcher,
-            debug=sim_logger.getEffectiveLevel() <= logging.INFO,
-        ),
+        dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(loc_type=LocType.R2LOC),
         seat_capacity=1000,
     )
     request = TransportationRequest(
@@ -83,7 +71,10 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     )
     tick = time()
     # TODO: instead of creating VehicleState, call cythonic dispatcher directly (same as the pythonic benchmark script)
-    vs.handle_transportation_request_single_vehicle(request)
+    #vs.handle_transportation_request_single_vehicle(request)
+    cythonic_solution = CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)(
+        request, stoplist, space, seat_capacity=100
+    )
     tock = time()
     print(f"Computing insertion into {n}-element stoplist took: {tock-tick} seconds")
 
