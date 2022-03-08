@@ -201,15 +201,12 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
 }
 
 template <typename Loc>
-InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher(
+InsertionResult<Loc>
+brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher(
     std::shared_ptr<TransportationRequest<Loc>> request,
-    vector<Stop<Loc>> &stoplist,
-    TransportSpace<Loc> &space,
-    int seat_capacity,
-    vector<Loc> &stop_locations,
-    bool debug = false,
-    ExternalCost external_cost = ExternalCost::absolute_detour
-    ) {
+    vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
+    vector<Loc> &stop_locations, bool debug = false,
+    ExternalCost external_cost = ExternalCost::absolute_detour) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
   by minimizing the total driving time. Stops are matched to the nearest
@@ -248,8 +245,8 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
   for (Loc &stop_location : stop_locations) {
     loc_d = space.d(request->origin, stop_location);
     if (loc_d < min_d) {
-        min_d = loc_d;
-        min_d_loc = stop_location;
+      min_d = loc_d;
+      min_d_loc = stop_location;
     }
   }
   Loc origin = min_d_loc;
@@ -260,8 +257,8 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
   for (Loc &stop_location : stop_locations) {
     loc_d = space.d(request->destination, stop_location);
     if (loc_d < min_d) {
-        min_d = loc_d;
-        min_d_loc = stop_location;
+      min_d = loc_d;
+      min_d_loc = stop_location;
     }
   }
   Loc destination = min_d_loc;
@@ -285,8 +282,7 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
     auto EAST_pu = request->pickup_timewindow_min;
 
     // dropoff immediately
-    auto CPAT_do =
-        max(EAST_pu, CPAT_pu) + space.t(origin, destination);
+    auto CPAT_do = max(EAST_pu, CPAT_pu) + space.t(origin, destination);
     auto EAST_do = request->delivery_timewindow_min;
     // check for request's dropoff timewindow violation
     if (CPAT_do > request->delivery_timewindow_max)
@@ -341,14 +337,13 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
         // insertion either here or at a later stop is permitted
         break;
       }
-      time_to_dropoff =
-          space.t(stop_before_dropoff->location, destination);
+      time_to_dropoff = space.t(stop_before_dropoff->location, destination);
       CPAT_do = cpat_of_inserted_stop(*stop_before_dropoff, time_to_dropoff,
                                       delta_cpat);
       if (CPAT_do > request->delivery_timewindow_max)
         break;
-      time_from_dropoff = time_to_stop_after_insertion(
-          stoplist, destination, j, space);
+      time_from_dropoff =
+          time_to_stop_after_insertion(stoplist, destination, j, space);
       auto original_dropoff_edge_length =
           time_from_current_stop_to_next(stoplist, j, space);
       auto dropoff_cost =
@@ -405,18 +400,11 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
       break;
     }
 
-    return InsertionResult<Loc>{
-        new_stoplist, min_cost, EAST_pu,         LAST_pu,
-        EAST_do,      LAST_do,  origin, destination};
+    return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu, LAST_pu,
+                                EAST_do,      LAST_do,  origin,  destination};
   } else {
-    return InsertionResult<Loc>{{},
-                                INFINITY,
-                                NAN,
-                                NAN,
-                                NAN,
-                                NAN,
-                                origin,
-                                destination};
+    return InsertionResult<Loc>{{},  INFINITY, NAN,    NAN,
+                                NAN, NAN,      origin, destination};
   }
 }
 
@@ -931,8 +919,7 @@ public:
   vector<Loc> stop_locations;
   BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher(
       vector<Loc> stop_locations,
-      ExternalCost external_cost = ExternalCost::absolute_detour
-      ) {
+      ExternalCost external_cost = ExternalCost::absolute_detour) {
     this->stop_locations = stop_locations;
     this->external_cost = external_cost;
   }
@@ -941,7 +928,8 @@ public:
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
     return brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher(
-        request, stoplist, space, seat_capacity, stop_locations, debug, external_cost);
+        request, stoplist, space, seat_capacity, stop_locations, debug,
+        external_cost);
   }
 };
 
