@@ -203,14 +203,17 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
 template <typename Loc>
 InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher(
     std::shared_ptr<TransportationRequest<Loc>> request,
-    vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
+    vector<Stop<Loc>> &stoplist,
+    TransportSpace<Loc> &space,
+    int seat_capacity,
+    vector<Loc> &stop_locations,
     bool debug = false,
-    ExternalCost external_cost = ExternalCost::absolute_detour,
-    int n_stops_per_dimension=10) {
+    ExternalCost external_cost = ExternalCost::absolute_detour
+    ) {
   /*
   Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
-  by minimizing the total driving time. Additionally, request locations are coarse-grained
-  onto a square grid of `n_stops_per_dimension` nodes per dimension.
+  by minimizing the total driving time. Stops are matched to the nearest
+  location in stop_locations before insertion.
 
   Parameters
   ----------
@@ -219,15 +222,17 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
   stoplist
       stoplist of the vehicle, to be mapped to a new stoplist
   space
-      a **euclidean** transport space which the vehicle is operating on
+      a transport space which the vehicle is operating on
+  seat_capacity
+      Number of seats on the vehicle
+  stop_locations
+    Locations of the stops to match requests to.
   debug
     Print debug info
   external_cost
       - absolute_detour: ``absolute pickup detour + absolute dropoff detour``
       - finishing_time: ``new_stoplist[-1].CPAT``
       - total_route_time: ``new_stoplist[-1].CPAT - new_stoplist[0].CPAT``
-  n_stops_per_dimension
-    Number of stops to match to for each dimension of the space.
 
   Returns
   -------
@@ -235,8 +240,31 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_static_stop_merging
   */
   double min_cost = INFINITY;
 
-  Loc origin = request->origin;
-  Loc destination = request->destination;
+  double loc_d;
+
+  double min_d = space.d(request->origin, stop_locations[0]);
+  Loc min_d_loc = stop_locations[0];
+
+  for (Loc &stop_location : stop_locations) {
+    loc_d = space.d(request->origin, stop_location);
+    if (loc_d < min_d) {
+        min_d = loc_d;
+        min_d_loc = stop_location;
+    }
+  }
+  Loc origin = min_d_loc;
+
+  min_d = space.d(request->destination, stop_locations[0]);
+  min_d_loc = stop_locations[0];
+
+  for (Loc &stop_location : stop_locations) {
+    loc_d = space.d(request->destination, stop_location);
+    if (loc_d < min_d) {
+        min_d = loc_d;
+        min_d_loc = stop_location;
+    }
+  }
+  Loc destination = min_d_loc;
 
   // Warning: i,j refers to the indices where the new stop would be inserted. So
   // i-1/j-1 is the index of the stop preceding the stop to be inserted.
@@ -900,20 +928,20 @@ class BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher
     : public AbstractDispatcher<Loc> {
 public:
   ExternalCost external_cost;
-  int n_stops_per_dimension;
+  vector<Loc> stop_locations;
   BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher(
-      ExternalCost external_cost = ExternalCost::absolute_detour,
-      int n_stops_per_dimension = 10) {
+      vector<Loc> stop_locations,
+      ExternalCost external_cost = ExternalCost::absolute_detour
+      ) {
+    this->stop_locations = stop_locations;
     this->external_cost = external_cost;
-    this->n_stops_per_dimension = n_stops_per_dimension;
   }
   InsertionResult<Loc>
   operator()(std::shared_ptr<TransportationRequest<Loc>> request,
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
     return brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher(
-        request, stoplist, space, seat_capacity, debug, external_cost,
-        n_stops_per_dimension);
+        request, stoplist, space, seat_capacity, stop_locations, debug, external_cost);
   }
 };
 

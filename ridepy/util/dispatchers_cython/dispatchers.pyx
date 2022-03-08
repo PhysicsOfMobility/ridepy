@@ -55,14 +55,14 @@ cdef class BruteForceTotalTravelTimeMinimizingStopMergingDispatcher(Dispatcher):
             raise ValueError("This line should never have been reached")
 
 cdef class BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher(Dispatcher):
-    def __cinit__(self, loc_type, external_cost=ExternalCost.absolute_detour, n_stops_per_dimension=10):
+    def __cinit__(self, loc_type, stop_locations, external_cost=ExternalCost.absolute_detour):
         if loc_type == LocType.R2LOC:
             self.u_dispatcher.dispatcher_r2loc_ptr = (
-                new CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[R2loc](external_cost, n_stops_per_dimension)
+                new CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[R2loc](stop_locations, external_cost)
             )
         elif loc_type == LocType.INT:
             self.u_dispatcher.dispatcher_int_ptr = (
-                new CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[int](external_cost, n_stops_per_dimension)
+                new CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[int](stop_locations, external_cost)
             )
         else:
             raise ValueError("This line should never have been reached")
