@@ -32,6 +32,16 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
           double merge_radius
     )
 
+    InsertionResult[Loc] brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher[Loc](
+            shared_ptr[TransportationRequest[Loc]] request,
+            vector[Stop[Loc]] &stoplist,
+            const TransportSpace &space,
+            int seat_capacity,
+            bint debug,
+            ExternalCost external_cost,
+            int n_stops_per_dimension
+    )
+
     InsertionResult[Loc] simple_ellipse_dispatcher[Loc](
           shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
@@ -49,6 +59,9 @@ cdef extern from "cdispatchers.h" namespace 'cstuff':
 
     cdef cppclass BruteForceTotalTravelTimeMinimizingStopMergingDispatcher[Loc](AbstractDispatcher[Loc]):
         BruteForceTotalTravelTimeMinimizingStopMergingDispatcher(ExternalCost, double)
+
+    cdef cppclass BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[Loc](AbstractDispatcher[Loc]):
+        BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher(ExternalCost, int)
 
     cdef cppclass SimpleEllipseDispatcher[Loc](AbstractDispatcher[Loc]):
         SimpleEllipseDispatcher(double)

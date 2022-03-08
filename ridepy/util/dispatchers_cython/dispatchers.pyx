@@ -6,6 +6,7 @@ from .cdispatchers cimport (
 AbstractDispatcher as CAbstractDispatcher,
 BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
 BruteForceTotalTravelTimeMinimizingStopMergingDispatcher as CBruteForceTotalTravelTimeMinimizingStopMergingDispatcher,
+BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher as CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher,
 SimpleEllipseDispatcher as CSimpleEllipseDispatcher,
 ExternalCost
 )
@@ -49,6 +50,19 @@ cdef class BruteForceTotalTravelTimeMinimizingStopMergingDispatcher(Dispatcher):
         elif loc_type == LocType.INT:
             self.u_dispatcher.dispatcher_int_ptr = (
                 new CBruteForceTotalTravelTimeMinimizingStopMergingDispatcher[int](external_cost, merge_radius)
+            )
+        else:
+            raise ValueError("This line should never have been reached")
+
+cdef class BruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher(Dispatcher):
+    def __cinit__(self, loc_type, external_cost=ExternalCost.absolute_detour, n_stops_per_dimension=10):
+        if loc_type == LocType.R2LOC:
+            self.u_dispatcher.dispatcher_r2loc_ptr = (
+                new CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[R2loc](external_cost, n_stops_per_dimension)
+            )
+        elif loc_type == LocType.INT:
+            self.u_dispatcher.dispatcher_int_ptr = (
+                new CBruteForceTotalTravelTimeMinimizingStaticStopMergingDispatcher[int](external_cost, n_stops_per_dimension)
             )
         else:
             raise ValueError("This line should never have been reached")
