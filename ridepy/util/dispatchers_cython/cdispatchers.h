@@ -375,8 +375,13 @@ brute_force_total_traveltime_minimizing_static_stop_merging_dispatcher(
   if (min_cost < INFINITY) {
     int best_pickup_idx = best_insertion.first;
     int best_dropoff_idx = best_insertion.second;
+
+    request->origin = origin;
+    request->destination = destination;
+
     auto new_stoplist = insert_request_to_stoplist_drive_first(
         stoplist, request, best_pickup_idx, best_dropoff_idx, space);
+
     if (debug) {
       std::cout << "Best insertion: " << best_pickup_idx << ", "
                 << best_dropoff_idx << std::endl;
