@@ -7,8 +7,14 @@ project(ridepy-cpp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# build library
 add_library(RidePy
     ../util/spaces_cython/cspaces.cxx
 )
 
-add_executable(ridepy-cpp-test main.cpp)
+# ensure, that header files can be included when linking this library from other projects
+target_include_directories(RidePy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# build test executable
+add_executable(RidePy-cpp-test main.cpp)
+target_link_libraries(RidePy-cpp-test RidePy)
