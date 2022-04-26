@@ -16,7 +16,7 @@
 
 using namespace std;
 
-namespace cstuff {
+namespace ridepy {
 typedef pair<double, double> R2loc;
 
 template <typename Loc> class TransportSpace {

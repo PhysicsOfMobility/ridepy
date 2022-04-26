@@ -2,10 +2,10 @@
 
 using namespace std;
 
-namespace cstuff {
+namespace ridepy {
 
-Euclidean2D::Euclidean2D() : TransportSpace{} {};
-Euclidean2D::Euclidean2D(double velocity) : TransportSpace{velocity} {};
+Euclidean2D::Euclidean2D() : TransportSpace{} {}
+Euclidean2D::Euclidean2D(double velocity) : TransportSpace{velocity} {}
 
 double Euclidean2D::d(R2loc u, R2loc v) {
   return sqrt((u.first - v.first) * (u.first - v.first) +
@@ -30,8 +30,8 @@ pair<R2loc, double> Euclidean2D::interp_time(R2loc u, R2loc v,
   return this->interp_dist(u, v, dist_to_dest);
 }
 
-Manhattan2D::Manhattan2D() : TransportSpace{} {};
-Manhattan2D::Manhattan2D(double velocity) : TransportSpace{velocity} {};
+Manhattan2D::Manhattan2D() : TransportSpace{} {}
+Manhattan2D::Manhattan2D(double velocity) : TransportSpace{velocity} {}
 
 double Manhattan2D::d(R2loc u, R2loc v) {
   return std::abs(u.first - v.first) + std::abs(u.second - v.second);
