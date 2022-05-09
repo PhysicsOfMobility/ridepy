@@ -16,5 +16,5 @@ add_library(RidePy
 target_include_directories(RidePy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # build test executable
-add_executable(RidePy-cpp-test main.cpp)
+add_executable(RidePy-cpp-test main.cxx)
 target_link_libraries(RidePy-cpp-test RidePy)
