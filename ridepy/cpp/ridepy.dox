@@ -1,0 +1,14 @@
+/*!
+ * \defgroup RidePy
+ * \brief The C++ interface of the RidePy package.
+ *
+ * This library can be included in other C++ projects using CMake:
+ * Assuming, the root directory of the RidePy repository is stored in \p RIDEPY_PATH, then it remains to add
+ * \code
+ * add_subdirectory(${RIDEPY_PATH}/ridepy/cpp)
+ * \endcode
+ * to your \p CMakeLists.txt. Then, RidePy headers can be included via
+ * \code
+ * #include "ridepy/*.h"
+ * \endcode
+ */
