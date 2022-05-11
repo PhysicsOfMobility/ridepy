@@ -5,7 +5,6 @@
 #ifndef RIDEPY_CDATA_STRUCTURES_H
 #define RIDEPY_CDATA_STRUCTURES_H
 
-#include "../util/spaces_cython/cspaces.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
