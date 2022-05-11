@@ -10,14 +10,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # build library
 file(GLOB RIDEPY_FILES
     ridepy/*.h
-    ../vehicle_state_cython/*.cxx
 )
 add_library(RidePy
+    ${RIDEPY_FILES}
+    # TransportSpace
     ../util/spaces_cython/transportspace.h
     ../util/spaces_cython/cspaces.h
     ../util/spaces_cython/cspaces.cxx
+    # VehicleState
     ../vehicle_state_cython/cvehicle_state.h
-    ${RIDEPY_FILES}
+    # DataStructures
+    ../data_structures_cython/cdata_structures.h
 )
 
 # ensure, that header files can be included when linking this library from other projects
