@@ -105,6 +105,6 @@ struct SingleVehicleSolution {
   double LAST_do = INFINITY;
 };
 
-} // namespace cstuff
+} // namespace ridepy
 
 #endif // RIDEPY_CDATA_STRUCTURES_H

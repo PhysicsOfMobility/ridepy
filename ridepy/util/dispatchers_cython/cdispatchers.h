@@ -11,7 +11,9 @@
 #include <climits>
 
 using namespace std;
-namespace cstuff {
+
+namespace ridepy {
+
 template <typename Loc>
 InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
     std::shared_ptr<TransportationRequest<Loc>> request,
@@ -389,5 +391,6 @@ public:
   }
 };
 
-} // namespace cstuff
+} // namespace ridepy
+
 #endif // RIDEPY_CDISPATCHERS_H

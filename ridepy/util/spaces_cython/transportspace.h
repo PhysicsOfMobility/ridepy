@@ -45,6 +45,6 @@ public:
   virtual ~TransportSpace(){}
 };
 
-} // namespace RidePy
+} // namespace ridepy
 
 #endif // TRANSPORTSPACE_H

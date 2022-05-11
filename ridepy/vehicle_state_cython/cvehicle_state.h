@@ -15,6 +15,7 @@
 #include <utility>
 
 using namespace std;
+
 namespace ridepy {
 
 struct StopEventSpec {

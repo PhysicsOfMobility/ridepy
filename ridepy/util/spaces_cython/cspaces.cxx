@@ -54,4 +54,5 @@ pair<R2loc, double> Manhattan2D::interp_time(R2loc u, R2loc v,
   double dist_to_dest = time_to_dest * (this->velocity);
   return this->interp_dist(u, v, dist_to_dest);
 }
-} // namespace cstuff
+
+} // namespace ridepy
