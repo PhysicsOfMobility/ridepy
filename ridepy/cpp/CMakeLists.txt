@@ -10,12 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # build library
 file(GLOB RIDEPY_FILES
     ridepy/*.h
-    ../util/spaces_cython/*.cxx
-    ../util/spaces_cython/*.h
     ../vehicle_state_cython/*.cxx
-    ../vehicle_state_cython/*.h
 )
 add_library(RidePy
+    ../util/spaces_cython/transportspace.h
+    ../util/spaces_cython/cspaces.h
+    ../util/spaces_cython/cspaces.cxx
+    ../vehicle_state_cython/cvehicle_state.h
     ${RIDEPY_FILES}
 )
 
