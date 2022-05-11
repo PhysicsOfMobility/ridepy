@@ -10,6 +10,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # build library
 add_library(RidePy
     ../util/spaces_cython/cspaces.cxx
+    ../util/spaces_cython/cspaces.h
+    ridepy/spaces.h
+    ../vehicle_state_cython/cvehicle_state.h
+    ridepy/vehiclestate.h
 )
 
 # ensure, that header files can be included when linking this library from other projects

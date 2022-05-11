@@ -15,7 +15,7 @@
 #include <utility>
 
 using namespace std;
-namespace cstuff {
+namespace ridepy {
 
 struct StopEventSpec {
   StopAction action;
@@ -151,6 +151,7 @@ public:
 
   void select_new_stoplist() { stoplist = stoplist_new; }
 };
-} // namespace cstuff
+
+} // namespace ridepy
 
 #endif // RIDEPY_CVEHICLE_STATE_H
