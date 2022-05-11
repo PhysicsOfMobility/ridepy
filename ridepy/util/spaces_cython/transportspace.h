@@ -1,5 +1,5 @@
-#ifndef TRANSPORTSPACE_H
-#define TRANSPORTSPACE_H
+#ifndef RIDEPY_TRANSPORTSPACE_H
+#define RIDEPY_TRANSPORTSPACE_H
 
 #include <utility>
 
@@ -63,4 +63,4 @@ public:
 
 } // namespace ridepy
 
-#endif // TRANSPORTSPACE_H
+#endif // RIDEPY_TRANSPORTSPACE_H

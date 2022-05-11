@@ -1,6 +1,6 @@
-#ifndef VEHICLESTATE_H
-#define VEHICLESTATE_H
+#ifndef RIDEPY_CPP_VEHICLESTATE_H
+#define RIDEPY_CPP_VEHICLESTATE_H
 
 #include "../../vehicle_state_cython/cvehicle_state.h"
 
-#endif // VEHICLESTATE_H
+#endif // RIDEPY_CPP_VEHICLESTATE_H

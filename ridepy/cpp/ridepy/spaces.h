@@ -1,6 +1,6 @@
-#ifndef SPACES_H
-#define SPACES_H
+#ifndef RIDEPY_CPP_SPACES_H
+#define RIDEPY_CPP_SPACES_H
 
 #include "../../util/spaces_cython/cspaces.h"
 
-#endif // SPACES_H
+#endif // RIDEPY_CPP_SPACES_H
