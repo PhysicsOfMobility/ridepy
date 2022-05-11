@@ -37,7 +37,23 @@ public:
    * \return The time needed to travel from location \p u to \p v
    */
   virtual double t(Loc u, Loc v) = 0;
+
+  /*!
+   * \brief Calculates the current position of a vehicle on the way from \p u to \p v at a distance \p dist_to_dest before reaching \p v
+   * \param u The origin of the ride
+   * \param v The destination of the ride
+   * \param dist_to_dest The remaining distance to reach the destination \p v
+   * \return A pair with (first) the next location that will be reached and (second) the remaining distance, until this intermedieate node will be reached.
+   */
   virtual std::pair<Loc, double> interp_dist(Loc u, Loc v, double dist_to_dest) = 0;
+
+  /*!
+   * \brief Calculates the current position of a vehicle on the way from \p u to \p v at time \p time_to_dest before reaching \p v
+   * \param u The origin of the ride
+   * \param v The destination of the ride
+   * \param time_to_dest The remaining travel time to reach the destination \p v
+   * \return A pair with (first) the next location that will be reached and (second) the remaining travel time, until this intermedieate node will be reached.
+   */
   virtual std::pair<Loc, double> interp_time(Loc u, Loc v, double time_to_dest) = 0;
 
   TransportSpace() : velocity{1} {}
