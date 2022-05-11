@@ -20,8 +20,6 @@ namespace ridepy {
 template <typename Loc>
 class TransportSpace {
 public:
-  double velocity;
-
   /*!
    * \brief Returns the spacial distance between the locations \p u and \p v inside this space
    * \param u The starting point
@@ -55,10 +53,6 @@ public:
    * \return A pair with (first) the next location that will be reached and (second) the remaining travel time, until this intermedieate node will be reached.
    */
   virtual std::pair<Loc, double> interp_time(Loc u, Loc v, double time_to_dest) = 0;
-
-  TransportSpace() : velocity{1} {}
-  TransportSpace(double velocity) : velocity{velocity} {}
-  virtual ~TransportSpace(){}
 };
 
 } // namespace ridepy
