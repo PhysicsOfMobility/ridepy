@@ -12,3 +12,9 @@
  * #include "ridepy/*.h"
  * \endcode
  */
+
+/*!
+ * \namespace ridepy
+ * \ingroup RidePy
+ * \brief The namespace that contains all specific types of the RidePy package.
+ */
