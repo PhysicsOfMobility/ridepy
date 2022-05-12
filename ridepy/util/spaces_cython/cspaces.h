@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& stream, R2loc const& x)
  */
 class Euclidean2D : public TransportSpace<R2loc> {
 public:
-  Euclidean2D(double _velocity = 1.);
+  Euclidean2D(double velocity = 1.);
 
   double d(R2loc u, R2loc v) override;
   double t(R2loc u, R2loc v) override;
@@ -59,7 +59,7 @@ public:
  */
 class Manhattan2D : public TransportSpace<R2loc> {
 public:
-  Manhattan2D(double _velocity = 1.);
+  Manhattan2D(double velocity = 1.);
 
   double d(R2loc u, R2loc v) override;
   double t(R2loc u, R2loc v) override;

@@ -86,16 +86,6 @@ cdef class TransportSpace:
         else:
             raise ValueError("This line should never have been reached")
 
-
-    @property
-    def velocity(self):
-        if self.loc_type == LocType.R2LOC:
-            return dereference(self.u_space.space_r2loc_ptr).velocity
-        elif self.loc_type == LocType.INT:
-            return dereference(self.u_space.space_int_ptr).velocity
-        else:
-            raise ValueError("This line should never have been reached")
-
     def asdict(self):
         return dict(loc_type=self.loc_type)
 
@@ -143,6 +133,10 @@ cdef class Euclidean2D(TransportSpace):
     def __repr__(self):
         return f"Euclidean2D(velocity={self.velocity})"
 
+    @property
+    def velocity(self):
+        return dereference(self.derived_ptr).velocity
+
     def random_point(self):
         return tuple(random.uniform(a, b) for a, b in self.coord_range)
 
@@ -185,6 +179,10 @@ cdef class Manhattan2D(TransportSpace):
 
     def __repr__(self):
         return f"Manhattan2D(velocity={self.velocity})"
+
+    @property
+    def velocity(self):
+        return dereference(self.derived_ptr).velocity
 
     def random_point(self):
         return tuple(random.uniform(a, b) for a, b in self.coord_range)
@@ -238,6 +236,10 @@ cdef class Graph(TransportSpace):
 
     def __repr__(self):
         return f"Graph(velocity={self.velocity})"
+
+    @property
+    def velocity(self):
+        return dereference(self.derived_ptr).velocity
 
     @property
     def vertices(self):
