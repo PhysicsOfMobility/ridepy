@@ -12,7 +12,7 @@ from ridepy.data_structures_cython.cdata_structures cimport (
     R2loc
 )
 
-cdef extern from * namespace 'cstuff':
+cdef extern from * namespace 'ridepy':
     cpdef enum class StopAction(int):
         pickup=1
         dropoff=2

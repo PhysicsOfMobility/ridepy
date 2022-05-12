@@ -13,7 +13,8 @@
 using namespace std;
 using namespace boost;
 
-namespace cstuff {
+namespace ridepy {
+
 template <typename vertex_t>
 class GraphSpace : public TransportSpace<vertex_t> {
   typedef adjacency_list<vecS, vecS, undirectedS,
@@ -189,5 +190,7 @@ public:
     return w;
   }
 };
-} // namespace cstuff
+
+} // namespace ridepy
+
 #endif

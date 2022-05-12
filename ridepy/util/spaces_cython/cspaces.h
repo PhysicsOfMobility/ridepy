@@ -14,9 +14,20 @@
 #include <utility> // for pair
 #include <vector>
 
+#include "ctransport_space.h"
+
 using namespace std;
 
-namespace cstuff {
+namespace ridepy {
+
+/*!
+ * \addtogroup RidePy
+ * @{
+ */
+
+/*!
+ * \brief A point in the 2D plane
+ */
 typedef pair<double, double> R2loc;
 
 std::ostream& operator<<(std::ostream& stream, R2loc const& x)
@@ -24,20 +35,10 @@ std::ostream& operator<<(std::ostream& stream, R2loc const& x)
     return stream << "(" << x.first << "," << x.second << ")" << endl;
 }
 
-template <typename Loc> class TransportSpace {
-public:
-  double velocity;
-
-  virtual double d(Loc u, Loc v) = 0;
-  virtual double t(Loc u, Loc v) = 0;
-  virtual pair<Loc, double> interp_dist(Loc u, Loc v, double dist_to_dest) = 0;
-  virtual pair<Loc, double> interp_time(Loc u, Loc v, double time_to_dest) = 0;
-
-  TransportSpace() : velocity{1} {};
-  TransportSpace(double velocity) : velocity{velocity} {};
-  virtual ~TransportSpace(){};
-};
-
+/*!
+ * \brief The Euclidean2D class allows vehicles to drive anywhere on the 2D
+ * plane.
+ */
 class Euclidean2D : public TransportSpace<R2loc> {
 public:
   double d(R2loc u, R2loc v) override;
@@ -51,6 +52,10 @@ public:
   Euclidean2D(double);
 };
 
+/*!
+ * \brief The Euclidean2D class allows vehicles to drive anywhere on the 2D
+ * plane.
+ */
 class Manhattan2D : public TransportSpace<R2loc> {
 public:
   double d(R2loc u, R2loc v) override;
@@ -64,7 +69,11 @@ public:
   Manhattan2D(double);
 };
 
-} // namespace cstuff
+/*!
+ * @}
+ */
+
+} // namespace ridepy
 
 #endif
 // RIDEPY_CSPACES_H

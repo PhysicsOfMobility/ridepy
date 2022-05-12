@@ -7,7 +7,8 @@
 
 #include "../../data_structures_cython/cdata_structures.h"
 
-namespace cstuff {
+namespace ridepy {
+
 template <typename Loc>
 std::vector<Stop<Loc>> insert_request_to_stoplist_drive_first(
     std::vector<Stop<Loc>> &stoplist,
@@ -214,6 +215,7 @@ bool is_timewindow_violated_dueto_insertion(
   }
   return false;
 }
-} // namespace cstuff
+
+} // namespace ridepy
 
 #endif // RIDEPY_CDISPATCHERS_UTILS_H
