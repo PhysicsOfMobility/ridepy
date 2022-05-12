@@ -150,6 +150,17 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
   if (min_cost < INFINITY) {
     int best_pickup_idx = best_insertion.first;
     int best_dropoff_idx = best_insertion.second;
+
+//    if (request->request_id == 2.) {
+//        {
+//        cout << "C++ DEBUG: best insertion @ (" << best_pickup_idx << ", " <<
+//        best_dropoff_idx << ")\n";
+//        cout << stoplist[0].estimated_arrival_time << endl;
+//        cout << stoplist[0].location << endl;
+//        cout << request->creation_timestamp << endl << endl;
+//
+//        }
+
     auto new_stoplist = insert_request_to_stoplist_drive_first(
         stoplist, request, best_pickup_idx, best_dropoff_idx, space);
     if (debug) {

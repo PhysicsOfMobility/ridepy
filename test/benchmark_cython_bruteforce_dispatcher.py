@@ -56,7 +56,9 @@ def benchmark_insertion_into_long_stoplist(seed=0):
         vehicle_id=12,
         initial_stoplist=stoplist,
         space=space,
-        dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(loc_type=LocType.R2LOC),
+        dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(
+            loc_type=LocType.R2LOC
+        ),
         seat_capacity=1000,
     )
     request = TransportationRequest(
@@ -71,7 +73,7 @@ def benchmark_insertion_into_long_stoplist(seed=0):
     )
     tick = time()
     # TODO: instead of creating VehicleState, call cythonic dispatcher directly (same as the pythonic benchmark script)
-    #vs.handle_transportation_request_single_vehicle(request)
+    # vs.handle_transportation_request_single_vehicle(request)
     cythonic_solution = CyBruteForceTotalTravelTimeMinimizingDispatcher(LocType.R2LOC)(
         request, stoplist, space, seat_capacity=100
     )

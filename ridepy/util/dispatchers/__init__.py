@@ -105,15 +105,10 @@ def TaxicabDispatcherDriveFirst(
     # TODO: When we have multi-passenger requests, this dispatcher needs to be changed and
     # include capacity constraints. Currently, taxi := single seat
     assert seat_capacity == 1
-    CPAT_pu = (
-        max(
-            stoplist[-1].estimated_arrival_time,
-            stoplist[-1].time_window_min
-            if stoplist[-1].time_window_min is not None
-            else 0,
-        )
-        + space.t(stoplist[-1].location, request.origin)
-    )
+    CPAT_pu = max(
+        stoplist[-1].estimated_arrival_time,
+        stoplist[-1].time_window_min if stoplist[-1].time_window_min is not None else 0,
+    ) + space.t(stoplist[-1].location, request.origin)
     EAST_pu = request.pickup_timewindow_min
     CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request.origin, request.destination)
     LAST_pu = (
@@ -297,6 +292,12 @@ def BruteForceTotalTravelTimeMinimizingDispatcher(
 
     if min_cost < np.inf:
         best_pickup_idx, best_dropoff_idx = best_insertion
+        # if request.request_id == 2:
+        # print(f"Py DEBUG: best insertion @ {best_insertion}")
+        # print(stoplist[0].estimated_arrival_time)
+        # print(stoplist[0].location)
+        # print(request.creation_timestamp)
+        # print()
 
         logger.info(f"Best insertion: {best_insertion}")
         logger.info(f"Min cost: {min_cost}")

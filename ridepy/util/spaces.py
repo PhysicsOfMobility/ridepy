@@ -229,6 +229,7 @@ class Graph(TransportSpace):
     """
 
     n_dim = 1
+    loc_type = LocType.INT
 
     def _update_distance_cache(self):
         (
