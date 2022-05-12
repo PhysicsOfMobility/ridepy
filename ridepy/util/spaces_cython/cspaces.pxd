@@ -19,7 +19,6 @@ cdef extern from "ctransport_space.h" namespace 'ridepy':
 
     ctypedef pair[double, double] R2loc
     cdef cppclass TransportSpace[Loc]:
-        double velocity
         TransportSpace()
         TransportSpace(double)
         double d(Loc u, Loc v)
@@ -31,16 +30,19 @@ cdef extern from "ctransport_space.h" namespace 'ridepy':
 cdef extern from "cspaces.h" namespace 'ridepy':
 
     cdef cppclass Euclidean2D(TransportSpace[R2loc]):
+        double velocity
         Euclidean2D()
         Euclidean2D(double)
 
     cdef cppclass Manhattan2D(TransportSpace[R2loc]):
+        double velocity
         Manhattan2D()
         Manhattan2D(double)
 
 
 cdef extern from "boost_graph_space.h" namespace 'ridepy':
     cdef cppclass GraphSpace[Loc](TransportSpace[Loc]):
+        double velocity
         ctypedef pair[Loc, Loc] Edge
 
         GraphSpace(double, vector[Loc] vertex_vec, vector[Edge] edge_vec, vector[double] weight_vec)

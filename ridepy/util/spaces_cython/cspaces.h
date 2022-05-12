@@ -41,6 +41,8 @@ std::ostream& operator<<(std::ostream& stream, R2loc const& x)
  */
 class Euclidean2D : public TransportSpace<R2loc> {
 public:
+  Euclidean2D(double velocity = 1.);
+
   double d(R2loc u, R2loc v) override;
   double t(R2loc u, R2loc v) override;
   pair<R2loc, double> interp_dist(R2loc u, R2loc v,
@@ -48,8 +50,7 @@ public:
   pair<R2loc, double> interp_time(R2loc u, R2loc v,
                                   double time_to_dest) override;
 
-  Euclidean2D();
-  Euclidean2D(double);
+  double velocity;
 };
 
 /*!
@@ -58,6 +59,8 @@ public:
  */
 class Manhattan2D : public TransportSpace<R2loc> {
 public:
+  Manhattan2D(double velocity = 1.);
+
   double d(R2loc u, R2loc v) override;
   double t(R2loc u, R2loc v) override;
   pair<R2loc, double> interp_dist(R2loc u, R2loc v,
@@ -65,8 +68,8 @@ public:
   pair<R2loc, double> interp_time(R2loc u, R2loc v,
                                   double time_to_dest) override;
 
-  Manhattan2D();
-  Manhattan2D(double);
+
+  double velocity;
 };
 
 /*!
