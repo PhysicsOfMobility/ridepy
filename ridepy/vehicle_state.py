@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import Optional, SupportsFloat, List
+from typing import Optional, SupportsFloat, List, Tuple
 
 from .data_structures import (
     Request,
@@ -90,6 +90,9 @@ class VehicleState:
 
         event_cache = []
 
+        # Here, last_stop refers to the stop with the largest departure time value smaller or equal than t.
+        # This can either be the last stop in the stoplist that is serviced here, or it can be the
+        # (possibly outdated) CPE stop, of no other stop is serviced.
         last_stop = None
 
         # drop all non-future stops from the stoplist, except for the (outdated) CPE
@@ -140,22 +143,24 @@ class VehicleState:
         self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
         # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-        if len(self.stoplist) > 1:
-            if last_stop.estimated_arrival_time > t:
-                # still mid-jump from last interpolation, no need to interpolate
-                # again
-                pass
-            else:
-                self.stoplist[0].location, jump_time = self.space.interp_time(
+        # still mid-jump from last interpolation, no need to interpolate
+        # again
+        if self.stoplist[0].estimated_arrival_time <= t:
+            if len(self.stoplist) > 1:
+                loc, jump_time = self.space.interp_time(
                     u=last_stop.location,
                     v=self.stoplist[1].location,
                     time_to_dest=self.stoplist[1].estimated_arrival_time - t,
                 )
+                self.stoplist[0].location = loc
                 # set CPE time
                 self.stoplist[0].estimated_arrival_time = t + jump_time
-        else:
-            # stoplist is empty, only CPE is there. set CPE time to current time
-            self.stoplist[0].estimated_arrival_time = t
+            else:
+                # Stoplist is (now) empty, only CPE is there. Set CPE time to
+                # current time and move CPE to last_stop's location (which is
+                # identical to CPE, if we haven't served anything.
+                self.stoplist[0].location = last_stop.location
+                self.stoplist[0].estimated_arrival_time = t
 
         return event_cache
 

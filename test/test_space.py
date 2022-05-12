@@ -523,3 +523,18 @@ def test_caching_in_boost_graph_space():
 
     assert (np.array(results) == results[0]).all()
     assert compute_times[0] > compute_times[1]
+
+
+@pytest.mark.xfail()
+# DO NOT test this for now, as we use different methods for computing the shortest path
+# (floyd-warshall in Python and dijkstra in C++. Therefore differences in interpolation arise.)
+def test_python_cython_graph_interpolation_equivalence():
+
+    pyspace = Graph.from_nx(make_nx_grid())
+    cyspace = CyGraph.from_nx(make_nx_grid())
+
+    py_loc, py_jump_time = pyspace.interp_time(0, 4, 1.5)
+    cy_loc, cy_jump_time = cyspace.interp_time(0, 4, 1.5)
+
+    assert py_loc == cy_loc
+    assert py_jump_time == cy_jump_time

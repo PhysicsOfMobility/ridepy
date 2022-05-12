@@ -19,6 +19,11 @@ using namespace std;
 namespace cstuff {
 typedef pair<double, double> R2loc;
 
+std::ostream& operator<<(std::ostream& stream, R2loc const& x)
+{
+    return stream << "(" << x.first << "," << x.second << ")" << endl;
+}
+
 template <typename Loc> class TransportSpace {
 public:
   double velocity;
