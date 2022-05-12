@@ -1,5 +1,5 @@
-#include "ridepy/spaces.h"
 #include <iostream>
+#include "ridepy/spaces.h"
 
 using namespace ridepy;
 
