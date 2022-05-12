@@ -9,7 +9,7 @@ from ridepy.data_structures_cython.cdata_structures cimport (
 from ridepy.data_structures_cython.data_structures cimport StopAction
 from ridepy.util.spaces_cython.cspaces cimport TransportSpace
 
-cdef extern from "cvehicle_state.h" namespace 'cstuff':
+cdef extern from "cvehicle_state.h" namespace 'ridepy':
     cdef cppclass StopEventSpec:
         StopAction action
         int request_id

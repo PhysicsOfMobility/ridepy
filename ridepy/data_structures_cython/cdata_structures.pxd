@@ -4,7 +4,7 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from libcpp.memory cimport shared_ptr
 
-cdef extern from "cdata_structures.h" namespace 'cstuff':
+cdef extern from "cdata_structures.h" namespace 'ridepy':
 
     ctypedef pair[double, double] R2loc
     cpdef enum class StopAction(int):

@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 
 using namespace std;
-using namespace cstuff;
+using namespace ridepy;
 
 double inf = 100000000;
 

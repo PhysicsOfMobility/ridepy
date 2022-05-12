@@ -5,7 +5,6 @@
 #ifndef RIDEPY_CDATA_STRUCTURES_H
 #define RIDEPY_CDATA_STRUCTURES_H
 
-#include "../util/spaces_cython/cspaces.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -15,7 +14,8 @@
 
 using namespace std;
 
-namespace cstuff {
+namespace ridepy {
+
 typedef pair<double, double> R2loc;
 
 template <typename Loc> class Request {
@@ -105,6 +105,6 @@ struct SingleVehicleSolution {
   double LAST_do = INFINITY;
 };
 
-} // namespace cstuff
+} // namespace ridepy
 
 #endif // RIDEPY_CDATA_STRUCTURES_H

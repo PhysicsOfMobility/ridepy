@@ -7,7 +7,7 @@ from ridepy.data_structures_cython.cdata_structures cimport (
 from ridepy.util.spaces_cython.cspaces cimport TransportSpace, Euclidean2D
 
 
-cdef extern from "cdispatchers.h" namespace 'cstuff':
+cdef extern from "cdispatchers.h" namespace 'ridepy':
     InsertionResult[Loc] brute_force_total_traveltime_minimizing_dispatcher[Loc](
           shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
