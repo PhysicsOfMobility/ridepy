@@ -30,9 +30,8 @@ namespace ridepy {
  */
 typedef pair<double, double> R2loc;
 
-std::ostream& operator<<(std::ostream& stream, R2loc const& x)
-{
-    return stream << "(" << x.first << "," << x.second << ")" << endl;
+std::ostream &operator<<(std::ostream &stream, R2loc const &x) {
+  return stream << "(" << x.first << "," << x.second << ")" << endl;
 }
 
 /*!
@@ -67,7 +66,6 @@ public:
                                   double dist_to_dest) override;
   pair<R2loc, double> interp_time(R2loc u, R2loc v,
                                   double time_to_dest) override;
-
 
   double velocity;
 };

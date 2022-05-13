@@ -65,9 +65,10 @@ public:
     // TODO optionally validate the travel time velocity constraints
     vector<StopEventSpec> event_cache;
 
-    // Here, last_stop refers to the stop with the largest departure time value smaller or equal than t.
-    // This can either be the last stop in the stoplist that is serviced here, or it can be the
-    // (possibly outdated) CPE stop, of no other stop is serviced.
+    // Here, last_stop refers to the stop with the largest departure time value
+    // smaller or equal than t. This can either be the last stop in the stoplist
+    // that is serviced here, or it can be the (possibly outdated) CPE stop, of
+    // no other stop is serviced.
     Stop<Loc> last_stop;
 
     bool any_stop_serviced{false};
@@ -75,7 +76,8 @@ public:
     // CPE
     for (int i = stoplist.size() - 1; i > 0; --i) {
       auto &stop = stoplist[i];
-      auto service_time = max(stop.estimated_arrival_time, stop.time_window_min);
+      auto service_time =
+          max(stop.estimated_arrival_time, stop.time_window_min);
 
       // service the stop at its estimated arrival time
       if (service_time <= t) {
@@ -110,21 +112,20 @@ public:
     // still mid-jump from last interpolation, no need to interpolate
     // again
     if (stoplist[0].estimated_arrival_time <= t) {
-        if (stoplist.size() > 1) {
-            auto [loc, jump_time] =
-                space.interp_time(last_stop.location, stoplist[1].location,
-                                  stoplist[1].estimated_arrival_time - t);
-            stoplist[0].location = loc;
-            // set CPE time
-            stoplist[0].estimated_arrival_time = t + jump_time;
-        }
-        else {
-          // Stoplist is (now) empty, only CPE is there. Set CPE time to
-          // current time and move CPE to last_stop's location (which is
-          // identical to CPE, if we haven't served anything.
-          stoplist[0].location = last_stop.location;
-          stoplist[0].estimated_arrival_time = t;
-        }
+      if (stoplist.size() > 1) {
+        auto [loc, jump_time] =
+            space.interp_time(last_stop.location, stoplist[1].location,
+                              stoplist[1].estimated_arrival_time - t);
+        stoplist[0].location = loc;
+        // set CPE time
+        stoplist[0].estimated_arrival_time = t + jump_time;
+      } else {
+        // Stoplist is (now) empty, only CPE is there. Set CPE time to
+        // current time and move CPE to last_stop's location (which is
+        // identical to CPE, if we haven't served anything.
+        stoplist[0].location = last_stop.location;
+        stoplist[0].estimated_arrival_time = t;
+      }
     }
     return event_cache;
   }
