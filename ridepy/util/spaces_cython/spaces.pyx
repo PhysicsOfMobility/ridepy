@@ -116,7 +116,7 @@ cdef class Euclidean2D(TransportSpace):
             constant velocity to compute travel time, optional. default: 1
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
-        coord_range = kwargs.get('coord_range')
+        coord_range = kwargs.get('coord_range') or (args[1] if len(args) > 1 else None)
 
         if coord_range is not None:
             assert len(coord_range) == self.n_dim, (
@@ -144,7 +144,7 @@ cdef class Euclidean2D(TransportSpace):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
     def __reduce__(self):
-        return self.__class__, (self.velocity, )
+        return self.__class__, (self.velocity, self.coord_range)
 
 
 cdef class Manhattan2D(TransportSpace):
@@ -164,7 +164,7 @@ cdef class Manhattan2D(TransportSpace):
         """
         TransportSpace.__init__(self, loc_type=LocType.R2LOC)
 
-        coord_range = kwargs.get('coord_range')
+        coord_range = kwargs.get('coord_range') or (args[1] if len(args) > 1 else None)
         if coord_range is not None:
             assert len(coord_range) == self.n_dim, (
                 "Number of desired dimensions must "
@@ -191,7 +191,7 @@ cdef class Manhattan2D(TransportSpace):
         return dict(velocity=self.velocity, coord_range=self.coord_range)
 
     def __reduce__(self):
-        return self.__class__, (self.velocity, )
+        return self.__class__, (self.velocity, self.coord_range)
 
 
 cdef class Graph(TransportSpace):

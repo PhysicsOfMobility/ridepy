@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.4
+#       jupytext_version: 1.13.6
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python (ridepy39)
 #     language: python
-#     name: python3
+#     name: ridepy39
 # ---
 
 # + tags=[]
@@ -32,7 +32,7 @@ simulation_set = SimulationSet(
     base_params={
         "general": {"n_reqs": 10},
         "dispatcher": {
-            "dispatcher_class": SimpleEllipseDispatcher,
+            "dispatcher_cls": SimpleEllipseDispatcher,
             "max_relative_detour": 3,
         },
     },

@@ -173,13 +173,13 @@ def perform_single_simulation(
             - ``seat_capacity``
             - (``initial_location`` and ``n_vehicles``) or ``initial_locations``
             - ``space``
-            - ``TransportationRequestCls``
-            - ``VehicleStateCls``
-            - ``FleetStateCls``
+            - ``transportation_request_cls``
+            - ``vehicle_state_cls``
+            - ``fleet_state_cls``
         - ``request_generator``
-            - ``RequestGeneratorCls``
+            - ``request_generator_cls``
         - ``dispatcher``
-            - ``dispatcher_class``
+            - ``dispatcher_cls``
             - ...
     data_dir
         Existing directory in which to store parameters and events.
@@ -224,14 +224,14 @@ def perform_single_simulation(
             event_path.unlink()
 
     space = params["general"]["space"]
-    RequestGeneratorCls = params["request_generator"].pop("RequestGeneratorCls")
-    rg = RequestGeneratorCls(
+    request_generator_cls = params["request_generator"].pop("request_generator_cls")
+    rg = request_generator_cls(
         space=space,
-        request_class=params["general"]["TransportationRequestCls"],
+        request_class=params["general"]["transportation_request_cls"],
         **params["request_generator"],
     )
 
-    dispatcher = params["dispatcher"].pop("dispatcher_class")
+    dispatcher = params["dispatcher"].pop("dispatcher_cls")
     if (
         params["general"].get("n_vehicles") is not None
         and params["general"].get("initial_location") is not None
@@ -256,12 +256,12 @@ def perform_single_simulation(
             "must either specify 'n_vehicles' and 'initial_location' or 'initial_locations'"
         )
 
-    fs = params["general"]["FleetStateCls"](
+    fs = params["general"]["fleet_state_cls"](
         initial_locations=initial_locations,
         space=space,
         dispatcher=dispatcher(loc_type=space.loc_type, **params["dispatcher"]),
         seat_capacities=params["general"]["seat_capacity"],
-        vehicle_state_class=params["general"]["VehicleStateCls"],
+        vehicle_state_class=params["general"]["vehicle_state_cls"],
     )
 
     # NOTE: this string is matched for testing
@@ -496,39 +496,35 @@ class SimulationSet:
         self._param_path_suffix = param_path_suffix
 
         if cython:
-            SpaceObj = CyEuclidean2D()
+            space_obj = CyEuclidean2D()
             dispatcher = CyBruteForceTotalTravelTimeMinimizingDispatcher
-            TransportationRequestCls = CyTransportationRequest
-            VehicleStateCls = CyVehicleState
+            transportation_request_cls = CyTransportationRequest
+            vehicle_state_cls = CyVehicleState
         else:
-            SpaceObj = Euclidean2D()
+            space_obj = Euclidean2D()
             dispatcher = BruteForceTotalTravelTimeMinimizingDispatcher
-            TransportationRequestCls = TransportationRequest
-            VehicleStateCls = VehicleState
+            transportation_request_cls = TransportationRequest
+            vehicle_state_cls = VehicleState
 
-        FleetStateCls = SlowSimpleFleetState
-        RequestGeneratorCls = RandomRequestGenerator
+        fleet_state_cls = SlowSimpleFleetState
+        request_generator_cls = RandomRequestGenerator
 
         self.default_base_params = dict(
             general=dict(
                 n_reqs=100,
                 t_cutoff=None,
-                space=SpaceObj,
+                space=space_obj,
                 n_vehicles=10,
                 initial_location=(0, 0),
                 initial_locations=None,
                 seat_capacity=8,
-                TransportationRequestCls=TransportationRequestCls,
-                VehicleStateCls=VehicleStateCls,
-                FleetStateCls=FleetStateCls,
+                transportation_request_cls=transportation_request_cls,
+                vehicle_state_cls=vehicle_state_cls,
+                fleet_state_cls=fleet_state_cls,
             ),
-            dispatcher=dict(dispatcher_class=dispatcher),
+            dispatcher=dict(dispatcher_cls=dispatcher),
             request_generator=dict(
-                RequestGeneratorCls=RequestGeneratorCls,
-                rate=10,
-                max_pickup_delay=3,
-                max_delivery_delay_rel=1.9,
-                seed=42,
+                request_generator_cls=request_generator_cls,
             ),
         )
 

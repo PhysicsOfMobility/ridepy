@@ -78,18 +78,18 @@ class ParamsJSONDecoder(json.JSONDecoder):
                 dct["initial_location"] = tuple(dct["initial_location"])
 
             for cls_str in [
-                "TransportationRequestCls",
-                "FleetStateCls",
-                "VehicleStateCls",
-                "RequestGeneratorCls",
+                "transportation_request_cls",
+                "fleet_state_cls",
+                "vehicle_state_cls",
+                "request_generator_cls",
             ]:
                 if cls_str in dct:
                     module, cls = dct[cls_str].rsplit(".", 1)
                     dct[cls_str] = getattr(importlib.import_module(module), cls)
 
-            if "dispatcher_class" in dct:
-                module, cls = dct["dispatcher_class"].rsplit(".", 1)
-                dct["dispatcher_class"] = getattr(importlib.import_module(module), cls)
+            if "dispatcher_cls" in dct:
+                module, cls = dct["dispatcher_cls"].rsplit(".", 1)
+                dct["dispatcher_cls"] = getattr(importlib.import_module(module), cls)
 
             if "space" in dct:
                 path, kwargs = next(iter(dct["space"].items()))
@@ -122,6 +122,27 @@ class EventsJSONEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
+def sort_params(params: dict) -> dict:
+    """
+    Returns a copy of the two-level nested dict `params` which is sorted
+    in both levels.
+
+    Parameters
+    ----------
+    params
+        Parameter dictionary, two levels of nesting
+
+    Returns
+    -------
+    params
+        Sorted params dict
+    """
+    params = dict(sorted(params.items(), key=op.itemgetter(0)))
+    for outer_key, inner_dict in params.items():
+        params[outer_key] = dict(sorted(inner_dict.items(), key=op.itemgetter(0)))
+    return params
+
+
 def create_params_json(*, params: dict, sort=True) -> str:
     """
     Create a dictionary containing simulation parameters to pretty JSON.
@@ -137,9 +158,7 @@ def create_params_json(*, params: dict, sort=True) -> str:
         if sort is True, sort the dict recursively to ensure consistent order.
     """
     if sort:
-        params = dict(sorted(params.items(), key=op.itemgetter(0)))
-        for outer_key, inner_dict in params.items():
-            params[outer_key] = dict(sorted(inner_dict.items(), key=op.itemgetter(0)))
+        params = sort_params(params)
     return json.dumps(params, indent=4, cls=ParamsJSONEncoder)
 
 
