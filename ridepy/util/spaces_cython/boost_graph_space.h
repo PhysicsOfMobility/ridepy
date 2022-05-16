@@ -52,6 +52,8 @@ private:
   }
 
 public:
+  double velocity;
+
   double d(vertex_t src, vertex_t target) override {
     // call dijkstra
     int src_idx = this->vertex_label2index[src];
@@ -106,7 +108,7 @@ public:
 
   GraphSpace(double velocity, vector<vertex_t> vertex_vec,
              vector<Edge> edge_vec, vector<double> weight_vec)
-      : TransportSpace<vertex_t>{velocity}, _g{vertex_vec.size()},
+      : TransportSpace<vertex_t>(), velocity(velocity), _g{vertex_vec.size()},
         vertex2label{get(vertex_name, _g)},
         _distances(static_cast<int>(vertex_vec.size())),
         _predecessors(static_cast<int>(vertex_vec.size())),

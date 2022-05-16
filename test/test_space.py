@@ -372,13 +372,15 @@ def test_digraph():
 
     py_graph = Graph.from_nx(**get_kwargs(G_u))
     py_digraph = DiGraph.from_nx(**get_kwargs(G))
+    cy_graph = CyGraph.from_nx(**get_kwargs(G_u))
 
-    assert py_graph.velocity == py_digraph.velocity == velocity
+    assert py_graph.velocity == py_digraph.velocity == cy_graph.velocity == velocity
 
     for u in G.nodes():
         for v in G.nodes():
             if u >= v:
                 assert py_graph.d(u, v) == nx.shortest_path_length(G_u, u, v)
+                assert cy_graph.d(u, v) == nx.shortest_path_length(G_u, u, v)
                 assert py_digraph.d(u, v) == nx.shortest_path_length(G, u, v)
 
 

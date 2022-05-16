@@ -57,10 +57,6 @@ public:
    */
   virtual std::pair<Loc, double> interp_time(Loc u, Loc v,
                                              double time_to_dest) = 0;
-
-  TransportSpace() : velocity{1} {}
-  TransportSpace(double velocity) : velocity{velocity} {}
-  virtual ~TransportSpace() {}
 };
 
 } // namespace ridepy
