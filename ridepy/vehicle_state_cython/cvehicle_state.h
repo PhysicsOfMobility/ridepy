@@ -25,23 +25,38 @@ struct StopEventSpec {
   double timestamp;
 };
 
-template <typename Loc> class VehicleState {
-  // private:
-
+template <typename Loc> class VehicleState
+{
 public:
   int vehicle_id;
+  int seat_capacity;
   vector<Stop<Loc>> stoplist;
   vector<Stop<Loc>> stoplist_new;
-  int seat_capacity;
   AbstractDispatcher<Loc> &dispatcher;
   TransportSpace<Loc> &space;
 
+  /*!
+   * \brief Old constructor, that requires an initial_stoplist even if it is empty.
+   */
   VehicleState(int vehicle_id, vector<Stop<Loc>> initial_stoplist,
                TransportSpace<Loc> &space,
                AbstractDispatcher<Loc> &desired_dispatcher, int seat_capacity)
-      : vehicle_id{vehicle_id}, stoplist{initial_stoplist},
-        seat_capacity{seat_capacity}, space{space}, dispatcher{
-                                                        desired_dispatcher} {}
+      : vehicle_id{vehicle_id}, seat_capacity{seat_capacity},
+        stoplist{initial_stoplist}, space{space}, dispatcher{desired_dispatcher} {}
+
+  /*!
+   * \brief Constructs a VehicleState.
+   * \param vehicle_id The id of the new vehicle
+   * \param seat_capacity The number of passengers, the new vehicle can carry
+   * \param space A reference to the TransportSpace along which the vehicle can move
+   * \param dispatcher A reference to the dispatcher
+   * \param initial_stoplist A list of stops that should be served at start.
+   */
+  VehicleState(const int vehicle_id, const int seat_capacity,
+               TransportSpace<Loc> &space, AbstractDispatcher<Loc> &dispatcher,
+               vector<Stop<Loc>> initial_stoplist = vector<Stop<Loc>>())
+      : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist),
+        space(space), dispatcher(dispatcher) {}
 
   ~VehicleState() {}
 
