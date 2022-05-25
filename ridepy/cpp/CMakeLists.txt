@@ -20,6 +20,8 @@ add_library(RidePy
     ../util/spaces_cython/cspaces.cxx
     # VehicleState
     ../vehicle_state_cython/cvehicle_state.h
+    # FleetState
+    ../fleet_state/fleetstate.h
     # DataStructures
     ../data_structures_cython/cdata_structures.h
     # Dispatchers
