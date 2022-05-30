@@ -11,6 +11,7 @@ using std::endl;
 #include "ridepy/transportationrequest.h"
 
 #include "ridepy/euclidean2d.h"
+#include "ridepy/vehiclestate.h"
 
 using namespace ridepy;
 

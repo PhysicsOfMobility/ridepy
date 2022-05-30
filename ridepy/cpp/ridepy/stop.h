@@ -21,11 +21,19 @@ struct Stop{
     int occupancy_after_servicing = 0;
     TimeWindow time_window;
 
+    Stop() {}
     Stop(const Loc &location, Request *request = nullptr, const StopAction action = StopAction::INTERNAL,
          const double estimated_arrival_time = 0., const int occupancy_after_servicing = 0, const TimeWindow time_window = TimeWindow())
         : location(location), request(request), action(action),
           estimated_arrival_time(estimated_arrival_time), occupancy_after_servicing(occupancy_after_servicing), time_window(time_window)
     {}
+};
+
+struct StopEvent{
+    StopAction action;
+    int request_id;
+    int vehicle_id;
+    double timestamp;
 };
 
 } // namespace ridepy
