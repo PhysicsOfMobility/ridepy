@@ -11,5 +11,3 @@ cython==3.0a6
 loky
 typer
 pyarrow
-tqdm
-fabric
