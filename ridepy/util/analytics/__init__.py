@@ -377,8 +377,8 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     #       this must be changed.
     #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
     locations.index = locations.index.set_levels(
-        levels=locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
-        level=1,
+        locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
+        1,
     )
 
     # finally fill the locations missing in the stops dataframe by joining on request_id and delta_occupancy
@@ -843,29 +843,29 @@ def get_vehicle_quantities(stops: pd.DataFrame, requests: pd.DataFrame) -> pd.Da
     efficiency_dist = total_direct_dist / total_dist_driven
     efficiency_time = total_direct_time / total_time_driven
 
-    # avg_system_stoplist_length_service_time = stops.groupby("vehicle_id").apply(
-    #     lambda gdf: (
-    #         gdf["system_stoplist_length_service_time"] * gdf["state_duration"]
-    #     ).sum()
-    #     / gdf["state_duration"].sum()
-    # )
-    # avg_system_stoplist_length_submission_time = stops.groupby("vehicle_id").apply(
-    #     lambda gdf: (
-    #         gdf["system_stoplist_length_submission_time"] * gdf["state_duration"]
-    #     ).sum()
-    #     / gdf["state_duration"].sum()
-    # )
-    #
-    # avg_stoplist_length_service_time = stops.groupby("vehicle_id").apply(
-    #     lambda gdf: (gdf["stoplist_length_service_time"] * gdf["state_duration"]).sum()
-    #     / gdf["state_duration"].sum()
-    # )
-    # avg_stoplist_length_submission_time = stops.groupby("vehicle_id").apply(
-    #     lambda gdf: (
-    #         gdf["stoplist_length_submission_time"] * gdf["state_duration"]
-    #     ).sum()
-    #     / gdf["state_duration"].sum()
-    # )
+    avg_system_stoplist_length_service_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (
+            gdf["system_stoplist_length_service_time"] * gdf["state_duration"]
+        ).sum()
+        / gdf["state_duration"].sum()
+    )
+    avg_system_stoplist_length_submission_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (
+            gdf["system_stoplist_length_submission_time"] * gdf["state_duration"]
+        ).sum()
+        / gdf["state_duration"].sum()
+    )
+
+    avg_stoplist_length_service_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (gdf["stoplist_length_service_time"] * gdf["state_duration"]).sum()
+        / gdf["state_duration"].sum()
+    )
+    avg_stoplist_length_submission_time = stops.groupby("vehicle_id").apply(
+        lambda gdf: (
+            gdf["stoplist_length_submission_time"] * gdf["state_duration"]
+        ).sum()
+        / gdf["state_duration"].sum()
+    )
 
     return pd.DataFrame(
         dict(
@@ -880,10 +880,10 @@ def get_vehicle_quantities(stops: pd.DataFrame, requests: pd.DataFrame) -> pd.Da
             total_direct_time=total_direct_time,
             efficiency_dist=efficiency_dist,
             efficiency_time=efficiency_time,
-            # avg_system_stoplist_length_service_time=avg_system_stoplist_length_service_time,
-            # avg_system_stoplist_length_submission_time=avg_system_stoplist_length_submission_time,
-            # avg_stoplist_length_service_time=avg_stoplist_length_service_time,
-            # avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
+            avg_system_stoplist_length_service_time=avg_system_stoplist_length_service_time,
+            avg_system_stoplist_length_submission_time=avg_system_stoplist_length_submission_time,
+            avg_stoplist_length_service_time=avg_stoplist_length_service_time,
+            avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
         )
     ).rename_axis("vehicle_id")
 
@@ -961,10 +961,7 @@ def get_system_quantities(
     total_dist_driven = stops["dist_to_next"].sum()
     total_time_driven = stops["time_to_next"].sum()
 
-    avg_direct_dist_submitted = requests[("submitted", "direct_travel_distance")].mean()
-    avg_direct_dist_serviced = serviced_requests[
-        ("submitted", "direct_travel_distance")
-    ].mean()
+    avg_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].mean()
     avg_direct_time = serviced_requests[("submitted", "direct_travel_time")].mean()
 
     total_direct_dist = serviced_requests[("submitted", "direct_travel_distance")].sum()
@@ -977,32 +974,32 @@ def get_system_quantities(
 
     rejection_ratio = 1 - len(serviced_requests) / len(requests)
 
-    # _stops = stops.dropna(
-    #     subset=(
-    #         "system_stoplist_length_service_time",
-    #         "system_stoplist_length_submission_time",
-    #     )
-    # )
-    # avg_system_stoplist_length_service_time = (
-    #     _stops["system_stoplist_length_service_time"] * _stops["state_duration"]
-    # ).sum() / _stops["state_duration"].sum()
-    #
-    # avg_system_stoplist_length_submission_time = (
-    #     _stops["system_stoplist_length_submission_time"] * _stops["state_duration"]
-    # ).sum() / _stops["state_duration"].sum()
-    #
-    # # not sure if it is necessary to do it again...
-    # _stops = stops.dropna(
-    #     subset=("stoplist_length_service_time", "stoplist_length_submission_time")
-    # )
-    #
-    # avg_stoplist_length_submission_time = (
-    #     _stops["stoplist_length_submission_time"] * _stops["state_duration"]
-    # ).sum() / _stops["state_duration"].sum()
-    #
-    # avg_stoplist_length_service_time = (
-    #     _stops["stoplist_length_service_time"] * _stops["state_duration"]
-    # ).sum() / _stops["state_duration"].sum()
+    _stops = stops.dropna(
+        subset=(
+            "system_stoplist_length_service_time",
+            "system_stoplist_length_submission_time",
+        )
+    )
+    avg_system_stoplist_length_service_time = (
+        _stops["system_stoplist_length_service_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    avg_system_stoplist_length_submission_time = (
+        _stops["system_stoplist_length_submission_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    # not sure if it is necessary to do it again...
+    _stops = stops.dropna(
+        subset=("stoplist_length_service_time", "stoplist_length_submission_time")
+    )
+
+    avg_stoplist_length_submission_time = (
+        _stops["stoplist_length_submission_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
+
+    avg_stoplist_length_service_time = (
+        _stops["stoplist_length_service_time"] * _stops["state_duration"]
+    ).sum() / _stops["state_duration"].sum()
 
     stops["event_type"] = stops["delta_occupancy"].map({1.0: "pickup", -1.0: "dropoff"})
 
@@ -1034,78 +1031,33 @@ def get_system_quantities(
 
     avg_detour = requests["inferred", "relative_travel_time"].mean()
 
-    total_system_time = (
-        stops.groupby("vehicle_id")
-        .apply(
-            lambda gdf: gdf.loc[gdf["request_id"] == -200, "timestamp"].item()
-            - gdf.loc[gdf["request_id"] == -100, "timestamp"].item()
-        )
-        .sum()
-    )
-    n_vehicles = len(stops.index.levels[0])
-    n_vehicles_used = (
-        requests.groupby(("serviced", "vehicle_id")).count().iloc[:, 0] > 0
-    ).sum()
-    avg_request_rate_submitted = len(requests) / (total_system_time / n_vehicles)
-    avg_request_rate_serviced = len(serviced_requests) / (
-        total_system_time / n_vehicles
-    )
-
-    avg_relative_travel_time = requests[("inferred", "relative_travel_time")].mean()
-
-    res = {}
-    if params:
-        theoretical_request_rate = params.get("request_generator", {}).get(
-            "rate", np.nan
-        )
-        velocity = params.get("general", {}).get("space").velocity
-        res |= dict(
-            n_vehicles=n_vehicles,
-            theoretical_request_rate=theoretical_request_rate,
-            max_pickup_delay=params.get("request_generator", {}).get(
-                "max_pickup_delay", np.nan
-            ),
-            max_delivery_delay_rel=params.get("request_generator", {}).get(
-                "max_delivery_delay_rel", np.nan
-            ),
-            velocity=velocity,
-            load_theoretical=(theoretical_request_rate * avg_direct_dist_submitted)
-            / (velocity * n_vehicles),
-        )
-
-    load_submitted = (avg_request_rate_submitted * avg_direct_dist_submitted) / (
-        res["velocity"] * res["n_vehicles"]
-    )
-    load_serviced = (avg_request_rate_serviced * avg_direct_dist_serviced) / (
-        res["velocity"] * res["n_vehicles"]
-    )
-
-    res |= dict(
+    res = dict(
         avg_occupancy=avg_occupancy,
-        n_vehicles_used=n_vehicles_used,
         avg_segment_dist=avg_segment_dist,
         avg_segment_time=avg_segment_time,
         total_dist_driven=total_dist_driven,
         total_time_driven=total_time_driven,
-        avg_direct_dist=avg_direct_dist_serviced,
+        avg_direct_dist=avg_direct_dist,
         avg_direct_time=avg_direct_time,
         total_direct_dist=total_direct_dist,
         total_direct_time=total_direct_time,
         efficiency_dist=efficiency_dist,
         efficiency_time=efficiency_time,
-        # avg_system_stoplist_length_service_time=avg_system_stoplist_length_service_time,
-        # avg_system_stoplist_length_submission_time=avg_system_stoplist_length_submission_time,
-        # avg_stoplist_length_service_time=avg_stoplist_length_service_time,
-        # avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
+        avg_system_stoplist_length_service_time=avg_system_stoplist_length_service_time,
+        avg_system_stoplist_length_submission_time=avg_system_stoplist_length_submission_time,
+        avg_stoplist_length_service_time=avg_stoplist_length_service_time,
+        avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
         avg_waiting_time=avg_waiting_time,
         rejection_ratio=rejection_ratio,
         median_stoplist_length=median_stoplist_length,
         avg_detour=avg_detour,
-        avg_request_rate_submitted=avg_request_rate_submitted,
-        avg_request_rate_serviced=avg_request_rate_serviced,
-        load_submitted=load_submitted,
-        load_serviced=load_serviced,
-        avg_relative_travel_time=avg_relative_travel_time,
     )
+
+    if params:
+        res |= dict(
+            n_vehicles=params["general"]["n_vehicles"],
+            request_rate=params["request_generator"]["rate"],
+            velocity=params["general"]["space"].velocity,
+        )
 
     return res
