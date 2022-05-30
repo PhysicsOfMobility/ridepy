@@ -77,6 +77,12 @@ class ParamsJSONDecoder(json.JSONDecoder):
             if "initial_location" in dct and isinstance(dct["initial_location"], list):
                 dct["initial_location"] = tuple(dct["initial_location"])
 
+            if "initial_locations" in dct:
+                dct["initial_locations"] = {
+                    int(vehicle_id): location
+                    for vehicle_id, location in dct["initial_locations"].items()
+                }
+
             for cls_str in [
                 "transportation_request_cls",
                 "fleet_state_cls",

@@ -34,5 +34,5 @@ setuptools.setup(
     install_requires=reqs,
     extras_require={"dev": dev_reqs, "doc": doc_reqs},
     options={"build_ext": {"inplace": True, "parallel": os.cpu_count() - 1}},
-    entry_points={"console_scripts": ["ridepy = ridepy.cli:cli"]},
+    entry_points={"console_scripts": ["ridepy = ridepy.cli:app"]},
 )

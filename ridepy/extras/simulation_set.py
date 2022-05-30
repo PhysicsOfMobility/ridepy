@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+
 import loky
 from time import time
 
@@ -206,7 +207,11 @@ def perform_single_simulation(
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
     param_path = data_dir / f"{sim_id}{param_path_suffix}"
 
-    if param_path.exists():
+    if (
+        param_path.exists()
+        and (params_json_ := param_path.read_text())
+        and params_json_[-1] == "}"
+    ):
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
         logger.info(
@@ -490,7 +495,7 @@ class SimulationSet:
         self.max_workers = max_workers
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
-        self.data_dir = data_dir
+        self.data_dir = Path(data_dir)
 
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
@@ -516,7 +521,6 @@ class SimulationSet:
                 space=space_obj,
                 n_vehicles=10,
                 initial_location=(0, 0),
-                initial_locations=None,
                 seat_capacity=8,
                 transportation_request_cls=transportation_request_cls,
                 vehicle_state_cls=vehicle_state_cls,

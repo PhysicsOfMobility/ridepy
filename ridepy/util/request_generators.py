@@ -2,10 +2,6 @@ import random
 import numpy as np
 
 from ridepy.data_structures import TransportSpace, TransportationRequest
-from ridepy.data_structures_cython import (
-    TransportationRequest as CTransportationRequest,
-)
-from ridepy.util.spaces import Euclidean
 
 
 class RandomRequestGenerator:

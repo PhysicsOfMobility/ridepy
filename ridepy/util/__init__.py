@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import uuid
 import random
@@ -19,6 +20,10 @@ def get_short_uuid():
 
 def get_uuid():
     return uuid.uuid4().hex
+
+
+def get_datetime_yymmddHHSS():
+    return datetime.datetime.now().strftime("%y%m%d%H%M")
 
 
 class smartVectorize:
