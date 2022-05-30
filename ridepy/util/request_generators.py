@@ -103,3 +103,106 @@ class RandomRequestGenerator:
             delivery_timewindow_min=pickup_lbound,
             delivery_timewindow_max=delivery_ubound,
         )
+
+
+class CoarseGrainedEuclideanRandomRequestGenerator:
+    """
+    Generates coarse-grained random requests in the chosen euclidean transport
+    space with a certain rate. The timewindows for the request are configurable.
+
+    Note:
+        The pickup and dropoff timewindows are calculated as follows:
+            1. request_pickup_time < request.creation_timestamp + max_pickup_delay
+            2. request_delivery_time < request.creation_timestamp + direct_travel_time \
+                + max_delivery_delay_abs
+            3. request_delivery_time < request.creation_timestamp + direct_travel_time*(1+max_delivery_delay_rel)
+    """
+
+    def __init__(
+        self,
+        *,
+        space: TransportSpace,
+        N,
+        rate=1,
+        seed=42,
+        pickup_timewindow_offset=0,
+        request_class=TransportationRequest,
+        max_pickup_delay: float = np.inf,
+        max_delivery_delay_abs: float = np.inf,
+        max_delivery_delay_rel: float = np.inf,
+    ):
+        """
+
+        Parameters
+        ----------
+        space
+            the TransportSpace in which the requests will be generated.
+        N
+            Divide a $[a, b]^n$ space into $(a, a+(b-a)/N, a+2*(b-a)/N, ..., b)^n$
+        rate
+            the rate of requests per time unit
+        seed
+            the random seed
+        pickup_timewindow_offset
+            each request's pickup_timewindow_min will be this much from the creation timestamp
+        request_class
+            the generated requests will be instances of this class. Needed to generate pythonic or cythonic requests at will.
+        max_pickup_delay
+            see class docstring
+        max_delivery_delay_abs
+            see class docstring
+        max_delivery_delay_rel
+            see class docstring
+        """
+
+        self.rng = np.random.default_rng(seed=seed)
+        self.space = space
+        self.N = N
+        self.sample_space = np.array(
+            [np.r_[a : b : N * 1j] for a, b in self.space.coord_range]
+        )
+
+        self.rate = rate
+        self.request_class = request_class
+        self.pickup_timewindow_offset = pickup_timewindow_offset
+        self.max_pickup_delay = max_pickup_delay
+        self.max_delivery_delay_abs = max_delivery_delay_abs
+        self.max_delivery_delay_rel = max_delivery_delay_rel
+
+    def __iter__(self):
+        self.now = 0
+        self.request_index = -1
+        return self
+
+    def __next__(self):
+        self.now += self.rng.exponential(1 / self.rate)
+        self.request_index += 1
+
+        while True:
+            origin = tuple(self.rng.choice(r) for r in self.sample_space)
+            destination = tuple(self.rng.choice(r) for r in self.sample_space)
+            if origin != destination:
+                break
+
+        direct_travel_time = self.space.t(origin, destination)
+        pickup_lbound = self.now + self.pickup_timewindow_offset
+        pickup_ubound = pickup_lbound + self.max_pickup_delay
+        delivery_ubound = (
+            pickup_lbound
+            + direct_travel_time
+            + min(
+                self.max_delivery_delay_abs,
+                self.max_delivery_delay_rel * direct_travel_time,
+            )
+        )
+
+        return self.request_class(
+            request_id=self.request_index,
+            creation_timestamp=self.now,
+            origin=origin,
+            destination=destination,
+            pickup_timewindow_min=pickup_lbound,
+            pickup_timewindow_max=pickup_ubound,
+            delivery_timewindow_min=pickup_lbound,
+            delivery_timewindow_max=delivery_ubound,
+        )

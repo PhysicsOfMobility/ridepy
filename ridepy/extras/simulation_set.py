@@ -1,6 +1,12 @@
 import logging
 import os
+import subprocess
 import warnings
+from dataclasses import dataclass
+import shlex
+import fabric
+import invoke.exceptions
+
 import loky
 from time import time
 
@@ -22,7 +28,7 @@ from typing import (
 )
 from pathlib import Path
 
-from ridepy.util import make_sim_id
+from ridepy.util import make_sim_id, get_short_uuid, get_datetime_yymmddHHSS
 from ridepy.util.analytics import (
     get_system_quantities,
     get_vehicle_quantities,
@@ -184,7 +190,7 @@ def perform_single_simulation(
     data_dir
         Existing directory in which to store parameters and events.
     jsonl_chunksize
-        Number of simulation events to keep in memory before writing them to disk at once.
+        Number of simulation events to keep in slurm_memory before writing them to disk at once.
     debug
         Print debug info to stdout.
     param_path_suffix
@@ -206,7 +212,11 @@ def perform_single_simulation(
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
     param_path = data_dir / f"{sim_id}{param_path_suffix}"
 
-    if param_path.exists():
+    if (
+        param_path.exists()
+        and (params_json_ := param_path.read_text())
+        and params_json_[-1] == "}"
+    ):
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
         logger.info(
@@ -316,7 +326,7 @@ def simulate_parameter_combinations(
     process_chunksize
         Number of simulations to submit to each multiprocessing worker at a time.
     jsonl_chunksize
-        Maximum number of events to keep in memory before saving to disk
+        Maximum number of events to keep in slurm_memory before saving to disk
     param_path_suffix
         Parameters will be stored under "data_dir/<simulation_id><suffix>"
     event_path_suffix
@@ -477,7 +487,7 @@ class SimulationSet:
         process_chunksize
             Number of simulations to submit to each multiprocessing worker at a time.
         jsonl_chunksize
-            Maximum number of events to keep in memory before saving to disk
+            Maximum number of events to keep in slurm_memory before saving to disk
         param_path_suffix
             Parameters will be stored under "data_dir/<simulation_id><suffix>"
         event_path_suffix
@@ -490,7 +500,7 @@ class SimulationSet:
         self.max_workers = max_workers
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
-        self.data_dir = data_dir
+        self.data_dir = Path(data_dir)
 
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
@@ -775,3 +785,328 @@ class SimulationSet:
                 system_quantities_df = pd.DataFrame(system_quantities, index=sim_ids)
                 system_quantities_df.rename_axis("simulation_id", inplace=True)
                 system_quantities_df.to_parquet(self.system_quantities_path)
+
+
+class SlurmHPCSimulationSet(SimulationSet):
+    def _create_slurm_submission_scripts(
+        self,
+        *,
+        ntasks,
+        time,
+        account,
+        mail_user,
+        mail_type,
+        output,
+        error,
+        sim_set_id,
+        overwrite_existing=False,
+    ):
+        logger.info("Creating slurm submission script")
+        master_script = f"""#!/bin/bash
+
+#SBATCH --ntasks={ntasks}
+#SBATCH --time={time}
+#SBATCH --mail-user={mail_user}
+#SBATCH --mail-type={mail_type}
+#SBATCH --job-name={sim_set_id[:16]}_master
+#SBATCH --account={account}
+#SBATCH --output={self.hpc_output_dir_remote/output}
+#SBATCH --error={self.hpc_output_dir_remote/error}
+#SBATCH --mem={self.slurm_memory}
+"""
+
+        master_analysis_script_path_local = (
+            self.hpc_input_dir_local / f"{sim_set_id}_analysis.sh"
+        )
+        master_analysis_script_path_remote = (
+            self.hpc_input_dir_remote / f"{sim_set_id}_analysis.sh"
+        )
+
+        master_analysis_script = f"""#!/bin/bash
+#SBATCH --ntasks={ntasks}
+#SBATCH --time={time}
+#SBATCH --mail-user={mail_user}
+#SBATCH --mail-type={mail_type}
+#SBATCH --job-name={sim_set_id[:16]}_analysis
+#SBATCH --account={account}
+#SBATCH --output={self.hpc_output_dir_remote / output}
+#SBATCH --error={self.hpc_output_dir_remote / error}
+#SBATCH --mem={self.slurm_memory}
+
+module purge > /dev/null 2>&1
+module load Python
+. /scratch/ws/1/feju585c-ridepy_ipp/venvs/ridepy/bin/activate
+
+ridepy hpc analyze --compute-system-quantities {self.hpc_output_dir_remote}"""
+
+        slurm_ids_analysis = []
+        for simulation_id in self.simulation_ids:
+            simulation_script = f"""#!/bin/bash
+#SBATCH --ntasks={ntasks}
+#SBATCH --time={time}
+#SBATCH --mail-user={mail_user}
+#SBATCH --mail-type={mail_type}
+#SBATCH --job-name={simulation_id[:16]}_simulation
+#SBATCH --account={account}
+#SBATCH --output={self.hpc_output_dir_remote/output}
+#SBATCH --error={self.hpc_output_dir_remote/error}
+#SBATCH --mem={self.slurm_memory}
+
+module purge > /dev/null 2>&1
+module load Python
+. /scratch/ws/1/feju585c-ridepy_ipp/venvs/ridepy/bin/activate
+
+ridepy hpc simulate {self.hpc_input_dir_remote} {self.hpc_output_dir_remote} {simulation_id}
+"""
+            simulation_script_path_local = (
+                self.hpc_input_dir_local / f"{simulation_id}_simulation.sh"
+            )
+            simulation_script_path_remote = (
+                self.hpc_input_dir_remote / f"{simulation_id}_simulation.sh"
+            )
+
+            if overwrite_existing or not simulation_script_path_local.exists():
+                simulation_script_path_local.write_text(simulation_script)
+
+            analysis_script = f"""#!/bin/bash
+#SBATCH --ntasks={ntasks}
+#SBATCH --time={time}
+#SBATCH --mail-user={mail_user}
+#SBATCH --mail-type={mail_type}
+#SBATCH --job-name={simulation_id[:16]}_analysis
+#SBATCH --account={account}
+#SBATCH --output={self.hpc_output_dir_remote/output}
+#SBATCH --error={self.hpc_output_dir_remote/error}
+#SBATCH --mem={self.slurm_memory}
+
+module purge > /dev/null 2>&1
+module load Python
+. /scratch/ws/1/feju585c-ridepy_ipp/venvs/ridepy/bin/activate
+
+ridepy hpc analyze {self.hpc_output_dir_remote} {simulation_id}
+"""
+            analysis_script_path_local = (
+                self.hpc_input_dir_local / f"{simulation_id}_analysis.sh"
+            )
+            analysis_script_path_remote = (
+                self.hpc_input_dir_remote / f"{simulation_id}_analysis.sh"
+            )
+
+            if overwrite_existing or not analysis_script_path_local.exists():
+                analysis_script_path_local.write_text(analysis_script)
+
+            slurm_id_simulation = f"ID_{simulation_id[:16]}_SIMULATION"
+            slurm_id_analysis = f"ID_{simulation_id[:16]}_ANALYSIS"
+
+            master_script += f"{slurm_id_simulation}=$(sbatch --parsable {simulation_script_path_remote})\n"
+            master_script += (
+                f"{slurm_id_analysis}=$(sbatch --parsable --dependency=afterok"
+                f":${{{slurm_id_simulation}}} {analysis_script_path_remote})\n\n"
+            )
+
+            master_analysis_script += f" {simulation_id}"
+
+            slurm_ids_analysis.append(slurm_id_analysis)
+
+        master_script += f"sbatch --dependency=afterok"
+        for slurm_id_analysis in slurm_ids_analysis:
+            master_script += f":${{{slurm_id_analysis}}}"
+        master_script += f" {master_analysis_script_path_remote}\n"
+
+        master_script_path_local = self.hpc_input_dir_local / f"{sim_set_id}_master.sh"
+        self.master_script_path_remote = (
+            self.hpc_input_dir_remote / f"{sim_set_id}_master.sh"
+        )
+
+        if overwrite_existing or not master_script_path_local.exists():
+            master_script_path_local.write_text(master_script)
+
+        if overwrite_existing or not master_analysis_script_path_local.exists():
+            master_analysis_script_path_local.write_text(master_analysis_script)
+
+    def _create_parameter_files(self, overwrite_existing=False):
+        logger.info("Creating parameter files")
+        self._simulation_ids = []
+
+        for params in iter(self):
+            params_json = create_params_json(params=params)
+            sim_id = make_sim_id(params_json=params_json)
+            param_path = self.hpc_input_dir_local / f"{sim_id}{self._param_path_suffix}"
+
+            if overwrite_existing or not param_path.exists():
+                param_path.write_text(params_json)
+
+            self._simulation_ids.append(sim_id)
+
+    def _push_files(self, dry_run=False):
+        logger.info("Pushing parameter and job files to remote")
+
+        try:
+            fabric.Connection(host=self.host_remote, user=self.user_remote).run(
+                f"mkdir -p {self.hpc_output_dir_remote}"
+            )
+        except Exception:
+            raise IOError(f"Failed to create output directory on remote host")
+
+        cmd = [
+            "rsync",
+            "-haz",
+            f"{self.hpc_input_dir_local}",
+            f"{self.user_remote}@{self.host_remote_transfer}:{self.hpc_input_dir_remote.parent}",
+        ]
+        if dry_run:
+            print(shlex.join(cmd))
+        else:
+            try:
+                subprocess.run(
+                    cmd,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                raise IOError(f"rsync failed on push: {e!r}")
+
+    def _pull_files(self, dry_run=False, system_quantities_only=False):
+        logger.info("Pulling result files from remote")
+        if system_quantities_only:
+            cmd = [
+                "rsync",
+                "-haz",
+                f"{self.user_remote}@{self.host_remote_transfer}:{self.hpc_output_dir_remote}/system_quantities.pq",
+                str(self.hpc_output_dir_local),
+            ]
+        else:
+            cmd = [
+                "rsync",
+                "-haz",
+                f"{self.user_remote}@{self.host_remote_transfer}:{self.hpc_output_dir_remote}",
+                str(self.hpc_output_dir_local.parent),
+            ]
+        if dry_run:
+            print(shlex.join(cmd))
+        else:
+            try:
+                subprocess.run(
+                    cmd,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                raise IOError(f"rsync failed on pull: {e!r}")
+
+    def setup(self, overwrite_existing=False, push=True, dry_run=False):
+        self.hpc_input_dir_local.mkdir(exist_ok=True, parents=True)
+        self.hpc_output_dir_local.mkdir(exist_ok=True, parents=True)
+        self._create_parameter_files(overwrite_existing=overwrite_existing)
+        sim_set_id = make_sim_id("".join(self._simulation_ids))
+        self._create_slurm_submission_scripts(
+            ntasks=1,
+            time=self.slurm_max_time,
+            account=self.slurm_account,
+            mail_user=self.slurm_user_email,
+            mail_type=self.slurm_mail_type,
+            output="simulation-%j.out",
+            error="simulation-%j.err",
+            overwrite_existing=overwrite_existing,
+            sim_set_id=sim_set_id,
+        )
+
+        if push:
+            self._push_files(dry_run=dry_run)
+
+    def run(self, overwrite_existing=False, dry_run=False):
+        self.setup(overwrite_existing=overwrite_existing, dry_run=dry_run, push=True)
+        try:
+            fab_res = fabric.Connection(
+                host=self.host_remote, user=self.user_remote
+            ).run(
+                f". /etc/profile.d/10_modules.sh && sbatch --parsable {self.master_script_path_remote}",
+                hide=True,
+            )
+        except Exception:
+            raise IOError(f"Failed to submit the master slurm job")
+        else:
+            self.slurm_master_job_id = int(fab_res.stdout)
+            logger.info(f"Submitted slurm job {self.slurm_master_job_id}")
+
+    def pull(self, dry_run=False, system_quantities_only=False):
+        if self.slurm_master_job_id is None:
+            logging.info("Unknown job, downloading data...")
+            self._pull_files(
+                dry_run=dry_run, system_quantities_only=system_quantities_only
+            )
+        else:
+            try:
+                # TODO: This is broken/faulty as the master job terminates when everything else is submitted.
+                #  This does, however, not mean that everything else has finished.
+                fabric.Connection(host=self.host_remote, user=self.user_remote).run(
+                    f"squeue -j {self.slurm_master_job_id}",
+                    hide=True,
+                )
+            except invoke.exceptions.UnexpectedExit:
+                logging.info("Job finished, downloading data...")
+                self._pull_files(
+                    dry_run=dry_run, system_quantities_only=system_quantities_only
+                )
+            except Exception:
+                raise IOError(f"Failed to query slurm job")
+            else:
+                logger.info(f"Job still running")
+
+    def __init__(
+        self,
+        *,
+        data_dir: Union[str, Path],
+        data_dir_remote: Path,
+        host_remote: str,
+        host_remote_transfer: str,
+        user_remote: str,
+        base_params: Optional[dict[str, dict[str, Any]]] = None,
+        zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
+        product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
+        cython: bool = True,
+        debug: bool = False,
+        max_workers: Optional[int] = None,
+        process_chunksize: int = 1,
+        jsonl_chunksize: int = 1000,
+        event_path_suffix: str = ".jsonl",
+        param_path_suffix: str = "_params.json",
+        validate: bool = False,
+        slurm_user_email: str = "felix.jung@tu-dresden.de",
+        slurm_mail_type: str = "END",
+        slurm_account: str = "p_colldyn",
+        slurm_max_time: str = "05:00:00",
+        slurm_memory=2000,
+    ) -> None:
+
+        super().__init__(
+            data_dir=data_dir,
+            base_params=base_params,
+            zip_params=zip_params,
+            product_params=product_params,
+            cython=cython,
+            debug=debug,
+            max_workers=max_workers,
+            process_chunksize=process_chunksize,
+            jsonl_chunksize=jsonl_chunksize,
+            event_path_suffix=event_path_suffix,
+            param_path_suffix=param_path_suffix,
+            validate=validate,
+        )
+
+        self.data_dir_remote = Path(data_dir_remote)
+
+        self.slurm_user_email = slurm_user_email
+        self.slurm_mail_type = slurm_mail_type
+        self.slurm_account = slurm_account
+        self.slurm_max_time = slurm_max_time
+        self.slurm_memory = slurm_memory
+        self.user_remote = user_remote
+        self.host_remote = host_remote
+        self.host_remote_transfer = host_remote_transfer
+
+        self.slurm_master_job_id = None
+
+        self.hpc_input_dir_local = self.data_dir / "hpc_input"
+        self.hpc_output_dir_local = self.data_dir / "hpc_output"
+
+        self.hpc_input_dir_remote = self.data_dir_remote / "hpc_input"
+        self.hpc_output_dir_remote = self.data_dir_remote / "hpc_output"

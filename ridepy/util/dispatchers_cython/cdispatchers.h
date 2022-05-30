@@ -31,6 +31,8 @@ InsertionResult<Loc> brute_force_total_traveltime_minimizing_dispatcher(
       stoplist of the vehicle, to be mapped to a new stoplist
   space
       transport space the vehicle is operating on
+  debug
+    Print debug info
 
   Returns
   -------
