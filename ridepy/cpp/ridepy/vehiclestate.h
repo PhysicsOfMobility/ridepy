@@ -32,8 +32,10 @@ public:
         // iterate over stops in list to gather all stops that will be serviced until new_time
         for (const Stop<Loc> &stop : stoplist) {
             double service_time = std::max(stop.estimated_arrival_time,stop.time_window.min);
-            if (service_time < new_time)
+            if (service_time <= new_time)
                 stopEvents.push_back({stop.action,stop.request->request_id,vehicle_id,service_time});
+            else
+                break;
         }
 
         // remove all serviced stops from list
