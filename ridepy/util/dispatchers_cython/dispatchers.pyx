@@ -6,6 +6,7 @@ from .cdispatchers cimport (
 AbstractDispatcher as CAbstractDispatcher,
 BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
 SimpleEllipseDispatcher as CSimpleEllipseDispatcher,
+ExternalCost
 )
 
 
@@ -26,14 +27,14 @@ cdef class Dispatcher:
 
 
 cdef class BruteForceTotalTravelTimeMinimizingDispatcher(Dispatcher):
-    def __cinit__(self, loc_type):
+    def __cinit__(self, loc_type, external_cost=ExternalCost.absolute_detour):
         if loc_type == LocType.R2LOC:
             self.u_dispatcher.dispatcher_r2loc_ptr = (
-                new CBruteForceTotalTravelTimeMinimizingDispatcher[R2loc]()
+                new CBruteForceTotalTravelTimeMinimizingDispatcher[R2loc](external_cost)
                 )
         elif loc_type == LocType.INT:
             self.u_dispatcher.dispatcher_int_ptr = (
-                new CBruteForceTotalTravelTimeMinimizingDispatcher[int]()
+                new CBruteForceTotalTravelTimeMinimizingDispatcher[int](external_cost)
             )
         else:
             raise ValueError("This line should never have been reached")
