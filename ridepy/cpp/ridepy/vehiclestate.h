@@ -30,7 +30,14 @@ public:
         std::vector<StopEvent> stopEvents;
 
         // iterate over stops in list to gather all stops that will be serviced until new_time
+        bool first = true;
         for (const Stop<Loc> &stop : stoplist) {
+            // skip first element in stoplist as this stop was already served at last fast_forward_time
+            if (first){
+                first = false;
+                continue;
+            }
+
             double service_time = std::max(stop.estimated_arrival_time,stop.time_window.min);
             if (service_time <= new_time)
                 stopEvents.push_back({stop.action,stop.request->request_id,vehicle_id,service_time});
@@ -39,7 +46,7 @@ public:
         }
 
         // remove all serviced stops from list
-        const int serviced_stops = stopEvents.size() < stoplist.size() ? stopEvents.size() : stoplist.size()-1;
+        const int serviced_stops = stopEvents.size();
         for (int i=0; i<serviced_stops; i++)
             stoplist.pop_front();
 
@@ -53,7 +60,6 @@ public:
             } else {
                 // wait at last serviced stop until new_time if stoplist is empty
                 stoplist[0].estimated_arrival_time = new_time;
-                stoplist[0].action = StopAction::INTERNAL; // was this forgotten in the original implementation?
             }
         }
 
