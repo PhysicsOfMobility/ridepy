@@ -56,6 +56,8 @@ def update_events_files(
 def main():
     """ridepy command-line interface"""
 
+    pass
+
 
 if __name__ == "__main__":
     cli()
