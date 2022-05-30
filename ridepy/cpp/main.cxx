@@ -10,6 +10,8 @@ using std::endl;
 #include "ridepy/r2loc.h"
 #include "ridepy/transportationrequest.h"
 
+#include "ridepy/euclidean2d.h"
+
 using namespace ridepy;
 
 int main() {
@@ -29,6 +31,17 @@ int main() {
     cout << "transportation requests:" << endl;
     for (auto request : requests)
         cout << std::fixed << request.request_id << ":\t" << request.origin << " -> " << request.destination << endl;
+
+    // test TransportSpace
+    Euclidean2D testSpace(2);
+
+    R2loc origin = {0,0};
+    R2loc destinantion = {1,1};
+
+    cout << "distance:    " << testSpace.d(origin,destinantion) << endl;
+    cout << "travel time: " << testSpace.t(origin,destinantion) << endl;
+    cout << "interp_dist: " << testSpace.interp_dist(origin,destinantion,0.707).location << endl;
+    cout << "interp_time: " << testSpace.interp_time(origin,destinantion,0.3535).location << endl;
 
     return 0;
 }
