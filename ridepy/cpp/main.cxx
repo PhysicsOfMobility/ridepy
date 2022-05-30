@@ -11,7 +11,7 @@ using std::endl;
 #include "ridepy/transportationrequest.h"
 
 #include "ridepy/euclidean2d.h"
-#include "ridepy/vehiclestate.h"
+#include "ridepy/fleetstate.h"
 
 using namespace ridepy;
 
@@ -43,6 +43,10 @@ int main() {
     cout << "travel time: " << testSpace.t(origin,destinantion) << endl;
     cout << "interp_dist: " << testSpace.interp_dist(origin,destinantion,0.707).location << endl;
     cout << "interp_time: " << testSpace.interp_time(origin,destinantion,0.3535).location << endl;
+
+    // test fleetstate
+
+    FleetState<R2loc> fleet(10,8,R2loc(0,0),&testSpace,nullptr);
 
     return 0;
 }
