@@ -521,7 +521,6 @@ class SimulationSet:
                 space=space_obj,
                 n_vehicles=10,
                 initial_location=(0, 0),
-                initial_locations=None,
                 seat_capacity=8,
                 transportation_request_cls=transportation_request_cls,
                 vehicle_state_cls=vehicle_state_cls,
