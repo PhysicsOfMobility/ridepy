@@ -36,3 +36,6 @@ cdef class Manhattan2D(TransportSpace):
 
 cdef class Graph(TransportSpace):
     cdef CGraphSpace[int] *derived_ptr
+
+cdef class Grid(Graph):
+    ...

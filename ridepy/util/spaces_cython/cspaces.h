@@ -71,6 +71,26 @@ public:
 };
 
 /*!
+ * \brief The Euclidean2D class allows vehicles to drive anywhere on the 2D
+ * plane.
+ */
+class Grid : public TransportSpace<R2loc> {
+public:
+  Grid(int n = 100, int m = 100, double dn = 1., double dm = 1.,
+       double velocity = 1.);
+
+  double d(R2loc u, R2loc v) override;
+  double t(R2loc u, R2loc v) override;
+  pair<R2loc, double> interp_dist(R2loc u, R2loc v,
+                                  double dist_to_dest) override;
+  pair<R2loc, double> interp_time(R2loc u, R2loc v,
+                                  double time_to_dest) override;
+
+  int n, m;
+  double dn, dm, velocity;
+};
+
+/*!
  * @}
  */
 

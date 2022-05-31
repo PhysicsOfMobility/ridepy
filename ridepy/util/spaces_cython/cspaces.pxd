@@ -39,6 +39,11 @@ cdef extern from "cspaces.h" namespace 'ridepy':
         Manhattan2D()
         Manhattan2D(double)
 
+    cdef cppclass Grid(TransportSpace[R2loc]):
+        int n, m
+        double dn,dm, velocity
+        Grid()
+        Grid(n, m, dn, dm, double)
 
 cdef extern from "boost_graph_space.h" namespace 'ridepy':
     cdef cppclass GraphSpace[Loc](TransportSpace[Loc]):

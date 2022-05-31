@@ -4,6 +4,7 @@ import random
 import warnings
 import itertools as it
 import networkx as nx
+import numpy as np
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
@@ -315,3 +316,81 @@ cdef class Graph(TransportSpace):
             weights=self.weights,
             velocity=self.velocity,
         )
+
+
+cdef class Grid(Graph):
+    """
+    Undirected square lattice
+    """
+
+    def __cinit__(self, n, m, dn=1, dm=1, velocity=1):
+        self.loc_type = LocType.R2LOC
+        self.derived_ptr = self.u_space.space_r2loc_ptr = new CGrid(n, m, dn, dm, velocity)
+
+    def __init__(self, n, m, dn=1, dm=1, velocity=1):
+        """
+        Parameters
+        ----------
+        n
+        m
+        dn
+        dm
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
+        TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+
+        self.n = n
+        self.m = m
+        self.dn = dn
+        self.dm= dm
+
+        self._vertices = np.c_[
+            np.repeat(np.linspace(0, (n - 1) * dn, n), m),
+            np.tile(np.linspace(0, (m - 1) * dm, m), n),
+        ]
+
+        edges = []
+        rows = self._vertices.reshape(-1, m, 2)
+        for row in rows:
+            edges += [(tuple(v1), tuple(v2)) for v1, v2 in zip(row, row[1:])]
+
+        for r1, r2 in zip(rows, rows[1:]):
+            edges += [(tuple(v1), tuple(v2)) for v1, v2 in zip(r1, r2)]
+        self._edges = np.array(edges)
+
+        self._weights = np.ones(self._edges.shape[0])
+
+    def __dealloc__(self):
+        del self.derived_ptr
+
+    def __repr__(self):
+        return (
+                f"Grid(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, "
+                f"velocity={self.velocity})"
+        )
+
+    @property
+    def velocity(self):
+        return self.velocity
+
+    def random_point(self):
+        return random.choice(self.vertices)
+
+    def asdict(self):
+        return dict(n=self.n, m=self.m, dn=self.dn, dm=self.dm, velocity=self.velocity)
+
+    def __reduce__(self):
+        return self.__class__, (self.n, self.m, self.dn, self.dm, self.velocity)
+
+    @property
+    def vertices(self):
+        return self._vertices
+
+    @property
+    def edges(self):
+        return self._edges
+
+    @property
+    def weights(self):
+        return self._weights
