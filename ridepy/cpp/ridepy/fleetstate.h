@@ -7,14 +7,14 @@
 
 #include "vehiclestate.h"
 #include "transportationrequest.h"
+#include "events.h"
 
 namespace ridepy {
 
 /*!
  * \brief The FleetState class holds
- * \tparam Loc The type used to identify locations in the underlying TransportSpace
+ * \tparam Loc The type used to identify locations in the underlying TransportSpace. It has at least to provide a proper implementation of the operator==
  *
- * The virtual functions fast_forward() and handle_transportation_request() can be overwritten in childclasses to implement e.g. paralellisation or other optimisations.
  */
 template <typename Loc>
 class FleetState
@@ -29,7 +29,7 @@ public:
         : m_transportSpace(transportSpace), m_dispatcher(dispatcher){
 
         // initial stoplist only contains the startLocation, that is reached immediately
-        std::deque<Stop<Loc>> initialStopList = {Stop<Loc>(startLocation,new Request(-1,startTime),StopAction::INTERNAL,startTime)};
+        std::deque<Stop<Loc>> initialStopList = {Stop<Loc>(startLocation,Request(-1,startTime),StopAction::INTERNAL,startTime)};
 
         m_vehicles.reserve(numVehicles);
         for (int i=0; i<numVehicles; i++)
@@ -65,6 +65,80 @@ public:
      */
     int numVehicles() const{
         return m_vehicles.size();
+    }
+
+    virtual std::vector<StopEvent> fast_forward(const double t){
+        std::list<StopEvent> sortedEvents;
+
+        // fast forward each vehicle
+        for (VehicleState<Loc> &vehicle : m_vehicles){
+            const std::vector<StopEvent> newEvents = vehicle.fast_forward_time(t);
+            // insertionsort events by timestamp
+            for (const StopEvent &e : newEvents){
+                // check if current event has to be appended or inserted
+                if (e.timestamp > sortedEvents.back().timestamp){
+                    sortedEvents.push_back(e);
+                } else {
+                    for (auto it = sortedEvents.begin(); it != sortedEvents.end(); ++it){
+                        if (it->timestamp > e.timestamp){
+                            sortedEvents.insert(it,e);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // return all sorted events as a vector
+        return std::vector<StopEvent>(sortedEvents.begin(),sortedEvents.end());
+    }
+
+
+    /*!
+     * \brief Sumits a transportation request to the fleet state and checks whether this request could be serviced or not
+     * \param request The request to handle
+     * \return An event, that states whether or not the request can be handled. If the request could be handled, it returns an estimate for the travel time (relative to pickup_timewindow.min), if the ride offer would be accepted
+     */
+    virtual RequestEvent submit_transportation_request(const TransportationRequest<Loc> &request){
+        const int N = numVehicles();
+
+        // reject trivial requests
+        if (request.origin == request.destination)
+            return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,{0,0},"Do not handle trivial requests");
+
+        // get for each vehicle the cost for adding this request to its stoplist
+        std::vector<SingleVehicleSolution> solutions;
+        solutions.reserve(N);
+        for (VehicleState<Loc> &vehicle : m_vehicles)
+            solutions.push_back(vehicle.handle_transportation_request_single_vehicle(request));
+
+        // choose vehicle with minimal cost
+        double min_cost = INFINITY;
+        int    opt_vehicle = -1;
+        for (int i=0; i<N; i++){
+            if (solutions.at(i).min_cost < min_cost){
+                min_cost = solutions.at(i).min_cost;
+                opt_vehicle = i;
+            }
+        }
+
+        // if min_cost = INFINITY, the request can't be handled
+        if (min_cost == INFINITY)
+            return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,{0,0},"Can not handle request");
+
+        // estimate travel time if customer would accept the ride
+        const TimeWindow estimated_invehicle_time = m_vehicles.at(opt_vehicle).estimate_travel_time(request);
+
+        return RequestEvent(EventType::REQUESTOFFERING_EVENT,request,estimated_invehicle_time,"Offering a ride");
+    }
+
+    /*!
+     * \brief Exectues a TransportationRequest that previously has been evaluated by calling submit_transportation_request()
+     * \param request_id The id of the request to be executed
+     * \return ...
+     */
+    virtual RequestEvent execute_transportation_request(const int request_id){
+        return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,{0,0},"execute_transportation_request not implemented yet");
     }
 
 private:

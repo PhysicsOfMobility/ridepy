@@ -12,6 +12,10 @@ namespace ridepy {
  */
 typedef std::pair<double, double> R2loc;
 
+inline bool operator==(const R2loc &v1, const R2loc &v2){
+    return v1.first == v2.first && v1.second == v2.second;
+}
+
 /*!
  * \brief Computes the direct sum of \p v1 and \p v2
  */

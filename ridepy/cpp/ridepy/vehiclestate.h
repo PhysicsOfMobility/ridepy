@@ -75,6 +75,22 @@ public:
         m_stoplist_new.clear();;
     }
 
+    TimeWindow estimate_travel_time(const TransportationRequest<Loc> &request, const bool useNewList = true) const{
+        TimeWindow invehicle_time = {INFINITY,INFINITY};
+
+        const std::deque<Stop<Loc>> &stoplistRef = useNewList ? m_stoplist_new : stoplist;
+        for (const Stop<Loc> &stop : stoplistRef){
+            if (stop.request.request_id == request.request_id){
+                if (stop.action == StopAction::PICKUP)
+                    invehicle_time.min = stop.estimated_arrival_time;
+                else if (stop.action == StopAction::DROPOFF)
+                    invehicle_time.max = stop.estimated_arrival_time;
+            }
+        }
+
+        return invehicle_time;
+    }
+
 private:
     std::deque<Stop<Loc>> m_stoplist_new;
     AbstractDispatcher<Loc> &m_dispatcher;

@@ -3,13 +3,16 @@
 
 #include <string>
 
+#include "request.h"
+#include "timewindow.h"
+
 namespace ridepy{
 
 enum class EventType{
     EVENT,
     STOP_EVENT,
     REQUEST_EVENT,
-    REQUESTHANDLE_EVENT,
+    REQUESTOFFERING_EVENT,
     REQUESTREJECTION_EVENT
 };
 
@@ -30,10 +33,11 @@ struct Event{
  */
 struct RequestEvent : public Event{
     int requestId;
-    double estimate;
+    TimeWindow estimated_invehicle_time;
+    std::string comment;
 
-    RequestEvent(const EventType type = EventType::REQUEST_EVENT, const double timestamp =0., const int requestId = 0, const double estimate = 0.)
-        : Event(type,timestamp), requestId(requestId), estimate(estimate)
+    RequestEvent(const EventType type = EventType::REQUEST_EVENT, const Request &request = {-1,0}, const TimeWindow estimated_invehicle_time = 0., const std::string &comment = "")
+        : Event(type,request.creation_timestamp), requestId(request.request_id), estimated_invehicle_time(estimated_invehicle_time), comment(comment)
     {}
 };
 
