@@ -2,7 +2,7 @@
 #define VEHICLESTATE_H
 
 #include <vector>
-#include <list>
+#include <deque>
 #include <algorithm>
 
 #include "stop.h"
@@ -18,10 +18,10 @@ class VehicleState
 public:
     int vehicle_id = -1;
     int seat_capacity = 1;
-    // note that StopList is a std::list compared to std::vector in the original implementation
-    std::list<Stop<Loc>> stoplist;
+    // use deque instead of vector here for efficient pop_front()
+    std::deque<Stop<Loc>> stoplist;
 
-    VehicleState(const int vehicle_id, const int seat_capacity, const std::list<Stop<Loc>> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space)
+    VehicleState(const int vehicle_id, const int seat_capacity, const std::deque<Stop<Loc>> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space)
         : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist), m_dispatcher(dispatcher), m_space(space)
     {}
 
@@ -40,15 +40,14 @@ public:
 
             double service_time = std::max(stop.estimated_arrival_time,stop.time_window.min);
             if (service_time <= new_time)
-                stopEvents.push_back({stop.action,stop.request->request_id,vehicle_id,service_time});
+                stopEvents.push_back({stop.action,service_time,stop.request->request_id,vehicle_id});
             else
                 break;
         }
 
         // remove all serviced stops from list
         const int serviced_stops = stopEvents.size();
-        for (int i=0; i<serviced_stops; i++)
-            stoplist.pop_front();
+        stoplist.erase(stoplist.begin(), stoplist.begin() + serviced_stops);
 
         // compute exact position at new_time
         if (stoplist[0].estimated_arrival_time < new_time){
@@ -56,7 +55,6 @@ public:
                 auto nextLocTravelTime = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - new_time);
                 stoplist[0].location = nextLocTravelTime.location;
                 stoplist[0].estimated_arrival_time = new_time + nextLocTravelTime.distance;
-                stoplist[0].action = StopAction::INTERNAL; // was this forgotten in the original implementation?
             } else {
                 // wait at last serviced stop until new_time if stoplist is empty
                 stoplist[0].estimated_arrival_time = new_time;
@@ -78,7 +76,7 @@ public:
     }
 
 private:
-    std::list<Stop<Loc>> m_stoplist_new;
+    std::deque<Stop<Loc>> m_stoplist_new;
     AbstractDispatcher<Loc> &m_dispatcher;
     TransportSpace<Loc> &m_space;
 };

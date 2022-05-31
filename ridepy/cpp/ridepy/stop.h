@@ -4,6 +4,8 @@
 #include "request.h"
 #include "timewindow.h"
 
+#include "events.h"
+
 namespace ridepy {
 
 enum class StopAction {
@@ -29,11 +31,14 @@ struct Stop{
     {}
 };
 
-struct StopEvent{
+struct StopEvent : public Event{
     StopAction action;
-    int request_id;
-    int vehicle_id;
-    double timestamp;
+    int requestId;
+    int vehicleId;
+
+    StopEvent(const StopAction action = StopAction::INTERNAL, const double timestamp = 0., const int requestId = 0, const int vehicleId = 0)
+        : Event(EventType::STOP_EVENT,timestamp), action(action), requestId(requestId), vehicleId(vehicleId)
+    {}
 };
 
 } // namespace ridepy

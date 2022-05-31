@@ -2,15 +2,19 @@
 #define FLEETSTATE_H
 
 #include <vector>
+#include <deque>
 #include <list>
 
 #include "vehiclestate.h"
+#include "transportationrequest.h"
 
 namespace ridepy {
 
 /*!
  * \brief The FleetState class holds
  * \tparam Loc The type used to identify locations in the underlying TransportSpace
+ *
+ * The virtual functions fast_forward() and handle_transportation_request() can be overwritten in childclasses to implement e.g. paralellisation or other optimisations.
  */
 template <typename Loc>
 class FleetState
@@ -25,7 +29,7 @@ public:
         : m_transportSpace(transportSpace), m_dispatcher(dispatcher){
 
         // initial stoplist only contains the startLocation, that is reached immediately
-        std::list<Stop<Loc>> initialStopList = {Stop<Loc>(startLocation,new Request(-1,startTime),StopAction::INTERNAL,startTime)};
+        std::deque<Stop<Loc>> initialStopList = {Stop<Loc>(startLocation,new Request(-1,startTime),StopAction::INTERNAL,startTime)};
 
         m_vehicles.reserve(numVehicles);
         for (int i=0; i<numVehicles; i++)

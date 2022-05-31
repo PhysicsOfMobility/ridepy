@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # build library
-file(GLOB RIDEPY_FILES
+file(GLOB_RECURSE RIDEPY_FILES
     ridepy/*.cxx
     ridepy/*.h
 )
