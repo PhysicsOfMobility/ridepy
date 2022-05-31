@@ -75,7 +75,7 @@ pair<R2loc, double> Grid::interp_dist(R2loc u, R2loc v, double dist_to_dest) {
   int x = ceil(x_prec / dm);
   int y = ceil(y_prec / dn);
 
-  double jump_time = x_prec - x + y_prec - y;
+  double jump_time = x - x_prec + y - y_prec;
 
   return make_pair(R2loc{x, y}, jump_time);
 }
