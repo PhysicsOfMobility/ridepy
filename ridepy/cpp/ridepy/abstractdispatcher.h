@@ -1,7 +1,7 @@
 #ifndef ABSTRACTDISPATCHER_H
 #define ABSTRACTDISPATCHER_H
 
-#include <vector>
+#include <deque>
 
 #include "insertionresult.h"
 #include "transportationrequest.h"
@@ -13,7 +13,7 @@ template <typename Loc>
 class AbstractDispatcher
 {
 public:
-    virtual InsertionResult<Loc> operator()(TransportationRequest<Loc> &request, std::vector<Stop<Loc>> &stoplist, TransportSpace<Loc> *space, int seat_capacity,
+    virtual InsertionResult<Loc> operator()(const TransportationRequest<Loc> &request, const std::deque<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
                                             bool debug = false) = 0;
 };
 

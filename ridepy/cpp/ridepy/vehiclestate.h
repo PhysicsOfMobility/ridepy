@@ -40,7 +40,7 @@ public:
 
             double service_time = std::max(stop.estimated_arrival_time,stop.time_window.min);
             if (service_time <= new_time)
-                stopEvents.push_back({stop.action,service_time,stop.request->request_id,vehicle_id});
+                stopEvents.push_back({stop.action,service_time,stop.request.request_id,vehicle_id});
             else
                 break;
         }
@@ -65,7 +65,7 @@ public:
     }
 
     SingleVehicleSolution handle_transportation_request_single_vehicle(const TransportationRequest<Loc> &request) {
-        InsertionResult<Loc> insertion_result = dispatcher(request, stoplist, m_space, seat_capacity);
+        InsertionResult<Loc> insertion_result = m_dispatcher(request, stoplist, m_space, seat_capacity);
         m_stoplist_new = insertion_result.new_stoplist;
         return insertion_result.toSingleVehicleSolution(vehicle_id);
     }

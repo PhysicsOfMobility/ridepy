@@ -1,7 +1,7 @@
 #ifndef INSERTIONRESULT_H
 #define INSERTIONRESULT_H
 
-#include <vector>
+#include <deque>
 
 #include "timewindow.h"
 #include "stop.h"
@@ -11,7 +11,7 @@ namespace ridepy {
 
 template <typename Loc>
 struct InsertionResult{
-    std::vector<Stop<Loc>> new_stoplist;
+    std::deque<Stop<Loc>> new_stoplist;
     double min_cost = 0;
     TimeWindow pickup_window;
     TimeWindow dropoff_window;
