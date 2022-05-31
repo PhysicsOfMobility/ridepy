@@ -43,7 +43,7 @@ cdef extern from "cspaces.h" namespace 'ridepy':
         int n, m
         double dn,dm, velocity
         Grid()
-        Grid(n, m, dn, dm, double)
+        Grid(int n, int m, double dn, double dm, double velocity)
 
 cdef extern from "boost_graph_space.h" namespace 'ridepy':
     cdef cppclass GraphSpace[Loc](TransportSpace[Loc]):

@@ -324,11 +324,11 @@ cdef class Grid(TransportSpace):
     Undirected square lattice
     """
 
-    def __cinit__(self, n, m, dn=1, dm=1, velocity=1):
+    def __cinit__(self, n=100, m=100, dn=1, dm=1, velocity=1):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CGrid(n, m, dn, dm, velocity)
 
-    def __init__(self, n, m, dn=1, dm=1, velocity=1):
+    def __init__(self, n=100, m=100, dn=1, dm=1, velocity=1):
         """
         Parameters
         ----------
