@@ -67,6 +67,8 @@ double Grid::t(R2loc u, R2loc v) { return this->d(u, v) / this->velocity; }
 pair<R2loc, double> Grid::interp_dist(R2loc u, R2loc v, double dist_to_dest) {
   double frac = dist_to_dest / this->d(u, v);
 
+  // This is not the only way of doing it, but it is an easy way.
+
   double x_prec = u.first * frac + (1 - frac) * v.first;
   double y_prec = u.second * frac + (1 - frac) * v.second;
 
