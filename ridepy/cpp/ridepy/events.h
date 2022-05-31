@@ -13,7 +13,8 @@ enum class EventType{
     STOP_EVENT,
     REQUEST_EVENT,
     REQUESTOFFERING_EVENT,
-    REQUESTREJECTION_EVENT
+    REQUESTREJECTION_EVENT,
+    REQUESTACCEPTION_EVENT
 };
 
 /*!
@@ -36,8 +37,11 @@ struct RequestEvent : public Event{
     TimeWindow estimated_invehicle_time;
     std::string comment;
 
-    RequestEvent(const EventType type = EventType::REQUEST_EVENT, const Request &request = {-1,0}, const TimeWindow estimated_invehicle_time = 0., const std::string &comment = "")
+    RequestEvent(const EventType type = EventType::REQUEST_EVENT, const Request &request = {-1,0}, const TimeWindow estimated_invehicle_time = {0.,0.}, const std::string &comment = "")
         : Event(type,request.creation_timestamp), requestId(request.request_id), estimated_invehicle_time(estimated_invehicle_time), comment(comment)
+    {}
+    RequestEvent(const EventType type = EventType::REQUEST_EVENT, const Request &request = {-1,0}, const std::string &comment = "")
+        : Event(type,request.creation_timestamp), requestId(request.request_id), estimated_invehicle_time({0.,0.}), comment(comment)
     {}
 };
 

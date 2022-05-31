@@ -1,6 +1,7 @@
 #ifndef FLEETSTATE_H
 #define FLEETSTATE_H
 
+#include <sstream>
 #include <vector>
 #include <deque>
 #include <list>
@@ -89,6 +90,9 @@ public:
             }
         }
 
+        // invalidate queries of travel requests
+        m_last_request.request_id = -1;
+
         // return all sorted events as a vector
         return std::vector<StopEvent>(sortedEvents.begin(),sortedEvents.end());
     }
@@ -104,7 +108,7 @@ public:
 
         // reject trivial requests
         if (request.origin == request.destination)
-            return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,{0,0},"Do not handle trivial requests");
+            return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,"Do not handle trivial requests");
 
         // get for each vehicle the cost for adding this request to its stoplist
         std::vector<SingleVehicleSolution> solutions;
@@ -124,12 +128,14 @@ public:
 
         // if min_cost = INFINITY, the request can't be handled
         if (min_cost == INFINITY)
-            return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,{0,0},"Can not handle request");
+            return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,"Can not handle request");
 
-        // estimate travel time if customer would accept the ride
-        const TimeWindow estimated_invehicle_time = m_vehicles.at(opt_vehicle).estimate_travel_time(request);
+        // save request data in case the customer accepts the offer
+        m_last_request = request;
+        m_last_request_optimal_vehicle = opt_vehicle;
 
-        return RequestEvent(EventType::REQUESTOFFERING_EVENT,request,estimated_invehicle_time,"Offering a ride");
+        // notify caller that the ride is possible and what would be the estimated invehicle time window for the ride
+        return RequestEvent(EventType::REQUESTOFFERING_EVENT,request,m_vehicles.at(opt_vehicle).estimate_travel_time(request),"Offering a ride");
     }
 
     /*!
@@ -138,7 +144,17 @@ public:
      * \return ...
      */
     virtual RequestEvent execute_transportation_request(const int request_id){
-        return RequestEvent(EventType::REQUESTREJECTION_EVENT,request,{0,0},"execute_transportation_request not implemented yet");
+        if (m_last_request.request_id == -1)
+            return RequestEvent(EventType::REQUESTREJECTION_EVENT,m_last_request,"Last request is invalid. Probably there was a fast_forward since the last request was submitted.");
+        if (m_last_request.request_id != request_id)
+            return RequestEvent(EventType::REQUESTREJECTION_EVENT,m_last_request,"The request doesn't match the last submitted request.");
+
+        // tell the optimal vehicle to service this request
+        m_vehicles.at(m_last_request_optimal_vehicle).select_new_stoplist();
+        m_last_request.request_id = -1;
+        std::stringstream s;
+        s << "Serve request " << m_last_request.request_id << " with vehicle " << m_last_request_optimal_vehicle << ".";
+        return RequestEvent(EventType::REQUESTOFFERING_EVENT,m_last_request,s.str());
     }
 
 private:
@@ -146,6 +162,10 @@ private:
 
     TransportSpace<Loc>     *m_transportSpace;
     AbstractDispatcher<Loc> *m_dispatcher;
+
+    // store informations on last request query, if m_last_request.request_id < 0, they are invalid
+    Request m_last_request = {-1,0};
+    int m_last_request_optimal_vehicle = 0;
 
 };
 
