@@ -16,6 +16,11 @@ struct InsertionResult{
     TimeWindow pickup_window;
     TimeWindow dropoff_window;
 
+    InsertionResult(const std::deque<Stop<Loc>> new_stoplist = {}, const double min_cost = INFINITY,
+                    const TimeWindow &pickup_window = TimeWindow(INFINITY,INFINITY), const TimeWindow &dropoff_window = TimeWindow(INFINITY,INFINITY))
+        : new_stoplist(new_stoplist), min_cost(min_cost), pickup_window(pickup_window), dropoff_window(dropoff_window)
+    {}
+
     SingleVehicleSolution toSingleVehicleSolution(const int vehicle_id){
         return SingleVehicleSolution(vehicle_id,min_cost,pickup_window,dropoff_window);
     }

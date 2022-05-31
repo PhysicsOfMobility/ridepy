@@ -12,6 +12,7 @@ using std::endl;
 
 #include "ridepy/euclidean2d.h"
 #include "ridepy/fleetstate.h"
+#include "ridepy/bruteforcetotaltraveltimeminimisingdispatcher.h"
 
 using namespace ridepy;
 
@@ -46,7 +47,7 @@ int main() {
 
     // test fleetstate
 
-    FleetState<R2loc> fleet(10,8,R2loc(0,0),&testSpace,nullptr);
+    FleetState<R2loc> fleet(10,8,R2loc(0,0),&testSpace,new BruteForceTotalTravelTimeMinimizingDispatcher<R2loc>());
 
     return 0;
 }

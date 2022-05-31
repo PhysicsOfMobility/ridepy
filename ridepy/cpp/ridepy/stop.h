@@ -29,6 +29,10 @@ struct Stop{
         : location(location), request(request), action(action),
           estimated_arrival_time(estimated_arrival_time), occupancy_after_servicing(occupancy_after_servicing), time_window(time_window)
     {}
+
+    double estimated_departure_time() const{
+        return estimated_arrival_time > time_window.min ? estimated_arrival_time : time_window.min;
+    }
 };
 
 struct StopEvent : public Event{

@@ -13,8 +13,7 @@ template <typename Loc>
 class AbstractDispatcher
 {
 public:
-    virtual InsertionResult<Loc> operator()(const TransportationRequest<Loc> &request, const std::deque<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
-                                            bool debug = false) = 0;
+    virtual InsertionResult<Loc> operator()(const TransportationRequest<Loc> &request, const std::deque<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity) = 0;
 };
 
 } // namespace ridepy
