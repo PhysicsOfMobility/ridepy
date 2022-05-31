@@ -344,23 +344,26 @@ cdef class Grid(TransportSpace):
         self.n = n
         self.m = m
         self.dn = dn
-        self.dm= dm
+        self.dm = dm
+        self._velocity = velocity
 
-        self._vertices = np.c_[
+        vertices = np.c_[
             np.repeat(np.linspace(0, (n - 1) * dn, n), m),
             np.tile(np.linspace(0, (m - 1) * dm, m), n),
         ]
-
         edges = []
-        rows = self._vertices.reshape(-1, m, 2)
+        rows = vertices.reshape(-1, m, 2)
         for row in rows:
             edges += [(tuple(v1), tuple(v2)) for v1, v2 in zip(row, row[1:])]
 
         for r1, r2 in zip(rows, rows[1:]):
             edges += [(tuple(v1), tuple(v2)) for v1, v2 in zip(r1, r2)]
-        self._edges = np.array(edges)
+        edges = np.array(edges)
+        weights = np.ones(edges.shape[0])
 
-        self._weights = np.ones(self._edges.shape[0])
+        self._weights = weights
+        self._edges = edges
+        self._vertices = vertices
 
     def __dealloc__(self):
         del self.derived_ptr
@@ -373,7 +376,7 @@ cdef class Grid(TransportSpace):
 
     @property
     def velocity(self):
-        return self.velocity
+        return self._velocity
 
     def random_point(self):
         return random.choice(self.vertices)

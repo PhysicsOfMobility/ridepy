@@ -41,4 +41,9 @@ cdef class Graph(TransportSpace):
 
 cdef class Grid(TransportSpace):
     cdef CGrid *derived_ptr
+    cdef readonly int n, m
+    cdef readonly double dn, dm, _velocity
+    cdef readonly vector[pair[float, float]] _vertices
+    cdef readonly vector[pair[pair[float, float], pair[float, float]]] _edges
+    cdef readonly vector[float] _weights
 
