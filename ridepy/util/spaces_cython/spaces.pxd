@@ -7,7 +7,8 @@ from .cspaces cimport (
     Euclidean2D as CEuclidean2D,
     TransportSpace as CTransportSpace,
     Manhattan2D as CManhattan2D,
-    GraphSpace as CGraphSpace
+    GraphSpace as CGraphSpace,
+    Grid as CGrid
 )
 
 from ridepy.data_structures_cython.data_structures cimport LocType, R2loc
@@ -37,5 +38,5 @@ cdef class Manhattan2D(TransportSpace):
 cdef class Graph(TransportSpace):
     cdef CGraphSpace[int] *derived_ptr
 
-cdef class Grid(Graph):
-    ...
+cdef class Grid(TransportSpace):
+    cdef CGrid *derived_ptr

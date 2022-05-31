@@ -70,8 +70,8 @@ pair<R2loc, double> Grid::interp_dist(R2loc u, R2loc v, double dist_to_dest) {
   double x_prec = u.first * frac + (1 - frac) * v.first;
   double y_prec = u.second * frac + (1 - frac) * v.second;
 
-  int x = ceil(x_rec / dm);
-  int y = ceil(y_rec / dn);
+  int x = ceil(x_prec / dm);
+  int y = ceil(y_prec / dn);
 
   double jump_time = x_prec - x + y_prec - y;
 

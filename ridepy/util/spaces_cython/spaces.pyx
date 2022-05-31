@@ -15,7 +15,8 @@ from .cspaces cimport(
     R2loc,
     Euclidean2D as CEuclidean2D,
     Manhattan2D as CManhattan2D,
-    GraphSpace as CGraphSpace
+    GraphSpace as CGraphSpace,
+    Grid as CGrid
 )
 
 from typing import List, Tuple, Optional
@@ -318,7 +319,7 @@ cdef class Graph(TransportSpace):
         )
 
 
-cdef class Grid(Graph):
+cdef class Grid(TransportSpace):
     """
     Undirected square lattice
     """
