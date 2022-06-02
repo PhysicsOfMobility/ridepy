@@ -157,8 +157,8 @@ public:
         return RequestEvent(EventType::REQUESTOFFERING_EVENT,m_last_request,s.str());
     }
 
-    std::vector<Loc> currentVehiclePositions() const{
-        std::vector<Loc> locations;
+    std::vector<std::pair<double, double>> currentVehiclePositions() const{
+        std::vector<std::pair<double, double>> locations;
         locations.reserve(m_vehicles.size());
 
         for (const VehicleState<Loc> &vehicle : m_vehicles)

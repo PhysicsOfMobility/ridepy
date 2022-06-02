@@ -25,12 +25,12 @@ public:
     inline InterpolatedPosition<R2loc> interp_dist(const R2loc &origin, const R2loc &destination, const double dist_to_dest){
         const R2loc normal = (destination-origin)/(abs(origin-destination));
         const R2loc currentPostion = destination - dist_to_dest * normal;
-        return {currentPostion,currentPostion,0};
+        return {currentPostion,currentPostion,0,true};
     }
     inline InterpolatedPosition<R2loc> interp_time(const R2loc &origin, const R2loc &destination, const double time_to_dest){
         const R2loc normal = (destination-origin)/(abs(origin-destination)) * m_velocity;
         const R2loc currentPostion = destination - time_to_dest * normal;
-        return {currentPostion,currentPostion,0};
+        return {currentPostion,currentPostion,0,false};
     }
 
     inline std::pair<double, double> getCoordinates(const InterpolatedPosition<R2loc> &position){

@@ -28,6 +28,11 @@ struct InterpolatedPosition{
      * \brief The remaining (spacial or timelike) distance to \a nextLocation location
      */
     double distance;
+
+    /*!
+     * \brief Flag that states whether the value of \a distance is a spacial distance or not
+     */
+    bool distanceIsSpacial;
 };
 
 template <typename Loc>

@@ -50,9 +50,9 @@ public:
         // compute exact position at new_time
         if (stoplist[0].estimated_arrival_time < new_time){
             if (stoplist.size() > 1){
-                InterpolatedPosition<Loc> interp = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - new_time);
-                stoplist[0].location = interp.nextLocation;
-                stoplist[0].estimated_arrival_time = new_time + interp.distance;
+                m_currentPosition = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - new_time);
+                stoplist[0].location = m_currentPosition.nextLocation;
+                stoplist[0].estimated_arrival_time = new_time + m_currentPosition.distance;
             } else {
                 // wait at last serviced stop until new_time if stoplist is empty
                 stoplist[0].estimated_arrival_time = new_time;
@@ -91,22 +91,10 @@ public:
     }
 
     /*!
-     * \brief Returns the current position of the vehicle
-     * \todo Currently, the next location that will be reached is returned. However, for visualisations it would be better to return the exact, interpolated position
+     * \brief Returns the current position of the vehicle in the plane
      */
-    Loc currentPosition() const{
-        if (stoplist.size() > 1){
-            // vehicle is driving from stoplist[0] to stoplist[1]
-            const double time_to_next_stop = stoplist.at(1).estimated_arrival_time - m_currentTime;
-            // get next location, that will be reached
-            InterpolatedPosition<Loc> interp = m_space.interp_time(stoplist.at(0).location,stoplist.at(1).location,time_to_next_stop);
-
-            // return the next location that will be reached
-            return interp.nextLocation;
-        } else {
-            // vehicle is waiting at stop
-            return stoplist.at(0).location;
-        }
+    std::pair<double,double> currentPosition() const{
+        return m_space.getCoordinates(m_currentPosition);
     }
 
 private:
@@ -115,6 +103,7 @@ private:
     TransportSpace<Loc> &m_space;
 
     double m_currentTime = 0;
+    InterpolatedPosition<Loc> m_currentPosition;
 };
 
 } // namespace ridepy

@@ -53,7 +53,7 @@ public:
             next.second = origin.second;
         }
 
-        return {previous,next,dist_to_next_loc};
+        return {previous,next,dist_to_next_loc,true};
     }
 
     inline InterpolatedPosition<I2loc> interp_time(const I2loc &origin, const I2loc &destination, const double time_to_dest){
@@ -61,6 +61,7 @@ public:
         InterpolatedPosition<I2loc> interp = interp_dist(origin,destination,dist_to_dest);
         // transport spacial distance into timelike distance
         interp.distance /= m_velocity;
+        interp.distanceIsSpacial = false;
         return interp;
     }
 
@@ -68,7 +69,8 @@ public:
         const R2loc nextPos = position.nextLocation * m_gridSize;
         const R2loc prevPos = position.previousLocation * m_gridSize;
         const R2loc normal = (nextPos-prevPos)/m_gridSize;
-        return nextPos - normal * position.distance;
+        const double spacialDistance = position.distanceIsSpacial ? position.distance : position.distance/m_velocity;
+        return nextPos - normal * spacialDistance;
     }
 
 private:
