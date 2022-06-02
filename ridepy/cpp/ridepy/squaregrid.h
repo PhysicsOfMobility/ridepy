@@ -73,6 +73,14 @@ public:
         return nextPos - normal * spacialDistance;
     }
 
+    inline double gridSize() const{
+        return m_gridSize;
+    }
+
+    inline double velocity() const{
+        return m_velocity;
+    }
+
 private:
     double m_gridSize = 1;
     double m_velocity = 1;

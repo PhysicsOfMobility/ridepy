@@ -20,8 +20,9 @@ public:
     StopList<Loc> stoplist;
 
     VehicleState(const int vehicle_id, const int seat_capacity, const StopList<Loc> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space, const double initialTime = 0.)
-        : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist), m_dispatcher(dispatcher), m_space(space), m_currentTime(initialTime)
-    {}
+        : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist), m_dispatcher(dispatcher), m_space(space), m_currentTime(initialTime) {
+        computeCurrentPosition();
+    }
 
     // this function was rewritten
     std::vector<StopEvent> fast_forward_time(double new_time){
@@ -48,18 +49,9 @@ public:
         stoplist.erase(stoplist.begin(), stoplist.begin() + serviced_stops);
 
         // compute exact position at new_time
-        if (stoplist[0].estimated_arrival_time < new_time){
-            if (stoplist.size() > 1){
-                m_currentPosition = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - new_time);
-                stoplist[0].location = m_currentPosition.nextLocation;
-                stoplist[0].estimated_arrival_time = new_time + m_currentPosition.distance;
-            } else {
-                // wait at last serviced stop until new_time if stoplist is empty
-                stoplist[0].estimated_arrival_time = new_time;
-            }
-        }
-
         m_currentTime = new_time;
+        computeCurrentPosition();
+
         return stopEvents;
     }
 
@@ -104,6 +96,20 @@ private:
 
     double m_currentTime = 0;
     InterpolatedPosition<Loc> m_currentPosition;
+
+    void computeCurrentPosition(){
+        if (stoplist.size() > 1){
+            m_currentPosition = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - m_currentTime);
+            stoplist[0].location = m_currentPosition.nextLocation;
+            stoplist[0].estimated_arrival_time = m_currentTime + m_currentPosition.distance;
+        } else {
+            // wait at last serviced stop until new_time if stoplist is empty
+            m_currentPosition.previousLocation = stoplist[0].location;
+            m_currentPosition.nextLocation = stoplist[0].location;
+            m_currentPosition.distance = 0.;
+            stoplist[0].estimated_arrival_time = m_currentTime;
+        }
+    }
 };
 
 } // namespace ridepy

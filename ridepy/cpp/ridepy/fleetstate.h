@@ -26,15 +26,15 @@ public:
      * \param numVehicles The number of vehicles in the fleet
      * \param seatCapacity The number of passenger a single vehicle can carry at the same time
      */
-    FleetState(const int numVehicles, const int seatCapacity, const Loc &startLocation, TransportSpace<Loc> *transportSpace, AbstractDispatcher<Loc> *dispatcher, double startTime = 0.)
+    FleetState(const int numVehicles, const int seatCapacity, const std::vector<Loc> &startLocations, TransportSpace<Loc> *transportSpace, AbstractDispatcher<Loc> *dispatcher, double startTime = 0.)
         : m_transportSpace(transportSpace), m_dispatcher(dispatcher){
-
-        // initial stoplist only contains the startLocation, that is reached immediately
-        StopList<Loc> initialStopList = {Stop<Loc>(startLocation,Request(-1,startTime),StopAction::INTERNAL,startTime)};
-
         m_vehicles.reserve(numVehicles);
-        for (int i=0; i<numVehicles; i++)
+        for (int i=0; i<numVehicles; i++){
+            // initial stoplist only contains the startLocation, that is reached immediately,
+            // if not enough startLocations where given, put all remaining vehicles to last entry of startLocations
+            StopList<Loc> initialStopList = {Stop<Loc>(startLocations.size()>i ? startLocations.at(i) : startLocations.back(),Request(-1,startTime),StopAction::INTERNAL,startTime)};
             m_vehicles.push_back(VehicleState<Loc>(i,seatCapacity,initialStopList,*m_dispatcher,*m_transportSpace,startTime));
+        }
     }
 
     /*!
