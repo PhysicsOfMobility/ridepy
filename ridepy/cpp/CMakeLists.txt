@@ -21,7 +21,11 @@ set_target_properties(RidePy PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(RidePy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # build test executable
-add_executable(RidePy-cpp-test main.cxx)
+file(GLOB_RECURSE RIDEPY_TEST_FILES
+    tests/*.cxx
+    tests/*.h
+)
+add_executable(RidePy-cpp-test main.cxx ${RIDEPY_TEST_FILES})
 target_link_libraries(RidePy-cpp-test RidePy)
 
 
