@@ -54,15 +54,19 @@ void test_misc(){
 void test_simpleSquareGridSimulation(){
     cout << "start test case 'simple square grid simulation'" << endl;
 
+
+    cout << excCharInit;
     // init transport space: an (infinit) square grid
     const double gridSize = 2.;
     const double velocity = 4.;
     SquareGrid *space = new SquareGrid(gridSize,velocity);
     cout << "[INIT] create transport space: a square grid with grid size " << space->gridSize() << " and velocity " << space->velocity() << endl;
 
+
     // create dispatcher
     AbstractDispatcher<I2loc> *dispatcher = new BruteForceTotalTravelTimeMinimizingDispatcher<I2loc>;
     cout << "[INIT] create dispatcher: use BruteForceTotalTravelTimeMinimizingDispatcher" << endl;
+
 
     // init fleet
     const int seat_capacity = 8;
@@ -79,8 +83,24 @@ void test_simpleSquareGridSimulation(){
     for (R2loc location : locations)
         cout << "[INIT]     " << std::setw(3) << i++ << ":  " << location << endl;
 
-    cout << "[INFO] expected loactions:" << endl;
+    cout << excCharInfo
+         << "[INFO] expected loactions:" << endl;
     i = 0;
     for (R2loc location : initialLocations)
         cout << "[INFO]     " << std::setw(3) << i++ << ":  " << gridSize * location << endl;
+    cout << excCharInit;
+
+    // generate transportation requests
+    const double timestep_per_request = 0.1;
+    std::vector<TransportationRequest<I2loc>> requests;
+    requests.push_back(TransportationRequest<I2loc>(requests.size(),requests.size()*timestep_per_request,{1,2},{0,0}));
+    requests.push_back(TransportationRequest<I2loc>(requests.size(),requests.size()*timestep_per_request,{-3,0},{1,1}));
+
+    cout << "[INIT] create transportation requests:" << endl;
+    for (auto request : requests)
+        cout << "[INIT]   " << std::setw(3) << request.request_id << ":  t=" << std::setprecision(3) << std::fixed << request.creation_timestamp
+                            << "   " << request.origin << " -> " << request.destination << endl;
+
+
+    cout << excCharDefault;
 }
