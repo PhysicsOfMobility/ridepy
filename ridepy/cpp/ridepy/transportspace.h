@@ -38,7 +38,7 @@ public:
      * inside this space \param u The starting point \param v The destination
      * \return The spacial distance between the locations \p u and \p v
      */
-    virtual double d(Loc u, Loc v) = 0;
+    virtual double d(const Loc &u, const Loc &v) = 0;
 
     /*!
      * \brief Returns the time needed to travel from location \p u to \p v inside
@@ -47,7 +47,7 @@ public:
      * \param v The destination
      * \return The time needed to travel from location \p u to \p v
      */
-    virtual double t(Loc u, Loc v) = 0;
+    virtual double t(const Loc &u, const Loc &v) = 0;
 
     /*!
      * \brief Calculates the current position of a vehicle on the way from \p u to \p v at a distance \p dist_to_dest before reaching \p v
@@ -55,7 +55,7 @@ public:
      * \param dist_to_dest The remaining distance to reach the destination \p v
      * \return The next location reached when travelling along the shortest path from \p u to \p v and the spacial distance to that location
      */
-    virtual NextLocationDistance interp_dist(Loc u, Loc v, double dist_to_dest) = 0;
+    virtual NextLocationDistance interp_dist(const Loc &u, const Loc &v, const double dist_to_dest) = 0;
 
     /*!
      * \brief Calculates the current position of a vehicle on the way from \p u to \p v at time \p time_to_dest before reaching \p v
@@ -64,7 +64,7 @@ public:
      * \param time_to_dest The remaining travel time to reach the destination \p v
      * \return The next location reached when travelling along the shortest path from \p u to \p v and the remaining travel time to that location
      */
-    virtual NextLocationDistance interp_time(Loc u, Loc v, double time_to_dest) = 0;
+    virtual NextLocationDistance interp_time(const Loc &u, const Loc &v, const double time_to_dest) = 0;
 };
 
 } // namespace ridepy

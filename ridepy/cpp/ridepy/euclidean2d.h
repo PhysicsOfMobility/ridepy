@@ -16,18 +16,18 @@ public:
         : TransportSpace<R2loc>(), m_velocity(velocity)
     {}
 
-    inline double d(R2loc u, R2loc v) override{
+    inline double d(const R2loc &u, const R2loc &v) override{
         return abs(u-v);
     }
-    inline double t(R2loc u, R2loc v) override{
+    inline double t(const R2loc &u, const R2loc &v) override{
         return abs(u-v)/m_velocity;
     }
-    inline NextLocationDistance interp_dist(R2loc u, R2loc v, double dist_to_dest) override{
+    inline NextLocationDistance interp_dist(const R2loc &u, const R2loc &v, const double dist_to_dest) override{
         const R2loc normal = (v-u)/(abs(v-u));
         const R2loc currentPostion = v - dist_to_dest * normal;
         return {currentPostion,0};
     }
-    inline NextLocationDistance interp_time(R2loc u, R2loc v, double time_to_dest) override{
+    inline NextLocationDistance interp_time(const R2loc &u, const R2loc &v, const double time_to_dest) override{
         const R2loc normal = (v-u)/(abs(v-u))*m_velocity;
         const R2loc currentPostion = v - time_to_dest * normal;
         return {currentPostion,0};
