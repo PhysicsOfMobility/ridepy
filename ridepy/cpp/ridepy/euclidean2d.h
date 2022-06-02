@@ -16,21 +16,25 @@ public:
         : TransportSpace<R2loc>(), m_velocity(velocity)
     {}
 
-    inline double d(const R2loc &u, const R2loc &v) override{
-        return abs(u-v);
+    inline double d(const R2loc &origin, const R2loc &destination){
+        return abs(origin-destination);
     }
-    inline double t(const R2loc &u, const R2loc &v) override{
-        return abs(u-v)/m_velocity;
+    inline double t(const R2loc &origin, const R2loc &destination){
+        return abs(origin-destination)/m_velocity;
     }
-    inline NextLocationDistance<R2loc> interp_dist(const R2loc &u, const R2loc &v, const double dist_to_dest) override{
-        const R2loc normal = (v-u)/(abs(v-u));
-        const R2loc currentPostion = v - dist_to_dest * normal;
-        return {currentPostion,0};
+    inline InterpolatedPosition<R2loc> interp_dist(const R2loc &origin, const R2loc &destination, const double dist_to_dest){
+        const R2loc normal = (destination-origin)/(abs(origin-destination));
+        const R2loc currentPostion = destination - dist_to_dest * normal;
+        return {currentPostion,currentPostion,0};
     }
-    inline NextLocationDistance<R2loc> interp_time(const R2loc &u, const R2loc &v, const double time_to_dest) override{
-        const R2loc normal = (v-u)/(abs(v-u))*m_velocity;
-        const R2loc currentPostion = v - time_to_dest * normal;
-        return {currentPostion,0};
+    inline InterpolatedPosition<R2loc> interp_time(const R2loc &origin, const R2loc &destination, const double time_to_dest){
+        const R2loc normal = (destination-origin)/(abs(origin-destination)) * m_velocity;
+        const R2loc currentPostion = destination - time_to_dest * normal;
+        return {currentPostion,currentPostion,0};
+    }
+
+    inline std::pair<double, double> getCoordinates(const InterpolatedPosition<R2loc> &position){
+        return position.previousLocation;
     }
 
 private:

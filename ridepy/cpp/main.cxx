@@ -36,23 +36,21 @@ int main() {
         cout << std::fixed << request.request_id << ":\t" << request.origin << " -> " << request.destination << endl;
 
     // test TransportSpace
-    Euclidean2D testSpace(2);
-
-    SquareGrid grid(1,2);
+    SquareGrid testSpace(4,2);
 
     R2loc origin = {0,0};
     R2loc destinantion = {1,1};
 
     cout << "distance:    " << testSpace.d(origin,destinantion) << endl;
     cout << "travel time: " << testSpace.t(origin,destinantion) << endl;
-    cout << "interp_dist: " << testSpace.interp_dist(origin,destinantion,0.707).location << endl;
-    cout << "interp_time: " << testSpace.interp_time(origin,destinantion,0.3535).location << endl;
+    cout << "interp_dist: " << testSpace.interp_dist(origin,destinantion,4.1) << endl;
+    cout << "interp_time: " << testSpace.interp_time(origin,destinantion,2) << endl;
 
 
 
     // test fleetstate
 
-    FleetState<R2loc> fleet(10,8,R2loc(0,0),&testSpace,new BruteForceTotalTravelTimeMinimizingDispatcher<R2loc>());
+    FleetState<I2loc> fleet(10,8,I2loc(0,0),&testSpace,new BruteForceTotalTravelTimeMinimizingDispatcher<I2loc>());
 
     return 0;
 }
