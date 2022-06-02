@@ -30,7 +30,7 @@ public:
         : m_transportSpace(transportSpace), m_dispatcher(dispatcher){
 
         // initial stoplist only contains the startLocation, that is reached immediately
-        std::deque<Stop<Loc>> initialStopList = {Stop<Loc>(startLocation,Request(-1,startTime),StopAction::INTERNAL,startTime)};
+        StopList<Loc> initialStopList = {Stop<Loc>(startLocation,Request(-1,startTime),StopAction::INTERNAL,startTime)};
 
         m_vehicles.reserve(numVehicles);
         for (int i=0; i<numVehicles; i++)

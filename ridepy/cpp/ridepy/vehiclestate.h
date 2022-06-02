@@ -2,7 +2,6 @@
 #define VEHICLESTATE_H
 
 #include <vector>
-#include <deque>
 #include <algorithm>
 
 #include "stop.h"
@@ -18,10 +17,9 @@ class VehicleState
 public:
     int vehicle_id = -1;
     int seat_capacity = 1;
-    // use deque instead of vector here for efficient pop_front()
-    std::deque<Stop<Loc>> stoplist;
+    StopList<Loc> stoplist;
 
-    VehicleState(const int vehicle_id, const int seat_capacity, const std::deque<Stop<Loc>> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space, const double initialTime = 0.)
+    VehicleState(const int vehicle_id, const int seat_capacity, const StopList<Loc> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space, const double initialTime = 0.)
         : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist), m_dispatcher(dispatcher), m_space(space), m_currentTime(initialTime)
     {}
 
@@ -79,7 +77,7 @@ public:
     TimeWindow estimate_travel_time(const TransportationRequest<Loc> &request, const bool useNewList = true) const{
         TimeWindow invehicle_time = {INFINITY,INFINITY};
 
-        const std::deque<Stop<Loc>> &stoplistRef = useNewList ? m_stoplist_new : stoplist;
+        const StopList<Loc> &stoplistRef = useNewList ? m_stoplist_new : stoplist;
         for (const Stop<Loc> &stop : stoplistRef){
             if (stop.request.request_id == request.request_id){
                 if (stop.action == StopAction::PICKUP)
@@ -110,8 +108,9 @@ public:
             return stoplist.at(0).location;
         }
     }
+
 private:
-    std::deque<Stop<Loc>> m_stoplist_new;
+    StopList<Loc> m_stoplist_new;
     AbstractDispatcher<Loc> &m_dispatcher;
     TransportSpace<Loc> &m_space;
 

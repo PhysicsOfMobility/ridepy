@@ -1,6 +1,8 @@
 #ifndef RIDEPY_CPP_STOP_H
 #define RIDEPY_CPP_STOP_H
 
+#include <vector>
+
 #include "request.h"
 #include "timewindow.h"
 
@@ -34,6 +36,9 @@ struct Stop{
         return estimated_arrival_time > time_window.min ? estimated_arrival_time : time_window.min;
     }
 };
+
+template<typename Loc>
+using StopList = std::vector<Stop<Loc>>;
 
 struct StopEvent : public Event{
     StopAction action;

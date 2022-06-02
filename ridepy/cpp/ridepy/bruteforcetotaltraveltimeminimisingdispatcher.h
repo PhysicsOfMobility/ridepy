@@ -11,7 +11,7 @@ template<typename Loc>
 class BruteForceTotalTravelTimeMinimizingDispatcher : public AbstractDispatcher<Loc>
 {
 public:
-    InsertionResult<Loc> operator ()(const TransportationRequest<Loc> &request, const std::deque<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity){
+    InsertionResult<Loc> operator ()(const TransportationRequest<Loc> &request, const StopList<Loc> &stoplist, TransportSpace<Loc> &space, int seat_capacity){
         double min_cost = INFINITY;
         std::pair<int, int> best_insertion = {0, 0};
 
@@ -114,7 +114,7 @@ public:
         const int pickup  = best_insertion.first;
 
         // build new stoplist
-        std::deque<Stop<Loc>> new_stoplist(stoplist);
+        StopList<Loc> new_stoplist(stoplist);
         const Stop<Loc> &stop_before_pickup = new_stoplist.at(pickup);
 
         // push new pickup stop to new list
@@ -164,7 +164,7 @@ public:
         return InsertionResult<Loc>(new_stoplist,min_cost,new_stoplist.at(pickup+1).time_window,new_stoplist.at(dropoff+1).time_window);
     }
 private:
-    bool does_insertion_violates_any_timewindow(const std::deque<Stop<Loc>> &stoplist, const int i, const double est_arrival){
+    bool does_insertion_violates_any_timewindow(const StopList<Loc> &stoplist, const int i, const double est_arrival){
         if (i > stoplist.size()-2)
             return false;
 
