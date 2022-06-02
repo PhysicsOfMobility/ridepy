@@ -23,7 +23,7 @@ public:
         return d(u,v) / m_velocity;
     }
 
-    inline NextLocationDistance interp_dist(const I2loc &u, const I2loc &v, const double dist_to_dest){
+    inline NextLocationDistance<I2loc> interp_dist(const I2loc &u, const I2loc &v, const double dist_to_dest){
         // assume, vehicles first go along first dimension to v.first, then along second dimension to v.second
         const int remaining_full_edges = floor(dist_to_dest/m_gridSize);
         const int second_dimenstion_dist = std::abs(v.second - u.second);
@@ -42,7 +42,7 @@ public:
         }
     }
 
-    inline NextLocationDistance interp_time(const I2loc &u, const I2loc &v, const double time_to_dest){
+    inline NextLocationDistance<I2loc> interp_time(const I2loc &u, const I2loc &v, const double time_to_dest){
         const double dist_to_dest = time_to_dest * m_velocity;
         return interp_dist(u,v,dist_to_dest);
     }

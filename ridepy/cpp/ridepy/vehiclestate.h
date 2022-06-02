@@ -21,8 +21,8 @@ public:
     // use deque instead of vector here for efficient pop_front()
     std::deque<Stop<Loc>> stoplist;
 
-    VehicleState(const int vehicle_id, const int seat_capacity, const std::deque<Stop<Loc>> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space)
-        : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist), m_dispatcher(dispatcher), m_space(space)
+    VehicleState(const int vehicle_id, const int seat_capacity, const std::deque<Stop<Loc>> &initial_stoplist, AbstractDispatcher<Loc> &dispatcher, TransportSpace<Loc> &space, const double initialTime = 0.)
+        : vehicle_id(vehicle_id), seat_capacity(seat_capacity), stoplist(initial_stoplist), m_dispatcher(dispatcher), m_space(space), m_currentTime(initialTime)
     {}
 
     // this function was rewritten
@@ -52,7 +52,7 @@ public:
         // compute exact position at new_time
         if (stoplist[0].estimated_arrival_time < new_time){
             if (stoplist.size() > 1){
-                auto nextLocTravelTime = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - new_time);
+                NextLocationDistance<Loc> nextLocTravelTime = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - new_time);
                 stoplist[0].location = nextLocTravelTime.location;
                 stoplist[0].estimated_arrival_time = new_time + nextLocTravelTime.distance;
             } else {
@@ -61,6 +61,7 @@ public:
             }
         }
 
+        m_currentTime = new_time;
         return stopEvents;
     }
 
@@ -91,10 +92,30 @@ public:
         return invehicle_time;
     }
 
+    /*!
+     * \brief Returns the current position of the vehicle
+     * \todo Currently, the next location that will be reached is returned. However, for visualisations it would be better to return the exact, interpolated position
+     */
+    Loc currentPosition() const{
+        if (stoplist.size() > 1){
+            // vehicle is driving from stoplist[0] to stoplist[1]
+            const double time_to_next_stop = stoplist.at(1).estimated_arrival_time - m_currentTime;
+            // get next location, that will be reached
+            NextLocationDistance<Loc> next = m_space.interp_time(stoplist.at(0).location,stoplist.at(1).location,time_to_next_stop);
+
+            // return the next location that will be reached
+            return next.location;
+        } else {
+            // vehicle is waiting at stop
+            return stoplist.at(0).location;
+        }
+    }
 private:
     std::deque<Stop<Loc>> m_stoplist_new;
     AbstractDispatcher<Loc> &m_dispatcher;
     TransportSpace<Loc> &m_space;
+
+    double m_currentTime = 0;
 };
 
 } // namespace ridepy

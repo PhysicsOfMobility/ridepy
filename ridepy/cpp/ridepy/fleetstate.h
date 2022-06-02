@@ -34,7 +34,7 @@ public:
 
         m_vehicles.reserve(numVehicles);
         for (int i=0; i<numVehicles; i++)
-            m_vehicles.push_back(VehicleState<Loc>(i,seatCapacity,initialStopList,*m_dispatcher,*m_transportSpace));
+            m_vehicles.push_back(VehicleState<Loc>(i,seatCapacity,initialStopList,*m_dispatcher,*m_transportSpace,startTime));
     }
 
     /*!
@@ -155,6 +155,16 @@ public:
         std::stringstream s;
         s << "Serve request " << m_last_request.request_id << " with vehicle " << m_last_request_optimal_vehicle << ".";
         return RequestEvent(EventType::REQUESTOFFERING_EVENT,m_last_request,s.str());
+    }
+
+    std::vector<Loc> currentVehiclePositions() const{
+        std::vector<Loc> locations;
+        locations.reserve(m_vehicles.size());
+
+        for (const VehicleState<Loc> &vehicle : m_vehicles)
+            locations.push_back(vehicle.currentPosition());
+
+        return locations;
     }
 
 private:
