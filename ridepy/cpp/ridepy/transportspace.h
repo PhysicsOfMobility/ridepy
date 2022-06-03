@@ -37,7 +37,7 @@ struct InterpolatedPosition{
 
 template <typename Loc>
 inline std::ostream &operator<<(std::ostream &os, const InterpolatedPosition<Loc> &interp){
-    return os << interp.previousLocation << " -> " << interp.nextLocation << ",   d=" << interp.distance;
+    return os << interp.previousLocation << " -> " << interp.nextLocation << ",   " << (interp.distanceIsSpacial ? "d" : "t") << "=" << interp.distance;
 }
 
 /*!
