@@ -165,9 +165,8 @@ public:
     }
 private:
     bool does_insertion_violates_any_timewindow(const StopList<Loc> &stoplist, const int i, const double est_arrival){
-        if (i > stoplist.size()-2)
+        if (i+2 > stoplist.size())
             return false;
-
         double delay = est_arrival - stoplist.at(i+1).estimated_arrival_time;
 
         // check each stop after the insertion
