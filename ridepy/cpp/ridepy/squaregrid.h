@@ -36,7 +36,7 @@ public:
 
         // determine whether vehicle currently drives along first or second dimension
         const int second_dimension_dist = std::abs(destination.second - origin.second);
-        if (remaining_full_edges < second_dimension_dist){
+        if (origin.first == destination.first || remaining_full_edges < second_dimension_dist){
             // vehicle is already at destination.first axis driving into second direction
             previous.first = destination.first;
             previous.second = destination.second + (origin.second < destination.second ? -1 : +1) * (remaining_full_edges+1);
@@ -69,7 +69,8 @@ public:
         const R2loc nextPos = position.nextLocation * m_gridSize;
         const R2loc prevPos = position.previousLocation * m_gridSize;
         const R2loc normal = (nextPos-prevPos)/m_gridSize;
-        const double spacialDistance = position.distanceIsSpacial ? position.distance : position.distance/m_velocity;
+        const double spacialDistance = position.distanceIsSpacial ? position.distance
+                                                                  : position.distance>0 ? m_velocity*position.distance : 0;
         return nextPos - normal * spacialDistance;
     }
 
