@@ -143,7 +143,7 @@ public:
         const Stop<Loc> stop_before_dropoff = new_stoplist.at(dropoff);
         const double cpat_at_do = stop_before_dropoff.estimated_departure_time() + space.t(stop_before_dropoff.location,request.destination);
         const Stop<Loc> dropoff_stop(request.destination, request, StopAction::DROPOFF, cpat_at_do, stop_before_dropoff.occupancy_after_servicing + 1, request.delivery_timewindow);
-        new_stoplist.insert(new_stoplist.begin()+dropoff+1,pickup_stop);
+        new_stoplist.insert(new_stoplist.begin()+dropoff+1,dropoff_stop);
 
         // update estimated_arrival_times for all following stops
         if (dropoff < n_stops-1){
