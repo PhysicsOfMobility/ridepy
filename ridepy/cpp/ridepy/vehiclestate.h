@@ -99,9 +99,10 @@ private:
 
     void computeCurrentPosition(){
         if (stoplist.size() > 1){
+            // compute current exact position
             m_currentPosition = m_space.interp_time(stoplist[0].location,stoplist[1].location,stoplist[1].estimated_arrival_time - m_currentTime);
-            stoplist[0].location = m_currentPosition.nextLocation;
-            stoplist[0].estimated_arrival_time = m_currentTime + m_currentPosition.distance;
+            // set location of last serviced stop stoplist[0] to the last location passed through
+            stoplist[0].location = m_currentPosition.previousLocation;
         } else {
             // wait at last serviced stop until new_time if stoplist is empty
             m_currentPosition.previousLocation = stoplist[0].location;
