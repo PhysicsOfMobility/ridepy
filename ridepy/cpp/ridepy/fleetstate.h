@@ -154,7 +154,7 @@ public:
         m_last_request.request_id = -1;
         std::stringstream s;
         s << "Serve request " << m_last_request.request_id << " with vehicle " << m_last_request_optimal_vehicle << ".";
-        return RequestEvent(EventType::REQUESTOFFERING_EVENT,m_last_request,s.str());
+        return RequestEvent(EventType::REQUESTACCEPTION_EVENT,m_last_request,s.str());
     }
 
     std::vector<std::pair<double, double>> currentVehiclePositions() const{
