@@ -2,6 +2,7 @@
 #define RIDEPY_CPP_TIMEWINDOW_H
 
 #include <cmath>
+#include <ostream>
 
 namespace ridepy {
 
@@ -13,6 +14,10 @@ struct TimeWindow{
         : min(min), max(max)
     {}
 };
+
+std::ostream &operator<<(std::ostream &os, const TimeWindow &tw){
+    return os << "[" << tw.min << "," << tw.max << "]";
+}
 
 } // namespace ridepy
 
