@@ -108,7 +108,6 @@ private:
             m_currentPosition.previousLocation = stoplist[0].location;
             m_currentPosition.nextLocation = stoplist[0].location;
             m_currentPosition.distance = 0.;
-            stoplist[0].estimated_arrival_time = m_currentTime;
         }
     }
 };
