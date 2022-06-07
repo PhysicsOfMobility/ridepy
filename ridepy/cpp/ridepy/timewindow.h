@@ -15,7 +15,7 @@ struct TimeWindow{
     {}
 };
 
-std::ostream &operator<<(std::ostream &os, const TimeWindow &tw){
+inline std::ostream &operator<<(std::ostream &os, const TimeWindow &tw){
     return os << "[" << tw.min << "," << tw.max << "]";
 }
 
