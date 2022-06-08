@@ -171,14 +171,17 @@ def is_timewindow_violated_or_violation_worsened_due_to_insertion(
     if idx > len(stoplist) - 2:
         return False
 
+    # inserted stop incurs zero detour, and we don't have to wait
+    if (
+        est_arrival_first_stop_after_insertion
+        <= stoplist[idx + 1].estimated_arrival_time
+    ):
+        return False
+
     delta_cpat = (
         est_arrival_first_stop_after_insertion
         - stoplist[idx + 1].estimated_arrival_time
     )
-
-    # inserted stop incurs zero detour and we don't have to wait
-    if delta_cpat == 0:
-        return False
 
     for stop in stoplist[idx + 1 :]:
         old_leeway = stop.time_window_max - stop.estimated_arrival_time
@@ -186,14 +189,14 @@ def is_timewindow_violated_or_violation_worsened_due_to_insertion(
 
         if new_leeway < 0 and new_leeway < old_leeway:
             return True
+        elif stop.time_window_min >= stop.estimated_arrival_time + delta_cpat:
+            # We have to wait or arrive just on time, thus no need to check next stops
+            return False
         else:
-            old_departure = stop.estimated_departure_time
-            new_departure = max(
-                stop.time_window_min, stop.estimated_arrival_time + delta_cpat
+            # Otherwise we are incurring additional delay. Compute the remaining delay:
+            delta_cpat = (
+                max(stop.time_window_min, stop.estimated_arrival_time + delta_cpat)
+                - stop.estimated_departure_time
             )
-            delta_cpat = new_departure - old_departure
-            if delta_cpat == 0:
-                # no need to check next stops
-                break
 
     return False
