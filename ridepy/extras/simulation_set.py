@@ -843,7 +843,7 @@ class SimulationSet(MutableSet):
 
     @staticmethod
     def compute_cardinality_product_params_zip_params(
-        self, product_params, zip_params
+        product_params, zip_params
     ) -> int:
         """
         Number of simulations performed when calling `SimulationSet.run`,
