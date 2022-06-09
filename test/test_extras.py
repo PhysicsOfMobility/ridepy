@@ -18,6 +18,8 @@ from ridepy.extras.spaces import (
 )
 from ridepy.extras.simulation_set import (
     SimulationSet,
+    thaw_two_level_dict,
+    freeze_two_level_dict,
 )
 from ridepy.util.analytics import (
     get_stops_and_requests,
@@ -129,7 +131,7 @@ def test_io_params(cython, tmp_path):
     print(params)
     print(restored_params)
 
-    assert params == restored_params
+    assert thaw_two_level_dict(params) == restored_params
 
 
 def test_param_scan_length(tmp_path):
@@ -138,7 +140,7 @@ def test_param_scan_length(tmp_path):
         2: {"z": [100, 200, 300]},
     }
     params_to_product = {
-        1: {"b": [21, 22], "d": [66, 67, 67, 68]},
+        1: {"b": [21, 22], "d": [66, 67, 68, 69]},
         2: {"w": [1000, 2000]},
     }
     simulation_set = SimulationSet(
@@ -148,11 +150,12 @@ def test_param_scan_length(tmp_path):
         validate=False,
     )
     simulation_set._base_params = {}
-    res = list(iter(simulation_set))
+    simulation_set._update_parameter_combinations()
+    res = set(iter(simulation_set))
 
-    assert len(res) == 3 * 2 * 4 * 2
     assert len([i for i in res if i[1]["a"] == 10]) == 2 * 4 * 2
     assert len([i for i in res if i[2]["w"] == 1000]) == 3 * 2 * 4
+    assert len(res) == 3 * 2 * 4 * 2
 
 
 def test_param_scan(tmp_path):
@@ -165,17 +168,23 @@ def test_param_scan(tmp_path):
         validate=False,
     )
     simulation_set._base_params = {}
-    res = tuple(iter(simulation_set))
+    simulation_set._update_parameter_combinations()
+    res = set(iter(simulation_set))
 
-    assert res == (
-        {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
-        {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
-        {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
-        {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
-        {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
-        {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
-        {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
-        {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
+    assert res == set(
+        map(
+            freeze_two_level_dict,
+            (
+                {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 1000}},
+                {1: {"a": 8, "b": 88, "c": 100}, 2: {"z": 2000}},
+                {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 1000}},
+                {1: {"a": 8, "b": 88, "c": 200}, 2: {"z": 2000}},
+                {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 1000}},
+                {1: {"a": 9, "b": 99, "c": 100}, 2: {"z": 2000}},
+                {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 1000}},
+                {1: {"a": 9, "b": 99, "c": 200}, 2: {"z": 2000}},
+            ),
+        )
     )
 
 
@@ -202,9 +211,12 @@ def test_param_scan_equivalent_to_cartesian_product(tmp_path):
         validate=False,
     )
     simulation_set._base_params = {}
-    res = list(iter(simulation_set))
+    simulation_set._update_parameter_combinations()
+    res = set(iter(simulation_set))
 
-    assert res == list(param_scan_cartesian_product(params_to_product))
+    assert res == set(
+        map(freeze_two_level_dict, param_scan_cartesian_product(params_to_product))
+    )
 
 
 def test_param_scan_equivalent_to_pure_zip(tmp_path):
@@ -216,11 +228,17 @@ def test_param_scan_equivalent_to_pure_zip(tmp_path):
         validate=False,
     )
     simulation_set._base_params = {}
-    res = list(iter(simulation_set))
-    assert res == [
-        {1: {"c": 100}, 2: {"z": 1000}},
-        {1: {"c": 200}, 2: {"z": 2000}},
-    ]
+    simulation_set._update_parameter_combinations()
+    res = set(iter(simulation_set))
+    assert res == set(
+        map(
+            freeze_two_level_dict,
+            [
+                {1: {"c": 100}, 2: {"z": 1000}},
+                {1: {"c": 200}, 2: {"z": 2000}},
+            ],
+        )
+    )
 
 
 def test_param_scan_dry_run(tmp_path):
@@ -263,8 +281,8 @@ def test_param_scan_dry_run(tmp_path):
         stops, requests = get_stops_and_requests(
             space=params["general"]["space"], events=evs
         )
-        assert len(stops) == i * 5 * 2 + 2
-        assert len(requests) == i * 5
+        assert len(stops) == params["general"]["n_reqs"] * 2 + 2
+        assert len(requests) == params["general"]["n_reqs"]
 
     assert simulation_set.simulation_ids == simulation_set_dry_run.simulation_ids
 

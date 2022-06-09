@@ -314,8 +314,16 @@ cdef class Graph(TransportSpace):
                  self.velocity,
             )
 
+
     def __hash__(self):
-        return hash(self.vertices) + hash(self.edges) + hash(self.weights) + hash(self.velocity)
+        return hash(
+            (
+                hash(repr(self.vertices)),
+                hash(repr(self.edges)),
+                hash(repr(self.weights)),
+                hash(repr(self.velocity)),
+            )
+        )
 
     def asdict(self):
         return dict(

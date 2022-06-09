@@ -60,6 +60,20 @@ from ridepy.extras.io import (
 logger = logging.getLogger(__name__)
 
 
+def freeze_two_level_dict(
+    d: dict[Any, dict[Any, Any]]
+) -> frozendict[Any, frozendict[Any, Any]]:
+    return frozendict(
+        {outer_key: frozendict(inner_dict) for outer_key, inner_dict in d.items()}
+    )
+
+
+def thaw_two_level_dict(
+    d: frozendict[Any, frozendict[Any, Any]]
+) -> dict[Any, dict[Any, Any]]:
+    return {outer_key: dict(inner_dict) for outer_key, inner_dict in d.items()}
+
+
 def make_file_path(sim_id: str, directory: Path, suffix: str):
     return directory / f"{sim_id}{suffix}"
 
@@ -208,6 +222,7 @@ def perform_single_simulation(
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
     tick = time()
+    params = thaw_two_level_dict(params)
     params_json = create_params_json(params=params)
     sim_id = make_sim_id(params_json)
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
@@ -415,7 +430,7 @@ class SimulationSet(MutableSet):
         d = deepcopy(base_dict)
         # This `sorted` is necessary because otherwise the detection of
         # existing simulation runs may fail.
-        for outer_key in sorted(set(base_dict) | set(update_dict)):
+        for outer_key in sorted(set(base_dict) | set(update_dict), key=str):
             d[outer_key] = base_dict.get(outer_key, {}) | update_dict.get(outer_key, {})
         return d
 
@@ -445,14 +460,6 @@ class SimulationSet(MutableSet):
             return next(g, True) and not next(g, False)
         else:
             return True
-
-    @staticmethod
-    def _freeze_two_level_dict(
-        d: dict[str, dict[str, Any]]
-    ) -> frozendict[str, frozendict[str, Any]]:
-        return frozendict(
-            {outer_key: frozendict(inner_dict) for outer_key, inner_dict in d.items()}
-        )
 
     @property
     def data_dir(self) -> Path:
@@ -601,11 +608,17 @@ class SimulationSet(MutableSet):
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params
         )
-        self.single_combinations = (
-            single_combinations
-            if single_combinations is not None
-            else [self._base_params]
-        )
+        if single_combinations is not None:
+            self._single_combinations = set(
+                map(freeze_two_level_dict, single_combinations)
+            )
+        elif not self.compute_cardinality_product_params_zip_params(
+            product_params=product_params, zip_params=zip_params
+        ):
+            self._single_combinations = {freeze_two_level_dict(self.base_params)}
+        else:
+            self._single_combinations = set()
+
         self._zip_params = zip_params
         self._product_params = product_params
 
@@ -676,7 +689,8 @@ class SimulationSet(MutableSet):
 
     @single_combinations.setter
     def single_combinations(self, value):
-        self._single_combinations = set(map(self._freeze_two_level_dict, value))
+        self._single_combinations = set(map(freeze_two_level_dict, value))
+        self._update_parameter_combinations()
 
     @staticmethod
     def _make_joined_key_pairs_values(
@@ -730,8 +744,8 @@ class SimulationSet(MutableSet):
             Generator yielding complete parameter sets which can be
             supplied to `perform_single_simulation`.
             """
-            for zipped_params, multiplied_params in it.product(
-                zipped_values_iter, multiplied_values_iter
+            for zipped_params, multiplied_params in list(
+                it.product(zipped_values_iter, multiplied_values_iter)
             ):
                 d = defaultdict(dict)
 
@@ -746,7 +760,7 @@ class SimulationSet(MutableSet):
                     d[outer_key][inner_key] = value
 
                 if d:
-                    yield self._freeze_two_level_dict(
+                    yield freeze_two_level_dict(
                         self._two_level_dict_update(self._base_params, d)
                     )
 
@@ -843,14 +857,14 @@ class SimulationSet(MutableSet):
 
     @staticmethod
     def compute_cardinality_product_params_zip_params(
-        product_params, zip_params
+        *, product_params, zip_params
     ) -> int:
         """
         Number of simulations performed when calling `SimulationSet.run`,
         excluding single_combinations
         """
         len_ = 1
-        if zip_params:
+        if zip_params and next(iter(zip_params.values())):
             len_ *= len(next(iter(next(iter(zip_params.values())).values())))
         if product_params:
             len_ *= ft.reduce(
@@ -875,6 +889,8 @@ class SimulationSet(MutableSet):
     def __getattr__(self, attr):
         if attr in self._delegated_attrs:
             return getattr(self.param_combinations, attr)
+        else:
+            raise AttributeError(f"'SimulationSet' has no attribute '{attr}'")
 
     @staticmethod
     def _wrap_method(method, o):
