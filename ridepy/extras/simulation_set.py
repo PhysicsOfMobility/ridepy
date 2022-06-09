@@ -899,13 +899,28 @@ class SimulationSet(MutableSet):
         return self
 
     def add(self, item):
+        # This is dynamically overwritten in SimulationSet._wrap_method,
+        # but is necessary here to be able to instantiate the class.
         ...
 
     def discard(self, item):
+        # This is dynamically overwritten in SimulationSet._wrap_method
+        # but is necessary here to be able to instantiate the class.
         ...
 
-    # def __str__(self):
-    #     return f"SimulationSet(...)"
-    #
+    def __str__(self):
+        return (
+            f"SimulationSet(single_combinations=..., "
+            f"data_dir={self.data_dir!r}, "
+            f"cython={self.use_cython!r}, "
+            f" debug={self.debug!r}, "
+            f"max_workers={self.max_workers!r}, "
+            f"process_chunksize={self.process_chunksize!r}, "
+            f"jsonl_chunksize={self.jsonl_chunksize!r}, "
+            f"event_path_suffix={self._event_path_suffix!r}, "
+            f"param_path_suffix={self._param_path_suffix!r}, "
+            f"validate={self.validated!r})"
+        )
+
     # def __repr__(self):
     #     return f"SimulationSet(...)"
