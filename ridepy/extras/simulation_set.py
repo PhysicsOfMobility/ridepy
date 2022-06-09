@@ -841,26 +841,28 @@ class SimulationSet(MutableSet):
                 system_quantities_df.rename_axis("simulation_id", inplace=True)
                 system_quantities_df.to_parquet(self.system_quantities_path)
 
-    def legacy_len(self) -> int:
+    @staticmethod
+    def compute_cardinality_product_params_zip_params(
+        self, product_params, zip_params
+    ) -> int:
         """
-        Number of simulations performed when calling `SimulationSet.run`.
+        Number of simulations performed when calling `SimulationSet.run`,
+        excluding single_combinations
         """
         len_ = 1
-        if self._zip_params:
-            len_ *= len(next(iter(next(iter(self._zip_params.values())).values())))
-        if self._product_params:
+        if zip_params:
+            len_ *= len(next(iter(next(iter(zip_params.values())).values())))
+        if product_params:
             len_ *= ft.reduce(
                 op.mul,
                 (
                     len(inner_value)
-                    for inner_dict in self._product_params.values()
+                    for inner_dict in product_params.values()
                     for inner_value in inner_dict.values()
                 ),
             )
-        if not (self._zip_params or self._product_params):
+        if not (zip_params or product_params):
             len_ = 0
-
-        len_ += len(self.single_combinations)
 
         return len_
 
