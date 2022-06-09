@@ -473,11 +473,11 @@ class SimulationSet(MutableSet):
 
     def __init__(
         self,
+        single_combinations: Iterable[Optional[dict[str, dict[str, Any]]]] = None,
         *,
         data_dir: Union[str, Path] = ".",
         base_params: Optional[dict[str, dict[str, Any]]] = None,
         zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
-        single_combinations: Iterable[Optional[dict[str, dict[str, Any]]]] = None,
         product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         cython: bool = True,
         debug: bool = False,
@@ -570,7 +570,6 @@ class SimulationSet(MutableSet):
         base_params = base_params or {}
         zip_params = zip_params or {}
         product_params = product_params or {}
-        single_combinations = single_combinations or {}
 
         if validate:
             # assert no unknown outer keys
@@ -599,9 +598,13 @@ class SimulationSet(MutableSet):
         else:
             self.validated = False
 
-        self.single_combinations = single_combinations
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params
+        )
+        self.single_combinations = (
+            single_combinations
+            if single_combinations is not None
+            else [self._base_params]
         )
         self._zip_params = zip_params
         self._product_params = product_params
@@ -742,9 +745,10 @@ class SimulationSet(MutableSet):
                 ):
                     d[outer_key][inner_key] = value
 
-                yield self._freeze_two_level_dict(
-                    self._two_level_dict_update(self._base_params, d)
-                )
+                if d:
+                    yield self._freeze_two_level_dict(
+                        self._two_level_dict_update(self._base_params, d)
+                    )
 
         self.param_combinations = self.single_combinations | set(param_combinations())
 
@@ -887,7 +891,7 @@ class SimulationSet(MutableSet):
             validate=o.validated,
         )
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         self = super(SimulationSet, cls).__new__(SimulationSet)
         for method in self._wrapped_methods:
             setattr(self, method, cls._wrap_method(method, self))
@@ -900,12 +904,8 @@ class SimulationSet(MutableSet):
     def discard(self, item):
         ...
 
-    def __str__(self):
-        ...
-
-    def __repr__(self):
-        ...
-
-    @classmethod
-    def _from_iterable(cls, iterable):
-        return cls(single_combinations=iterable)
+    # def __str__(self):
+    #     return f"SimulationSet(...)"
+    #
+    # def __repr__(self):
+    #     return f"SimulationSet(...)"
