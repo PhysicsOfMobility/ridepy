@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import os
+import sys
 import warnings
 
 import loky
@@ -10,6 +13,7 @@ import functools as ft
 import itertools as it
 import pandas as pd
 
+from collections.abc import MutableSet
 from collections import defaultdict
 from copy import deepcopy
 from typing import (
@@ -22,6 +26,8 @@ from typing import (
     Callable,
 )
 from pathlib import Path
+
+from frozendict import frozendict
 
 from ridepy.util import make_sim_id
 from ridepy.util.analytics import (
@@ -352,7 +358,7 @@ def simulate_parameter_combinations(
     return sim_ids
 
 
-class SimulationSet:
+class SimulationSet(MutableSet):
     """
     A set of simulations. The parameter space is defined through constant `base_params`,
     zipped `zip_params` and cartesian product `product_params`. A set of a single simulation
@@ -360,13 +366,28 @@ class SimulationSet:
     allowing for parallelization of simulation runs at different parameters.
     """
 
+    _wrapped_methods = [
+        "add",
+        "copy",
+        "difference",
+        "difference_update",
+        "discard",
+        "intersection",
+        "intersection_update",
+        "symmetric_difference" "symmetric_difference_update",
+        "union",
+        "update",
+    ]
+
+    _delegated_attrs = ["issubset", "issuperset"]
+
     @staticmethod
     def _two_level_dict_update(
         base_dict: dict[str, dict[str, Any]], update_dict: dict[str, dict[str, Any]]
     ) -> dict:
         """
         Update two-level nested dictionary with deepcopying,
-        where `update_dict` overwrites entries in `base_dict`.
+        where `update_dict` updates entries in `base_dict`.
 
         Example
         -------
@@ -384,7 +405,7 @@ class SimulationSet:
         base_dict
             two-level nested dict to update
         update_dict
-            two-level nested dict which overwrites entries in base_dict
+            two-level nested dict which updates entries in base_dict
 
         Returns
         -------
@@ -392,7 +413,8 @@ class SimulationSet:
 
         """
         d = deepcopy(base_dict)
-        # This sorted is needed otherwise detection of pre existing simulation run does not work.
+        # This `sorted` is necessary because otherwise the detection of
+        # existing simulation runs may fail.
         for outer_key in sorted(set(base_dict) | set(update_dict)):
             d[outer_key] = base_dict.get(outer_key, {}) | update_dict.get(outer_key, {})
         return d
@@ -424,6 +446,14 @@ class SimulationSet:
         else:
             return True
 
+    @staticmethod
+    def _freeze_two_level_dict(
+        d: dict[str, dict[str, Any]]
+    ) -> frozendict[str, frozendict[str, Any]]:
+        return frozendict(
+            {outer_key: frozendict(inner_dict) for outer_key, inner_dict in d.items()}
+        )
+
     @property
     def data_dir(self) -> Path:
         """
@@ -444,9 +474,10 @@ class SimulationSet:
     def __init__(
         self,
         *,
-        data_dir: Union[str, Path],
+        data_dir: Union[str, Path] = ".",
         base_params: Optional[dict[str, dict[str, Any]]] = None,
         zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
+        single_combinations: Iterable[Optional[dict[str, dict[str, Any]]]] = None,
         product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         cython: bool = True,
         debug: bool = False,
@@ -472,6 +503,8 @@ class SimulationSet:
             Dictionary setting parameters of which the cartesian product (i.e. all possible
             combinations of the supplied parameters) is created and varied throughout
             the simulation set, optional.
+        single_combinations
+            Iterable of single parameter combinations. Each item must fully specify a simulation run.
         cython
             Use cython.
         debug
@@ -499,6 +532,8 @@ class SimulationSet:
 
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
+
+        self.use_cython = cython
 
         if cython:
             space_obj = CyEuclidean2D()
@@ -532,9 +567,10 @@ class SimulationSet:
             ),
         )
 
-        base_params = base_params if base_params is not None else {}
-        zip_params = zip_params if zip_params is not None else {}
-        product_params = product_params if product_params is not None else {}
+        base_params = base_params or {}
+        zip_params = zip_params or {}
+        product_params = product_params or {}
+        single_combinations = single_combinations or {}
 
         if validate:
             # assert no unknown outer keys
@@ -559,12 +595,18 @@ class SimulationSet:
             assert self._zip_params_equal_length(
                 zip_params
             ), "zipped parameters must be of equal length"
+            self.validated = True
+        else:
+            self.validated = False
 
+        self.single_combinations = single_combinations
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params
         )
         self._zip_params = zip_params
         self._product_params = product_params
+
+        self._update_parameter_combinations()
 
         self._simulation_ids = None
 
@@ -597,6 +639,41 @@ class SimulationSet:
             self.data_dir / f"{simulation_id}{self._event_path_suffix}"
             for simulation_id in self.simulation_ids
         ]
+
+    @property
+    def base_params(self):
+        return self._base_params
+
+    @property
+    def product_params(self):
+        return self._product_params
+
+    @property
+    def zip_params(self):
+        return self._zip_params
+
+    @property
+    def single_combinations(self):
+        return self._single_combinations
+
+    @base_params.setter
+    def base_params(self, value):
+        self._base_params = value
+        self._update_parameter_combinations()
+
+    @product_params.setter
+    def product_params(self, value):
+        self._product_params = value
+        self._update_parameter_combinations()
+
+    @zip_params.setter
+    def zip_params(self, value):
+        self._zip_params = value
+        self._update_parameter_combinations()
+
+    @single_combinations.setter
+    def single_combinations(self, value):
+        self._single_combinations = set(map(self._freeze_two_level_dict, value))
 
     @staticmethod
     def _make_joined_key_pairs_values(
@@ -633,7 +710,7 @@ class SimulationSet:
 
         return joined_key_pairs, joined_values_iter
 
-    def __iter__(self):
+    def _update_parameter_combinations(self):
         zipped_key_pairs, zipped_values_iter = self._make_joined_key_pairs_values(
             params=self._zip_params, join_fn=zip
         )
@@ -645,7 +722,7 @@ class SimulationSet:
             params=self._product_params, join_fn=it.product
         )
 
-        def param_combinations() -> Iterator[dict[str, dict[str, Any]]]:
+        def param_combinations() -> Iterator[frozendict[str, dict[str, Any]]]:
             """
             Generator yielding complete parameter sets which can be
             supplied to `perform_single_simulation`.
@@ -665,13 +742,14 @@ class SimulationSet:
                 ):
                     d[outer_key][inner_key] = value
 
-                yield self._two_level_dict_update(self._base_params, d)
+                yield self._freeze_two_level_dict(
+                    self._two_level_dict_update(self._base_params, d)
+                )
 
-        self._param_combinations = param_combinations()
-        return self
+        self.param_combinations = self.single_combinations | set(param_combinations())
 
-    def __next__(self):
-        return next(self._param_combinations)
+    def __iter__(self):
+        return iter(self.param_combinations)
 
     def run(self, dry_run=False):
         """
@@ -701,27 +779,6 @@ class SimulationSet:
             param_path_suffix=self._param_path_suffix,
             dry_run=dry_run,
         )
-
-    def __len__(self) -> int:
-        """
-        Number of simulations performed when calling `SimulationSet.run`.
-        """
-        len_ = 1
-        if self._zip_params:
-            len_ *= len(next(iter(next(iter(self._zip_params.values())).values())))
-        if self._product_params:
-            len_ *= ft.reduce(
-                op.mul,
-                (
-                    len(inner_value)
-                    for inner_dict in self._product_params.values()
-                    for inner_value in inner_dict.values()
-                ),
-            )
-        if not (self._zip_params or self._product_params):
-            len_ = 0
-
-        return len_
 
     def run_analytics(
         self,
@@ -779,3 +836,76 @@ class SimulationSet:
                 system_quantities_df = pd.DataFrame(system_quantities, index=sim_ids)
                 system_quantities_df.rename_axis("simulation_id", inplace=True)
                 system_quantities_df.to_parquet(self.system_quantities_path)
+
+    def legacy_len(self) -> int:
+        """
+        Number of simulations performed when calling `SimulationSet.run`.
+        """
+        len_ = 1
+        if self._zip_params:
+            len_ *= len(next(iter(next(iter(self._zip_params.values())).values())))
+        if self._product_params:
+            len_ *= ft.reduce(
+                op.mul,
+                (
+                    len(inner_value)
+                    for inner_dict in self._product_params.values()
+                    for inner_value in inner_dict.values()
+                ),
+            )
+        if not (self._zip_params or self._product_params):
+            len_ = 0
+
+        len_ += len(self.single_combinations)
+
+        return len_
+
+    def __len__(self):
+        return len(self.param_combinations)
+
+    def __contains__(self, item):
+        return item in self.param_combinations
+
+    def __getattr__(self, attr):
+        if attr in self._delegated_attrs:
+            return getattr(self.param_combinations, attr)
+
+    @staticmethod
+    def _wrap_method(method, o):
+        # Note that this uses self's properties for everything except the simulation
+        # parameters. This is intended behavior.
+        return lambda *args, **kwargs: SimulationSet(
+            single_combinations=getattr(o.param_combinations, method)(*args, **kwargs),
+            data_dir=o.data_dir,
+            cython=o.use_cython,
+            debug=o.debug,
+            max_workers=o.max_workers,
+            process_chunksize=o.process_chunksize,
+            jsonl_chunksize=o.jsonl_chunksize,
+            event_path_suffix=o._event_path_suffix,
+            param_path_suffix=o._param_path_suffix,
+            validate=o.validated,
+        )
+
+    def __new__(cls):
+        self = super(SimulationSet, cls).__new__(SimulationSet)
+        for method in self._wrapped_methods:
+            setattr(self, method, cls._wrap_method(method, self))
+
+        return self
+
+    def add(self, item):
+        ...
+
+    def discard(self, item):
+        ...
+
+    def __str__(self):
+        ...
+
+    def __repr__(self):
+        ...
+
+    @classmethod
+    def _from_iterable(cls, iterable):
+        return cls(single_combinations=iterable)
