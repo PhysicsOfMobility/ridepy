@@ -608,6 +608,26 @@ class SimulationSet(MutableSet):
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params
         )
+
+        # make parameters immutable
+
+        if single_combinations:
+            for outer_dict in single_combinations:
+                for outer_key, inner_dict in outer_dict.items():
+                    for inner_key, inner_value in inner_dict.items():
+                        if isinstance(inner_value, dict):
+                            outer_dict[outer_key][inner_key] = frozendict(inner_dict)
+
+        for multi_params in [zip_params, product_params]:
+            if multi_params:
+                for outer_key, inner_dict in multi_params.items():
+                    for inner_key, inner_value in inner_dict.items():
+                        for i, multi_value in enumerate(inner_value):
+                            if isinstance(multi_value, dict):
+                                multi_params[outer_key][inner_key][i] = frozendict(
+                                    multi_value
+                                )
+
         if single_combinations is not None:
             self._single_combinations = set(
                 map(freeze_two_level_dict, single_combinations)
