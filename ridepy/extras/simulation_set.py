@@ -389,7 +389,8 @@ class SimulationSet(MutableSet):
         "discard",
         "intersection",
         "intersection_update",
-        "symmetric_difference" "symmetric_difference_update",
+        "symmetric_difference",
+        "symmetric_difference_update",
         "union",
         "update",
     ]
