@@ -10,6 +10,8 @@ from ridepy.data_structures import (
     TransportSpace,
 )
 from ridepy.events import VehicleStateEndEvent, VehicleStateBeginEvent
+from ridepy.extras.io import create_params_json
+from ridepy.util import make_sim_id
 
 
 def _create_events_dataframe(events: Iterable[dict]) -> pd.DataFrame:
@@ -915,7 +917,7 @@ def get_system_quantities(
     - avg_stoplist_length_submission_time
     - avg_waiting_time
     - rejection_ratio
-    - median_stoplist_length
+    - avg_stoplist_length
     - avg_detour
     - (n_vehicles)
     - (request_rate)
@@ -957,6 +959,8 @@ def get_system_quantities(
 
     avg_segment_dist = stops["dist_to_next"].mean()
     avg_segment_time = stops["time_to_next"].mean()
+    avg_segment_duration = stops["state_duration"].mean()
+    avg_idle_duration = (stops["state_duration"] - stops["time_to_next"]).mean()
 
     total_dist_driven = stops["dist_to_next"].sum()
     total_time_driven = stops["time_to_next"].sum()
@@ -1004,33 +1008,42 @@ def get_system_quantities(
     #     _stops["stoplist_length_service_time"] * _stops["state_duration"]
     # ).sum() / _stops["state_duration"].sum()
 
-    stops["event_type"] = stops["delta_occupancy"].map({1.0: "pickup", -1.0: "dropoff"})
-
     submission_events = requests.loc[
         :, [("submitted", "timestamp"), ("serviced", "vehicle_id")]
     ].dropna()
+
     submission_events.columns = ["timestamp", "vehicle_id"]
     submission_events = (
-        submission_events.reset_index()
+        submission_events.reset_index(drop=True)
         .set_index(["vehicle_id", "timestamp"])
+        .assign(n_stops_delta=2)
+    )
+
+    stops = stops.copy()
+    stops["n_stops_delta"] = stops["delta_occupancy"].map({1.0: -1, -1.0: -1, 0.0: 0})
+
+    stop_events = (
+        stops[["timestamp", "n_stops_delta"]]
+        .reset_index("stop_id", drop=True)
+        .set_index("timestamp", append=True)
+    )
+
+    all_events = (
+        pd.concat(
+            [
+                submission_events,
+                stop_events,
+            ],
+            axis="index",
+        )
         .sort_index()
-        .assign(event_type="submission")
+        .squeeze()
     )
 
-    event_log = pd.concat(
-        [
-            stops[["event_type", "request_id"]],
-            submission_events,
-        ],
-        axis="index",
-    ).sort_index()
-
-    median_stoplist_length = (
-        event_log["event_type"]
-        .map(dict(submission=2, pickup=-1, dropoff=-1))
-        .cumsum()
-        .median()
+    avg_stoplist_length = (
+        all_events.groupby("vehicle_id").cumsum().groupby("vehicle_id").mean().mean()
     )
+    assert not avg_stoplist_length < 0
 
     avg_detour = requests["inferred", "relative_travel_time"].mean()
 
@@ -1051,8 +1064,6 @@ def get_system_quantities(
         total_system_time / n_vehicles
     )
 
-    avg_relative_travel_time = requests[("inferred", "relative_travel_time")].mean()
-
     res = {}
     if params:
         theoretical_request_rate = params.get("request_generator", {}).get(
@@ -1071,20 +1082,20 @@ def get_system_quantities(
             velocity=velocity,
             load_theoretical=(theoretical_request_rate * avg_direct_dist_submitted)
             / (velocity * n_vehicles),
+            seat_capacity=params.get("general", {}).get("seat_capacity", np.nan),
+            load_submitted=(avg_request_rate_submitted * avg_direct_dist_submitted)
+            / (velocity * n_vehicles),
+            load_serviced=(avg_request_rate_serviced * avg_direct_dist_serviced)
+            / (velocity * n_vehicles),
         )
-
-    load_submitted = (avg_request_rate_submitted * avg_direct_dist_submitted) / (
-        res["velocity"] * res["n_vehicles"]
-    )
-    load_serviced = (avg_request_rate_serviced * avg_direct_dist_serviced) / (
-        res["velocity"] * res["n_vehicles"]
-    )
 
     res |= dict(
         avg_occupancy=avg_occupancy,
         n_vehicles_used=n_vehicles_used,
         avg_segment_dist=avg_segment_dist,
         avg_segment_time=avg_segment_time,
+        avg_segment_duration=avg_segment_duration,
+        avg_idle_duration=avg_idle_duration,
         total_dist_driven=total_dist_driven,
         total_time_driven=total_time_driven,
         avg_direct_dist=avg_direct_dist_serviced,
@@ -1099,13 +1110,10 @@ def get_system_quantities(
         # avg_stoplist_length_submission_time=avg_stoplist_length_submission_time,
         avg_waiting_time=avg_waiting_time,
         rejection_ratio=rejection_ratio,
-        median_stoplist_length=median_stoplist_length,
+        avg_stoplist_length=avg_stoplist_length,
         avg_detour=avg_detour,
         avg_request_rate_submitted=avg_request_rate_submitted,
         avg_request_rate_serviced=avg_request_rate_serviced,
-        load_submitted=load_submitted,
-        load_serviced=load_serviced,
-        avg_relative_travel_time=avg_relative_travel_time,
     )
 
     return res
