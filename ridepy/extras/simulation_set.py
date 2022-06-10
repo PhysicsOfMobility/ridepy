@@ -494,7 +494,7 @@ class SimulationSet(MutableSet):
         jsonl_chunksize: int = 1000,
         event_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
-        validate: bool = True,
+        validate: bool = False,
     ) -> None:
         """
 
@@ -531,6 +531,9 @@ class SimulationSet(MutableSet):
         validate
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
         """
+
+        for method in self._wrapped_methods:
+            setattr(self, method, self._wrap_method(method, self))
 
         self.debug = debug
         self.max_workers = max_workers
@@ -929,13 +932,6 @@ class SimulationSet(MutableSet):
             param_path_suffix=o._param_path_suffix,
             validate=o.validated,
         )
-
-    def __new__(cls, *args, **kwargs):
-        self = super(SimulationSet, cls).__new__(SimulationSet)
-        for method in self._wrapped_methods:
-            setattr(self, method, cls._wrap_method(method, self))
-
-        return self
 
     def add(self, item):
         # This is dynamically overwritten in SimulationSet._wrap_method,
