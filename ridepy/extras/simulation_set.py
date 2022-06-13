@@ -57,7 +57,7 @@ from ridepy.extras.io import (
     read_params_json,
 )
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 def freeze_two_level_dict(
@@ -235,16 +235,16 @@ def perform_single_simulation(
     ):
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
-        logger.info(
+        log.info(
             f"Pre-existing param json exists for {params_json=} at {param_path=}, skipping simulation"
         )
         return sim_id
     else:
-        logger.info(
+        log.info(
             f"No pre-existing param json exists for {params_json=} at {param_path=}, running simulation"
         )
         if event_path.exists():
-            logger.info(
+            log.info(
                 f"Potentially incomplete simulation data exists at {event_path=}, this will be overwritten"
             )
             event_path.unlink()
@@ -382,11 +382,9 @@ class SimulationSet(MutableSet):
     """
 
     _wrapped_methods = [
-        "add",
         "copy",
         "difference",
         "difference_update",
-        "discard",
         "intersection",
         "intersection_update",
         "symmetric_difference",
@@ -613,6 +611,9 @@ class SimulationSet(MutableSet):
             self.default_base_params, base_params
         )
 
+        if single_combinations:
+            single_combinations = list(single_combinations)
+
         # make parameters immutable
 
         if single_combinations:
@@ -633,9 +634,7 @@ class SimulationSet(MutableSet):
                                 )
 
         if single_combinations is not None:
-            self._single_combinations = set(
-                map(freeze_two_level_dict, single_combinations)
-            )
+            self._single_combinations = set(single_combinations)
         elif not self.compute_cardinality_product_params_zip_params(
             product_params=product_params, zip_params=zip_params
         ):
@@ -648,17 +647,20 @@ class SimulationSet(MutableSet):
 
         self._update_parameter_combinations()
 
-        self._simulation_ids = None
+        self._simulation_ids = {
+            make_sim_id(params_json=create_params_json(params=params))
+            for params in self.param_combinations
+        }
 
         self.system_quantities_path = None
 
     @property
-    def simulation_ids(self) -> list[str]:
+    def simulation_ids(self) -> set[str]:
         """
         Get simulation IDs.
         """
         # protect simulation ids
-        return self._simulation_ids if self._simulation_ids is not None else []
+        return self._simulation_ids
 
     @property
     def param_paths(self) -> list[Path]:
@@ -810,7 +812,7 @@ class SimulationSet(MutableSet):
             If True, do not actually simulate.
         """
 
-        self._simulation_ids = simulate_parameter_combinations(
+        simulate_parameter_combinations(
             param_combinations=iter(self),
             data_dir=self.data_dir,
             debug=self.debug,
@@ -920,28 +922,37 @@ class SimulationSet(MutableSet):
     def _wrap_method(method, o):
         # Note that this uses self's properties for everything except the simulation
         # parameters. This is intended behavior.
-        return lambda *args, **kwargs: SimulationSet(
-            single_combinations=getattr(o.param_combinations, method)(*args, **kwargs),
-            data_dir=o.data_dir,
-            cython=o.use_cython,
-            debug=o.debug,
-            max_workers=o.max_workers,
-            process_chunksize=o.process_chunksize,
-            jsonl_chunksize=o.jsonl_chunksize,
-            event_path_suffix=o._event_path_suffix,
-            param_path_suffix=o._param_path_suffix,
-            validate=o.validated,
-        )
+        def wrapped(*args):
+            log.debug(f"Was told to {method}")
+            args = [arg.param_combinations for arg in args]
+            return SimulationSet(
+                single_combinations=getattr(o.param_combinations, method)(*args),
+                data_dir=o.data_dir,
+                cython=o.use_cython,
+                debug=o.debug,
+                max_workers=o.max_workers,
+                process_chunksize=o.process_chunksize,
+                jsonl_chunksize=o.jsonl_chunksize,
+                event_path_suffix=o._event_path_suffix,
+                param_path_suffix=o._param_path_suffix,
+                validate=o.validated,
+            )
+
+        return wrapped
 
     def add(self, item):
-        # This is dynamically overwritten in SimulationSet._wrap_method,
-        # but is necessary here to be able to instantiate the class.
-        ...
+        log.debug(f"Was told to add")
+        self.param_combinations.add(item)
+        self._simulation_ids.add(
+            make_sim_id(params_json=create_params_json(params=item))
+        )
 
     def discard(self, item):
-        # This is dynamically overwritten in SimulationSet._wrap_method
-        # but is necessary here to be able to instantiate the class.
-        ...
+        log.debug(f"Was told to discard")
+        self.param_combinations.discard(item)
+        self._simulation_ids.discard(
+            make_sim_id(params_json=create_params_json(params=item))
+        )
 
     def __str__(self):
         return (
