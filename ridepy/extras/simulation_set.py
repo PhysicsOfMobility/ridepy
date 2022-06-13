@@ -539,6 +539,9 @@ class SimulationSet(MutableSet):
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = Path(data_dir)
 
+        self._param_data_dir = self.data_dir
+        self._event_data_dir = self.data_dir
+
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
 
@@ -652,8 +655,6 @@ class SimulationSet(MutableSet):
             for params in self.param_combinations
         }
 
-        self.system_quantities_path = None
-
     @property
     def simulation_ids(self) -> set[str]:
         """
@@ -661,26 +662,6 @@ class SimulationSet(MutableSet):
         """
         # protect simulation ids
         return self._simulation_ids
-
-    @property
-    def param_paths(self) -> list[Path]:
-        """
-        Get list of JSON parameter files.
-        """
-        return [
-            self.data_dir / f"{simulation_id}{self._param_path_suffix}"
-            for simulation_id in self.simulation_ids
-        ]
-
-    @property
-    def event_paths(self) -> list[Path]:
-        """
-        Get list of resulting output event JSON Lines file paths.
-        """
-        return [
-            self.data_dir / f"{simulation_id}{self._event_path_suffix}"
-            for simulation_id in self.simulation_ids
-        ]
 
     @property
     def base_params(self):
@@ -831,9 +812,7 @@ class SimulationSet(MutableSet):
         requests_path_suffix: str = "_requests.pq",
         only_stops_and_requests: bool = False,  # only compute stops and requests
         vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
-        system_quantities_filename: str = "system_quantities.pq",
     ):
-        self.system_quantities_path = self.data_dir / system_quantities_filename
 
         if not self.simulation_ids:
             warnings.warn(
@@ -845,7 +824,7 @@ class SimulationSet(MutableSet):
             else:
                 compute_vehicle_quantities = True
                 compute_system_quantities = (
-                    not self.system_quantities_path.exists() or update_existing
+                    self.system_quantities_path is None or update_existing
                 )
 
             with loky.get_reusable_executor(max_workers=self.max_workers) as executor:
@@ -968,5 +947,54 @@ class SimulationSet(MutableSet):
             f"validate={self.validated!r})"
         )
 
+    def get_parameter(self, parameter: tuple[str, str]) -> pd.Series:
+        index = self.simulation_ids
+        values = []
+        for sim_id in index:
+            params = get_params(
+                directory=self._param_data_dir,
+                sim_id=sim_id,
+                param_path_suffix=self._param_path_suffix,
+            )
+            values.append(params[parameter[0]][parameter[1]])
+
+        return pd.Series(values, index=index, name=parameter)
+
     # def __repr__(self):
     #     return f"SimulationSet(...)"
+    @property
+    def system_quantities_path(self):
+        if (self.hpc_output_dir_local / "system_quantities.pq").exists():
+            return self.hpc_output_dir_local / "system_quantities.pq"
+
+    @property
+    def param_paths(self) -> list[Path]:
+        """
+        Get list of JSON parameter files.
+        """
+        res = []
+
+        for simulation_id in self.simulation_ids:
+            param_path = (
+                self.hpc_input_dir_local / f"{simulation_id}{self._param_path_suffix}"
+            )
+            if param_path.exists():
+                res.append(param_path)
+
+        return res
+
+    @property
+    def event_paths(self) -> list[Path]:
+        """
+        Get list of resulting output event JSON Lines file paths.
+        """
+        res = []
+
+        for simulation_id in self.simulation_ids:
+            event_path = (
+                self.hpc_output_dir_local / f"{simulation_id}{self._event_path_suffix}"
+            )
+            if event_path.exists():
+                res.append(event_path)
+
+        return res
