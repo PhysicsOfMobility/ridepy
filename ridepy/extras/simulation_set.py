@@ -962,10 +962,11 @@ class SimulationSet(MutableSet):
 
     # def __repr__(self):
     #     return f"SimulationSet(...)"
+
     @property
     def system_quantities_path(self):
-        if (self.hpc_output_dir_local / "system_quantities.pq").exists():
-            return self.hpc_output_dir_local / "system_quantities.pq"
+        if (self.data_dir / "system_quantities.pq").exists():
+            return self.data_dir / "system_quantities.pq"
 
     @property
     def param_paths(self) -> list[Path]:
@@ -975,9 +976,7 @@ class SimulationSet(MutableSet):
         res = []
 
         for simulation_id in self.simulation_ids:
-            param_path = (
-                self.hpc_input_dir_local / f"{simulation_id}{self._param_path_suffix}"
-            )
+            param_path = self.data_dir / f"{simulation_id}{self._param_path_suffix}"
             if param_path.exists():
                 res.append(param_path)
 
@@ -991,9 +990,7 @@ class SimulationSet(MutableSet):
         res = []
 
         for simulation_id in self.simulation_ids:
-            event_path = (
-                self.hpc_output_dir_local / f"{simulation_id}{self._event_path_suffix}"
-            )
+            event_path = self.data_dir / f"{simulation_id}{self._event_path_suffix}"
             if event_path.exists():
                 res.append(event_path)
 
