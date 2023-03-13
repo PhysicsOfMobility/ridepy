@@ -14,7 +14,7 @@
 #     name: python3
 # ---
 
-# # ridepy Introduction: Simulations with Cython
+# # RidePy Introduction: Simulations with Cython
 
 # +
 # %matplotlib inline

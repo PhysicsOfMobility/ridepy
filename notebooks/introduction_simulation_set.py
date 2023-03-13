@@ -13,7 +13,7 @@
 #     name: ridepy39
 # ---
 
-# # ridepy Introduction: Multiple Simulations
+# # RidePy Introduction: Multiple Simulations
 
 # +
 # %matplotlib inline

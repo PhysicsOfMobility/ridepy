@@ -14,7 +14,7 @@
 #     name: ridepy_testing
 # ---
 
-# # ridepy Introduction: Basics
+# # RidePy Introduction: Basics
 
 # +
 # %matplotlib inline
