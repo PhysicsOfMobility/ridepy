@@ -14,6 +14,8 @@
 #     name: ridepy_testing
 # ---
 
+# # Introductory Notebook: ridepy
+
 # +
 # %matplotlib inline
 
@@ -75,7 +77,7 @@ rg = RandomRequestGenerator(
 transportation_requests = it.islice(rg, 100)
 # -
 
-# ## Initialize a `FleetState`
+# ### Initialize a `FleetState`
 
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
@@ -85,32 +87,32 @@ fs = SlowSimpleFleetState(
     vehicle_state_class=VehicleState,
 )
 
-# ## Perform the simulation
+# ### Perform the simulation
 
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
 
-# ## Process the results
+# ### Process the results
 
 stops, reqs = get_stops_and_requests(events=events, space=space)
 
-# # Some distributions
-# ## Relative travel times
+# ## Some distributions
+# ### Relative travel times
 
 reqs[("inferred", "relative_travel_time")].hist(bins=np.r_[1:5:20j])
 plt.gca().set_yscale("log")
 
 
-# ## Waiting times
+# ### Waiting times
 
 reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 
 
-# ## Direct travel times
+# ### Direct travel times
 
 reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
 
 
-# ## Occupancies
+# ### Occupancies
 
 plot_occupancy_hist(stops)
