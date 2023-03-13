@@ -132,7 +132,6 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         #     cyspaces.Graph.from_nx(make_nx_grid()),
         # ),
     ):
-
         n_reqs = 100
 
         random.seed(seed)
@@ -245,7 +244,6 @@ def test_sanity_in_graph():
         }
 
         for req in transportation_requests:
-
             if (rid := req.request_id) not in rejections:
                 assert isclose(req.delivery_timewindow_max, delivery_times[rid])
                 assert isclose(

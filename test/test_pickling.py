@@ -19,7 +19,6 @@ def pickled_object_equal_to_original(obj):
 
 def test_pickling_data_structures():
     for mod in [pyds, cyds]:
-
         ir = mod.InternalRequest(
             request_id=999, creation_timestamp=7.89, location=(1, 3)
         )

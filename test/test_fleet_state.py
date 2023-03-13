@@ -49,7 +49,6 @@ def test_slow_simple_fleet_state_initialization():
         [VehicleState, CyVehicleState],
     ]
     for i, (space, dispatcher, VehicleStateCls) in enumerate(it.product(*test_space)):
-
         testable = lambda: SlowSimpleFleetState(
             initial_locations={0: (0, 0), 1: (1, 1)},
             space=space,
@@ -119,7 +118,6 @@ def test_slow_simple_fleet_state_from_fleet():
         InternalRequestCls,
         StopActionCls,
     ) in enumerate(it.product(*test_space)):
-
         testable = lambda: SlowSimpleFleetState.from_fleet(
             fleet=make_fleet(
                 space=space,

@@ -36,7 +36,12 @@ def test_append_to_empty_stoplist(kind):
 
     # location, cpat, tw_min, tw_max, occupancy
     stoplist_properties = [[(0, 0), 0, 0, inf]]
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -69,7 +74,12 @@ def test_inserted_at_the_middle(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -104,7 +114,12 @@ def test_capacity_constraint(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -156,7 +171,12 @@ def test_inserted_at_the_middle_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -188,7 +208,12 @@ def test_inserted_at_the_middle_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -220,7 +245,12 @@ def test_inserted_at_the_middle_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -263,7 +293,12 @@ def test_inserted_separately(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -301,7 +336,12 @@ def test_same_location_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -343,7 +383,12 @@ def test_inserted_separately_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -371,7 +416,12 @@ def test_inserted_separately_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -399,7 +449,12 @@ def test_inserted_separately_with_detour(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Manhattan2D",
@@ -437,7 +492,12 @@ def test_dropoff_appended(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
@@ -473,7 +533,12 @@ def test_pickup_and_dropoff_appended(kind):
         delivery_timewindow_min=0,
         delivery_timewindow_max=inf,
     )
-    (space, request, stoplist, _,) = setup_insertion_data_structures(
+    (
+        space,
+        request,
+        stoplist,
+        _,
+    ) = setup_insertion_data_structures(
         stoplist_properties=stoplist_properties,
         request_properties=request_properties,
         space_type="Euclidean2D",
