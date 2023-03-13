@@ -21,34 +21,23 @@ You should probably use an environment. For example, using
 
 .. code:: sh
 
-   conda create -n the_simulator python=3.9
-   conda activate the_simulator
+    conda create -n the_simulator python=3.9
+    conda activate the_simulator
 
-Installation
+Full Installation
 ~~~~~~~~~~~~
 
 .. code:: sh
 
-   sudo apt-get update && sudo apt-get -y install openmpi-bin \
-     openmpi-common libopenmpi-dev libboost-all-dev build-essential
-   git clone  --recursive  git@github.com:PhysicsOfMobility/ridepy.git
-   cd ridepy
-   pip install -r requirements.txt
-   python setup.py develop
-   pre-commit install
-   pytest
+    sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
+    git clone  --recursive https://github.com/PhysicsOfMobility/ridepy.git
+    cd ridepy
+    pip install -e ".[dev,doc]"
+    make -C doc html
+    pre-commit install
+    pytest
 
-
-Building the Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: sh
-    
-    pip install -r requirements-doc.txt
-    cd doc
-    make html
-
-The documentation can then be found at ``doc/_build/html/index.html``.
+The documentation is located in ``doc/_build/html/index.html``.
 
 
 First Steps
