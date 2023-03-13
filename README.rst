@@ -27,12 +27,12 @@ You should probably use an environment. For example, using
     conda activate the_simulator
 
 Full Installation
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code:: sh
 
     sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
-    git clone  --recursive https://github.com/PhysicsOfMobility/ridepy.git
+    git clone --recursive https://github.com/PhysicsOfMobility/ridepy.git
     cd ridepy
     pip install -e ".[dev,doc]"
     make -C doc html
