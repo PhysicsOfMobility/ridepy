@@ -54,7 +54,7 @@ pd.set_option("display.width", 1000)
 evf = lambda S, f, **arg: (S, f(S, **arg))
 # -
 
-# # Configure the simulation and supply initial values
+# ## Configure the simulation and supply initial values
 
 # +
 n_buses = 50

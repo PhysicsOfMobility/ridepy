@@ -400,7 +400,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
 
         return df
 
-    stops = stops.groupby("vehicle_id", group_keys=True).apply(dist_time_to_next)
+    stops = stops.groupby("vehicle_id", group_keys=False).apply(dist_time_to_next)
 
     return stops[
         [
