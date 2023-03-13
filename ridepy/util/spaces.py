@@ -53,7 +53,10 @@ class Euclidean(TransportSpace):
 
     @smartVectorize
     def d(self, u, v):
-        return spd.euclidean(u, v)
+        if self.n_dim == 1:
+            return abs(v - u)
+        else:
+            return spd.euclidean(u, v)
 
     def t(self, u, v):
         return self.d(u, v) / self.velocity
