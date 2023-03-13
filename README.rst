@@ -3,9 +3,11 @@
 RidePy
 ======
 
-Simulates a dispatching algorithm serving exogeneous transportation
+Simulates a dispatching algorithm serving exogenous transportation
 requests with a fleet of vehicles. Does not simulate the universe,
 unlike MATSIM.
+
+The documentation is available at `ridepy.org <https://ridepy.org/>`__.
 
 Instructions
 ------------
