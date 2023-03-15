@@ -23,8 +23,8 @@ You should probably use an environment. For example, using
 
 .. code:: sh
 
-    conda create -n the_simulator python=3.9
-    conda activate the_simulator
+    conda create -n ridepy python=3.9
+    conda activate ridepy
 
 Full Installation
 ~~~~~~~~~~~~~~~~~
