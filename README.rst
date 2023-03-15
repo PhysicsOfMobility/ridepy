@@ -5,7 +5,7 @@ RidePy
 
 Simulates a dispatching algorithm serving exogenous transportation
 requests with a fleet of vehicles. Does not simulate the universe,
-unlike MATSIM. Batteries are included.
+unlike MATSim. Batteries are included.
 
 The documentation is available at `ridepy.org <https://ridepy.org/>`__.
 
