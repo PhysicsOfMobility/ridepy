@@ -26,12 +26,20 @@ You should probably use an environment. For example, using
     conda create -n ridepy python=3.9
     conda activate ridepy
 
+
+Finally, a C++ build environment and the `Boost C++ Libraries <https://www.boost.org/>`__ are necessary.
+On Debian-based Linux distributions, these may be installed as follows:
+
+.. code:: sh
+
+    sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
+
+
 Full Installation
 ~~~~~~~~~~~~~~~~~
 
 .. code:: sh
 
-    sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
     git clone --recursive https://github.com/PhysicsOfMobility/ridepy.git
     cd ridepy
     pip install -e ".[dev,doc]"
