@@ -7,14 +7,16 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.0
+#       jupytext_version: 1.14.5
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python (ridepy_testing)
 #     language: python
-#     name: python3
+#     name: ridepy_testing
 # ---
 
-# + tags=[]
+# # RidePy Introduction: Basics
+
+# +
 # %matplotlib inline
 
 import itertools as it
@@ -23,7 +25,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# + tags=[]
+# +
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState
 
@@ -35,7 +37,7 @@ from ridepy.util.spaces import Euclidean2D
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
 
-# + tags=[]
+# +
 # assume dark background for plots?
 dark = True
 
@@ -46,7 +48,7 @@ if dark:
     plt.rcParams["axes.facecolor"] = (1, 1, 1, 0)
     plt.rcParams["figure.facecolor"] = (1, 1, 1, 0)
 
-# + tags=[]
+# +
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
 pd.set_option("display.width", 1000)
@@ -54,9 +56,9 @@ pd.set_option("display.width", 1000)
 evf = lambda S, f, **arg: (S, f(S, **arg))
 # -
 
-# # Configure the simulation and supply initial values
+# ## Configure the simulation and supply initial values
 
-# + tags=[]
+# +
 n_buses = 50
 
 initial_location = (0, 0)
@@ -75,9 +77,8 @@ rg = RandomRequestGenerator(
 transportation_requests = it.islice(rg, 100)
 # -
 
-# ## Initialize a `FleetState`
+# ### Initialize a `FleetState`
 
-# + tags=[]
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
@@ -85,45 +86,33 @@ fs = SlowSimpleFleetState(
     dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
     vehicle_state_class=VehicleState,
 )
-# -
 
-# ## Perform the simulation
+# ### Perform the simulation
 
-# + tags=[]
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
-# -
 
-# ## Process the results
+# ### Process the results
 
-# + tags=[]
 stops, reqs = get_stops_and_requests(events=events, space=space)
-# -
 
-# # Some distributions
-# ## Relative travel times
+# ## Some distributions
+# ### Relative travel times
 
-# + tags=[]
 reqs[("inferred", "relative_travel_time")].hist(bins=np.r_[1:5:20j])
 plt.gca().set_yscale("log")
-# -
 
 
-# ## Waiting times
+# ### Waiting times
 
-# + tags=[]
 reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
-# -
 
 
-# ## Direct travel times
+# ### Direct travel times
 
-# + tags=[]
 reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
-# -
 
 
-# ## Occupancies
+# ### Occupancies
 
-# + tags=[]
 plot_occupancy_hist(stops)

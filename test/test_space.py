@@ -306,7 +306,6 @@ def test_py_cy_init():
             velocity=velocity,
         ),
     ]:
-
         cy_graph = CyGraph(**kwargs)
         py_graph = Graph(**kwargs)
 
@@ -531,7 +530,6 @@ def test_caching_in_boost_graph_space():
 # DO NOT test this for now, as we use different methods for computing the shortest path
 # (floyd-warshall in Python and dijkstra in C++. Therefore differences in interpolation arise.)
 def test_python_cython_graph_interpolation_equivalence():
-
     pyspace = Graph.from_nx(make_nx_grid())
     cyspace = CyGraph.from_nx(make_nx_grid())
 

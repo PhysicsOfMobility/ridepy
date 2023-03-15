@@ -1,4 +1,4 @@
-black
+black==23.1.0
 commitizen
 pdbpp
 pre-commit

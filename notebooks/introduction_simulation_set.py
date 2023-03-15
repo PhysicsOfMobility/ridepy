@@ -6,14 +6,16 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.13.6
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python (ridepy39)
 #     language: python
 #     name: ridepy39
 # ---
 
-# + tags=[]
+# # RidePy Introduction: Multiple Simulations
+
+# +
 # %matplotlib inline
 
 from ridepy.extras.simulation_set import SimulationSet
@@ -23,9 +25,8 @@ from pathlib import Path
 
 # -
 
-# # Simulation Set
+# ## Simulation Set
 
-# + tags=[]
 tmp_path = Path("./simulations_tmp").resolve()
 tmp_path.mkdir(exist_ok=True)
 simulation_set = SimulationSet(
@@ -45,13 +46,9 @@ simulation_set = SimulationSet(
     data_dir=tmp_path,
 )
 
-# + tags=[]
 simulation_set.run()
 simulation_set.run_analytics(only_stops_and_requests=True)
 
-# + tags=[]
 read_params_json(simulation_set.param_paths[0])
 
-# + tags=[]
 read_events_json(simulation_set.event_paths[0])
-# -

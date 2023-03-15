@@ -377,8 +377,8 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
     #       this must be changed.
     #       See also [issue #45](https://github.com/PhysicsOfMobility/ridepy/issues/45)
     locations.index = locations.index.set_levels(
-        locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
-        1,
+        levels=locations.index.levels[1].map({"origin": 1.0, "destination": -1.0}),
+        level=1,
     )
 
     # finally fill the locations missing in the stops dataframe by joining on request_id and delta_occupancy
@@ -400,7 +400,7 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
 
         return df
 
-    stops = stops.groupby("vehicle_id").apply(dist_time_to_next)
+    stops = stops.groupby("vehicle_id", group_keys=False).apply(dist_time_to_next)
 
     return stops[
         [

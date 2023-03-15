@@ -77,7 +77,6 @@ def test_smartVectorize():
             lambda u, v: phony3.foo(u=u, v=v),
         ],
     ]:
-
         assert w1(u, v) == e
         assert w2(u, v) == e
         assert w3(u, v) == e

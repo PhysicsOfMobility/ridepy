@@ -37,7 +37,6 @@ from ridepy.extras.spaces import (
 @pytest.mark.parametrize("backend", ["python", "cython"])
 @pytest.mark.parametrize("space", ["euclid1d", "euclid2d", "grid"])
 def test_fast_forward_time(backend, space):
-
     random.seed(43)
     np.random.seed(43)
 

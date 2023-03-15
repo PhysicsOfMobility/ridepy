@@ -25,7 +25,10 @@ extensions = [
 
 setuptools.setup(
     name="ridepy",
-    version="0.1",
+    version="2.0",
+    author="Felix Jung and Debsankha Manik",
+    author_email="felix.jung@tu-dresden.de",
+    url="https://ridepy.org/",
     python_requires=">=3.9",
     zip_safe=False,
     packages=setuptools.find_packages(),
