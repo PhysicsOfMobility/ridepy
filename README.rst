@@ -66,12 +66,10 @@ Generally, branch off from ``master``, implement stuff® and file a pull
 request back to ``master``. Feel free to do the latter at an early
 stage using the GitHub's "Submit Draft" feature.
 
-Philosophy:
+Versioning Philosophy:
 
--  ``master`` should always improve. Incomplete functionality is
-   welcome.
--  ``production`` should always be usable and, if possible, not break
-   things.
+-  ``master`` should always improve. Incomplete functionality is welcome.
+-  API-breaking changes imply transition to a new major version
 
 Code style is *black* for Python and *LLVM* for C++. To format your code use
 
