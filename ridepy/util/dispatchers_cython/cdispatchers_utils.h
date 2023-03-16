@@ -185,11 +185,14 @@ bool is_timewindow_violated_dueto_insertion(
   // double delta_cpat, old_leeway, new_leeway, old_departure, new_departure
   if (idx > static_cast<int>(stoplist.size() - 2))
     return false;
+
+  // inserted stop incurs zero detour, and we don't have to wait
+  if (est_arrival_first_stop_after_insertion <=
+      stoplist[idx + 1].estimated_arrival_time)
+    return false;
+
   auto delta_cpat = (est_arrival_first_stop_after_insertion -
                      stoplist[idx + 1].estimated_arrival_time);
-
-  if (delta_cpat == 0)
-    return false;
 
   //    BOOST_FOREACH(auto& stop,
   //    boost::make_iterator_range(stoplist.begin()+idx, stoplist.end()))
@@ -201,17 +204,17 @@ bool is_timewindow_violated_dueto_insertion(
 
     if ((new_leeway < 0) && (new_leeway < old_leeway))
       return true;
-    else {
-      auto old_departure =
-          max(stop->time_window_min, stop->estimated_arrival_time);
-      auto new_departure =
-          max(stop->time_window_min, stop->estimated_arrival_time + delta_cpat);
-      auto delta_cpat = new_departure - old_departure;
-      if (delta_cpat == 0) {
-        // no need to check next stops
-        return false;
-      }
-    }
+    else if (stop->time_window_min >= stop->estimated_arrival_time + delta_cpat)
+      // We have to wait or arrive just on time, thus no need to check next
+      // stops
+      return false;
+    else
+      // Otherwise we are incurring additional delay. Compute the remaining
+      // delay:
+      delta_cpat = max(stop->time_window_min,
+                       stop->estimated_arrival_time + delta_cpat) -
+                   max(stop->time_window_min, stop->estimated_arrival_time);
+    ;
   }
   return false;
 }
