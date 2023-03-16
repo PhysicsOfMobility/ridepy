@@ -129,8 +129,8 @@ General Things
 .. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
 
-.. |Docs: passing| image:: https://img.shields.io/docsrs/built
-   :target: https://ridepy.org/
+.. |Docs: passing| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/docs-gh-pages.yml/badge.svg
+   :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/docs-gh-pages.yml
 
 .. |Tests| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml/badge.svg
    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml
