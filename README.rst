@@ -73,7 +73,7 @@ Versioning Philosophy:
 
 Code style is *black* for Python and *LLVM* for C++. To format your code use
 
-- ``black .`` for Python. Make sure to use the correct version as specified in `requirements-dev.txt`.
+- ``black .`` for Python. Make sure to use the correct version as specified in ``requirements-dev.txt``.
 - ``find . -regex '.*\.\(cxx\|h\)' -exec clang-format -style=file -i {} \;`` for C++
 
 Testing
