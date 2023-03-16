@@ -3,6 +3,7 @@ import pytest
 import os
 import re
 
+import operator as op
 import itertools as it
 import numpy as np
 
@@ -10,6 +11,7 @@ from ridepy.extras.io import (
     save_params_json,
     read_params_json,
     read_events_json,
+    sort_params,
 )
 from ridepy.extras.spaces import (
     make_nx_cycle_graph,
@@ -121,13 +123,12 @@ def test_io_params(cython, tmp_path):
         debug=True,
         cython=cython,
     )
-    params = next(iter(simulation_set))
+
+    # sort for easy visual comparison
+    params = sort_params(next(iter(simulation_set)))
 
     save_params_json(param_path=param_path, params=params)
     restored_params = read_params_json(param_path=param_path)
-    print()
-    print(params)
-    print(restored_params)
 
     assert params == restored_params
 

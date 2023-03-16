@@ -1,3 +1,5 @@
+import pytest
+
 import itertools as it
 import numpy as np
 import pandas as pd
@@ -876,10 +878,10 @@ def test_get_stops_and_requests_and_get_quantities():
                 "total_direct_time": {0: 0.4, 1: 1.0, 2: nan},
                 "efficiency_dist": {0: 1.3333333333333335, 1: 0.5, 2: nan},
                 "efficiency_time": {0: 1.3333333333333335, 1: 0.5, 2: nan},
-                "avg_system_stoplist_length_service_time": {0: 2.2, 1: 0.0, 2: 0.0},
-                "avg_system_stoplist_length_submission_time": {0: 4.0, 1: 2.0, 2: 0.0},
-                "avg_stoplist_length_service_time": {0: 0.2, 1: 0.0, 2: 0.0},
-                "avg_stoplist_length_submission_time": {0: 2.0, 1: 0.0, 2: 0.0},
+                # "avg_system_stoplist_length_service_time": {0: 2.2, 1: 0.0, 2: 0.0},
+                # "avg_system_stoplist_length_submission_time": {0: 4.0, 1: 2.0, 2: 0.0},
+                # "avg_stoplist_length_service_time": {0: 0.2, 1: 0.0, 2: 0.0},
+                # "avg_stoplist_length_submission_time": {0: 2.0, 1: 0.0, 2: 0.0},
             }
         )
         assert_frame_equal(
@@ -901,14 +903,16 @@ def test_get_stops_and_requests_and_get_quantities():
             "efficiency_dist": (0.3 + 0.1 + 1) / (0.1 + 0.1 + 0.1 + 1 + 1),
             "efficiency_time": (0.3 + 0.1 + 1) / (0.1 + 0.1 + 0.1 + 1 + 1),
             "avg_waiting_time": (0 + 0.1 + 1) / 3,
-            "median_stoplist_length": 2.0,
             "rejection_ratio": 0.25,
             "avg_detour": 1.0,
-            "avg_system_stoplist_length_service_time": 1.4666666666666668,
-            "avg_system_stoplist_length_submission_time": 4.0,
-            "avg_stoplist_length_service_time": 0.13333333333333333,
-            "avg_stoplist_length_submission_time": 1.3333333333333333,
+            "n_vehicles_used": 2,
+            "avg_segment_duration": 0.5,
+            "avg_idle_duration": 0.41111111111111115,
+            "avg_stoplist_length": 1.0,
+            "avg_request_rate_submitted": 2.000000,
+            "avg_request_rate_serviced": 1.500000,
         }
+
         assert get_system_quantities(stops, requests) == expected_system_quantities
 
         plot_occupancy_hist(stops)
