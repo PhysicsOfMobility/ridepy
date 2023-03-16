@@ -130,7 +130,7 @@ General Things
    :target: https://github.com/psf/black
 
 .. |Docs: passing| image:: https://img.shields.io/docsrs/built
-   :target: https://physicsofmobility.gitlab.io/ridepy/
+   :target: https://ridepy.org/
 
 .. |Tests| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml/badge.svg
    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml
