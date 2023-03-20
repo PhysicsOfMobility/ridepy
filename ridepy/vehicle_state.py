@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 class VehicleState:
     """
-    Single vehicle insertion logic is implemented here. Can optionally  be implemented in Cython
-    or other compiled language.
+    Single vehicle insertion logic is implemented here. Can optionally be implemented in Cython
+    or another compiled language.
     """
 
     def recompute_arrival_times_drive_first(self):
@@ -51,13 +51,12 @@ class VehicleState:
             id of the vehicle to be created.
         initial_stoplist
             stoplist to start out with, MUST contain CPE as first element.
+        space
+        dispatcher
+            see the docstring of `.FleetState`.
         seat_capacity
             the maximum number of `.TransportationRequest` s
              that can be in a vehicle at the same time.
-        space
-        loc_type
-        dispatcher
-            see the docstring of `.FleetState`.
         """
         self.vehicle_id = vehicle_id
         # TODO check for CPE existence in each supplied stoplist or encapsulate the whole thing
@@ -180,7 +179,7 @@ class VehicleState:
 
         Returns
         -------
-            The `SingleVehicleSolution` for the respective vehicle.
+        The `SingleVehicleSolution` for the respective vehicle.
         """
 
         cost, self.stoplist_new, (EAST_pu, LAST_pu, EAST_do, LAST_do) = self.dispatcher(

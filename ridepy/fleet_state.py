@@ -95,17 +95,17 @@ class FleetState(ABC):
         ----------
         initial_locations
             Dictionary with vehicle ids as keys and initial locations as values.
-        seat_capacities
-            Integers denoting the maximum number of persons a vehicle can hold. Either a dictionary with vehicle ids as
-            keys or a positive integer (Causes each vehicle to have the same capacity).
+        vehicle_state_class
+            The vehicle state class to be used. Can be either `.vehicle_state.VehicleState` (pure pythonic) or
+            `.vehicle_state_cython.VehicleState` (implemented in cython).
         space
             The `.data_structures.TransportSpace` (e.g. Euclidean2D, Graph) in which the simulation will be run.
         dispatcher
             The dispatching algorithm that maps a (stoplist, TransportationRequest) pair into a cost and new stoplist.
             See :doc:`introduction` for more details.
-        vehicle_state_class
-            The vehicle state class to be used. Can be either `.vehicle_state.VehicleState` (pure pythonic) or
-            `.vehicle_state_cython.VehicleState` (implemented in cython).
+        seat_capacities
+            Integers denoting the maximum number of persons a vehicle can hold. Either a dictionary with vehicle ids as
+            keys or a positive integer (Causes each vehicle to have the same capacity).
 
         Note
         ----
@@ -148,7 +148,7 @@ class FleetState(ABC):
 
         assert initial_locations, "No initial locations supplied."
         for initial_location in initial_locations.values():
-            # note that numpy's dimensions start from 0
+            # note that NumPy's dimensions start from 0
             assert space.n_dim == np.ndim(initial_location) + 1, (
                 f"Dimension mismatch: Initial location {initial_location} of "
                 f"dimensionality {np.ndim(initial_location) + 1} supplied, "
@@ -201,8 +201,6 @@ class FleetState(ABC):
             TransportSpace to operate on
         dispatcher
             dispatcher to use to assign requests to vehicles or reject them.
-        VehicleStateCls
-            Class to create vehicle_state objects from
         validate
             If true, try to figure out whether something is off. If not, raise.
 
@@ -261,7 +259,7 @@ class FleetState(ABC):
         self, requests: Iterator[Request], t_cutoff: float = np.inf
     ) -> Iterator[Event]:
         """
-        Perform a simulation.
+        Run a simulation.
 
         Parameters
         ----------
@@ -273,11 +271,12 @@ class FleetState(ABC):
 
         Returns
         -------
-            Iterator of events that have been emitted during the simulation.
+        Iterator of events that have been emitted during the simulation.
 
         Note
         ----
-        Because of lazy evaluation the returned iterator must be exhausted for the simulation to be actually be performed.
+        Because of lazy evaluation the returned iterator must be exhausted
+        for the simulation to be actually be performed.
         """
 
         self.t = 0
@@ -346,7 +345,8 @@ class FleetState(ABC):
     @abstractmethod
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:
         """
-        Advance the simulator's state in time from the previous time :math:`t'` to the new time :math:`t`, with :math:`t >= t'`.
+        Advance the simulator's state in time from the previous time :math:`t'`
+        to the new time :math:`t`, with :math:`t >= t'`.
         E.g. vehicle locations may change and vehicle stops may be serviced.
         The latter will emit `.StopEvent` s which are returned.
 
