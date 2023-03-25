@@ -131,7 +131,10 @@ cdef class Euclidean2D(TransportSpace):
         del self.derived_ptr
 
     def __repr__(self):
-        return f"Euclidean2D(velocity={self.velocity})"
+        return f"Euclidean2D(coord_range={self.coord_range}, velocity={self.velocity})"
+
+    def __hash__(self):
+        return hash(repr(self))
 
     @property
     def velocity(self):
@@ -178,7 +181,10 @@ cdef class Manhattan2D(TransportSpace):
         del self.derived_ptr
 
     def __repr__(self):
-        return f"Manhattan2D(velocity={self.velocity})"
+        return f"Manhattan2D(coord_range={self.coord_range}, velocity={self.velocity})"
+
+    def __hash__(self):
+        return hash(repr(self))
 
     @property
     def velocity(self):
@@ -307,6 +313,17 @@ cdef class Graph(TransportSpace):
                  self.weights,
                  self.velocity,
             )
+
+
+    def __hash__(self):
+        return hash(
+            (
+                hash(repr(self.vertices)),
+                hash(repr(self.edges)),
+                hash(repr(self.weights)),
+                hash(repr(self.velocity)),
+            )
+        )
 
     def asdict(self):
         return dict(

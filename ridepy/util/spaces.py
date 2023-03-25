@@ -100,6 +100,12 @@ class Euclidean(TransportSpace):
     def __repr__(self):
         return make_repr("Euclidean", self.asdict())
 
+    def __hash__(self):
+        hash(repr(self))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
 
 class Euclidean1D(Euclidean):
     def __init__(
@@ -468,6 +474,19 @@ class Graph(TransportSpace):
             self.weights,
             self.velocity,
         )
+
+    def __hash__(self):
+        return hash(
+            (
+                hash(repr(self.vertices)),
+                hash(repr(self.edges)),
+                hash(repr(self.weights)),
+                hash(repr(self.velocity)),
+            )
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
 
 class DiGraph(Graph):

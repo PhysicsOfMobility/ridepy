@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import os
+import sys
 import warnings
 
 import loky
@@ -10,6 +13,7 @@ import functools as ft
 import itertools as it
 import pandas as pd
 
+from collections.abc import MutableSet
 from collections import defaultdict
 from copy import deepcopy
 from typing import (
@@ -22,6 +26,8 @@ from typing import (
     Callable,
 )
 from pathlib import Path
+
+from frozendict import frozendict
 
 from ridepy.util import make_sim_id
 from ridepy.util.analytics import (
@@ -51,7 +57,21 @@ from ridepy.extras.io import (
     read_params_json,
 )
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+
+
+def freeze_two_level_dict(
+    d: dict[Any, dict[Any, Any]]
+) -> frozendict[Any, frozendict[Any, Any]]:
+    return frozendict(
+        {outer_key: frozendict(inner_dict) for outer_key, inner_dict in d.items()}
+    )
+
+
+def thaw_two_level_dict(
+    d: frozendict[Any, frozendict[Any, Any]]
+) -> dict[Any, dict[Any, Any]]:
+    return {outer_key: dict(inner_dict) for outer_key, inner_dict in d.items()}
 
 
 def make_file_path(sim_id: str, directory: Path, suffix: str):
@@ -202,6 +222,7 @@ def perform_single_simulation(
     # we need a pseudorandom id that does not change if this function is called with the same params
     # the following does not guarantee a lack of collisions, and will fail if non-ascii characters are involved.
     tick = time()
+    params = thaw_two_level_dict(params)
     params_json = create_params_json(params=params)
     sim_id = make_sim_id(params_json)
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
@@ -214,16 +235,16 @@ def perform_single_simulation(
     ):
         # assume that a previous simulation run already exists. this works because we write
         # to param_path *after* a successful simulation run.
-        logger.info(
+        log.info(
             f"Pre-existing param json exists for {params_json=} at {param_path=}, skipping simulation"
         )
         return sim_id
     else:
-        logger.info(
+        log.info(
             f"No pre-existing param json exists for {params_json=} at {param_path=}, running simulation"
         )
         if event_path.exists():
-            logger.info(
+            log.info(
                 f"Potentially incomplete simulation data exists at {event_path=}, this will be overwritten"
             )
             event_path.unlink()
@@ -352,7 +373,7 @@ def simulate_parameter_combinations(
     return sim_ids
 
 
-class SimulationSet:
+class SimulationSet(MutableSet):
     """
     A set of simulations. The parameter space is defined through constant `base_params`,
     zipped `zip_params` and cartesian product `product_params`. A set of a single simulation
@@ -360,13 +381,27 @@ class SimulationSet:
     allowing for parallelization of simulation runs at different parameters.
     """
 
+    _wrapped_methods = [
+        "copy",
+        "difference",
+        "difference_update",
+        "intersection",
+        "intersection_update",
+        "symmetric_difference",
+        "symmetric_difference_update",
+        "union",
+        "update",
+    ]
+
+    _delegated_attrs = ["issubset", "issuperset"]
+
     @staticmethod
     def _two_level_dict_update(
         base_dict: dict[str, dict[str, Any]], update_dict: dict[str, dict[str, Any]]
     ) -> dict:
         """
         Update two-level nested dictionary with deepcopying,
-        where `update_dict` overwrites entries in `base_dict`.
+        where `update_dict` updates entries in `base_dict`.
 
         Example
         -------
@@ -384,7 +419,7 @@ class SimulationSet:
         base_dict
             two-level nested dict to update
         update_dict
-            two-level nested dict which overwrites entries in base_dict
+            two-level nested dict which updates entries in base_dict
 
         Returns
         -------
@@ -392,8 +427,9 @@ class SimulationSet:
 
         """
         d = deepcopy(base_dict)
-        # This sorted is needed otherwise detection of pre existing simulation run does not work.
-        for outer_key in sorted(set(base_dict) | set(update_dict)):
+        # This `sorted` is necessary because otherwise the detection of
+        # existing simulation runs may fail.
+        for outer_key in sorted(set(base_dict) | set(update_dict), key=str):
             d[outer_key] = base_dict.get(outer_key, {}) | update_dict.get(outer_key, {})
         return d
 
@@ -443,8 +479,9 @@ class SimulationSet:
 
     def __init__(
         self,
+        single_combinations: Iterable[Optional[dict[str, dict[str, Any]]]] = None,
         *,
-        data_dir: Union[str, Path],
+        data_dir: Union[str, Path] = ".",
         base_params: Optional[dict[str, dict[str, Any]]] = None,
         zip_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
         product_params: Optional[dict[str, dict[str, Sequence[Any]]]] = None,
@@ -455,7 +492,7 @@ class SimulationSet:
         jsonl_chunksize: int = 1000,
         event_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
-        validate: bool = True,
+        validate: bool = False,
     ) -> None:
         """
 
@@ -472,6 +509,8 @@ class SimulationSet:
             Dictionary setting parameters of which the cartesian product (i.e. all possible
             combinations of the supplied parameters) is created and varied throughout
             the simulation set, optional.
+        single_combinations
+            Iterable of single parameter combinations. Each item must fully specify a simulation run.
         cython
             Use cython.
         debug
@@ -491,14 +530,22 @@ class SimulationSet:
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
         """
 
+        for method in self._wrapped_methods:
+            setattr(self, method, self._wrap_method(method, self))
+
         self.debug = debug
         self.max_workers = max_workers
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = Path(data_dir)
 
+        self._param_data_dir = self.data_dir
+        self._event_data_dir = self.data_dir
+
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
+
+        self.use_cython = cython
 
         if cython:
             space_obj = CyEuclidean2D()
@@ -532,9 +579,9 @@ class SimulationSet:
             ),
         )
 
-        base_params = base_params if base_params is not None else {}
-        zip_params = zip_params if zip_params is not None else {}
-        product_params = product_params if product_params is not None else {}
+        base_params = base_params or {}
+        zip_params = zip_params or {}
+        product_params = product_params or {}
 
         if validate:
             # assert no unknown outer keys
@@ -559,44 +606,98 @@ class SimulationSet:
             assert self._zip_params_equal_length(
                 zip_params
             ), "zipped parameters must be of equal length"
+            self.validated = True
+        else:
+            self.validated = False
 
         self._base_params = self._two_level_dict_update(
             self.default_base_params, base_params
         )
+
+        if single_combinations:
+            single_combinations = list(single_combinations)
+
+        # make parameters immutable
+
+        if single_combinations:
+            for outer_dict in single_combinations:
+                for outer_key, inner_dict in outer_dict.items():
+                    for inner_key, inner_value in inner_dict.items():
+                        if isinstance(inner_value, dict):
+                            outer_dict[outer_key][inner_key] = frozendict(inner_dict)
+
+        for multi_params in [zip_params, product_params]:
+            if multi_params:
+                for outer_key, inner_dict in multi_params.items():
+                    for inner_key, inner_value in inner_dict.items():
+                        for i, multi_value in enumerate(inner_value):
+                            if isinstance(multi_value, dict):
+                                multi_params[outer_key][inner_key][i] = frozendict(
+                                    multi_value
+                                )
+
+        if single_combinations is not None:
+            self._single_combinations = set(single_combinations)
+        elif not self.compute_cardinality_product_params_zip_params(
+            product_params=product_params, zip_params=zip_params
+        ):
+            self._single_combinations = {freeze_two_level_dict(self.base_params)}
+        else:
+            self._single_combinations = set()
+
         self._zip_params = zip_params
         self._product_params = product_params
 
-        self._simulation_ids = None
+        self._update_parameter_combinations()
 
-        self.system_quantities_path = None
+        self._simulation_ids = {
+            make_sim_id(params_json=create_params_json(params=params))
+            for params in self.param_combinations
+        }
 
     @property
-    def simulation_ids(self) -> list[str]:
+    def simulation_ids(self) -> set[str]:
         """
         Get simulation IDs.
         """
         # protect simulation ids
-        return self._simulation_ids if self._simulation_ids is not None else []
+        return self._simulation_ids
 
     @property
-    def param_paths(self) -> list[Path]:
-        """
-        Get list of JSON parameter files.
-        """
-        return [
-            self.data_dir / f"{simulation_id}{self._param_path_suffix}"
-            for simulation_id in self.simulation_ids
-        ]
+    def base_params(self):
+        return self._base_params
 
     @property
-    def event_paths(self) -> list[Path]:
-        """
-        Get list of resulting output event JSON Lines file paths.
-        """
-        return [
-            self.data_dir / f"{simulation_id}{self._event_path_suffix}"
-            for simulation_id in self.simulation_ids
-        ]
+    def product_params(self):
+        return self._product_params
+
+    @property
+    def zip_params(self):
+        return self._zip_params
+
+    @property
+    def single_combinations(self):
+        return self._single_combinations
+
+    @base_params.setter
+    def base_params(self, value):
+        self._base_params = value
+        self._update_parameter_combinations()
+
+    @product_params.setter
+    def product_params(self, value):
+        self._product_params = value
+        self._update_parameter_combinations()
+
+    @zip_params.setter
+    def zip_params(self, value):
+        self._zip_params = value
+        self._update_parameter_combinations()
+
+    @single_combinations.setter
+    def single_combinations(self, value):
+        self._single_combinations = set(map(freeze_two_level_dict, value))
+        self._update_parameter_combinations()
 
     @staticmethod
     def _make_joined_key_pairs_values(
@@ -633,7 +734,7 @@ class SimulationSet:
 
         return joined_key_pairs, joined_values_iter
 
-    def __iter__(self):
+    def _update_parameter_combinations(self):
         zipped_key_pairs, zipped_values_iter = self._make_joined_key_pairs_values(
             params=self._zip_params, join_fn=zip
         )
@@ -645,13 +746,13 @@ class SimulationSet:
             params=self._product_params, join_fn=it.product
         )
 
-        def param_combinations() -> Iterator[dict[str, dict[str, Any]]]:
+        def param_combinations() -> Iterator[frozendict[str, dict[str, Any]]]:
             """
             Generator yielding complete parameter sets which can be
             supplied to `perform_single_simulation`.
             """
-            for zipped_params, multiplied_params in it.product(
-                zipped_values_iter, multiplied_values_iter
+            for zipped_params, multiplied_params in list(
+                it.product(zipped_values_iter, multiplied_values_iter)
             ):
                 d = defaultdict(dict)
 
@@ -665,13 +766,15 @@ class SimulationSet:
                 ):
                     d[outer_key][inner_key] = value
 
-                yield self._two_level_dict_update(self._base_params, d)
+                if d:
+                    yield freeze_two_level_dict(
+                        self._two_level_dict_update(self._base_params, d)
+                    )
 
-        self._param_combinations = param_combinations()
-        return self
+        self.param_combinations = self.single_combinations | set(param_combinations())
 
-    def __next__(self):
-        return next(self._param_combinations)
+    def __iter__(self):
+        return iter(self.param_combinations)
 
     def run(self, dry_run=False):
         """
@@ -690,7 +793,7 @@ class SimulationSet:
             If True, do not actually simulate.
         """
 
-        self._simulation_ids = simulate_parameter_combinations(
+        simulate_parameter_combinations(
             param_combinations=iter(self),
             data_dir=self.data_dir,
             debug=self.debug,
@@ -702,27 +805,6 @@ class SimulationSet:
             dry_run=dry_run,
         )
 
-    def __len__(self) -> int:
-        """
-        Number of simulations performed when calling `SimulationSet.run`.
-        """
-        len_ = 1
-        if self._zip_params:
-            len_ *= len(next(iter(next(iter(self._zip_params.values())).values())))
-        if self._product_params:
-            len_ *= ft.reduce(
-                op.mul,
-                (
-                    len(inner_value)
-                    for inner_dict in self._product_params.values()
-                    for inner_value in inner_dict.values()
-                ),
-            )
-        if not (self._zip_params or self._product_params):
-            len_ = 0
-
-        return len_
-
     def run_analytics(
         self,
         update_existing: bool = False,
@@ -730,9 +812,7 @@ class SimulationSet:
         requests_path_suffix: str = "_requests.pq",
         only_stops_and_requests: bool = False,  # only compute stops and requests
         vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
-        system_quantities_filename: str = "system_quantities.pq",
     ):
-        self.system_quantities_path = self.data_dir / system_quantities_filename
 
         if not self.simulation_ids:
             warnings.warn(
@@ -744,7 +824,7 @@ class SimulationSet:
             else:
                 compute_vehicle_quantities = True
                 compute_system_quantities = (
-                    not self.system_quantities_path.exists() or update_existing
+                    self.system_quantities_path is None or update_existing
                 )
 
             with loky.get_reusable_executor(max_workers=self.max_workers) as executor:
@@ -779,3 +859,139 @@ class SimulationSet:
                 system_quantities_df = pd.DataFrame(system_quantities, index=sim_ids)
                 system_quantities_df.rename_axis("simulation_id", inplace=True)
                 system_quantities_df.to_parquet(self.system_quantities_path)
+
+    @staticmethod
+    def compute_cardinality_product_params_zip_params(
+        *, product_params, zip_params
+    ) -> int:
+        """
+        Number of simulations performed when calling `SimulationSet.run`,
+        excluding single_combinations
+        """
+        len_ = 1
+        if zip_params and next(iter(zip_params.values())):
+            len_ *= len(next(iter(next(iter(zip_params.values())).values())))
+        if product_params:
+            len_ *= ft.reduce(
+                op.mul,
+                (
+                    len(inner_value)
+                    for inner_dict in product_params.values()
+                    for inner_value in inner_dict.values()
+                ),
+            )
+        if not (zip_params or product_params):
+            len_ = 0
+
+        return len_
+
+    def __len__(self):
+        return len(self.param_combinations)
+
+    def __contains__(self, item):
+        return item in self.param_combinations
+
+    def __getattr__(self, attr):
+        if attr in self._delegated_attrs:
+            return getattr(self.param_combinations, attr)
+        else:
+            raise AttributeError(f"'SimulationSet' has no attribute '{attr}'")
+
+    @staticmethod
+    def _wrap_method(method, o):
+        # Note that this uses self's properties for everything except the simulation
+        # parameters. This is intended behavior.
+        def wrapped(*args):
+            log.debug(f"Was told to {method}")
+            args = [arg.param_combinations for arg in args]
+            return SimulationSet(
+                single_combinations=getattr(o.param_combinations, method)(*args),
+                data_dir=o.data_dir,
+                cython=o.use_cython,
+                debug=o.debug,
+                max_workers=o.max_workers,
+                process_chunksize=o.process_chunksize,
+                jsonl_chunksize=o.jsonl_chunksize,
+                event_path_suffix=o._event_path_suffix,
+                param_path_suffix=o._param_path_suffix,
+                validate=o.validated,
+            )
+
+        return wrapped
+
+    def add(self, item):
+        log.debug(f"Was told to add")
+        self.param_combinations.add(item)
+        self._simulation_ids.add(
+            make_sim_id(params_json=create_params_json(params=item))
+        )
+
+    def discard(self, item):
+        log.debug(f"Was told to discard")
+        self.param_combinations.discard(item)
+        self._simulation_ids.discard(
+            make_sim_id(params_json=create_params_json(params=item))
+        )
+
+    def __str__(self):
+        return (
+            f"SimulationSet(single_combinations=..., "
+            f"data_dir={self.data_dir!r}, "
+            f"cython={self.use_cython!r}, "
+            f" debug={self.debug!r}, "
+            f"max_workers={self.max_workers!r}, "
+            f"process_chunksize={self.process_chunksize!r}, "
+            f"jsonl_chunksize={self.jsonl_chunksize!r}, "
+            f"event_path_suffix={self._event_path_suffix!r}, "
+            f"param_path_suffix={self._param_path_suffix!r}, "
+            f"validate={self.validated!r})"
+        )
+
+    def get_parameter(self, parameter: tuple[str, str]) -> pd.Series:
+        index = self.simulation_ids
+        values = []
+        for sim_id in index:
+            params = get_params(
+                directory=self._param_data_dir,
+                sim_id=sim_id,
+                param_path_suffix=self._param_path_suffix,
+            )
+            values.append(params[parameter[0]][parameter[1]])
+
+        return pd.Series(values, index=index, name=parameter)
+
+    # def __repr__(self):
+    #     return f"SimulationSet(...)"
+
+    @property
+    def system_quantities_path(self):
+        if (self.data_dir / "system_quantities.pq").exists():
+            return self.data_dir / "system_quantities.pq"
+
+    @property
+    def param_paths(self) -> list[Path]:
+        """
+        Get list of JSON parameter files.
+        """
+        res = []
+
+        for simulation_id in self.simulation_ids:
+            param_path = self.data_dir / f"{simulation_id}{self._param_path_suffix}"
+            if param_path.exists():
+                res.append(param_path)
+
+        return res
+
+    @property
+    def event_paths(self) -> list[Path]:
+        """
+        Get list of resulting output event JSON Lines file paths.
+        """
+        res = []
+
+        for simulation_id in self.simulation_ids:
+            event_path = self.data_dir / f"{simulation_id}{self._event_path_suffix}"
+            if event_path.exists():
+                res.append(event_path)
+
+        return res

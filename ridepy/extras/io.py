@@ -10,6 +10,8 @@ import numpy as np
 from typing import Iterable
 from pathlib import Path
 
+from frozendict import frozendict
+
 from ridepy.data_structures import TransportSpace
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
 
@@ -29,6 +31,8 @@ class ParamsJSONEncoder(json.JSONEncoder):
     """
 
     def default(self, obj):
+        if isinstance(obj, frozendict):
+            return dict(obj)
         # request generator?
         if isinstance(obj, type):
             return f"{obj.__module__}.{obj.__qualname__}"
