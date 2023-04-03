@@ -1,0 +1,24 @@
+include *.in
+include *.txt
+include *.yaml
+include *.yml
+include pytest.ini
+recursive-include doc *.py
+recursive-include doc *.rst
+recursive-include doc Makefile
+recursive-include notebooks *.py
+recursive-include src *.cfg
+recursive-include src *.cxx
+recursive-include src *.dox
+recursive-include src *.gitmodules
+recursive-include src *.h
+recursive-include src *.hpp
+recursive-include src *.md
+recursive-include src *.pxd
+recursive-include src *.pyx
+recursive-include src *.sh
+recursive-include src *.txt
+recursive-include test *.cxx
+recursive-include test *.h
+recursive-include test *.py
+recursive-include test *.txt
