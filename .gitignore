@@ -1,9 +1,10 @@
 /scratch
+/simulations_tmp
 
 # cmake
 *.cmake
 src/**/Makefile
-test/**/CMakeFiles
+test/**/Makefile
 **/CMakeFiles
 CMakeCache.txt
 /Makefile

@@ -3,6 +3,7 @@ include *.txt
 include *.yaml
 include *.yml
 include pytest.ini
+
 recursive-include doc *.py
 recursive-include doc *.rst
 recursive-include doc Makefile
@@ -22,3 +23,9 @@ recursive-include test *.cxx
 recursive-include test *.h
 recursive-include test *.py
 recursive-include test *.txt
+
+# why is this not working
+global-exclude CMakeCache.txt CMakeFiles
+global-exclude .ipynb_checkpoints
+global-exclude .gitlab-ci.yml
+global-exclude .pre-commit-config.yaml
