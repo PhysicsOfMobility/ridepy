@@ -34,7 +34,7 @@ classifiers = [
 dependencies = ["decorator",
  "networkx",
  "numpy",
- "pandas",
+ "pandas < 2",
  "scipy",
  "tabulate",
  "notebook",
