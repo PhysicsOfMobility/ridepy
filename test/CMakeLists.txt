@@ -13,6 +13,6 @@ FetchContent_MakeAvailable(googletest)
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
 add_executable(
-        integration_test_insertion cpp_integration_test.cxx ../ridepy/util/spaces_cython/cspaces.cxx)
+        integration_test_insertion cpp_integration_test.cxx ../src/ridepy/util/spaces_cython/cspaces.cxx)
 target_link_libraries(integration_test_insertion LINK_PUBLIC dispatchers gtest gtest_main)
 # target_link_libraries(integration_test_insertion gtest gtest_main)
