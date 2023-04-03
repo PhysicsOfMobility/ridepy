@@ -1,7 +1,3 @@
-//
-// Created by dmanik on 29.11.20.
-//
-
 #ifndef RIDEPY_CSPACES_H
 #define RIDEPY_CSPACES_H
 

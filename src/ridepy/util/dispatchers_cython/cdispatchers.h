@@ -1,7 +1,3 @@
-//
-// Created by Debsankha Manik on 13.12.20.
-//
-
 #ifndef RIDEPY_CDISPATCHERS_H
 #define RIDEPY_CDISPATCHERS_H
 
