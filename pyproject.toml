@@ -31,7 +31,8 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-dependencies = ["decorator",
+dependencies = [
+    "decorator",
     "networkx",
     "numpy",
     "pandas < 2",
@@ -81,8 +82,17 @@ ridepy = "ridepy.cli:app"
 
 [tool.setuptools]
 zip-safe = false
-package-dir = { "" = "src"}
+include-package-data = false
+package-dir = {"" = "src"}
 
+#[tool.setuptools.packages.find]
+#where = ["src"]
+#include = ["ridepy*", "lru-cache/*"]
+#exclude = ["doc*", "test*"]
+#namespaces = false
+
+[tool.setuptools.package-data]
+"*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
 
 [tool.black]
 line-length = 88
