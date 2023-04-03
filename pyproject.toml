@@ -83,7 +83,7 @@ ridepy = "ridepy.cli:app"
 [tool.setuptools]
 zip-safe = false
 include-package-data = false
-package-dir = {"ridepy" = "src"}
+package-dir = {"" = "src"}
 
 #[tool.setuptools.packages.find]
 #where = ["src"]
@@ -92,10 +92,10 @@ package-dir = {"ridepy" = "src"}
 #namespaces = false
 
 [tool.setuptools.package-data]
-"ridepy" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
+"*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
 
 [tool.setuptools.exclude-package-data]
-"ridepy" = ["test", "doc"]
+"*" = ["test", "doc"]
 
 [tool.black]
 line-length = 88
