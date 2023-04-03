@@ -1,10 +1,11 @@
 # cmake
 *.cmake
 src/**/Makefile
-src/**/CMakeFiles
+test/**/CMakeFiles
+**/CMakeFiles
 CMakeCache.txt
-./Makefile
-
+/Makefile
+/_deps
 
 # auto-generated cpp files (Cython). Persistent ones shall end with cxx
 *.cpp
