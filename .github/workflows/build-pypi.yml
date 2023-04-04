@@ -32,6 +32,11 @@ jobs:
 #          pre-build-command: 'sh pre-build-script.sh'
 #          package-path: 'my_project'
 #          pip-wheel-args: '-w ./dist --no-deps'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Manylinux Wheels
+          path: dist/*-manylinux*.whl
+
 #      - name: Publish wheels to PyPI
 #        env:
 #          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
