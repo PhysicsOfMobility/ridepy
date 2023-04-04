@@ -87,12 +87,10 @@ py-modules = []
 
 [tool.setuptools.packages.find]
 where = ["src"]
+exclude = ["test.*", "test"]
 
 [tool.setuptools.package-data]
 "*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
-
-[tool.setuptools.exclude-package-data]
-"*" = ["*.tests"]
 
 [tool.black]
 line-length = 88
