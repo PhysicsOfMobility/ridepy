@@ -9,10 +9,6 @@ authors = [
     { name = "Felix Jung", email = "felix.jung@tu-dresden.de" },
     { name = "Debsankha Manik", email = "dmanik@debsankha.net" },
 ]
-maintainers = [
-    { name = "Felix Jung", email = "felix.jung@tu-dresden.de" },
-    { name = "Debsankha Manik", email = "dmanik@debsankha.net" },
-]
 description = """
 Simulates a dispatching algorithm serving exogenous transportation \
 requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. \
@@ -61,6 +57,7 @@ dev = [
     "check-manifest",
     "twine",
     "build",
+    "auditwheel",
 ]
 
 doc = [
@@ -73,9 +70,9 @@ doc = [
 ]
 
 [project.urls]
-homepage = "https://ridepy.org/"
-documentation = "https://ridepy.org/"
-repository = "https://github.com/PhysicsOfMobility/ridepy/"
+"Homepage" = "https://ridepy.org/"
+"Documentation" = "https://ridepy.org/"
+"Repository" = "https://github.com/PhysicsOfMobility/ridepy/"
 
 [project.scripts]
 ridepy = "ridepy.cli:app"
