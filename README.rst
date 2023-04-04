@@ -35,13 +35,30 @@ On Debian-based Linux distributions, these may be installed as follows:
 
     sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
 
-
-Full Installation
+User Installation
 ~~~~~~~~~~~~~~~~~
+
+Just do
 
 .. code:: sh
 
-    git clone --recursive https://github.com/PhysicsOfMobility/ridepy.git
+    pip install ridepy
+
+If you prefer, you can also use clone the git repository instead:
+
+.. code:: sh
+
+    git clone --recurse-submodules https://github.com/PhysicsOfMobility/ridepy.git
+    cd ridepy
+    pip install -e .
+
+
+Developer Installation
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: sh
+
+    git clone --recurse-submodules https://github.com/PhysicsOfMobility/ridepy.git
     cd ridepy
     pip install -e ".[dev,doc]"
     make -C doc html
