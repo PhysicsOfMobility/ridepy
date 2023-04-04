@@ -38,7 +38,7 @@ On Debian-based Linux distributions, these may be installed as follows:
 User Installation
 ~~~~~~~~~~~~~~~~~
 
-Just do
+Just run
 
 .. code:: sh
 
