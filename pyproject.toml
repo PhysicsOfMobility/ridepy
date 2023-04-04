@@ -92,7 +92,7 @@ where = ["src"]
 "*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
 
 [tool.setuptools.exclude-package-data]
-"*" = ["*tests*"]
+"*" = ["*.py", "*tests*", "*test*"]
 
 [tool.black]
 line-length = 88
