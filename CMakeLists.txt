@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 # set the project name
 project(ridepy)
 
-add_subdirectory(src)
+add_subdirectory(src/ridepy)
 add_subdirectory(test)
 
 # Uncomment the following line to see detailed logs for the compilation process
