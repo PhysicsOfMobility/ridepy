@@ -99,8 +99,8 @@ where = ["src"]
 [tool.setuptools.package-data]
 "*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
 
-#[tool.setuptools.exclude-package-data]
-#"*" = ["test*"]
+[tool.setuptools.exclude-package-data]
+"*" = ["test", "src/ridepy/util/spaces_cython/lru-cache/tests"]
 
 [tool.black]
 line-length = 88
