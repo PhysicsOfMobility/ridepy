@@ -1,16 +1,11 @@
 name: wheel
 
 on:
-  push:
-    branches:
-      - package_staging
-  release:
-    types: [published]
+  workflow_call:
 
 jobs:
-  build_deploy:
+  build:
     runs-on: ubuntu-latest
-    environment: pypi
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v3
@@ -40,16 +35,5 @@ jobs:
 #          pip-wheel-args: '-w ./dist --no-deps'
       - uses: actions/upload-artifact@v3
         with:
-          name: Manylinux wheels
+          name: wheel-manylinux
           path: dist/*-manylinux*.whl
-      - name: Publish sdist to TestPyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
-        run: twine upload -r testpypi dist/*-manylinux*.whl
-      - name: Publish to PyPI
-        if: ${{ github.ref == 'refs/heads/master' }}
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: twine upload -r testpypi dist/*-manylinux*.whl

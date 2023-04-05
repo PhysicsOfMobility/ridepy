@@ -1,0 +1,42 @@
+name: testpypi
+
+on:
+  push:
+    branches:
+      - master
+      - package_staging
+
+concurrency:
+  group: "testpypi"
+  cancel-in-progress: false
+
+jobs:
+  sdist:
+    uses: ./.github/workflows/build-sdist.yml
+  wheel:
+    uses: ./.github/workflows/build-wheel.yml
+  test:
+    uses: ./.github/workflows/python-testing.yml
+  doc:
+    uses: ./.github/workflows/build-doc.yml
+  deploy:
+    runs-on: ubuntu-latest
+    environment: pypi
+    needs: [sdist, wheel, test, doc]
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdist
+          path: dist
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheel-manylinux
+          path: dist
+      - name: Show what is being published
+        run: ls -lah
+        working-directory: dist
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/

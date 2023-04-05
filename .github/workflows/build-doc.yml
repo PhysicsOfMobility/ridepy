@@ -1,0 +1,38 @@
+# Build RidePy docs
+name: docs
+
+on:
+  push:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Cache python environment
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install system dependencies using apt
+        run: |
+          sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
+      - name: Install Dependencies
+        run: |
+          pip install -U pip 
+          pip install .[doc]
+      - name: Build doc
+        run: sphinx-build -b html ./doc/ ./_site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
