@@ -147,14 +147,14 @@ General Things
 .. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
 
-.. |Docs| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/docs-gh-pages.yml/badge.svg
-    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/docs-gh-pages.yml
+.. |Docs| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-doc.yml/badge.svg
+    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-doc.yml
 
 .. |Tests| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml/badge.svg
     :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/python-testing.yml
 
-.. |wheel| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-pypi-wheel.yml/badge.svg
-    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-pypi-wheel.yml
+.. |wheel| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-wheel.yml/badge.svg
+    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-wheel.yml
 
-.. |sdist| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-pypi-sdist.yml/badge.svg
-    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-pypi-sdist.yml
+.. |sdist| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml/badge.svg
+    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml
