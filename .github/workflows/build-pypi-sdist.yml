@@ -1,0 +1,51 @@
+name: sdist
+
+on:
+  push:
+    branches:
+      - package_staging
+  release:
+    types: [created]
+
+jobs:
+  build_deploy:
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Cache python environment
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install system dependencies using apt
+        run: |
+          sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
+      - name: Install Dependencies
+        run: |
+          pip install -U pip 
+          pip install -U wheel build twine
+      - name: Build sdist package
+        run: python -m build --sdist
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Source package
+          path: dist/*.tar.gz
+      - name: Publish to TestPyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+        run: twine upload -r testpypi dist/*.tar.gz
+      - name: Publish to PyPI
+        if: ${{ github.ref == 'refs/heads/master' }}
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: twine upload dist/*.tar.gz

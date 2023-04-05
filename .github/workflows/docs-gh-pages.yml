@@ -40,9 +40,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('pyproject.toml') }}
       - name: Install Dependencies
-        run: pip install --upgrade pip wheel && pip install -r requirements-doc.txt
+        run: pip install --upgrade pip wheel && pip install .[doc]
       - name: Build doc
         run: sphinx-build -b html ./doc/ ./_site          
       - name: Upload artifact
@@ -58,4 +58,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v2

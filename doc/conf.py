@@ -14,12 +14,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../"))
-import ridepy
 
 # -- Project information -----------------------------------------------------
 
 project = "ridepy"
-copyright = "2021, Felix Jung and Debsankha Manik"
+copyright = "2023, Felix Jung and Debsankha Manik"
 author = "Felix Jung and Debsankha Manik"
 
 # Aesthetics

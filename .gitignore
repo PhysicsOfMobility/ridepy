@@ -1,5 +1,18 @@
-#
-#
+/scratch
+/simulations_tmp
+
+# cmake
+*.cmake
+src/**/Makefile
+test/**/Makefile
+**/CMakeFiles
+CMakeCache.txt
+/Makefile
+/_deps
+
+# auto-generated cpp files (Cython). Persistent ones shall end with cxx
+*.cpp
+
 # source: https://github.com/github/gitignore/blob/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -13,9 +26,7 @@ cmake-build-debug
 
 # C extensions
 *.so
-
-# auto-generated files. Persistent ones shall end with cxx
-*.cpp 
+*.a
 
 # Distribution / packaging
 .Python

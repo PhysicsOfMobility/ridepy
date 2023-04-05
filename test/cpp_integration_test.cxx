@@ -1,4 +1,3 @@
-
 #include "cpp_integration_test.h"
 #include "gtest/gtest.h"
 
