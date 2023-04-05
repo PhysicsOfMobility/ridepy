@@ -1,11 +1,11 @@
-name: Python package build
+name: build sdist for pypi
 
 on: [push]
 #  release:
 #    types: [created]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository and submodules
