@@ -1,11 +1,15 @@
 name: wheel
 
-on: [push]
-#  release:
-#    types: [created]
+on:
+  push:
+    branches:
+      - packaging
+  release:
+    types: [created]
+
 
 jobs:
-  build:
+  build_deploy:
     runs-on: ubuntu-latest
     environment: pypi
     steps:
@@ -39,5 +43,10 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
-        run: twine upload -r testpypi dist/*.tar.gz
-#        run: twine upload dist/*.tar.gz
+        run: twine upload -r testpypi dist/*-manylinux*.whl
+      - name: Publish to PyPI
+        if: ${{ github.ref == 'refs/heads/master' }}
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+        run: twine upload -r testpypi dist/*-manylinux*.whl
