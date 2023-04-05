@@ -1,6 +1,0 @@
-recommonmark
-sphinx
-sphinx-rtd-theme
-sphinxcontrib-napoleon
-sphinx-toggleprompt
-sphinx-autodoc-typehints

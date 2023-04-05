@@ -1,7 +1,3 @@
-//
-// Created by dmanik on 29.11.20.
-//
-
 #ifndef RIDEPY_CPP_INTEGRATION_TEST_H
 #define RIDEPY_CPP_INTEGRATION_TEST_H
 
@@ -12,10 +8,10 @@
 #include <vector>
 //#include <boost/foreach.hpp>
 //#include <boost/range/iterator_range.hpp>
-#include "../ridepy/data_structures_cython/cdata_structures.h"
-#include "../ridepy/util/dispatchers_cython/cdispatchers.h"
-#include "../ridepy/util/spaces_cython/cspaces.h"
-#include "../ridepy/vehicle_state_cython/cvehicle_state.h"
+#include "../src/ridepy/data_structures_cython/cdata_structures.h"
+#include "../src/ridepy/util/dispatchers_cython/cdispatchers.h"
+#include "../src/ridepy/util/spaces_cython/cspaces.h"
+#include "../src/ridepy/vehicle_state_cython/cvehicle_state.h"
 #include <chrono> // for benchmarking
 #include <iostream>
 #include <random>

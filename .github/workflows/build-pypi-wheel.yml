@@ -1,0 +1,55 @@
+name: wheel
+
+on:
+  push:
+    branches:
+      - package_staging
+  release:
+    types: [created]
+
+jobs:
+  build_deploy:
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Cache python environment
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install dependencies
+        run: |
+          pip install -U pip 
+          pip install -U twine
+      - name: Build manylinux Python wheel
+        uses: RalfG/python-wheels-manylinux-build@v0.7.1-manylinux2014_x86_64
+        with:
+          python-versions: 'cp39-cp39'
+#          build-requirements: 'cython numpy'
+          system-packages: 'boost-devel gcc gcc-c++ make'
+#          pre-build-command: 'sh pre-build-script.sh'
+#          package-path: 'my_project'
+#          pip-wheel-args: '-w ./dist --no-deps'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Manylinux wheels
+          path: dist/*-manylinux*.whl
+      - name: Publish sdist to TestPyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+        run: twine upload -r testpypi dist/*-manylinux*.whl
+      - name: Publish to PyPI
+        if: ${{ github.ref == 'refs/heads/master' }}
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: twine upload -r testpypi dist/*-manylinux*.whl

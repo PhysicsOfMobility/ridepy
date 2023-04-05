@@ -2,6 +2,92 @@
 requires = ["setuptools", "wheel", "Cython==3.0a6"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "ridepy"
+version = "2.0.1.dev3"
+authors = [
+    { name = "Felix Jung", email = "felix.jung@tu-dresden.de" },
+    { name = "Debsankha Manik", email = "dmanik@debsankha.net" },
+]
+description = """
+Simulates a dispatching algorithm serving exogenous transportation \
+requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. \
+Batteries are included."""
+keywords = ["simulation", "ridepooling", "mobility", "transport", "physics"]
+readme = "README.rst"
+requires-python=">=3.9"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Cython",
+    "Programming Language :: C++",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "decorator",
+    "networkx",
+    "numpy",
+    "pandas < 2",
+    "scipy",
+    "tabulate",
+    "notebook",
+    "jupytext",
+    "matplotlib",
+    "cython==3.0a6",
+    "loky",
+    "typer",
+    "pyarrow",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==23.1.0",
+    "commitizen",
+    "pdbpp",
+    "pre-commit",
+    "hypothesis",
+    "pytest",
+    "wheel",
+    "tox",
+    "psutil",
+    "check-manifest",
+    "twine",
+    "build",
+    "auditwheel",
+]
+
+doc = [
+    "recommonmark",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-napoleon",
+    "sphinx-toggleprompt",
+    "sphinx-autodoc-typehints",
+]
+
+[project.urls]
+"Homepage" = "https://ridepy.org/"
+"Documentation" = "https://ridepy.org/"
+"Repository" = "https://github.com/PhysicsOfMobility/ridepy/"
+
+[project.scripts]
+ridepy = "ridepy.cli:app"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = false
+py-modules = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
+
 [tool.black]
 line-length = 88
 target-version = ['py39']
@@ -15,6 +101,7 @@ exclude = '''
   | \.tox
   | \.venv
   | _build
+  | _deps
   | buck-out
   | build
   | dist

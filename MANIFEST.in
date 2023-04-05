@@ -1,0 +1,3 @@
+recursive-exclude test *
+recursive-exclude src/ridepy/util/spaces_cython/lru-cache/tests *
+global-exclude *.cpp
