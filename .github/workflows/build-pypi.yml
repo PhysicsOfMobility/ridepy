@@ -32,10 +32,16 @@ jobs:
 #          pre-build-command: 'sh pre-build-script.sh'
 #          package-path: 'my_project'
 #          pip-wheel-args: '-w ./dist --no-deps'
+      - name: Build sdist package
+        run: python -m build --sdist
       - uses: actions/upload-artifact@v3
         with:
-          name: Manylinux Wheels
+          name: Manylinux wheels
           path: dist/*-manylinux*.whl
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Source package
+          path: dist/*.tar.gz
 
 #      - name: Publish wheels to PyPI
 #        env:
