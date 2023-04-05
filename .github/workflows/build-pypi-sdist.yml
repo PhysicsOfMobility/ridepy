@@ -32,9 +32,9 @@ jobs:
         with:
           name: Source package
           path: dist/*.tar.gz
-#      - name: Publish to PyPI
-#        env:
-#          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-#          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-#        run: |
-#          twine upload dist/*-manylinux*.whl
+      - name: Publish to TestPyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+        run: twine upload -r testpypi dist/*-manylinux*.whl
+#        run: twine upload dist/*-manylinux*.whl

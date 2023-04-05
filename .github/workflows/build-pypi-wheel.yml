@@ -34,9 +34,9 @@ jobs:
         with:
           name: Manylinux wheels
           path: dist/*-manylinux*.whl
-#      - name: Publish wheels to PyPI
-#        env:
-#          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-#          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-#        run: |
-#          twine upload dist/*-manylinux*.whl
+      - name: Publish sdist to TestPyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+        run: twine upload -r testpypi dist/*.tar.gz
+#        run: twine upload dist/*.tar.gz
