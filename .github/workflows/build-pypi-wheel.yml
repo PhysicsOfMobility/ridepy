@@ -1,4 +1,4 @@
-name: build manylinux wheel for pypi
+name: wheel
 
 on: [push]
 #  release:

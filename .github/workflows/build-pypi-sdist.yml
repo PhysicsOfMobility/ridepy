@@ -1,4 +1,4 @@
-name: build sdist for pypi
+name: sdist
 
 on: [push]
 #  release:
