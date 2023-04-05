@@ -5,7 +5,7 @@ on:
     branches:
       - package_staging
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   build_deploy:

@@ -4,7 +4,10 @@ name: docs
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["master"]
+    branches:
+      - master
+  release:
+    types: [published]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -41,8 +44,13 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install system dependencies using apt
+        run: |
+          sudo apt-get update && sudo apt-get -y install libboost-all-dev build-essential
       - name: Install Dependencies
-        run: pip install --upgrade pip wheel && pip install .[doc]
+        run: |
+          pip install -U pip 
+          pip install .[doc]
       - name: Build doc
         run: sphinx-build -b html ./doc/ ./_site          
       - name: Upload artifact
