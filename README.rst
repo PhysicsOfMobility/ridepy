@@ -28,8 +28,12 @@ You should probably use an environment. For example, using
     conda activate ridepy
 
 
-Finally, a C++ build environment and the `Boost C++ Libraries <https://www.boost.org/>`__ are necessary.
-On Debian-based Linux distributions, these may be installed as follows:
+Finally, a C++ build environment and the `Boost C++ Libraries <https://www.boost.org/>`__
+are necessary if you want or need to build the Cython/C++ part from source. This step
+can be skipped when installing the Python Wheel via ``pip`` on supported platforms
+(currently only x86-64 Linux).
+
+On Debian-based Linux distributions, these dependencies may be installed as follows:
 
 .. code:: sh
 
