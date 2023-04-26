@@ -7,7 +7,7 @@ Simulates a dispatching algorithm serving exogenous transportation
 requests with a fleet of vehicles. Does not simulate the universe,
 unlike MATSim. Batteries are included.
 
-The documentation is available at `docs.ridepy.org <https://docs.ridepy.org/>`__,
+The documentation is available at `ridepy.org <https://ridepy.org/>`__,
 the source code is hosted on `GitHub <https://github.com/PhysicsOfMobility/ridepy>`__.
 
 Instructions
