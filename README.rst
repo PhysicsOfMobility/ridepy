@@ -7,7 +7,7 @@ Simulates a dispatching algorithm serving exogenous transportation
 requests with a fleet of vehicles. Does not simulate the universe,
 unlike MATSim. Batteries are included.
 
-The documentation is available at `ridepy.org <https://ridepy.org/>`__,
+The documentation is available at `docs.ridepy.org <https://docs.ridepy.org/>`__,
 the source code is hosted on `GitHub <https://github.com/PhysicsOfMobility/ridepy>`__.
 
 Instructions
@@ -81,6 +81,12 @@ First Steps
    right-clicking and choosing *Open With > Notebook* (for ``jupyter lab``).
 -  Run the notebook step-by-step and play around :)
 
+Reporting a Problem
+-------------------
+
+Should you encounter any problems when using RidePy or have a feature request, 
+please don't hesitate to `submit an issue <https://github.com/PhysicsOfMobility/ridepy/issues/new>`__.
+
 Contributing
 ------------
 
@@ -90,12 +96,16 @@ stage using the GitHub's "Submit Draft" feature.
 
 Versioning Philosophy:
 
--  ``master`` should always improve. Incomplete functionality is welcome.
--  API-breaking changes imply transition to a new major version
+- ``master`` should always improve. Incomplete functionality is welcome.
+- API-breaking changes imply transition to a new major version
+- We use `Semantic Versioning <https://semver.org/>`__
 
-Code style is *black* for Python and *LLVM* for C++. To format your code use
+Code style is *black* for Python and *LLVM* for C++. To format your code, use
 
-- ``black .`` for Python. Make sure to use the correct version as specified in ``requirements-dev.txt``.
+- ``black .`` for Python. Make sure to use the correct version as specified in
+  ``pyproject.toml``. It is automatically installed when installing the ``dev``
+  extras via ``pip install -e .[dev]``. Also, consider using the pre-commit hook
+  (``pre-commit install``).
 - ``find . -regex '.*\.\(cxx\|h\)' -exec clang-format -style=file -i {} \;`` for C++
 
 Testing
