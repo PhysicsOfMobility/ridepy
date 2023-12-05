@@ -16,7 +16,7 @@ authors:
 affiliations:
   - name: 'Chair of Network Dynamics, Institute of Theoretical Physics and Center for Advancing Electronics Dresden (cfaed), TUD Dresden University of Technology, 01062 Dresden, Germany'
     index: 1
-date: 2023-12-04
+date: 4 December 2023
 bibliography: paper.bib
 ---
 
