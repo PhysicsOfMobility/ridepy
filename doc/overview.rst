@@ -39,11 +39,14 @@ Quickstart
 
 Here we will demonstrate how to run a simple simulation.
 
+Note that several introductory notebooks for easy experimentation are available in the ``notebooks`` directory in the git repository, see also :ref:`first steps <first_steps>`.
+
 Generate requests
 ^^^^^^^^^^^^^^^^^
 
 First we need to generate a sequence of :class:`TransportationRequest
 <data_structures.TransportationRequest>`. Each ``TransportationRequest`` consists of:
+
   - ``origin``,
   - ``destination``,
   - ``pickup_timewindow_min``,

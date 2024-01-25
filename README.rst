@@ -71,6 +71,7 @@ Developer Installation
 
 The built documentation can be found in ``doc/_build/html/index.html``.
 
+.. _first_steps:
 
 First Steps
 -----------
