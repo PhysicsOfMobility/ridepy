@@ -5,7 +5,7 @@ Overview
 
 RidePy is a Python library that runs mobility simulations; in particular, it is able to simulate on-demand transit services such as ridehailing and ridepooling. It provides an interface that allows researchers to replicate the operation of such transport systems and thus study their properties and behavior without actually transporting someone in the real world.
 
-Getting started with RidePy is easy: The user just has to choose a way of generating the virtual customers' requests for transportation and set up a transportation service by specifying its characteristics (e.g., number of vehicles, dispatching algorithm, additional constraints). RidePy will simulate the operation of the service and log all events, e.g., the pick-up of a customer or submission of a new request. After the simulation has finished, RidePy can additionally be used to retrieve structured information about the details of the simulation run.
+Getting started with RidePy is easy: The user just has to choose a way of generating the virtual customers' requests for transportation and set up a transportation service by specifying its characteristics (e.g., number of vehicles, dispatching algorithm, additional constraints). RidePy will simulate the operation of the service and log all events, e.g., the pick-up of a customer or the submission of a new request. After the simulation has finished, RidePy can additionally be used to retrieve structured information about the details of the simulation run.
 
 In this chapter, we describe the design of RidePy, and how to get started with using
 it to run simulations. We also describe how to specify new dispatching
