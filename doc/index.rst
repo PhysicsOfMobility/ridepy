@@ -14,6 +14,7 @@ Welcome to ridepy's documentation!
 
    overview
    reference
+   glossary
 
 Indices and tables
 ==================
