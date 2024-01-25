@@ -22,7 +22,7 @@ bibliography: paper.bib
 
 # Summary
 
-RidePy enables fast computer simulations of on-demand mobility modes such as ridehailing or ridepooling. It strongly focuses on modeling the mobility service itself, rather than its customers or the environment. Through a combination of Python [@vanrossum1995], Cython [@cython] and C++ [@stroustrup2000], it offers ease of use at high performance. Its modular design makes customization easy, while the included modules allow for a quick start.
+RidePy enables fast computer simulations of on-demand mobility modes such as ridehailing or ridepooling. It strongly focuses on modeling the mobility service itself, rather than its customers or the environment. Through a combination of Python, Cython and C++, it offers ease of use at high performance. Its modular design makes customization easy, while the included modules allow for a quick start.
 
 # Statement of need
 
@@ -37,7 +37,7 @@ A number of open-source simulation software projects are already being used to i
 
 FleetPy [@engelhardt2022], a recently released on-demand mobility simulation, is primarily aimed at realistic modeling of the interactions between operators and users, specifically incorporating multiple operators. While its technical approach is similar to ours, integrating Python with fast Cython and C++ extensions, the project is predominantly focused on applied simulations, although its framework architecture promises to allow for adjustment of the model detail level.
 
-Perhaps the most idealized approach is taken by the Julia [@bezanson2017] package `RidePooling.jl` [@muehle2022] which was developed in support of a recent scientific contribution [@muehle2023].
+Perhaps the most idealized approach is taken by the Julia package `RidePooling.jl` [@muehle2022] which was developed in support of a recent scientific contribution [@muehle2023].
 
 A very different yet interesting route is taken by MaaSSim [@kucharski2022a], which models on-demand mobility in the realm of two-sided mobility platforms such as Uber [@uber] and Lyft [@lyft].
 
@@ -49,11 +49,11 @@ RidePy simulates flexible mobility services based on *requests*, *dispatchers* a
 
 All individual components of the simulation framework may be customized or replaced. This includes `RequestGenerator`s, `dispatcher`s, and the `TransportSpace` which the system operates on. Examples for `TransportSpace`s include the continuous Euclidean plane and arbitrary weighted graphs (e.g., street networks). Several components of RidePy are implemented in both pure Python and Cython/C++. While their pure Python versions are easier to understand, debug and modify, the Cython/C++ versions make large-scale simulations tractable.
 
-Running a RidePy simulation yields a sequence of `Event`s. The included analytics code consumes these events and returns two extensive Pandas [@wesmckinney2010] `DataFrame`s: `stops` and `requests`. `stops` contains all stops that have been visited by each vehicle, along with additional information such as the vehicles' passenger occupancy. `requests` similarly contains all requests that have entered the system, enriched with secondary information such as the time riders spent on the vehicle.
+Running a RidePy simulation yields a sequence of `Event`s. The included analytics code consumes these events and returns two extensive Pandas `DataFrame`s: `stops` and `requests`. `stops` contains all stops that have been visited by each vehicle, along with additional information such as the vehicles' passenger occupancy. `requests` similarly contains all requests that have entered the system, enriched with secondary information such as the time riders spent on the vehicle.
 
-Additional included tooling allows for the setup, parallel execution, and analysis of simulations at different parameters (parameter scans). This includes the serialization of all simulation data in JSON format [@json].
+Additional included tooling allows for the setup, parallel execution, and analysis of simulations at different parameters (parameter scans). This includes the serialization of all simulation data in JSON format.
 
-To ensure valid behavior, RidePy incorporates an extensive automated test suite [@pytest].
+To ensure valid behavior, RidePy incorporates an extensive automated test suite.
 
 # Availability
 
