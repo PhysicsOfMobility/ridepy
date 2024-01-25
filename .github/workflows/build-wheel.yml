@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.9'
       - name: Cache python environment
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('pyproject.toml') }}
