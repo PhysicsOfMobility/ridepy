@@ -3,12 +3,12 @@
 RidePy
 ======
 
-Simulates a dispatching algorithm serving exogenous transportation
-requests with a fleet of vehicles. Does not simulate the universe,
-unlike MATSim. Batteries are included.
+Simulates a dispatching algorithm serving exogenous transportation requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. Batteries are included.
 
-The documentation is available at `ridepy.org <https://ridepy.org/>`__,
-the source code is hosted on `GitHub <https://github.com/PhysicsOfMobility/ridepy>`__.
+The extensive documentation is available at `ridepy.org <https://ridepy.org/>`__. This includes a high-level `overview <https://ridepy.org/overview>`__, as well as a `glossary <https://ridepy.org/glossary>`__ and a detailed `reference <https://ridepy.org/reference>`__.
+
+The source code is hosted on `GitHub <https://github.com/PhysicsOfMobility/ridepy>`__.
+
 
 Instructions
 ------------
@@ -130,32 +130,6 @@ Testing
 -  Warning 2: Warning 1 applies in particular to stuff hiding in
    innocent-looking files named ``conftest.py``. See docs on
    `conftest <https://docs.pytest.org/en/2.7.3/plugins.html>`__.
-
-Principles
-----------
-
-Jargon
-~~~~~~
-
--  **estimated arrival time**, also Cached Predicted Arrival Time CPAT
--  **time window min**, also Earliest Allowed Service Time EAST
--  **time window max**, also Latest Allowed Service Time LAST
--  **stoplist**, a sequence of scheduled stops that a transporter must
-   *service*, i.e. perform the action defined in the respective stop's
-   ``Stop.action``
--  The dummy stop **current position element CPE** always must be the first
-   entry of each stoplist. It is used to denote the current location of the
-   transporter.
--  Transporter, the same as vehicle, bus, or car
-
-General Things
-~~~~~~~~~~~~~~
-
--  The **dispatcher** is responsible for keeping the state of the stoplists
-   valid. This includes recomputing the estimated arrival times and
-   making sure that the order of the stops in the stoplist follows the
-   order of the estimated arrival times. It also means managing the
-   CPE.
 
 
 .. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
