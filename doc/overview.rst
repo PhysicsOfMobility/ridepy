@@ -3,33 +3,21 @@ Overview
 
 .. highlight:: python
 
-RidePy is a Python library that runs mobility simulations; in particular, it is able to simulate on-demand transit services such as ridehailing and ridepooling. It provides an interface that allows researchers to replicate the operation of such transport systems and thus study their properties and behavior without actually transporting someone in the real world.
+RidePy is a Python library that performs mobility simulations; in particular, it is able to simulate on-demand transit services such as ride hailing (taxicab-like operations) and ridepooling (trips of similar origin, destination, and time are served by the same vehicle). RidePy provides an interface that allows researchers to replicate the operation of such transport systems and thus study their properties and behavior without actually transporting passengers in the real world.
 
-Getting started with RidePy is easy: The user just has to choose a way of generating the virtual customers' requests for transportation and set up a transportation service by specifying its characteristics (e.g., number of vehicles, dispatching algorithm, additional constraints). RidePy will simulate the operation of the service and log all events, e.g., the pick-up of a customer or the submission of a new request. After the simulation has finished, RidePy can additionally be used to retrieve structured information about the details of the simulation run.
+Getting started with RidePy is easy: The user just has to choose a way of generating the virtual customers' requests for transportation and set up a transportation service by specifying its characteristics (e.g., number of vehicles, dispatching algorithm, additional constraints). RidePy will simulate the operation of the service and log all events, e.g., the pick-up of a customer or the submission of a new request. After the simulation has finished, RidePy can additionally provide structured information about the details of the simulation run. These data can then be analyzed further by the user to gain insights into the behavior of the simulated service.
 
-In this chapter, we describe the design of RidePy, and how to get started with using
-it to run simulations. We also describe how to specify new dispatching
-algorithms and new transport spaces.
-
+In this chapter, we describe the design of RidePy, and how to get started using it to run simulations. We also describe how to specify new dispatching algorithms and new transport spaces.
 
 
 The setting
 -----------
-RidePy does *not* do agent-based simulations. Rather, it starts with a set of
-*transportation requests* (denoting the desire of an individual to be transported from A
-to B within specified time windows), and a *dispatcher* (an algorithm that determines
-which vehicle should service which requests and in which order). Then it simply
-simulates these requests arriving in the system, being picked up and delivered. Requests
-that cannot be delivered within the specified time windows are *rejected*.
 
-RidePy makes it easy to experiment with different dispatching algorithms,
-spatiotemporal request densities, fleet sizes and transport spaces (2-D plane, different
-graphs). It comes with an `analytics` module that computes from the simulation output
-various metrics like the statistical distributions of occupancies, waiting times and
-detours.
+Rather than explicitly modeling the behavior of individuals (classic agent-based simulations), RidePy instead starts with a set of *transportation requests* (denoting the desire of an individual to be transported from A to B within a specified time window), and a *dispatcher* (an algorithm that determines which vehicle should service which requests and in which order). Then it simply simulates these requests arriving in the system, being picked up, and being delivered. Requests that cannot be delivered within the specified time windows are *rejected*.
 
-Since the ability to simulate many *requests* and many *vehicles* is important for any
-quantitative study, we include two powerful ways of speeding up the simulation:
+RidePy makes it easy to experiment with different dispatching algorithms, spatio-temporal request densities, fleet sizes and transport spaces (2-D plane, different graphs). It comes with an `analytics` module that computes from the simulation output various metrics like the statistical distributions of occupancies, waiting times, and detours.
+
+Since the ability to simulate many *requests* and many *vehicles* is important for any quantitative study, we include two powerful ways of speeding up the simulation:
 
 Using parallelism:
    The dispatcher interface prescribes computing a *cost* for serving a request with a
@@ -48,10 +36,12 @@ Using `cython <https://cython.readthedocs.io/en/latest/>`_:
 
 Quickstart
 ----------
+
 Here we will demonstrate how to run a simple simulation.
 
 Generate requests
 ^^^^^^^^^^^^^^^^^
+
 First we need to generate a sequence of :class:`TransportationRequest
 <data_structures.TransportationRequest>`. Each ``TransportationRequest`` consists of:
   - ``origin``,
@@ -90,6 +80,7 @@ will be run.
 
 Create a ``FleetState`` with a single vehicle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 We will now create a :class:`FleetState <fleet_state.FleetState>` with the
 desired number of vehicles, the initial positions of the vehicles, and a
 ``dispatcher`` that matches a request to a vehicle.
@@ -113,6 +104,7 @@ own.
 
 Now, simulate
 ^^^^^^^^^^^^^
+
 ...by calling the :meth:`FleetState.simulate <fleet_state.FleetState.simulate>` method.
 The output of the simulation run is an :any:`Iterator <python:collections.abc.Iterator>`
 of ``Event`` objects, describing when which ``TransportationRequest`` was picked up and
@@ -135,6 +127,7 @@ delivered.
 
 Using parallelism
 -----------------
+
 Running RidePy in a multi-node OpenMPI cluster is as simple as replacing
 :class:`SlowSimpleFleetState <fleet_state.SlowSimpleFleetState>` with
 :class:`MPIFuturesFleetState <fleet_state.MPIFuturesFleetState>`:
@@ -158,6 +151,7 @@ Running RidePy in a multi-node OpenMPI cluster is as simple as replacing
 
 Using cythonized data structures and algorithms
 -----------------------------------------------
+
 The simulation we saw can be sped up considerably by using a cythonized version of the
 dispatcher, with the core logic implemented in C++. We will also need to use cythonized
 versions of ``TransportationRequest``, ``Stop``, ``VehicleState`` and a
@@ -207,13 +201,15 @@ versions of ``TransportationRequest``, ``Stop``, ``VehicleState`` and a
    print(events)
 
 
-How to write your own dispatcher
----------------------------------
+..
+   How to write your own dispatcher
+   ---------------------------------
 
 
 
-How to write your own ``TransportSpace``
------------------------------------------
+..
+   How to write your own ``TransportSpace``
+   -----------------------------------------
 
 
 
