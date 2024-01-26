@@ -29,8 +29,8 @@ from ridepy.util.analytics import (
     get_stops_and_requests,
     get_system_quantities,
     get_vehicle_quantities,
-    _add_insertion_stats_to_stoplist_dataframe,
 )
+from ridepy.util.analytics.stops import _add_insertion_stats_to_stoplist_dataframe
 from ridepy.util.analytics.plotting import plot_occupancy_hist
 from ridepy.vehicle_state import VehicleState
 
