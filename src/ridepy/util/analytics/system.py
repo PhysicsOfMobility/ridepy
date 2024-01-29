@@ -11,8 +11,16 @@ def get_system_quantities(
     """
     Compute various quantities aggregated for the entire simulation.
 
-    Currently the following observables are returned:
+    Currently, the following observables are returned (quantities in parentheses may not
+    be returned if ``params`` is not given/``stops`` does not contain the respective
+    quantities):
 
+    - (n_vehicles)
+    - (request_rate)
+    - (velocity)
+    - (load_requested)
+    - (load_serviced)
+    - (avg_direct_dist_space)
     - avg_occupancy
     - avg_segment_dist
     - avg_segment_time
@@ -24,17 +32,14 @@ def get_system_quantities(
     - total_direct_time
     - efficiency_dist
     - efficiency_time
-    - avg_system_stoplist_length_service_time
-    - avg_system_stoplist_length_submission_time
-    - avg_stoplist_length_service_time
-    - avg_stoplist_length_submission_time
     - avg_waiting_time
     - rejection_ratio
     - median_stoplist_length
     - avg_detour
-    - (n_vehicles)
-    - (request_rate)
-    - (velocity)
+    - (avg_system_stoplist_length_service_time)
+    - (avg_system_stoplist_length_submission_time)
+    - (avg_stoplist_length_service_time)
+    - (avg_stoplist_length_submission_time)
 
     Parameters
     ----------
@@ -130,7 +135,40 @@ def get_system_quantities(
 
     avg_detour = requests["inferred", "relative_travel_time"].mean()
 
-    res = dict(
+    res = {}
+
+    if params:
+        n_vehicles = params["general"]["n_vehicles"] or len(
+            params["general"]["initial_locations"]
+        )
+        space = params["general"]["space"]
+        request_rate = params["request_generator"].get("rate")
+        velocity = space.velocity
+        d_avg = (
+            sum(
+                [
+                    space.d(space.random_point(), space.random_point())
+                    for _ in range(100000)
+                ]
+            )
+            / 100000
+        )
+
+        load_requested = d_avg * request_rate / (velocity * n_vehicles)
+        load_serviced = (
+            d_avg * request_rate * (1 - rejection_ratio) / (velocity * n_vehicles)
+        )
+
+        res |= dict(
+            n_vehicles=n_vehicles,
+            request_rate=request_rate,
+            velocity=velocity,
+            load_requested=load_requested,
+            load_serviced=load_serviced,
+            avg_direct_dist_space=d_avg,
+        )
+
+    res |= dict(
         avg_occupancy=avg_occupancy,
         avg_segment_dist=avg_segment_dist,
         avg_segment_time=avg_segment_time,
@@ -180,13 +218,5 @@ def get_system_quantities(
         res["avg_stoplist_length_service_time"] = (
             _stops["stoplist_length_service_time"] * _stops["state_duration"]
         ).sum() / _stops["state_duration"].sum()
-
-    if params:
-        res |= dict(
-            n_vehicles=params["general"]["n_vehicles"]
-            or len(params["general"]["initial_locations"]),
-            request_rate=params["request_generator"].get("rate"),
-            velocity=params["general"]["space"].velocity,
-        )
 
     return res
