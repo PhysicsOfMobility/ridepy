@@ -4,6 +4,7 @@ import random
 import warnings
 import itertools as it
 import networkx as nx
+import math as m
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
@@ -193,6 +194,131 @@ cdef class Manhattan2D(TransportSpace):
     def __reduce__(self):
         return self.__class__, (self.velocity, self.coord_range)
 
+
+cdef class Grid2D(Manhattan2D):
+    """
+    Fast 2D grid network space, realized as a discrete 2D space with Manhattan metric.
+    """
+    def __cinit__(self, int n=10, int m=10, double dn=1, double dm=1, double velocity=1):
+        self.loc_type = LocType.R2LOC
+        self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
+    def __init__(self, n=10, m=10, dn=1, dm=1, velocity=1):
+        """
+        Parameters
+        ----------
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
+        TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+
+        self.n = n
+        self.m = m
+        self.dn = dn
+        self.dm = dm
+        self.velocity = velocity
+
+
+    def interp_dist(self, u, v, double dist_to_dest):
+        d_r = dist_to_dest
+        d_n = self.dn
+        d_m = self.dm
+
+        if d_r == 0:
+            nn = v
+            d_j = 0
+        else:
+            x, _ = dereference(self.u_space.space_r2loc_ptr).interp_dist(<R2loc>u, <R2loc>v, d_r)
+
+            # determine grid cell target node:
+            if u[0] < v[0]:
+                # going downwards
+                # print('going down')
+                i = m.ceil(x[0] / d_n)
+            elif u[0] > v[0]:
+                # going upwards
+                # print('going up')
+                i = m.floor(x[0] / d_n)
+            else:
+                # going horizontally
+                i = u[0] / d_n
+
+            if u[1] < v[1]:
+                # going right
+                # print('going right')
+                j = m.ceil(x[1] / d_m)
+            elif u[1] > v[1]:
+                # going left
+                # print('going left')
+                j = m.floor(x[1] / d_m)
+            else:
+                # going vertically
+                j = u[1] / d_m
+
+            # distance remaining from grid cell target node
+            d_r_p = abs(v[0] - i * d_n) + abs(v[1] - j * d_m)
+
+            # distance within grid cell to grid cell target node
+            d_g = d_r - d_r_p
+
+            # assumption: we always deviate to the left
+            if (u[0] >= v[0] and u[1] < v[1]) or (u[0] <= v[0] and u[1] > v[1]):
+                # coming in horizontally
+                # print('coming in horizontally')
+                horizontal = True
+                d_gref = d_m
+            else:
+                # coming in vertically
+                # print('coming in vertically')
+                horizontal = False
+                d_gref = d_n
+
+            if d_g < d_gref:
+                # next node is grid cell target node,
+                # jump distance is grid cell distance
+                nn = (i, j)
+                d_j = d_g
+            else:
+                d_j = d_g - d_gref
+                if horizontal:
+                    # coming in horizontally
+                    if u[1] < v[1]:
+                        # coming in from the left
+                        # print('coming in from the left')
+                        nn = (i, j - 1)
+                    else:
+                        # coming in from the right
+                        # print('coming in from the right')
+                        nn = (i, j + 1)
+                else:
+                    # coming in vertically
+                    if u[0] < v[0]:
+                        # coming in from above
+                        # print('coming in from above')
+                        nn = (i - 1, j)
+                    else:
+                        # coming in from below
+                        # print('coming in from below')
+                        nn = (i + 1, j)
+
+        return nn, d_j
+
+    def interp_time(self, u, v, double time_to_dest):
+        nn, d_j = self.interp_dist(u, v, time_to_dest * self.velocity)
+        t_j = d_j / self.velocity
+        return nn, t_j
+
+    def random_point(self):
+        i = random.randint(0, self.n - 1)
+        j = random.randint(0, self.m - 1)
+        return i * self.dn, j * self.dm
+
+    def __repr__(self):
+        return f"Grid2D(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
+
+    def asdict(self):
+        return dict(n=self.n, m=self.m, dn=self.dn, dm=self.dm, velocity=self.velocity)
+    def __reduce__(self):
+        return self.__class__, (self.n, self.m, self.dn, self.dm, self.velocity)
 
 cdef class Graph(TransportSpace):
     """

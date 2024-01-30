@@ -33,6 +33,12 @@ cdef class Manhattan2D(TransportSpace):
     cdef CManhattan2D *derived_ptr
     cdef readonly vector[pair[float, float]] coord_range
 
+cdef class Grid2D(Manhattan2D):
+    cdef readonly float n
+    cdef readonly float m
+    cdef readonly float dn
+    cdef readonly float dm
+    cdef readonly float velocity
 
 cdef class Graph(TransportSpace):
     cdef CGraphSpace[int] *derived_ptr
