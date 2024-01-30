@@ -1,6 +1,10 @@
 Glossary
 ========
 
+
+General
+-------
+
 .. glossary::
     :sorted:
 
@@ -36,3 +40,12 @@ Glossary
     stoplist
         Ordered list of stops that define the route of a vehicle. The first element is the current position element (``CPE``), the other stops represent pick-up or drop-off of requests (passengers).
 
+
+Analytics
+---------
+
+.. glossary::
+    :sorted:
+
+    travel time
+        ``travel_time`` is the time spent on the vehicle, i.e. drop-off time minus pick-up time.
