@@ -198,6 +198,14 @@ cdef class Manhattan2D(TransportSpace):
 cdef class Grid2D(Manhattan2D):
     """
     Fast 2D grid network space, realized as a discrete 2D space with Manhattan metric.
+
+    Note that this space does not enforce the discrete integer coordinate pairs it is
+    supposed to be used with. This means that you have to take care yourself to only
+    introduce integer coordinate pairs. This implies that the distance and time functions
+    ``Grid2D.d`` and ``Grid2D.t`` will in fact as if the space were continuous.
+    The discrete/graph characteristic of the space is encoded in the interpolation and
+    random point generation functions.
+
     """
     def __cinit__(self, int n=10, int m=10, double dn=1, double dm=1, double velocity=1):
         self.loc_type = LocType.R2LOC
