@@ -45,7 +45,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black==23.1.0",
+    "black==24.1.1",
     "commitizen",
     "pdbpp",
     "pre-commit",
