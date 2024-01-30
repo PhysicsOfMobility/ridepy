@@ -376,9 +376,9 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
         res[
             f"{'system_' if scope=='system' else ''}stoplist_length_submission_time"
         ] = len(sl_s)
-        res[
-            f"{'system_' if scope=='system' else ''}stoplist_length_service_time"
-        ] = len(sl)
+        res[f"{'system_' if scope=='system' else ''}stoplist_length_service_time"] = (
+            len(sl)
+        )
 
         res[
             f"avg_{'system_' if scope=='system' else ''}segment_dist_submission_time"
@@ -387,12 +387,12 @@ def _add_insertion_stats_to_stoplist_dataframe(*, reqs, stops, space) -> pd.Data
             f"avg_{'system_' if scope=='system' else ''}segment_time_submission_time"
         ] = sl_s["time_to_next"].mean()
 
-        res[
-            f"avg_{'system_' if scope=='system' else ''}segment_dist_service_time"
-        ] = sl["dist_to_next"].mean()
-        res[
-            f"avg_{'system_' if scope=='system' else ''}segment_time_service_time"
-        ] = sl["time_to_next"].mean()
+        res[f"avg_{'system_' if scope=='system' else ''}segment_dist_service_time"] = (
+            sl["dist_to_next"].mean()
+        )
+        res[f"avg_{'system_' if scope=='system' else ''}segment_time_service_time"] = (
+            sl["time_to_next"].mean()
+        )
 
         return res
 

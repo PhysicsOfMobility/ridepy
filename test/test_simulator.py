@@ -134,9 +134,9 @@ def test_with_taxicab_dispatcher_simple_1():
 
     for row, event in zip(output_list, stop_events):
         row[0] = f"{event['timestamp']:.2f}"
-        row[
-            vehicle_id_idxs[event["vehicle_id"]]
-        ] = f"{'pu' if event['event_type']== 'PickupEvent' else 'do'} {event['request_id']}"
+        row[vehicle_id_idxs[event["vehicle_id"]]] = (
+            f"{'pu' if event['event_type']== 'PickupEvent' else 'do'} {event['request_id']}"
+        )
 
     print()
     print(

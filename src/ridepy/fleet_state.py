@@ -489,5 +489,4 @@ class SlowSimpleFleetState(FleetState):
             ),
         )
 
-    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent:
-        ...
+    def handle_internal_request(self, req: pyInternalRequest) -> RequestEvent: ...

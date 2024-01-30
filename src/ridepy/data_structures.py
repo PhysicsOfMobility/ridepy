@@ -212,8 +212,7 @@ class TransportSpace(ABC):
         ...
 
     @abstractmethod
-    def asdict(self) -> dict:
-        ...
+    def asdict(self) -> dict: ...
 
     def __eq__(self, other: "TransportSpace"):
         return type(self) == type(other) and self.asdict() == other.asdict()
