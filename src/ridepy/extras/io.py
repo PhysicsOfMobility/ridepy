@@ -77,7 +77,7 @@ class ParamsJSONDecoder(json.JSONDecoder):
             if "initial_location" in dct and isinstance(dct["initial_location"], list):
                 dct["initial_location"] = tuple(dct["initial_location"])
 
-            if "initial_locations" in dct:
+            if "initial_locations" in dct and dct["initial_locations"] is not None:
                 dct["initial_locations"] = {
                     int(vehicle_id): location
                     for vehicle_id, location in dct["initial_locations"].items()
