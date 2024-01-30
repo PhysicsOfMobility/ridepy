@@ -521,6 +521,7 @@ class SimulationSet:
                 space=space_obj,
                 n_vehicles=10,
                 initial_location=(0, 0),
+                initial_locations=None,
                 seat_capacity=8,
                 transportation_request_cls=transportation_request_cls,
                 vehicle_state_cls=vehicle_state_cls,
@@ -726,12 +727,28 @@ class SimulationSet:
     def run_analytics(
         self,
         update_existing: bool = False,
+        check_for_changes: bool = True,
         stops_path_suffix: str = "_stops.pq",
         requests_path_suffix: str = "_requests.pq",
         only_stops_and_requests: bool = False,  # only compute stops and requests
         vehicle_quantities_path_suffix: str = "_vehicle_quantities.pq",
         system_quantities_filename: str = "system_quantities.pq",
-    ):
+    ) -> None:
+        """
+
+        Parameters
+        ----------
+        update_existing
+            Recompute existing outputs
+        check_for_changes
+            If True, only update if simulation ids have changed.
+            If False, do update in any case.
+        stops_path_suffix
+        requests_path_suffix
+        only_stops_and_requests
+        vehicle_quantities_path_suffix
+        system_quantities_filename
+        """
         self.system_quantities_path = self.data_dir / system_quantities_filename
 
         if not self.simulation_ids:
@@ -743,9 +760,29 @@ class SimulationSet:
                 compute_system_quantities = compute_vehicle_quantities = False
             else:
                 compute_vehicle_quantities = True
-                compute_system_quantities = (
-                    not self.system_quantities_path.exists() or update_existing
-                )
+
+                if self.system_quantities_path.exists():
+                    # file exists, should we recompute?
+                    if update_existing:
+                        # we update existing files. do we still recompute
+                        # if there are no changes?
+                        if check_for_changes:
+                            # we check for changes and only recompute if there are some
+                            sqdf = pd.read_parquet(self.system_quantities_path)
+                            compute_system_quantities = set(sqdf.index) != set(
+                                self.simulation_ids
+                            )
+                            del sqdf
+                        else:
+                            # we don't care whether there are changes or not,
+                            # thus we recompute in any case
+                            compute_system_quantities = True
+                    else:
+                        # file exists and we are not updating, thus not recomputing
+                        compute_system_quantities = False
+                else:
+                    # file doesn't exist, we have to compute
+                    compute_system_quantities = True
 
             with loky.get_reusable_executor(max_workers=self.max_workers) as executor:
                 sim_ids, system_quantities = zip(
