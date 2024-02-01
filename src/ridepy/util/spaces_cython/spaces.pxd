@@ -40,12 +40,8 @@ cdef class Grid2D(Manhattan2D):
     cdef readonly float dm
     cdef readonly float velocity
 
-cdef class Grid2D_QM(Grid2D):
-    cdef readonly float n
-    cdef readonly float m
-    cdef readonly float dn
-    cdef readonly float dm
-    cdef readonly float velocity
+# cdef class Grid2D_QM(Grid2D):
+#     ...
 
 cdef class Graph(TransportSpace):
     cdef CGraphSpace[int] *derived_ptr
