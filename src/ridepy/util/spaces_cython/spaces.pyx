@@ -268,9 +268,9 @@ cdef class Grid2D(Manhattan2D):
                         # Going upwards
                         print("Going upwards")
                         d_e_d = d_e
-                        k_d_e_d = m.floor(d_e_d / d_n)
+                        k_d_e_d = m.ceil(d_e_d / d_n)
                         i = u[0] - k_d_e_d
-                        d_j = d_e_d - k_d_e_d * d_n
+                        d_j = k_d_e_d * d_n - d_e_d
                     else:
                         # Going downwards
                         print("Going downwards")
@@ -287,15 +287,15 @@ cdef class Grid2D(Manhattan2D):
                         # Going left
                         print("Going left")
                         d_e_d = d_e - d_vert
-                        k_d_e_d = m.floor(d_e_d / d_m)
-                        j = u[0] - k_d_e_d
-                        d_j = d_e_d - k_d_e_d * d_m
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[1] - k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
                     else:
                         # Going right
                         print("Going right")
                         d_e_d = d_e - d_vert
                         k_d_e_d = m.ceil(d_e_d / d_m)
-                        j = u[0] + k_d_e_d
+                        j = u[1] + k_d_e_d
                         d_j =  k_d_e_d * d_m - d_e_d
             else:
                 # Going horizontally, first
@@ -309,15 +309,15 @@ cdef class Grid2D(Manhattan2D):
                         # Going left
                         print("Going left")
                         d_e_d = d_e
-                        k_d_e_d = m.floor(d_e_d / d_m)
-                        j = u[0] - k_d_e_d
-                        d_j = d_e_d - k_d_e_d * d_m
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[1] - k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
                     else:
                         # Going right
                         print("Going right")
                         d_e_d = d_e
                         k_d_e_d = m.ceil(d_e_d / d_m)
-                        j = u[0] + k_d_e_d
+                        j = u[1] + k_d_e_d
                         d_j =  k_d_e_d * d_m - d_e_d
                 else:
                     # We have made the turn
@@ -328,9 +328,9 @@ cdef class Grid2D(Manhattan2D):
                         # Going upwards
                         print("Going upwards")
                         d_e_d = d_e - d_hori
-                        k_d_e_d = m.floor(d_e_d / d_n)
+                        k_d_e_d = m.ceil(d_e_d / d_n)
                         i = u[0] - k_d_e_d
-                        d_j = d_e_d - k_d_e_d * d_n
+                        d_j = k_d_e_d * d_n - d_e_d
                     else:
                         # Going downwards
                         print("Going downwards")
@@ -339,6 +339,8 @@ cdef class Grid2D(Manhattan2D):
                         i = u[0] + k_d_e_d
                         d_j = k_d_e_d * d_n - d_e_d
 
+            print(f"d_r = {d_r}, d_t = {d_t}, d_e = {d_e}, d_n = {d_n}, d_m = {d_m}, w = {w}, d_vert = {d_vert}, "
+                  f"d_hori = {d_hori}, d_e_d = {d_e_d}, k_d_e_d = {k_d_e_d}, i = {i}, j = {j}, d_j = {d_j}")
         return (i, j), d_j
 
 
