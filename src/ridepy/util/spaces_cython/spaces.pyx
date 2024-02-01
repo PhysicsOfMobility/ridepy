@@ -236,73 +236,108 @@ cdef class Grid2D(Manhattan2D):
         d_m = self.dm # Horizontal grid spacing
 
 
-        if d_r == dist_to_dest:
+        if d_r == d_t:
             # We are still at the origin
-            nn = u
+            print("We are still at the origin")
+            i = u[0]
+            j = u[1]
             d_j = 0
         elif d_r == 0:
             # We have reached the destination
-            nn = v
+            print("We have reached the destination")
+            i = v[0]
+            j = v[1]
             d_j = 0
         else:
             # We are under way
+            print("We are under way")
             w = (v[0] - u[0], v[1] - u[1])
 
-            d_vert = abs(w[0])
-            d_hori = abs(w[1])
+            d_vert = abs(w[0]) * d_n
+            d_hori = abs(w[1]) * d_m
 
             if (w[0] < 0 < w[1]) or (w[0] > 0 > w[1]) or (w[1] == 0):
                 # Going vertically, first
-                if d_e <= d_vert * d_n:
+                print("Going vertically, first")
+                if d_e <= d_vert:
                     # We have not made the turn.
+                    print("We have not made the turn")
                     j = u[1]
                     # Determine next node:
                     if w[0] < 0:
                         # Going upwards
-                        i = m.floor(d_e / d_n)
-                        d_j = d_e - i * d_n
+                        print("Going upwards")
+                        d_e_d = d_e
+                        k_d_e_d = m.floor(d_e_d / d_n)
+                        i = u[0] - k_d_e_d
+                        d_j = d_e_d - k_d_e_d * d_n
                     else:
                         # Going downwards
-                        i = m.ceil(d_e / d_n)
-                        d_j = i * d_n - d_e
+                        print("Going downwards")
+                        d_e_d = d_e
+                        k_d_e_d = m.ceil(d_e_d / d_n)
+                        i = u[0] + k_d_e_d
+                        d_j = k_d_e_d * d_n - d_e_d
                 else:
                     # We have made the turn.
+                    print("We have made the turn")
                     i = v[0]
                     # Determine next node:
                     if w[1] < 0:
                         # Going left
-                        j = m.floor((d_e - d_vert) / d_m)
-                        d_j = (d_e - d_vert) - j * d_m
+                        print("Going left")
+                        d_e_d = d_e - d_vert
+                        k_d_e_d = m.floor(d_e_d / d_m)
+                        j = u[0] - k_d_e_d
+                        d_j = d_e_d - k_d_e_d * d_m
                     else:
                         # Going right
-                        j = m.ceil((d_e - d_vert) / d_m)
-                        d_j = j * d_m - (d_e - d_vert)
+                        print("Going right")
+                        d_e_d = d_e - d_vert
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[0] + k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
             else:
                 # Going horizontally, first
-                if d_e <= d_hori * d_m:
+                print("Going horizontally, first")
+                if d_e <= d_hori:
                     # We have not made the turn
+                    print("We have not made the turn")
                     i = u[0]
                     # Determine the next node:
                     if w[1] < 0:
                         # Going left
-                        j = m.floor(d_e / d_m)
-                        d_j = d_e - j * d_m
+                        print("Going left")
+                        d_e_d = d_e
+                        k_d_e_d = m.floor(d_e_d / d_m)
+                        j = u[0] - k_d_e_d
+                        d_j = d_e_d - k_d_e_d * d_m
                     else:
                         # Going right
-                        j = m.ceil(d_e / d_m)
-                        d_j = j * d_m - d_e
+                        print("Going right")
+                        d_e_d = d_e
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[0] + k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
                 else:
                     # We have made the turn
+                    print("We have made the turn")
                     j = v[1]
                     # Determine the next node:
                     if w[0] < 0:
                         # Going upwards
-                        i = m.floor((d_e - d_hori) / d_n)
-                        d_j = (d_e - d_hori) - i * d_n
+                        print("Going upwards")
+                        d_e_d = d_e - d_hori
+                        k_d_e_d = m.floor(d_e_d / d_n)
+                        i = u[0] - k_d_e_d
+                        d_j = d_e_d - k_d_e_d * d_n
                     else:
                         # Going downwards
-                        i = m.ceil((d_e - d_hori) / d_n)
-                        d_j = i * d_n - (d_e - d_hori)
+                        print("Going downwards")
+                        d_e_d = d_e - d_hori
+                        k_d_e_d = m.ceil(d_e_d / d_n)
+                        i = u[0] + k_d_e_d
+                        d_j = k_d_e_d * d_n - d_e_d
 
         return (i, j), d_j
 
