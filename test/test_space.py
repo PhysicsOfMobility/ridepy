@@ -24,7 +24,7 @@ from ridepy.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Manhattan2D as CyManhattan2D,
     Graph as CyGraph,
-    Grid2D as CyGrid2D,
+    Grid2D_QM as CyGrid2D_QM,
 )
 
 from ridepy.extras.spaces import (
@@ -164,7 +164,7 @@ def test_CyManhattan2D():
 
 
 def test_CyGrid2D():
-    space = CyGrid2D()
+    space = CyGrid2D_QM()
 
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
@@ -173,14 +173,14 @@ def test_CyGrid2D():
 
 
 def test_CyGrid2D_velocity():
-    space = CyGrid2D()
+    space = CyGrid2D_QM()
 
     assert space.t((0, 0), (0, 1)) == 1.0
     assert space.t((0, 0), (0, 0)) == 0.0
     assert space.t((0, 0), (1, 1)) == 2
     assert space.t((0, 0), (0, 0.1)) == 0.1
 
-    space = CyGrid2D(velocity=2)
+    space = CyGrid2D_QM(velocity=2)
 
     assert space.t((0, 0), (0, 1)) == 0.5
     assert space.t((0, 0), (0, 0)) == 0.0
@@ -195,7 +195,7 @@ def test_CyGrid2D_interpolation():
         assert a[0][1] == pytest.approx(b[0][1])
         assert a[1] == pytest.approx(b[1])
 
-    space = CyGrid2D()
+    space = CyGrid2D_QM()
 
     assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 0), 0))
     # assert space.interp_dist((0, 1), (0, 1), 1.0) == ((1, 0), 0) # this is undefined behavior
@@ -290,7 +290,7 @@ def test_CyGrid2D_interpolation():
 
 
 def test_CyGrid2D_random_points_discrete():
-    space = CyGrid2D()
+    space = CyGrid2D_QM()
     random_points = [space.random_point() for _ in range(1000)]
     for random_point in random_points:
         assert 0 <= random_point[0] <= 10

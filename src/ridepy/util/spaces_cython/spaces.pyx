@@ -206,10 +206,13 @@ cdef class Grid2D(Manhattan2D):
     The discrete/graph characteristic of the space is encoded in the interpolation and
     random point generation functions.
 
+    The interpolation function will always assume the shortest path with no turns or a
+    single right turn.
     """
     def __cinit__(self, int n=10, int m=10, double dn=1, double dm=1, double velocity=1):
         self.loc_type = LocType.R2LOC
         self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
+
     def __init__(self, n=10, m=10, dn=1, dm=1, velocity=1):
         """
         Parameters
@@ -225,6 +228,101 @@ cdef class Grid2D(Manhattan2D):
         self.dm = dm
         self.velocity = velocity
 
+    def interp_dist(self, u, v, double dist_to_dest):
+        d_r = dist_to_dest # Remaining distance
+        d_t = self.d(u, v) # Total distance
+        d_e = d_t - d_r # Elapsed distance
+        d_n = self.dn # Vertical grid spacing
+        d_m = self.dm # Horizontal grid spacing
+
+
+        if d_r == dist_to_dest:
+            # We are still at the origin
+            nn = u
+            d_j = 0
+        elif d_r == 0:
+            # We have reached the destination
+            nn = v
+            d_j = 0
+        else:
+            # We are under way
+            w = (v[0] - u[0], v[1] - u[1])
+
+            d_vert = abs(w[0])
+            d_hori = abs(w[1])
+
+            if (w[0] < 0 < w[1]) or (w[0] > 0 > w[1]) or (w[1] == 0):
+                # Going vertical, first
+                if d_e <= d_vert * d_n:
+                    # We have not made the turn.
+                    j = u[1]
+                    # Determine next node:
+                    if w[0] < 0:
+                        # Going upwards
+                        i = m.floor(d_e / d_n)
+                    else:
+                        # Going downwards
+                        i = m.ceil(d_e / d_n)
+                else:
+                    # We have made the turn.
+                    i = v[0]
+                    # Determine next node:
+                    if w[1] < 0:
+                        # Going left
+                        j = m.floor((d_e - d_vert) / d_m)
+                    else:
+                        # Going right
+                        j = m.ceil((d_e - d_vert) / d_m)
+            else:
+                # Going horizontal, first
+                if d_e <= d_hori * d_m:
+                    # We have not made the turn
+                    i = u[0]
+                    # Determine the next node:
+                    if w[1] < 0:
+                        # Going left
+                        j = m.floor(d_e / d_m)
+                    else:
+                        # Going right
+                        j = m.ceil(d_e / d_m)
+                else:
+                    # We have made the turn
+                    j = v[1]
+                    # Determine the next node:
+                    if w[0] < 0:
+                        # Going upwards
+                        i = m.floor((d_e - d_hori) / d_n)
+                    else:
+                        # Going downwards
+                        i = m.ceil((d_e - d_hori) / d_n)
+
+
+
+    def interp_time(self, u, v, double time_to_dest):
+        nn, d_j = self.interp_dist(u, v, time_to_dest * self.velocity)
+        t_j = d_j / self.velocity
+        return nn, t_j
+
+    def random_point(self):
+        i = random.randint(0, self.n - 1)
+        j = random.randint(0, self.m - 1)
+        return i * self.dn, j * self.dm
+
+    def __repr__(self):
+        return f"Grid2D(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
+
+    def asdict(self):
+        return dict(n=self.n, m=self.m, dn=self.dn, dm=self.dm, velocity=self.velocity)
+    def __reduce__(self):
+        return self.__class__, (self.n, self.m, self.dn, self.dm, self.velocity)
+
+cdef class Grid2D_QM(Grid2D):
+    """
+    Same as Grid2D, except that the bus routes are nonunique. This means that the choice of the
+    (non-unique) shortest path on the grid will only be made at the time of interpolation ("measurement").
+    This has the benefit that buses tend to move along the Euclidean shortest path. The drawback is that
+    interpolating multiple times along the route will produce inconsistent paths taken.
+    """
 
     def interp_dist(self, u, v, double dist_to_dest):
         d_r = dist_to_dest
@@ -310,23 +408,9 @@ cdef class Grid2D(Manhattan2D):
 
         return nn, d_j
 
-    def interp_time(self, u, v, double time_to_dest):
-        nn, d_j = self.interp_dist(u, v, time_to_dest * self.velocity)
-        t_j = d_j / self.velocity
-        return nn, t_j
-
-    def random_point(self):
-        i = random.randint(0, self.n - 1)
-        j = random.randint(0, self.m - 1)
-        return i * self.dn, j * self.dm
 
     def __repr__(self):
-        return f"Grid2D(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
-
-    def asdict(self):
-        return dict(n=self.n, m=self.m, dn=self.dn, dm=self.dm, velocity=self.velocity)
-    def __reduce__(self):
-        return self.__class__, (self.n, self.m, self.dn, self.dm, self.velocity)
+        return f"Grid2D_QM(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
 
 cdef class Graph(TransportSpace):
     """
