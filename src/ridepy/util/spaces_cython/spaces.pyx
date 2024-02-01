@@ -252,7 +252,7 @@ cdef class Grid2D(Manhattan2D):
             d_hori = abs(w[1])
 
             if (w[0] < 0 < w[1]) or (w[0] > 0 > w[1]) or (w[1] == 0):
-                # Going vertical, first
+                # Going vertically, first
                 if d_e <= d_vert * d_n:
                     # We have not made the turn.
                     j = u[1]
@@ -260,9 +260,11 @@ cdef class Grid2D(Manhattan2D):
                     if w[0] < 0:
                         # Going upwards
                         i = m.floor(d_e / d_n)
+                        d_j = d_e - i * d_n
                     else:
                         # Going downwards
                         i = m.ceil(d_e / d_n)
+                        d_j = i * d_n - d_e
                 else:
                     # We have made the turn.
                     i = v[0]
@@ -270,11 +272,13 @@ cdef class Grid2D(Manhattan2D):
                     if w[1] < 0:
                         # Going left
                         j = m.floor((d_e - d_vert) / d_m)
+                        d_j = (d_e - d_vert) - j * d_m
                     else:
                         # Going right
                         j = m.ceil((d_e - d_vert) / d_m)
+                        d_j = j * d_m - (d_e - d_vert)
             else:
-                # Going horizontal, first
+                # Going horizontally, first
                 if d_e <= d_hori * d_m:
                     # We have not made the turn
                     i = u[0]
@@ -282,9 +286,11 @@ cdef class Grid2D(Manhattan2D):
                     if w[1] < 0:
                         # Going left
                         j = m.floor(d_e / d_m)
+                        d_j = d_e - j * d_m
                     else:
                         # Going right
                         j = m.ceil(d_e / d_m)
+                        d_j = j * d_m - d_e
                 else:
                     # We have made the turn
                     j = v[1]
@@ -292,9 +298,13 @@ cdef class Grid2D(Manhattan2D):
                     if w[0] < 0:
                         # Going upwards
                         i = m.floor((d_e - d_hori) / d_n)
+                        d_j = (d_e - d_hori) - i * d_n
                     else:
                         # Going downwards
                         i = m.ceil((d_e - d_hori) / d_n)
+                        d_j = i * d_n - (d_e - d_hori)
+
+        return (i, j), d_j
 
 
 
