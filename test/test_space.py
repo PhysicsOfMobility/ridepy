@@ -35,6 +35,12 @@ from ridepy.extras.spaces import (
 )
 
 
+def assert_interpolation_equal(a, b):
+    assert a[0][0] == b[0][0]
+    assert a[0][1] == b[0][1]
+    assert a[1] == pytest.approx(b[1])
+
+
 def test_Euclidean():
     space = Euclidean(n_dim=1)
     assert space.d(0, 1) == 1.0
@@ -214,14 +220,100 @@ def test_CyGrid2D_QM_velocity():
     assert space.t((0, 0), (0, 0.1)) == 0.05
 
 
+@pytest.mark.parametrize(
+    "space", [CyGrid2D(dn=2, dm=3, velocity=5), CyGrid2D_QM(dn=2, dm=3, velocity=5)]
+)
+def test_CyGrid2D_dn_dm(space):
+
+    assert (
+        space.d((0, 0), (0, 1))
+        == space.d(
+            (0, 1),
+            (
+                0,
+                2,
+            ),
+        )
+        == 3
+    )
+    assert (
+        space.t((0, 0), (0, 1))
+        == space.t(
+            (0, 1),
+            (
+                0,
+                2,
+            ),
+        )
+        == 3 / 5
+    )
+
+    assert (
+        space.d((0, 0), (1, 0))
+        == space.d(
+            (1, 0),
+            (
+                2,
+                0,
+            ),
+        )
+        == 2
+    )
+    assert (
+        space.t((0, 0), (1, 0))
+        == space.t(
+            (1, 0),
+            (
+                2,
+                0,
+            ),
+        )
+        == 2 / 5
+    )
+
+    assert (
+        space.d((0, 0), (1, 1))
+        == space.d(
+            (1, 1),
+            (
+                2,
+                2,
+            ),
+        )
+        == 5
+    )
+    assert (
+        space.t((0, 0), (1, 1))
+        == space.t(
+            (1, 1),
+            (
+                2,
+                2,
+            ),
+        )
+        == 1
+    )
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 1), 1.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 0), 1.0), ((1, 0), 1.0))
+
+    # X---X   X   X   X
+    #     V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 5.0), ((0, 0), 0.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 4.0), ((0, 1), 2.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 3.4), ((0, 1), 1.4))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 3.0), ((0, 1), 1.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 2.0), ((0, 1), 0.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.4), ((1, 1), 1.4))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.0), ((1, 1), 1.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 0.0), ((1, 1), 0.0))
+
+
 def test_CyGrid2D_interpolation():
-
-    def assert_interpolation_equal(a, b):
-        # TODO this should not be necessary anymore, as we want exact values
-        assert a[0][0] == b[0][0]
-        assert a[0][1] == b[0][1]
-        assert a[1] == pytest.approx(b[1])
-
     space = CyGrid2D()
 
     assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 0), 0))
@@ -313,12 +405,6 @@ def test_CyGrid2D_interpolation():
 
 
 def test_CyGrid2D_QM_interpolation():
-
-    def assert_interpolation_equal(a, b):
-        assert a[0][0] == b[0][0]
-        assert a[0][1] == b[0][1]
-        assert a[1] == pytest.approx(b[1])
-
     space = CyGrid2D_QM()
 
     assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 0), 0))
@@ -394,9 +480,9 @@ def test_CyGrid2D_QM_interpolation():
 
     assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 0.6), ((0, 1), 0.6))
     assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 1.0), ((0, 0), 0))
-    # assert_interpolation_equal(
-    #     space.interp_dist((2, 0), (0, 1), 1.6), ((0, 0), 0.6)
-    # )  # this is broken (returns ((1, 1), 0.6), which is incompatible with the previous result)
+    assert_interpolation_equal(
+        space.interp_dist((2, 0), (0, 1), 1.6), ((1, 1), 0.6)
+    )  # this deviates from the path drawn in the picture!
     assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 2.6), ((1, 0), 0.6))
 
     # X   X   X   X   X
@@ -407,9 +493,9 @@ def test_CyGrid2D_QM_interpolation():
 
     assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 0.6), ((2, 0), 0.6))
     assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 1.0), ((2, 1), 0))
-    # assert_interpolation_equal(
-    #     space.interp_dist((0, 1), (2, 0), 1.6), ((2, 1), 0.6)
-    # )  # this is broken
+    assert_interpolation_equal(
+        space.interp_dist((0, 1), (2, 0), 1.6), ((1, 0), 0.6)
+    )  # this deviates from the path drawn in the picture!
     assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 2.6), ((1, 1), 0.6))
 
 

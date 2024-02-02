@@ -385,7 +385,9 @@ cdef class Grid2D_QM(Grid2D):
             nn = v
             d_j = 0
         else:
-            x, _ = dereference(self.u_space.space_r2loc_ptr).interp_dist(<R2loc>u, <R2loc>v, d_r)
+            frac = d_r / self.d(u, v)
+            x = (u[0] * frac + (1 - frac) * v[0]) * d_n, (u[1] * frac + (1 - frac) * v[1]) * d_m
+            # print(x)
 
             # determine grid cell target node:
             if u[0] < v[0]:
@@ -413,7 +415,7 @@ cdef class Grid2D_QM(Grid2D):
                 j = u[1] / d_m
 
             # distance remaining from grid cell target node
-            d_r_p = abs(v[0] - i * d_n) + abs(v[1] - j * d_m)
+            d_r_p = abs(v[0] - i) * d_n + abs(v[1] - j) * d_m
 
             # distance within grid cell to grid cell target node
             d_g = d_r - d_r_p
