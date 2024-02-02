@@ -312,6 +312,44 @@ def test_CyGrid2D_dn_dm(space):
     assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.0), ((1, 1), 1.0))
     assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 0.0), ((1, 1), 0.0))
 
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (0, 1), 1.0 / 5), ((0, 1), 1.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 0), 1.0 / 5), ((1, 0), 1.0 / 5)
+    )
+
+    # X---X   X   X   X
+    #     V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 5.0 / 5), ((0, 0), 0.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 4.0 / 5), ((0, 1), 2.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 3.4 / 5), ((0, 1), 1.4 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 3.0 / 5), ((0, 1), 1.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 2.0 / 5), ((0, 1), 0.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 1.4 / 5), ((1, 1), 1.4 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 1.0 / 5), ((1, 1), 1.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 0.0 / 5), ((1, 1), 0.0 / 5)
+    )
+
 
 def test_CyGrid2D_interpolation():
     space = CyGrid2D()
