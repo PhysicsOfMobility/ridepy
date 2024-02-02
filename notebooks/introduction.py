@@ -7,11 +7,11 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.14.5
+#       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: Python (ridepy_testing)
+#     display_name: Python 3.9 (ridepy)
 #     language: python
-#     name: ridepy_testing
+#     name: ridepy
 # ---
 
 # # RidePy Introduction: Basics
