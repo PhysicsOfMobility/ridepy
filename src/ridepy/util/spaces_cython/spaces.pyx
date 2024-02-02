@@ -228,6 +228,12 @@ cdef class Grid2D(Manhattan2D):
         self.dm = dm
         self.velocity = velocity
 
+    def d(self, u, v):
+        return abs(u[0] - v[0]) * self.dn + abs(u[1] - v[1]) * self.dm
+
+    def t(self, u, v):
+        return self.d(u, v) / self.velocity
+
     def interp_dist(self, u, v, double dist_to_dest):
         d_r = dist_to_dest # Remaining distance
         d_t = self.d(u, v) # Total distance
@@ -238,19 +244,19 @@ cdef class Grid2D(Manhattan2D):
 
         if d_r == d_t:
             # We are still at the origin
-            print("We are still at the origin")
+            # print("We are still at the origin")
             i = u[0]
             j = u[1]
             d_j = 0
         elif d_r == 0:
             # We have reached the destination
-            print("We have reached the destination")
+            # print("We have reached the destination")
             i = v[0]
             j = v[1]
             d_j = 0
         else:
             # We are under way
-            print("We are under way")
+            # print("We are under way")
             w = (v[0] - u[0], v[1] - u[1])
 
             d_vert = abs(w[0]) * d_n
@@ -258,82 +264,82 @@ cdef class Grid2D(Manhattan2D):
 
             if (w[0] < 0 < w[1]) or (w[0] > 0 > w[1]) or (w[1] == 0):
                 # Going vertically, first
-                print("Going vertically, first")
+                # print("Going vertically, first")
                 if d_e <= d_vert:
                     # We have not made the turn.
-                    print("We have not made the turn")
+                    # print("We have not made the turn")
                     j = u[1]
                     # Determine next node:
                     if w[0] < 0:
                         # Going upwards
-                        print("Going upwards")
+                        # print("Going upwards")
                         d_e_d = d_e
                         k_d_e_d = m.ceil(d_e_d / d_n)
                         i = u[0] - k_d_e_d
                         d_j = k_d_e_d * d_n - d_e_d
                     else:
                         # Going downwards
-                        print("Going downwards")
+                        # print("Going downwards")
                         d_e_d = d_e
                         k_d_e_d = m.ceil(d_e_d / d_n)
                         i = u[0] + k_d_e_d
                         d_j = k_d_e_d * d_n - d_e_d
                 else:
                     # We have made the turn.
-                    print("We have made the turn")
+                    # print("We have made the turn")
                     i = v[0]
                     # Determine next node:
                     if w[1] < 0:
                         # Going left
-                        print("Going left")
+                        # print("Going left")
                         d_e_d = d_e - d_vert
                         k_d_e_d = m.ceil(d_e_d / d_m)
                         j = u[1] - k_d_e_d
                         d_j =  k_d_e_d * d_m - d_e_d
                     else:
                         # Going right
-                        print("Going right")
+                        # print("Going right")
                         d_e_d = d_e - d_vert
                         k_d_e_d = m.ceil(d_e_d / d_m)
                         j = u[1] + k_d_e_d
                         d_j =  k_d_e_d * d_m - d_e_d
             else:
                 # Going horizontally, first
-                print("Going horizontally, first")
+                # print("Going horizontally, first")
                 if d_e <= d_hori:
                     # We have not made the turn
-                    print("We have not made the turn")
+                    # print("We have not made the turn")
                     i = u[0]
                     # Determine the next node:
                     if w[1] < 0:
                         # Going left
-                        print("Going left")
+                        # print("Going left")
                         d_e_d = d_e
                         k_d_e_d = m.ceil(d_e_d / d_m)
                         j = u[1] - k_d_e_d
                         d_j =  k_d_e_d * d_m - d_e_d
                     else:
                         # Going right
-                        print("Going right")
+                        # print("Going right")
                         d_e_d = d_e
                         k_d_e_d = m.ceil(d_e_d / d_m)
                         j = u[1] + k_d_e_d
                         d_j =  k_d_e_d * d_m - d_e_d
                 else:
                     # We have made the turn
-                    print("We have made the turn")
+                    # print("We have made the turn")
                     j = v[1]
                     # Determine the next node:
                     if w[0] < 0:
                         # Going upwards
-                        print("Going upwards")
+                        # print("Going upwards")
                         d_e_d = d_e - d_hori
                         k_d_e_d = m.ceil(d_e_d / d_n)
                         i = u[0] - k_d_e_d
                         d_j = k_d_e_d * d_n - d_e_d
                     else:
                         # Going downwards
-                        print("Going downwards")
+                        # print("Going downwards")
                         d_e_d = d_e - d_hori
                         k_d_e_d = m.ceil(d_e_d / d_n)
                         i = u[0] + k_d_e_d
@@ -341,8 +347,7 @@ cdef class Grid2D(Manhattan2D):
 
             print(f"d_r = {d_r}, d_t = {d_t}, d_e = {d_e}, d_n = {d_n}, d_m = {d_m}, w = {w}, d_vert = {d_vert}, "
                   f"d_hori = {d_hori}, d_e_d = {d_e_d}, k_d_e_d = {k_d_e_d}, i = {i}, j = {j}, d_j = {d_j}")
-        return (i, j), d_j
-
+        return (round(i), round(j)), d_j
 
 
     def interp_time(self, u, v, double time_to_dest):
@@ -353,7 +358,7 @@ cdef class Grid2D(Manhattan2D):
     def random_point(self):
         i = random.randint(0, self.n - 1)
         j = random.randint(0, self.m - 1)
-        return i * self.dn, j * self.dm
+        return i, j
 
     def __repr__(self):
         return f"Grid2D(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
@@ -453,7 +458,7 @@ cdef class Grid2D_QM(Grid2D):
                         # print('coming in from below')
                         nn = (i + 1, j)
 
-        return nn, d_j
+        return (round(nn[0]), round(nn[1])), d_j
 
 
     def __repr__(self):
