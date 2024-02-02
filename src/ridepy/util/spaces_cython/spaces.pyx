@@ -4,6 +4,7 @@ import random
 import warnings
 import itertools as it
 import networkx as nx
+import math as m
 
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
@@ -193,6 +194,277 @@ cdef class Manhattan2D(TransportSpace):
     def __reduce__(self):
         return self.__class__, (self.velocity, self.coord_range)
 
+
+cdef class Grid2D(Manhattan2D):
+    """
+    Fast 2D grid network space, realized as a discrete 2D space with Manhattan metric.
+
+    Note that this space does not enforce the discrete integer coordinate pairs it is
+    supposed to be used with. This means that you have to take care yourself to only
+    introduce integer coordinate pairs. This implies that the distance and time functions
+    ``Grid2D.d`` and ``Grid2D.t`` will in fact as if the space were continuous.
+    The discrete/graph characteristic of the space is encoded in the interpolation and
+    random point generation functions.
+
+    The interpolation function will always assume the shortest path with no turns or a
+    single right turn.
+    """
+    def __cinit__(self, int n=10, int m=10, double dn=1, double dm=1, double velocity=1):
+        self.loc_type = LocType.R2LOC
+        self.derived_ptr = self.u_space.space_r2loc_ptr = new CManhattan2D(velocity)
+
+    def __init__(self, n=10, m=10, dn=1, dm=1, velocity=1):
+        """
+        Parameters
+        ----------
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
+        TransportSpace.__init__(self, loc_type=LocType.R2LOC)
+
+        self.n = n
+        self.m = m
+        self.dn = dn
+        self.dm = dm
+        self.velocity = velocity
+
+    def d(self, u, v):
+        return abs(u[0] - v[0]) * self.dn + abs(u[1] - v[1]) * self.dm
+
+    def t(self, u, v):
+        return self.d(u, v) / self.velocity
+
+    def interp_dist(self, u, v, double dist_to_dest):
+        d_r = dist_to_dest # Remaining distance
+        d_t = self.d(u, v) # Total distance
+        d_e = d_t - d_r # Elapsed distance
+        d_n = self.dn # Vertical grid spacing
+        d_m = self.dm # Horizontal grid spacing
+
+
+        if d_r == d_t:
+            # We are still at the origin
+            # print("We are still at the origin")
+            i = u[0]
+            j = u[1]
+            d_j = 0
+        elif d_r == 0:
+            # We have reached the destination
+            # print("We have reached the destination")
+            i = v[0]
+            j = v[1]
+            d_j = 0
+        else:
+            # We are under way
+            # print("We are under way")
+            w = (v[0] - u[0], v[1] - u[1])
+
+            d_vert = abs(w[0]) * d_n
+            d_hori = abs(w[1]) * d_m
+
+            if (w[0] < 0 < w[1]) or (w[0] > 0 > w[1]) or (w[1] == 0):
+                # Going vertically, first
+                # print("Going vertically, first")
+                if d_e <= d_vert:
+                    # We have not made the turn.
+                    # print("We have not made the turn")
+                    j = u[1]
+                    # Determine next node:
+                    if w[0] < 0:
+                        # Going upwards
+                        # print("Going upwards")
+                        d_e_d = d_e
+                        k_d_e_d = m.ceil(d_e_d / d_n)
+                        i = u[0] - k_d_e_d
+                        d_j = k_d_e_d * d_n - d_e_d
+                    else:
+                        # Going downwards
+                        # print("Going downwards")
+                        d_e_d = d_e
+                        k_d_e_d = m.ceil(d_e_d / d_n)
+                        i = u[0] + k_d_e_d
+                        d_j = k_d_e_d * d_n - d_e_d
+                else:
+                    # We have made the turn.
+                    # print("We have made the turn")
+                    i = v[0]
+                    # Determine next node:
+                    if w[1] < 0:
+                        # Going left
+                        # print("Going left")
+                        d_e_d = d_e - d_vert
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[1] - k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
+                    else:
+                        # Going right
+                        # print("Going right")
+                        d_e_d = d_e - d_vert
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[1] + k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
+            else:
+                # Going horizontally, first
+                # print("Going horizontally, first")
+                if d_e <= d_hori:
+                    # We have not made the turn
+                    # print("We have not made the turn")
+                    i = u[0]
+                    # Determine the next node:
+                    if w[1] < 0:
+                        # Going left
+                        # print("Going left")
+                        d_e_d = d_e
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[1] - k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
+                    else:
+                        # Going right
+                        # print("Going right")
+                        d_e_d = d_e
+                        k_d_e_d = m.ceil(d_e_d / d_m)
+                        j = u[1] + k_d_e_d
+                        d_j =  k_d_e_d * d_m - d_e_d
+                else:
+                    # We have made the turn
+                    # print("We have made the turn")
+                    j = v[1]
+                    # Determine the next node:
+                    if w[0] < 0:
+                        # Going upwards
+                        # print("Going upwards")
+                        d_e_d = d_e - d_hori
+                        k_d_e_d = m.ceil(d_e_d / d_n)
+                        i = u[0] - k_d_e_d
+                        d_j = k_d_e_d * d_n - d_e_d
+                    else:
+                        # Going downwards
+                        # print("Going downwards")
+                        d_e_d = d_e - d_hori
+                        k_d_e_d = m.ceil(d_e_d / d_n)
+                        i = u[0] + k_d_e_d
+                        d_j = k_d_e_d * d_n - d_e_d
+
+            print(f"d_r = {d_r}, d_t = {d_t}, d_e = {d_e}, d_n = {d_n}, d_m = {d_m}, w = {w}, d_vert = {d_vert}, "
+                  f"d_hori = {d_hori}, d_e_d = {d_e_d}, k_d_e_d = {k_d_e_d}, i = {i}, j = {j}, d_j = {d_j}")
+        return (round(i), round(j)), d_j
+
+
+    def interp_time(self, u, v, double time_to_dest):
+        nn, d_j = self.interp_dist(u, v, time_to_dest * self.velocity)
+        t_j = d_j / self.velocity
+        return nn, t_j
+
+    def random_point(self):
+        i = random.randint(0, self.n - 1)
+        j = random.randint(0, self.m - 1)
+        return i, j
+
+    def __repr__(self):
+        return f"Grid2D(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
+
+    def asdict(self):
+        return dict(n=self.n, m=self.m, dn=self.dn, dm=self.dm, velocity=self.velocity)
+    def __reduce__(self):
+        return self.__class__, (self.n, self.m, self.dn, self.dm, self.velocity)
+
+cdef class Grid2D_QM(Grid2D):
+    """
+    Same as Grid2D, except that the bus routes are nonunique. This means that the choice of the
+    (non-unique) shortest path on the grid will only be made at the time of interpolation ("measurement").
+    This has the benefit that buses tend to move along the Euclidean shortest path. The drawback is that
+    interpolating multiple times along the route will produce inconsistent paths taken.
+    """
+
+    def interp_dist(self, u, v, double dist_to_dest):
+        d_r = dist_to_dest
+        d_n = self.dn
+        d_m = self.dm
+
+        if d_r == 0:
+            nn = v
+            d_j = 0
+        else:
+            frac = d_r / self.d(u, v)
+            x = (u[0] * frac + (1 - frac) * v[0]) * d_n, (u[1] * frac + (1 - frac) * v[1]) * d_m
+            # print(x)
+
+            # determine grid cell target node:
+            if u[0] < v[0]:
+                # going downwards
+                # print('going down')
+                i = m.ceil(x[0] / d_n)
+            elif u[0] > v[0]:
+                # going upwards
+                # print('going up')
+                i = m.floor(x[0] / d_n)
+            else:
+                # going horizontally
+                i = u[0] / d_n
+
+            if u[1] < v[1]:
+                # going right
+                # print('going right')
+                j = m.ceil(x[1] / d_m)
+            elif u[1] > v[1]:
+                # going left
+                # print('going left')
+                j = m.floor(x[1] / d_m)
+            else:
+                # going vertically
+                j = u[1] / d_m
+
+            # distance remaining from grid cell target node
+            d_r_p = abs(v[0] - i) * d_n + abs(v[1] - j) * d_m
+
+            # distance within grid cell to grid cell target node
+            d_g = d_r - d_r_p
+
+            # assumption: we always deviate to the left
+            if (u[0] >= v[0] and u[1] < v[1]) or (u[0] <= v[0] and u[1] > v[1]):
+                # coming in horizontally
+                # print('coming in horizontally')
+                horizontal = True
+                d_gref = d_m
+            else:
+                # coming in vertically
+                # print('coming in vertically')
+                horizontal = False
+                d_gref = d_n
+
+            if d_g < d_gref:
+                # next node is grid cell target node,
+                # jump distance is grid cell distance
+                nn = (i, j)
+                d_j = d_g
+            else:
+                d_j = d_g - d_gref
+                if horizontal:
+                    # coming in horizontally
+                    if u[1] < v[1]:
+                        # coming in from the left
+                        # print('coming in from the left')
+                        nn = (i, j - 1)
+                    else:
+                        # coming in from the right
+                        # print('coming in from the right')
+                        nn = (i, j + 1)
+                else:
+                    # coming in vertically
+                    if u[0] < v[0]:
+                        # coming in from above
+                        # print('coming in from above')
+                        nn = (i - 1, j)
+                    else:
+                        # coming in from below
+                        # print('coming in from below')
+                        nn = (i + 1, j)
+
+        return (round(nn[0]), round(nn[1])), d_j
+
+
+    def __repr__(self):
+        return f"Grid2D_QM(n={self.n}, m={self.m}, dn={self.dn}, dm={self.dm}, velocity={self.velocity})"
 
 cdef class Graph(TransportSpace):
     """

@@ -1,5 +1,7 @@
 /scratch
 /simulations_tmp
+/notebooks/simulations_tmp
+
 
 # cmake
 *.cmake

@@ -18,11 +18,14 @@ from ridepy.util.spaces import (
     Euclidean2D,
     Graph,
     DiGraph,
+    Manhattan2D,
 )
 from ridepy.util.spaces_cython import (
     Euclidean2D as CyEuclidean2D,
     Manhattan2D as CyManhattan2D,
     Graph as CyGraph,
+    Grid2D as CyGrid2D,
+    Grid2D_QM as CyGrid2D_QM,
 )
 
 from ridepy.extras.spaces import (
@@ -30,6 +33,12 @@ from ridepy.extras.spaces import (
     make_nx_grid,
     make_nx_star_graph,
 )
+
+
+def assert_interpolation_equal(a, b):
+    assert a[0][0] == b[0][0]
+    assert a[0][1] == b[0][1]
+    assert a[1] == pytest.approx(b[1])
 
 
 def test_Euclidean():
@@ -54,6 +63,13 @@ def test_Euclidean2D():
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
+
+
+def test_Manhattan2D():
+    space = Manhattan2D()
+    assert space.d((0, 0), (0, 1)) == 1.0
+    assert space.d((0, 0), (0, 0)) == 0.0
+    assert space.d((0, 0), (1, 1)) == 2
 
 
 def test_Euclidean2D_smart_vectorize():
@@ -147,11 +163,398 @@ def test_CyEuclidean2D():
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
 
 
-def test_Manhattan2D():
+def test_CyManhattan2D():
     space = CyManhattan2D()
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == 2
+
+
+def test_CyGrid2D():
+    space = CyGrid2D()
+
+    assert space.d((0, 0), (0, 1)) == 1.0
+    assert space.d((0, 0), (0, 0)) == 0.0
+    assert space.d((0, 0), (1, 1)) == 2
+    assert space.d((0, 0), (0, 0.1)) == 0.1
+
+
+def test_CyGrid2D_QM():
+    space = CyGrid2D_QM()
+
+    assert space.d((0, 0), (0, 1)) == 1.0
+    assert space.d((0, 0), (0, 0)) == 0.0
+    assert space.d((0, 0), (1, 1)) == 2
+    assert space.d((0, 0), (0, 0.1)) == 0.1
+
+
+def test_CyGrid2D_velocity():
+    space = CyGrid2D()
+
+    assert space.t((0, 0), (0, 1)) == 1.0
+    assert space.t((0, 0), (0, 0)) == 0.0
+    assert space.t((0, 0), (1, 1)) == 2
+    assert space.t((0, 0), (0, 0.1)) == 0.1
+
+    space = CyGrid2D(velocity=2)
+
+    assert space.t((0, 0), (0, 1)) == 0.5
+    assert space.t((0, 0), (0, 0)) == 0.0
+    assert space.t((0, 0), (1, 1)) == 1
+    assert space.t((0, 0), (0, 0.1)) == 0.05
+
+
+def test_CyGrid2D_QM_velocity():
+    space = CyGrid2D_QM()
+
+    assert space.t((0, 0), (0, 1)) == 1.0
+    assert space.t((0, 0), (0, 0)) == 0.0
+    assert space.t((0, 0), (1, 1)) == 2
+    assert space.t((0, 0), (0, 0.1)) == 0.1
+
+    space = CyGrid2D_QM(velocity=2)
+
+    assert space.t((0, 0), (0, 1)) == 0.5
+    assert space.t((0, 0), (0, 0)) == 0.0
+    assert space.t((0, 0), (1, 1)) == 1
+    assert space.t((0, 0), (0, 0.1)) == 0.05
+
+
+@pytest.mark.parametrize(
+    "space", [CyGrid2D(dn=2, dm=3, velocity=5), CyGrid2D_QM(dn=2, dm=3, velocity=5)]
+)
+def test_CyGrid2D_dn_dm(space):
+
+    assert (
+        space.d((0, 0), (0, 1))
+        == space.d(
+            (0, 1),
+            (
+                0,
+                2,
+            ),
+        )
+        == 3
+    )
+    assert (
+        space.t((0, 0), (0, 1))
+        == space.t(
+            (0, 1),
+            (
+                0,
+                2,
+            ),
+        )
+        == 3 / 5
+    )
+
+    assert (
+        space.d((0, 0), (1, 0))
+        == space.d(
+            (1, 0),
+            (
+                2,
+                0,
+            ),
+        )
+        == 2
+    )
+    assert (
+        space.t((0, 0), (1, 0))
+        == space.t(
+            (1, 0),
+            (
+                2,
+                0,
+            ),
+        )
+        == 2 / 5
+    )
+
+    assert (
+        space.d((0, 0), (1, 1))
+        == space.d(
+            (1, 1),
+            (
+                2,
+                2,
+            ),
+        )
+        == 5
+    )
+    assert (
+        space.t((0, 0), (1, 1))
+        == space.t(
+            (1, 1),
+            (
+                2,
+                2,
+            ),
+        )
+        == 1
+    )
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 1), 1.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 0), 1.0), ((1, 0), 1.0))
+
+    # X---X   X   X   X
+    #     V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 5.0), ((0, 0), 0.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 4.0), ((0, 1), 2.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 3.4), ((0, 1), 1.4))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 3.0), ((0, 1), 1.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 2.0), ((0, 1), 0.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.4), ((1, 1), 1.4))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.0), ((1, 1), 1.0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 0.0), ((1, 1), 0.0))
+
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (0, 1), 1.0 / 5), ((0, 1), 1.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 0), 1.0 / 5), ((1, 0), 1.0 / 5)
+    )
+
+    # X---X   X   X   X
+    #     V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 5.0 / 5), ((0, 0), 0.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 4.0 / 5), ((0, 1), 2.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 3.4 / 5), ((0, 1), 1.4 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 3.0 / 5), ((0, 1), 1.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 2.0 / 5), ((0, 1), 0.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 1.4 / 5), ((1, 1), 1.4 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 1.0 / 5), ((1, 1), 1.0 / 5)
+    )
+    assert_interpolation_equal(
+        space.interp_time((0, 0), (1, 1), 0.0 / 5), ((1, 1), 0.0 / 5)
+    )
+
+
+def test_CyGrid2D_interpolation():
+    space = CyGrid2D()
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 0), 0))
+    # assert space.interp_dist((0, 1), (0, 1), 1.0) == ((1, 0), 0) # this is undefined behavior
+
+    # ========================================
+
+    # X---X   X   X   X
+    #     V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.0), ((0, 1), 0))
+
+    # X   X   X   X   X
+    # A
+    # X---X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((1, 1), (0, 0), 1.0), ((1, 0), 0))
+
+    # ========================================
+
+    # X---X   X   X   X
+    #     |
+    # X   X   X   X   X
+    #     V
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 0.6), ((2, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 1.0), ((1, 1), 0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 1.6), ((1, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 2.6), ((0, 1), 0.6))
+
+    # X   X   X   X   X
+    # A
+    # X   X   X   X   X
+    # |
+    # X---X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 0.6), ((0, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 1.0), ((1, 0), 0))
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 1.6), ((1, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 2.6), ((2, 0), 0.6))
+
+    # ========================================
+
+    # X---X   X   X   X
+    # V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((1, 0), (0, 1), 1.0), ((0, 0), 0))
+
+    # X   X   X   X   X
+    #     A
+    # X---X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 1), (1, 0), 1.0), ((1, 1), 0))
+
+    # ========================================
+
+    # X-->X   X   X   X
+    # |
+    # X   X   X   X   X
+    # |
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 0.6), ((0, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 1.0), ((0, 0), 0))
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 1.6), ((0, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 2.6), ((1, 0), 0.6))
+
+    # X   X   X   X   X
+    #     |
+    # X   X   X   X   X
+    #     |
+    # X<--X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 0.6), ((2, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 1.0), ((2, 1), 0))
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 1.6), ((2, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 2.6), ((1, 1), 0.6))
+
+
+def test_CyGrid2D_QM_interpolation():
+    space = CyGrid2D_QM()
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (0, 1), 1.0), ((0, 0), 0))
+    # assert space.interp_dist((0, 1), (0, 1), 1.0) == ((1, 0), 0) # this is undefined behavior
+
+    # ========================================
+
+    # X---X   X   X   X
+    #     V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (1, 1), 1.0), ((0, 1), 0))
+
+    # X   X   X   X   X
+    # A
+    # X---X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((1, 1), (0, 0), 1.0), ((1, 0), 0))
+
+    # ========================================
+
+    # X---X   X   X   X
+    #     |
+    # X   X   X   X   X
+    #     V
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 0.6), ((2, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 1.0), ((1, 1), 0))
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 1.6), ((1, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 0), (2, 1), 2.6), ((0, 1), 0.6))
+
+    # X   X   X   X   X
+    # A
+    # X   X   X   X   X
+    # |
+    # X---X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 0.6), ((0, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 1.0), ((1, 0), 0))
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 1.6), ((1, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 1), (0, 0), 2.6), ((2, 0), 0.6))
+
+    # ========================================
+
+    # X---X   X   X   X
+    # V
+    # X   X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((1, 0), (0, 1), 1.0), ((0, 0), 0))
+
+    # X   X   X   X   X
+    #     A
+    # X---X   X   X   X
+    #
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 1), (1, 0), 1.0), ((1, 1), 0))
+
+    # ========================================
+
+    # X-->X   X   X   X
+    # |
+    # X   X   X   X   X
+    # |
+    # X   X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 0.6), ((0, 1), 0.6))
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 1.0), ((0, 0), 0))
+    assert_interpolation_equal(
+        space.interp_dist((2, 0), (0, 1), 1.6), ((1, 1), 0.6)
+    )  # this deviates from the path drawn in the picture!
+    assert_interpolation_equal(space.interp_dist((2, 0), (0, 1), 2.6), ((1, 0), 0.6))
+
+    # X   X   X   X   X
+    #     |
+    # X   X   X   X   X
+    #     |
+    # X<--X   X   X   X
+
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 0.6), ((2, 0), 0.6))
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 1.0), ((2, 1), 0))
+    assert_interpolation_equal(
+        space.interp_dist((0, 1), (2, 0), 1.6), ((1, 0), 0.6)
+    )  # this deviates from the path drawn in the picture!
+    assert_interpolation_equal(space.interp_dist((0, 1), (2, 0), 2.6), ((1, 1), 0.6))
+
+
+def test_CyGrid2D_random_points_discrete():
+    space = CyGrid2D()
+    random_points = [space.random_point() for _ in range(1000)]
+    for random_point in random_points:
+        assert 0 <= random_point[0] <= 10
+        assert 0 <= random_point[1] <= 10
+        assert random_point[0] % 1 == 0
+        assert random_point[1] % 1 == 0
+
+
+def test_CyGrid2D_QM_random_points_discrete():
+    space = CyGrid2D_QM()
+    random_points = [space.random_point() for _ in range(1000)]
+    for random_point in random_points:
+        assert 0 <= random_point[0] <= 10
+        assert 0 <= random_point[1] <= 10
+        assert random_point[0] % 1 == 0
+        assert random_point[1] % 1 == 0
 
 
 @given(edge_weight=st.floats(0.00001, 10))
