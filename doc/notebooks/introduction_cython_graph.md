@@ -5,7 +5,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.7
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3.9 (ridepy)
   language: python
@@ -14,7 +14,7 @@ kernelspec:
 
 # RidePy Introduction: Simulations with Cython on Graphs
 
-```{code-cell}
+```{code-cell} ipython3
 %matplotlib inline
 
 import itertools as it
@@ -24,7 +24,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state_cython import VehicleState
 
@@ -39,7 +39,7 @@ from ridepy.util.analytics.plotting import plot_occupancy_hist
 from ridepy.extras.spaces import make_nx_grid
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 # assume dark background for plots?
 dark = False
 
@@ -51,7 +51,7 @@ if dark:
     plt.rcParams["figure.facecolor"] = (1, 1, 1, 0)
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
 pd.set_option("display.width", 1000)
@@ -61,7 +61,7 @@ evf = lambda S, f, **arg: (S, f(S, **arg))
 
 ## Configure the simulation and supply initial values
 
-```{code-cell}
+```{code-cell} ipython3
 n_buses = 50
 
 initial_location = 0
@@ -83,7 +83,7 @@ transportation_requests = it.islice(rg, 100)
 
 ### Define simulation environment
 
-```{code-cell}
+```{code-cell} ipython3
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
@@ -95,39 +95,39 @@ fs = SlowSimpleFleetState(
 
 ### Perform the simulation
 
-```{code-cell}
+```{code-cell} ipython3
 # exhaust the simulator's iterator
 %time events = list(fs.simulate(transportation_requests))
 ```
 
 ### Process the results
 
-```{code-cell}
+```{code-cell} ipython3
 stops, reqs = get_stops_and_requests(events=events, space=space)
 ```
 
 ## Some distributions
 ### Relative travel times
 
-```{code-cell}
+```{code-cell} ipython3
 reqs[("inferred", "relative_travel_time")].hist(bins=np.r_[1:5:20j])
 plt.gca().set_yscale("log")
 ```
 
 ### Waiting times
 
-```{code-cell}
+```{code-cell} ipython3
 reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 ```
 
 ### Direct travel times
 
-```{code-cell}
+```{code-cell} ipython3
 reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[-0.5:5.5:7j])
 ```
 
 ### Occupancies
 
-```{code-cell}
+```{code-cell} ipython3
 plot_occupancy_hist(stops)
 ```

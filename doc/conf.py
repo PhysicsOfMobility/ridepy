@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
 
-project = "ridepy"
+project = "RidePy"
 copyright = "2024, Felix Jung and Debsankha Manik"
 author = "Felix Jung and Debsankha Manik"
 
