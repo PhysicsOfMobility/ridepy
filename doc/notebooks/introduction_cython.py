@@ -14,7 +14,7 @@
 #     name: ridepy
 # ---
 
-# # RidePy Introduction: Basics
+# # RidePy Introduction: Simulations with Cython
 
 # +
 # %matplotlib inline
@@ -27,19 +27,23 @@ import matplotlib.pyplot as plt
 
 # +
 from ridepy.fleet_state import SlowSimpleFleetState
-from ridepy.vehicle_state import VehicleState
+from ridepy.vehicle_state_cython import VehicleState
 
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+    SimpleEllipseDispatcher,
+)
 
 from ridepy.util.request_generators import RandomRequestGenerator
-from ridepy.util.spaces import Euclidean2D
+from ridepy.util.spaces_cython import Euclidean2D
+from ridepy.data_structures_cython import TransportationRequest
 
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
 
 # +
 # assume dark background for plots?
-dark = True
+dark = False
 
 if dark:
     default_cycler = plt.rcParams["axes.prop_cycle"]
@@ -70,12 +74,14 @@ rg = RandomRequestGenerator(
     max_pickup_delay=3,
     max_delivery_delay_rel=1.9,
     space=space,
+    request_class=TransportationRequest,
     seed=42,
 )
 
 # create iterator yielding 100 random requests
-transportation_requests = it.islice(rg, 100)
+transportation_requests = it.islice(rg, 1000)
 # -
+
 
 # ### Initialize a `FleetState`
 
@@ -83,7 +89,8 @@ fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
     space=space,
-    dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
+    # dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(space.loc_type),
+    dispatcher=SimpleEllipseDispatcher(space.loc_type, 3),
     vehicle_state_class=VehicleState,
 )
 
@@ -91,11 +98,10 @@ fs = SlowSimpleFleetState(
 
 # exhaust the simulator's iterator
 # %time events = list(fs.simulate(transportation_requests))
-
 # ### Process the results
 
-stops, reqs = get_stops_and_requests(events=events, space=space)
 
+# %time stops, reqs = get_stops_and_requests( events=events, space=Euclidean2D())
 # ## Some distributions
 # ### Relative travel times
 

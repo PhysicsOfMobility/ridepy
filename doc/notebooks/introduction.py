@@ -2,19 +2,19 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: ipynb,py:light
+#     formats: ipynb,py:light,md:myst
 #     text_representation:
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.14.5
+#       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python 3.9 (ridepy)
 #     language: python
-#     name: python3
+#     name: ridepy
 # ---
 
-# # RidePy Introduction: Simulations with Cython on Graphs
+# # RidePy Introduction: Basics
 
 # +
 # %matplotlib inline
@@ -27,21 +27,19 @@ import matplotlib.pyplot as plt
 
 # +
 from ridepy.fleet_state import SlowSimpleFleetState
-from ridepy.vehicle_state_cython import VehicleState
+from ridepy.vehicle_state import VehicleState
 
-from ridepy.util.dispatchers_cython import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+
 from ridepy.util.request_generators import RandomRequestGenerator
-from ridepy.util.spaces_cython import Graph
-from ridepy.data_structures_cython import TransportationRequest
+from ridepy.util.spaces import Euclidean2D
 
 from ridepy.util.analytics import get_stops_and_requests
 from ridepy.util.analytics.plotting import plot_occupancy_hist
 
-from ridepy.extras.spaces import make_nx_grid
-
 # +
 # assume dark background for plots?
-dark = True
+dark = False
 
 if dark:
     default_cycler = plt.rcParams["axes.prop_cycle"]
@@ -63,16 +61,15 @@ evf = lambda S, f, **arg: (S, f(S, **arg))
 # +
 n_buses = 50
 
-initial_location = 0
+initial_location = (0, 0)
 
-space = Graph.from_nx(make_nx_grid())
+space = Euclidean2D()
 
 rg = RandomRequestGenerator(
     rate=10,
     max_pickup_delay=3,
     max_delivery_delay_rel=1.9,
     space=space,
-    request_class=TransportationRequest,
     seed=42,
 )
 
@@ -80,14 +77,13 @@ rg = RandomRequestGenerator(
 transportation_requests = it.islice(rg, 100)
 # -
 
-
-# ### Define simulation environment
+# ### Initialize a `FleetState`
 
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
     space=space,
-    dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(loc_type=space.loc_type),
+    dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
     vehicle_state_class=VehicleState,
 )
 
@@ -97,7 +93,6 @@ fs = SlowSimpleFleetState(
 # %time events = list(fs.simulate(transportation_requests))
 
 # ### Process the results
-
 
 stops, reqs = get_stops_and_requests(events=events, space=space)
 
@@ -115,7 +110,7 @@ reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
 
 # ### Direct travel times
 
-reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[-0.5:5.5:7j])
+reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
 
 
 # ### Occupancies
