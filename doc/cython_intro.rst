@@ -1,3 +1,5 @@
+.. _using_cython:
+
 Overview of the cythonic components
 ===================================
 As we described in :doc:`overview`, ridepy enables the users to run a
