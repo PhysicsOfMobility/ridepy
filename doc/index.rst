@@ -13,8 +13,9 @@ Welcome to ridepy's documentation!
    :hidden:
 
    overview
+   howto
    notebooks
-   reference
    glossary
+   reference
    Python module index <modindex>
    genindex
