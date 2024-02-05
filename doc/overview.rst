@@ -37,9 +37,9 @@ Using `cython <https://cython.readthedocs.io/en/latest/>`_:
 Quickstart
 ----------
 
-Here we will demonstrate how to run a simple simulation.
+In this section, we will demonstrate how to run a simple simulation.
 
-Note that several introductory notebooks for easy experimentation are available in the ``notebooks`` directory in the git repository, see also :ref:`first steps <first_steps>`.
+Note that several introductory notebooks for easy experimentation are available under ``doc/notebooks`` in the git repository, see also :ref:`first steps <first_steps>`. Alternatively you can directly have a look at them :doc:`here <notebooks>`.
 
 Generate requests
 ^^^^^^^^^^^^^^^^^
