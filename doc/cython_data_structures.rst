@@ -18,6 +18,8 @@ obviously cannot be templated, we will use the :ref:`desc_runtime_dispatch` appr
 
 .. automodule:: ridepy.data_structures_cython
     :members: TransportationRequest, InternalRequest, Stop, Stoplist
+
+..
     :special-members: __len__, __getitem__
 
 

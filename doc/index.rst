@@ -13,6 +13,7 @@ Welcome to ridepy's documentation!
    :caption: Contents:
 
    overview
+   notebooks
    reference
    glossary
 

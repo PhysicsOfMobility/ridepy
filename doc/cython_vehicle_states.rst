@@ -7,7 +7,7 @@ but it is not possible to mix pure-python and cython components: If you want to 
 :doc:`data_structures<cython_data_structures>` and :doc:`spaces<cython_spaces>`.
 
 .. autoclass:: ridepy.vehicle_state_cython.VehicleState
-    :members: fast_forward_time, sudo ddcutil --display 2 setvcp 10 70  # lenovo
+    :members: fast_forward_time
 
 
 

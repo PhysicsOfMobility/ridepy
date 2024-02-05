@@ -11,6 +11,7 @@ its components i.e.
 * `data_structures`,
 * `spaces`,
 * and `dispatchers`,
+
 as well as cython wrappers thereof.
 
 The module structure of the cythonic components mimics exactly that of their pythonic
