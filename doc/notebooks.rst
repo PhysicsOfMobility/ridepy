@@ -1,21 +1,19 @@
-Introductory notebooks
-======================
+Tutorial
+========
 
-This section contains a set of introductory notebooks that will help you get started with RidePy.
-
-You can either view the notebooks as part of this documentation or run them on your machine to try out RidePy yourself.
+To get started with RidePy, following this tutorial is a good option. The tutorials are based on jupyter notebooks. Because of this, you can either view them here as part of the documentation or run them on your machine to get hands-on experience.
 
 .. toctree::
     :maxdepth: 1
-    :caption: Notebooks included
+    :caption: Available tutorials
 
     Basics <notebooks/introduction>
     Simulations with cython <notebooks/introduction_cython>
     Simulation with cython on graphs <notebooks/introduction_cython_graph>
     Multiple simulations at once <notebooks/introduction_simulation_set>
 
-Executing the notebooks yourself
---------------------------------
+Executing the tutorial notebooks yourself
+-----------------------------------------
 
 To run these notebooks locally, you will first need to install RidePy. Then, either clone the git repository:
 
