@@ -77,9 +77,7 @@ First Steps
 -----------
 
 -  Start ``jupyter notebook`` or ``jupyter lab``
--  Open one of the introductory notebooks in the ``notebooks``
-   subdirectory, either just by clicking on it (in ``jupyter notebook``) or
-   right-clicking and choosing *Open With > Notebook* (for ``jupyter lab``).
+-  Open one of the introductory notebooks in ``doc/notebooks``, either just by clicking on it (in ``jupyter notebook``) or by right-clicking and choosing *Open With > Notebook* (for ``jupyter lab``).
 -  Run the notebook step-by-step and play around :)
 
 Reporting a Problem
