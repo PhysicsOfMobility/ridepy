@@ -10,16 +10,11 @@ Welcome to ridepy's documentation!
 
 .. toctree::
    :maxdepth: 5
-   :caption: Contents:
+   :hidden:
 
    overview
    notebooks
    reference
    glossary
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   Python module index <modindex>
+   genindex
