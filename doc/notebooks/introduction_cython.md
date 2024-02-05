@@ -1,6 +1,7 @@
 ---
 jupytext:
   encoding: '# -*- coding: utf-8 -*-'
+  formats: md:myst
   text_representation:
     extension: .md
     format_name: myst

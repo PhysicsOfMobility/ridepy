@@ -1,6 +1,7 @@
 ---
 jupytext:
   text_representation:
+  formats: md:myst
     extension: .md
     format_name: myst
     format_version: 0.13
