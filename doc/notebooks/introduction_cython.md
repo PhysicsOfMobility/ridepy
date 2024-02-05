@@ -6,69 +6,52 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.7
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3.9 (ridepy)
   language: python
   name: ridepy
 ---
 
-# RidePy Introduction: Simulations with Cython
+# RidePy Tutorial 2: Faster simulations using Cython
 
-```{code-cell}
-%matplotlib inline
++++
+
+In Tutorial 1 we have seen how to set up a basic simulation, run, and analyze it. This tutorial is concerned with significantly increasing simulation performance by replacing the crucial components with their Cython equivalents. 
+
+To demonstrate this, we will first show the complete process again in a condensed form, using the Python components. Afterwards, we will do the same using the Cython components.
+
+The result processing and data analytics steps will not be covered again, as they are identical to using the Python components.
+
++++
+
+## Simulation using Python components
+
+First, we import all necessary **Python** components:
+
+```{code-cell} ipython3
+---
+editable: true
+slideshow:
+  slide_type: ''
+---
+from ridepy.util.spaces import Euclidean2D
+from ridepy.util.request_generators import RandomRequestGenerator
+from ridepy.fleet_state import SlowSimpleFleetState
+from ridepy.vehicle_state import VehicleState
+from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
 
 import itertools as it
-import math as m
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 ```
 
-```{code-cell}
-from ridepy.fleet_state import SlowSimpleFleetState
-from ridepy.vehicle_state_cython import VehicleState
+Now we can set up the simulation as explained in Tutorial 1:
 
-from ridepy.util.dispatchers_cython import (
-    BruteForceTotalTravelTimeMinimizingDispatcher,
-    SimpleEllipseDispatcher,
-)
-
-from ridepy.util.request_generators import RandomRequestGenerator
-from ridepy.util.spaces_cython import Euclidean2D
-from ridepy.data_structures_cython import TransportationRequest
-
-from ridepy.util.analytics import get_stops_and_requests
-from ridepy.util.analytics.plotting import plot_occupancy_hist
-```
-
-```{code-cell}
-# assume dark background for plots?
-dark = False
-
-if dark:
-    default_cycler = plt.rcParams["axes.prop_cycle"]
-    plt.style.use("dark_background")
-    plt.rcParams["axes.prop_cycle"] = default_cycler
-    plt.rcParams["axes.facecolor"] = (1, 1, 1, 0)
-    plt.rcParams["figure.facecolor"] = (1, 1, 1, 0)
-```
-
-```{code-cell}
-pd.set_option("display.max_rows", 500)
-pd.set_option("display.max_columns", 500)
-pd.set_option("display.width", 1000)
-
-evf = lambda S, f, **arg: (S, f(S, **arg))
-```
-
-## Configure the simulation and supply initial values
-
-```{code-cell}
-n_buses = 50
-
-initial_location = (0, 0)
-
+```{code-cell} ipython3
+---
+editable: true
+slideshow:
+  slide_type: ''
+---
 space = Euclidean2D()
 
 rg = RandomRequestGenerator(
@@ -76,60 +59,109 @@ rg = RandomRequestGenerator(
     max_pickup_delay=3,
     max_delivery_delay_rel=1.9,
     space=space,
-    request_class=TransportationRequest,
     seed=42,
 )
 
-# create iterator yielding 100 random requests
-transportation_requests = it.islice(rg, 1000)
-```
+n_buses = 50
+initial_location = (0, 0)
 
-### Initialize a `FleetState`
-
-```{code-cell}
 fs = SlowSimpleFleetState(
     initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
     seat_capacities=8,
     space=space,
-    # dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(space.loc_type),
-    dispatcher=SimpleEllipseDispatcher(space.loc_type, 3),
+    dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
     vehicle_state_class=VehicleState,
+)
+
+transportation_requests = it.islice(rg, 100)
+```
+
+And finally run the simulation. This time we will use the `%time` magic to record the execution time:
+
+```{code-cell} ipython3
+---
+editable: true
+slideshow:
+  slide_type: ''
+---
+%time events = list(fs.simulate(transportation_requests))
+```
+
+The simulation is now done and events have been produced:
+
+```{code-cell} ipython3
+events[200:203]
+```
+
+## Simulation using Cython components
+
+Now let's repeat the same process using the **Cython** components. The crucial step to do this is to change the imports to using the Cython equivalents of the `TransportSpace`, the `VehicleState`, the `TransportationRequest`, and the `Dispatcher`. To avoid name collisions with the Python components we will import them as prefixed with `Cy`/`cy`:
+
+```{code-cell} ipython3
+from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
+from ridepy.data_structures_cython import TransportationRequest as CyTransportationRequest
+from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
+from ridepy.util.dispatchers_cython import (
+    BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 ```
 
-### Perform the simulation
+Now that's basically it. We will now do the same configuration as above, using the new Cython components. 
 
-```{code-cell}
-# exhaust the simulator's iterator
-%time events = list(fs.simulate(transportation_requests))
-# ### Process the results
+There are two little extra changes we have to make: The first is to supply our `RandomRequestGenerator` with the Cython `TransportationRequest` type as `request_class` to make it supply those instead of the Python ones. 
+
+Secondly, the Cython `Dispatcher` needs to know about the type of spatial coordinates it is dealing with and therefore needs to be handed the `TransportSpace`'s `loc_type` attribute.
+
+```{code-cell} ipython3
+---
+editable: true
+slideshow:
+  slide_type: ''
+---
+space = CyEuclidean2D()
+
+rg = RandomRequestGenerator(
+    rate=10,
+    max_pickup_delay=3,
+    max_delivery_delay_rel=1.9,
+    space=space,
+    seed=42,
+    request_class=CyTransportationRequest
+)
+
+n_buses = 50
+initial_location = (0, 0)
+
+fs = SlowSimpleFleetState(
+    initial_locations={vehicle_id: initial_location for vehicle_id in range(n_buses)},
+    seat_capacities=8,
+    space=space,
+    dispatcher=CyBruteForceTotalTravelTimeMinimizingDispatcher(space.loc_type),
+    vehicle_state_class=CyVehicleState,
+)
+
+transportation_requests = it.islice(rg, 100)
 ```
 
-```{code-cell}
-%time stops, reqs = get_stops_and_requests( events=events, space=Euclidean2D())
-# ## Some distributions
-# ### Relative travel times
+Now we're ready to run the cythonized simulation: 
+
+```{code-cell} ipython3
+---
+editable: true
+slideshow:
+  slide_type: ''
+---
+%time cy_events = list(fs.simulate(transportation_requests))
 ```
 
-```{code-cell}
-reqs[("inferred", "relative_travel_time")].hist(bins=np.r_[1:5:20j])
-plt.gca().set_yscale("log")
+The simulation done and again, events have been produced:
+
+```{code-cell} ipython3
+cy_events[200:203]
 ```
 
-### Waiting times
+So that's it. In this case, the Cython version was more than 20 times faster than the Python version.
 
-```{code-cell}
-reqs[("inferred", "waiting_time")].hist(bins=np.r_[1:3:20j])
-```
+```{code-cell} ipython3
 
-### Direct travel times
-
-```{code-cell}
-reqs[("submitted", "direct_travel_time")].hist(bins=np.r_[0 : m.sqrt(2) : 30j])
-```
-
-### Occupancies
-
-```{code-cell}
-plot_occupancy_hist(stops)
 ```

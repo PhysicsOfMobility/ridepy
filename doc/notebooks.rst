@@ -7,15 +7,15 @@ To get started with RidePy, following this tutorial is a good option. The tutori
     :maxdepth: 1
     :caption: Available tutorials
 
-    Basics <notebooks/introduction>
-    Simulations with cython <notebooks/introduction_cython>
-    Simulation with cython on graphs <notebooks/introduction_cython_graph>
-    Multiple simulations at once <notebooks/introduction_simulation_set>
+    1 | Basics <notebooks/introduction>
+    2 | Cython <notebooks/introduction_cython>
+    3 | Graphs <notebooks/introduction_cython_graph>
+    4 | Parallelization <notebooks/introduction_simulation_set>
 
 Executing the tutorial notebooks yourself
 -----------------------------------------
 
-To run these notebooks locally, you will first need to install RidePy. Then, either clone the git repository:
+To run these notebooks locally, you'll need to install RidePy first. Then, either clone the git repository:
 
 .. code:: sh
 
