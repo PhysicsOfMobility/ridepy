@@ -7,9 +7,9 @@ As we described in the :doc:`conceptual overview <overview>`, RidePy enables the
 In order to make it happen, RidePy contains C++ implementations of all
 its core components, i.e.
 
-* `data_structures`
-* `spaces`
-* and `dispatchers`,
+* ``data_structures``
+* ``spaces``
+* and ``dispatchers``,
 
 as well as Cython wrappers thereof.
 
