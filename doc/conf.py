@@ -46,7 +46,6 @@ extensions = [
     "sphinxcontrib.napoleon",  # for sane autodoc
     "alabaster",  # theme
     "myst_nb",  # for jupyter notebook support
-    "nbsphinx_link",
 ]
 
 # Napoleon settings
