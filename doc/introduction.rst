@@ -1,7 +1,7 @@
 Introduction
 ============
 
-ridepy lets a user specify a `.FleetState` of :math:`n` vehicles with desired
+RidePy lets a user specify a `.FleetState` of :math:`n` vehicles with desired
 passenger capacities, as well as an ``iterator`` of `.TransportationRequest`
 objects, each containing:
 
