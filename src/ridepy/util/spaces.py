@@ -343,7 +343,8 @@ class Graph(TransportSpace):
         make_attribute_distance: str = "distance",
     ):
         """
-        Create a graph space from networkx graph
+        Create a graph space from NetworkX graph.
+
         Parameters
         ----------
         G

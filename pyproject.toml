@@ -67,6 +67,7 @@ doc = [
     "sphinxcontrib-napoleon",
     "sphinx-toggleprompt",
     "sphinx-autodoc-typehints",
+    "myst-nb",
 ]
 
 [project.urls]
