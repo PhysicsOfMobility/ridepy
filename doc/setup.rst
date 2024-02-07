@@ -1,4 +1,4 @@
-.. highlight:: bash
+.. highlight:: sh
 
 Setting up RidePy
 =================
@@ -14,14 +14,14 @@ In addition, you should probably use a Python environment for keeping things cle
 
 We recommend using either `Anaconda <https://www.anaconda.com/>`__ (which has the added benefit of being able to handle different Python versions):
 
-.. code:: sh
+.. code::
 
     conda create -n ridepy python=3.9
     conda activate ridepy
 
 or simply ``venv`` from the Python standard library (assuming you are already on Python 3.9, alternatively you can additionally use `pyenv <https://github.com/pyenv/pyenv>`__ for managing Python versions):
 
-.. code:: sh
+.. code::
 
     python -m venv <venv directory path of choice>
     source <venv directory path of choice>/bin/activate
@@ -30,7 +30,7 @@ Finally, it may be necessary that you build the Cython/C++ part from source. If 
 
 On Debian-based Linux distributions, both of these can be installed as follows:
 
-.. code:: sh
+.. code::
 
     sudo apt-get update && sudo apt-get -y install build-essential libboost-all-dev
 
@@ -42,13 +42,13 @@ User Installation
 
 Just run
 
-.. code:: sh
+.. code::
 
     pip install ridepy
 
 If you prefer, you can also clone the git repository instead (for which you need ``git``):
 
-.. code:: sh
+.. code::
 
     git clone --recurse-submodules https://github.com/PhysicsOfMobility/ridepy.git
     cd ridepy
@@ -60,7 +60,7 @@ Developer Installation
 
 Note that the editable install (``-e`` flag) does only serve its purpose when editing the Python components. For changes to the Cython/C++ components to come into effect, the ``pip install`` command has to be executed again to build the Cython/C++.
 
-.. code:: sh
+.. code::
 
     git clone --recurse-submodules https://github.com/PhysicsOfMobility/ridepy.git
     cd ridepy
@@ -69,7 +69,7 @@ Note that the editable install (``-e`` flag) does only serve its purpose when ed
 
 To build the documentation to ``doc/_build/html``, additionally execute the following command:
 
-.. code:: sh
+.. code::
 
     sphinx-build -j3 -b html doc doc/_build/html
 
@@ -79,7 +79,7 @@ Testing the installation
 
 To check whether the installation was successful, you may run the automated test suite, which should report no errors:
 
-.. code:: sh
+.. code::
 
     pytest
 
@@ -87,6 +87,8 @@ The built documentation can be found in ``doc/_build/html/index.html``.
 
 Updating the installation
 -------------------------
+
+.. _updating_user_installation:
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -104,6 +106,8 @@ If you have installed RidePy manually using from git repository, you need to pul
     git pull
     pip install -e .
 
+.. _updating_developer_installation:
+
 Developer installation
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -117,6 +121,6 @@ Pull the latest version and ``pip``-install the new version:
 
 To update the documentation, additionally execute the following command:
 
-.. code:: sh
+.. code::
 
     sphinx-build -j3 -b html doc doc/_build/html

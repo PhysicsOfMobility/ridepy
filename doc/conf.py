@@ -124,3 +124,5 @@ html_static_path = ["_static"]
 nb_custom_formats = {
     ".md": ["jupytext.reads", {"fmt": "mystnb"}],
 }
+
+suppress_warnings = ["autosectionlabel.*"]
