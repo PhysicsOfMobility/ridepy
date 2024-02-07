@@ -12,6 +12,8 @@ To get started with RidePy, following this tutorial is a good option. The tutori
     3 | Graphs <notebooks/introduction_cython_graph>
     4 | Parallelization <notebooks/introduction_simulation_set>
 
+.. _running notebooks:
+
 Executing the tutorial notebooks yourself
 -----------------------------------------
 

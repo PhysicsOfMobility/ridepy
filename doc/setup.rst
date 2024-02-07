@@ -26,7 +26,7 @@ or simply ``venv`` from the Python standard library (assuming you are already on
     python -m venv <venv directory path of choice>
     source <venv directory path of choice>/bin/activate
 
-Finally, it may be necessary that you build the Cython/C++ part from source. If you are on a supported platform (currently only x86-64 Linux) and install RidePy via ``pip`` from the PyPI repository, this step can be skipped. Otherwise, you will need a C++ build environment and the `Boost C++ Libraries <https://www.boost.org/>`__.
+Finally, it may be necessary that you build the Cython/C++ part from source. If you are on a supported platform (currently only x86-64 Linux) and install RidePy via ``pip`` from the PyPI repository, this step can be skipped. Otherwise, you will need a C++ build environment and the `Boost C++ libraries <https://www.boost.org/>`__.
 
 On Debian-based Linux distributions, both of these can be installed as follows:
 
@@ -46,7 +46,9 @@ Just run
 
     pip install ridepy
 
-If you prefer, you can also clone the git repository instead (for which you need ``git``):
+and you're set.
+
+Alternatively, if you prefer, you can also clone the git repository (for which you need ``git``) and install any version from the repository:
 
 .. code::
 
@@ -54,6 +56,7 @@ If you prefer, you can also clone the git repository instead (for which you need
     cd ridepy
     pip install -e .
 
+*Note: This will only work if you have the C++ build environment and the Boost libraries.*
 
 Developer Installation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -73,6 +76,7 @@ To build the documentation to ``doc/_build/html``, additionally execute the foll
 
     sphinx-build -j3 -b html doc doc/_build/html
 
+After the build has finished, you can open ``doc/_build/html/index.html`` in a your web browser choice to read the documentation.
 
 Testing the installation
 ------------------------
@@ -83,7 +87,7 @@ To check whether the installation was successful, you may run the automated test
 
     pytest
 
-The built documentation can be found in ``doc/_build/html/index.html``.
+In addition, you can also play around with the tutorial notebooks. Click :ref:`here <running notebooks>` for documentation on how to run them.
 
 Updating the installation
 -------------------------
