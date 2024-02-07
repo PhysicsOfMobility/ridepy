@@ -28,11 +28,11 @@ or simply ``venv`` from the Python standard library (assuming you are already on
 
 Finally, it may be necessary that you build the Cython/C++ part from source. If you are on a supported platform (currently only x86-64 Linux) and install RidePy via ``pip`` from the PyPI repository, this step can be skipped. Otherwise, you will need a C++ build environment and the `Boost C++ libraries <https://www.boost.org/>`__.
 
-On Debian-based Linux distributions, both of these can be installed as follows:
+On Debian-based Linux distributions such as Debian, Debian, and Linux Mint, both of these can be installed as follows:
 
 .. code::
 
-    sudo apt-get update && sudo apt-get -y install build-essential libboost-all-dev
+    sudo apt update && sudo apt -y install build-essential libboost-all-dev
 
 Installation
 ------------
