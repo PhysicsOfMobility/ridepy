@@ -2,23 +2,20 @@
 
 Overview of the cythonic components
 ===================================
-As we described in :doc:`overview`, ridepy enables the users to run a
-simulation using either pure pythonic components, or using cythonic
-components. Using a :ref:`dispatcher <desc_dispatcher>` implemented in C++ and
-exposed to python using cython can dramatically speed up the simulation runs.
+As we described in the :doc:`conceptual overview <overview>`, RidePy enables the users to run a simulation using either pure pythonic components, or using cythonic components. Using a :ref:`dispatcher <desc_dispatcher>` implemented in C++ and exposed to Python using Cython can dramatically speed up the simulation runs.
 
-In order to make it happen, ridepy contains C++ implementations of all
-its components i.e.
+In order to make it happen, RidePy contains C++ implementations of all
+its core components, i.e.
 
-* `data_structures`,
-* `spaces`,
+* `data_structures`
+* `spaces`
 * and `dispatchers`,
 
-as well as cython wrappers thereof.
+as well as Cython wrappers thereof.
 
 The module structure of the cythonic components mimics exactly that of their pythonic
-counterparts, so that in most cases a user wishing to switch to cythonic components can
-just change their import statements from
+counterparts, so that in most cases, a user wishing to switch to cythonic components can
+simply change their ``import`` statements from
 
 .. code-block:: python
 
@@ -30,8 +27,5 @@ to
 
     from ridepy.data_structures_cython import Stop
 
-A concrete example of how to switch from a pure python simulation to a
-cythonic simulation is provided in :doc:`overview`.
-
-.. warning::
-   Add a list of all user-facing cythonic components for ease of discoverability.
+A concrete example of how to transition from a pure python simulation to a
+cythonic simulation is provided in :doc:`tutorial 2 <notebooks/introduction_cython>`.
