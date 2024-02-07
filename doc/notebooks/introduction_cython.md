@@ -7,8 +7,6 @@ jupytext:
     format_name: myst
     format_version: 0.13
     jupytext_version: 1.15.2
-kernelspec:
-  language: python
 ---
 
 # RidePy Tutorial 2: Faster simulations using Cython
