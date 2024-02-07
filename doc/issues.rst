@@ -7,7 +7,7 @@ First, check whether the issue has been reported already. If this is the case, f
 
 If you in fact have run into an unreported issue, please describe clearly which steps have lead to the problem and, if possible, provide a minimum working example. GitHub issues support markdown syntax which makes it easy to format them in a concise way. Use code cells for highlighted code like this:
 
-.. code::markdown
+.. code:: markdown
 
     ```python
 
