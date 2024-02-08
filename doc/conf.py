@@ -46,7 +46,10 @@ extensions = [
     "sphinxcontrib.napoleon",  # for sane autodoc
     "alabaster",  # theme
     "myst_nb",  # for jupyter notebook support
+    # "autoapi.extension",
 ]
+
+# autosummary_generate = True
 
 # Napoleon settings
 napoleon_google_docstring = False
@@ -91,7 +94,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "_templates", "Thumbs.db", ".DS_Store"]
 
 # The suffix of source filenames.
 source_suffix = {
@@ -125,3 +128,5 @@ nb_custom_formats = {
 }
 
 suppress_warnings = ["autosectionlabel.*"]
+
+# autoapi_dirs = ["../src/ridepy"]

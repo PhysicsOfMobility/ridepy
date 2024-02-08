@@ -15,31 +15,31 @@ def get_system_quantities(
     be returned if ``params`` is not given/``stops`` does not contain the respective
     quantities):
 
-    - (n_vehicles)
-    - (request_rate)
-    - (velocity)
-    - (load_requested)
-    - (load_serviced)
-    - (avg_direct_dist_space)
-    - avg_occupancy
-    - avg_segment_dist
-    - avg_segment_time
-    - total_dist_driven
-    - total_time_driven
-    - avg_direct_dist
-    - avg_direct_time
-    - total_direct_dist
-    - total_direct_time
-    - efficiency_dist
-    - efficiency_time
-    - avg_waiting_time
-    - rejection_ratio
-    - median_stoplist_length
-    - avg_detour
-    - (avg_system_stoplist_length_service_time)
-    - (avg_system_stoplist_length_submission_time)
-    - (avg_stoplist_length_service_time)
-    - (avg_stoplist_length_submission_time)
+    - **(n_vehicles)** -- number of vehicles (simulation parameter)
+    - **(request_rate)** -- request rate (simulation parameter)
+    - **(velocity)** -- vehicle velocity (simulation parameter)
+    - **(load_requested)** -- load requested (derived from request rate, velocity, and number of vehicles as input parameters and the spaces' average distance)
+    - **(load_serviced)** -- load requested (derived from request rate times (1-rejection ratio), velocity, and number of vehicles as input parameters and the spaces' average distance)
+    - **(avg_direct_dist_space)** -- average direct distance in space, computed by taking 1e5 random samples
+    - **avg_occupancy**
+    - **avg_segment_dist**
+    - **avg_segment_time**
+    - **total_dist_driven**
+    - **total_time_driven**
+    - **avg_direct_dist**
+    - **avg_direct_time**
+    - **total_direct_dist**
+    - **total_direct_time**
+    - **efficiency_dist**
+    - **efficiency_time**
+    - **avg_waiting_time**
+    - **rejection_ratio**
+    - **median_stoplist_length** -- median per-vehicle stoplist length, taken over all "stoplist states" (vehicles x time)
+    - **avg_detour**
+    - **(avg_system_stoplist_length_service_time)**
+    - **(avg_system_stoplist_length_submission_time)**
+    - **(avg_stoplist_length_service_time)**
+    - **(avg_stoplist_length_submission_time)**
 
     Parameters
     ----------
@@ -148,10 +148,10 @@ def get_system_quantities(
             sum(
                 [
                     space.d(space.random_point(), space.random_point())
-                    for _ in range(100000)
+                    for _ in range(100_000)
                 ]
             )
-            / 100000
+            / 100_000
         )
 
         load_requested = d_avg * request_rate / (velocity * n_vehicles)

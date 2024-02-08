@@ -1,5 +1,5 @@
-Module ``util``
-===============
+Package ``util``
+================
 The module contains some utility functions and classes.
 
 
@@ -18,10 +18,4 @@ The request generators
 .. automodule:: ridepy.util.request_generators
     :members:
 
-The analytics module
---------------------
-
-.. automodule:: ridepy.util.analytics
-    :members:
-
-
+.. include:: ./analytics.rst
