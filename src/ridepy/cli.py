@@ -134,9 +134,6 @@ def analyze(
         _, sys_quant = perform_single_analysis(
             sim_id=simulation_id,
             data_dir=output_directory,
-            update_existing=False,
-            compute_system_quantities=compute_system_quantities,
-            compute_vehicle_quantities=True,
         )
         system_quantities.append(sys_quant)
 
