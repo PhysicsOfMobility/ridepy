@@ -62,7 +62,7 @@ dev = [
 
 doc = [
     "recommonmark",
-    "sphinx<7",
+    "sphinx",
     "sphinx-rtd-theme",
     "sphinxcontrib-napoleon",
     "sphinx-toggleprompt",
