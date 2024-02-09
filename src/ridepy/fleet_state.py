@@ -5,6 +5,7 @@ from collections import defaultdict
 import functools as ft
 import itertools as it
 import operator as op
+
 import numpy as np
 
 
@@ -13,28 +14,23 @@ from typing import (
     Dict,
     SupportsFloat,
     Iterator,
-    List,
     Union,
     Tuple,
     Iterable,
     Type,
-    Optional,
-    Any,
 )
 
 import logging
 
-from ridepy.util.request_generators import RandomRequestGenerator
+from .util import supress_stoplist_extraction_warning
 
 logger = logging.getLogger(__name__)
 
 from ridepy.data_structures import (
     Stop,
-    Stoplist,
     Request,
     TransportationRequest as pyTransportationRequest,
     InternalRequest as pyInternalRequest,
-    TransportSpace,
     SingleVehicleSolution,
     Dispatcher,
     StopAction,
@@ -43,19 +39,12 @@ from ridepy.data_structures import (
 )
 from .events import (
     Event,
-    RequestAcceptanceEvent,
-    RequestRejectionEvent,
     RequestEvent,
     StopEvent,
-    InternalEvent,
-    VehicleStateBeginEvent,
-    VehicleStateEndEvent,
-    RequestSubmissionEvent,
 )
 from ridepy.data_structures_cython import (
     TransportationRequest as CyTransportationRequest,
     InternalRequest as CyInternalRequest,
-    LocType,
     StopAction as CyStopAction,
     Stop as CyStop,
 )
@@ -281,14 +270,15 @@ class FleetState(ABC):
 
         self.t = 0
 
-        for vehicle_id, fleet_state in self.fleet.items():
-            yield {
-                "event_type": "VehicleStateBeginEvent",
-                "vehicle_id": vehicle_id,
-                "timestamp": self.t,
-                "location": fleet_state.stoplist[0].location,
-                "request_id": -100,
-            }
+        with supress_stoplist_extraction_warning():
+            for vehicle_id, fleet_state in self.fleet.items():
+                yield {
+                    "event_type": "VehicleStateBeginEvent",
+                    "vehicle_id": vehicle_id,
+                    "timestamp": self.t,
+                    "location": fleet_state.stoplist[0].location,
+                    "request_id": -100,
+                }
 
         for n_req, request in enumerate(requests):
             # advance clock to req_epoch
@@ -322,25 +312,27 @@ class FleetState(ABC):
                 raise NotImplementedError(f"Unknown request type: {type(request)}")
             logger.info(f"Handled request # {n_req}")
 
-        self.t = min(
-            t_cutoff,
-            max(
-                vehicle.stoplist[-1].estimated_arrival_time
-                for vehicle in self.fleet.values()
-            ),
-        )
+        with supress_stoplist_extraction_warning():
+            self.t = min(
+                t_cutoff,
+                max(
+                    vehicle.stoplist[-1].estimated_arrival_time
+                    for vehicle in self.fleet.values()
+                ),
+            )
 
         # service all remaining stops
         yield from self.fast_forward(self.t)
 
-        for vehicle_id, fleet_state in self.fleet.items():
-            yield {
-                "event_type": "VehicleStateEndEvent",
-                "vehicle_id": vehicle_id,
-                "timestamp": self.t,
-                "location": fleet_state.stoplist[0].location,
-                "request_id": -200,
-            }
+        with supress_stoplist_extraction_warning():
+            for vehicle_id, fleet_state in self.fleet.items():
+                yield {
+                    "event_type": "VehicleStateEndEvent",
+                    "vehicle_id": vehicle_id,
+                    "timestamp": self.t,
+                    "location": fleet_state.stoplist[0].location,
+                    "request_id": -200,
+                }
 
     @abstractmethod
     def fast_forward(self, t: SupportsFloat) -> Iterator[StopEvent]:

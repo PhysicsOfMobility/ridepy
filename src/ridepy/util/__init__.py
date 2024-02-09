@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import datetime
 import hashlib
 import uuid
 import random
 import string
 import sys
+import warnings
+from contextlib import contextmanager
+
 import numpy as np
 import dataclasses
 
@@ -185,3 +190,14 @@ def make_repr(cls, dct):
 
 def make_sim_id(params_json: str):
     return hashlib.sha224(params_json.encode("ascii", errors="strict")).hexdigest()
+
+
+@contextmanager
+def supress_stoplist_extraction_warning():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore",
+            message=r"Extracting the C\+\+ stoplist will impact performance",
+            category=UserWarning,
+        )
+        yield
