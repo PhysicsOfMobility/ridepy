@@ -122,9 +122,8 @@ Later this can e.g. be used as input for the analytics module:
 .. code-block:: python
 
     stops, requests = get_stops_and_requests(
-        events=read_events_json("events.jsonl"),
-        space=read_params_json("params.json")
-        )
+        events=read_events_json("events.jsonl"), space=read_params_json("params.json")
+    )
 
 .. automodule:: ridepy.extras.io
     :members:

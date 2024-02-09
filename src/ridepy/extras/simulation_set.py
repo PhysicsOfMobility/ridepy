@@ -425,10 +425,15 @@ class SimulationSet:
 
         .. code-block:: python
 
-            >>> SimulationSet._two_level_dict_update(
-            ...     {"a": {"b": 5, 6: 8}}, {"a": {6: "fooo", 8: "baaar"}, "baz": {"6": 6}}
-            ... )
-            {'a': {'b': 5, 6: 'fooo', 8: 'baaar'}, 'baz': {'6': 6}}
+            SimulationSet._two_level_dict_update(
+                {"a": {"b": 5, 6: 8}}, {"a": {6: "fooo", 8: "baaar"}, "baz": {"6": 6}}
+            )
+
+        yields
+
+        .. code-block:: python
+
+            {"a": {"b": 5, 6: "fooo", 8: "baaar"}, "baz": {"6": 6}}
 
 
         Parameters

@@ -58,6 +58,7 @@ dev = [
     "twine",
     "build",
     "auditwheel",
+    "blacken-docs",
 ]
 
 doc = [

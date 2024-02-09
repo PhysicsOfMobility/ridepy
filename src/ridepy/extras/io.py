@@ -24,7 +24,7 @@ class ParamsJSONEncoder(json.JSONEncoder):
 
     .. code-block:: python
 
-        >>> json.dumps(params, cls=ParamsJSONEncoder)
+        json.dumps(params, cls=ParamsJSONEncoder)
 
     """
 
@@ -63,7 +63,7 @@ class ParamsJSONDecoder(json.JSONDecoder):
 
     .. code-block:: python
 
-        >>> json.loads(params, cls=ParamsJSONDecoder)
+       json.loads(params, cls=ParamsJSONDecoder)
 
     """
 
@@ -117,7 +117,7 @@ class EventsJSONEncoder(json.JSONEncoder):
 
     .. code-block:: python
 
-        >>> json.dumps(events, cls=EventsJSONEncoder)
+        json.dumps(events, cls=EventsJSONEncoder)
 
     """
 
