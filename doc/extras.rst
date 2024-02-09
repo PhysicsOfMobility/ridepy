@@ -73,8 +73,8 @@ Simulations are executed when `SimulationSet.run()` is called. Independent simul
 .. autofunction:: perform_single_simulation
 
 
-Running analysis on the simulation results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Running analytics on the simulation results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The simulation results can be automatically analyzed using the `ridepy.extras.analytics` module, storing the results to disk.
 
