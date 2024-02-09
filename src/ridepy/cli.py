@@ -129,14 +129,16 @@ def analyze(
     respectively.
     """
 
+    tasks = {"stops", "requests", "vehicle_quantities"}
+    if compute_system_quantities:
+        tasks.add("system_quantities")
+
     system_quantities = []
     for simulation_id in simulation_ids:
         _, sys_quant = perform_single_analysis(
             sim_id=simulation_id,
             data_dir=output_directory,
-            update_existing=False,
-            compute_system_quantities=compute_system_quantities,
-            compute_vehicle_quantities=True,
+            tasks_if_existent=tasks,
         )
         system_quantities.append(sys_quant)
 

@@ -10,9 +10,7 @@ If you in fact have run into an unreported issue, please describe clearly which 
 .. code:: markdown
 
     ```python
-
-    def my_broken_function(a: int, b:float):
+    def my_broken_function(a: int, b: float):
         result = do_stuff()
         return 42 + result
-
     ```

@@ -11,7 +11,7 @@ setup(
                 sources=["src/ridepy/**/*.pyx"],
                 extra_compile_args=["-std=c++17"],
                 include_dirs=[
-                    "src/ridepy/util/spaces_cython/lru-cache/include",
+                    "src/lru-cache/include",
                     "src/ridepy/util/spaces_cython",
                     "src/ridepy/util/dispatchers_cython",
                     "src/ridepy/data_structures_cython",

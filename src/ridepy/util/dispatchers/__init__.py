@@ -51,8 +51,7 @@ def dispatcherclass(f):
             stoplist: Stoplist,
             space: TransportSpace,
             seat_capacity: int,
-        ) -> SingleVehicleSolution:
-            ...
+        ) -> SingleVehicleSolution: ...
 
     """
 

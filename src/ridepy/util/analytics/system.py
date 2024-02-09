@@ -1,4 +1,4 @@
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Union
 
 import pandas as pd
 
@@ -7,7 +7,7 @@ def get_system_quantities(
     stops: pd.DataFrame,
     requests: pd.DataFrame,
     params: Optional[dict[str, dict[str, Any]]] = None,
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, Union[int, float]]:
     """
     Compute various quantities aggregated for the entire simulation.
 
@@ -15,31 +15,34 @@ def get_system_quantities(
     be returned if ``params`` is not given/``stops`` does not contain the respective
     quantities):
 
-    - (n_vehicles)
-    - (request_rate)
-    - (velocity)
-    - (load_requested)
-    - (load_serviced)
-    - (avg_direct_dist_space)
-    - avg_occupancy
-    - avg_segment_dist
-    - avg_segment_time
-    - total_dist_driven
-    - total_time_driven
-    - avg_direct_dist
-    - avg_direct_time
-    - total_direct_dist
-    - total_direct_time
-    - efficiency_dist
-    - efficiency_time
-    - avg_waiting_time
-    - rejection_ratio
-    - median_stoplist_length
-    - avg_detour
-    - (avg_system_stoplist_length_service_time)
-    - (avg_system_stoplist_length_submission_time)
-    - (avg_stoplist_length_service_time)
-    - (avg_stoplist_length_submission_time)
+    - **(n_vehicles)** -- number of vehicles (simulation parameter)
+    - **(request_rate)** -- request rate (simulation parameter)
+    - **(velocity)** -- vehicle velocity (simulation parameter)
+    - **(load_requested)** -- load requested (derived from request rate, velocity, and number of vehicles as input parameters and the spaces' average distance)
+    - **(load_serviced)** -- load requested (derived from request rate times (1-rejection ratio), velocity, and number of vehicles as input parameters and the spaces' average distance)
+    - **(avg_direct_dist_space)** -- average direct distance in space, computed by taking 1e5 random samples
+    - **avg_occupancy**
+    - **avg_segment_dist**
+    - **avg_segment_time**
+    - **total_dist_driven**
+    - **total_time_driven**
+    - **avg_direct_dist**
+    - **avg_direct_time**
+    - **total_direct_dist**
+    - **total_direct_time**
+    - **efficiency_dist**
+    - **efficiency_time**
+    - **avg_waiting_time**
+    - **rejection_ratio**
+    - **median_stoplist_length** -- median per-vehicle stoplist length, taken over all "stoplist states" (vehicles x time)
+    - **median_stoplist_length** -- median per-vehicle stoplist length, taken over all "stoplist states" (vehicles x time)
+    - **mean_system_stoplist_length** -- arithmetic mean system-wide stoplist length, taken over all "stoplist states" (time)
+    - **mean_system_stoplist_length** -- arithmetic mean system-wide stoplist length, taken over all "stoplist states" (time)
+    - **avg_detour**
+    - **(avg_system_stoplist_length_service_time)**
+    - **(avg_system_stoplist_length_submission_time)**
+    - **(avg_stoplist_length_service_time)**
+    - **(avg_stoplist_length_submission_time)**
 
     Parameters
     ----------
@@ -52,18 +55,9 @@ def get_system_quantities(
 
     Returns
     -------
-    dict containing the aforementioned observables
+    system_quantities
+        dict containing the aforementioned observables
 
-    Parameters
-    ----------
-    stops
-        Stops dataframe
-    requests
-        Requests dataframe
-
-    Returns
-    -------
-    dict containing the aforementioned observables
     """
     serviced_requests = (
         requests[requests[("rejected", "timestamp")].isna()]
@@ -122,7 +116,7 @@ def get_system_quantities(
     # submission events, pickup stops, delivery stops and internal stops
     # (initial and final stops). State changes at the same timestamp are merged.
     # It assumes that the stoplist is ordered by timestamp.
-    median_stoplist_length = (
+    stoplist_length_ensemble = (
         event_log["event_type"]
         .map(dict(submission=2, pickup=-1, dropoff=-1))
         .fillna(0)  # internal stops remain, incur no stoplist length delta
@@ -130,8 +124,24 @@ def get_system_quantities(
         .sum()  # merge state changes at same time
         .groupby("vehicle_id")
         .cumsum()  # integrate over stoplist length changes for each vehicle
-        .median()
     )
+
+    median_stoplist_length = stoplist_length_ensemble.median()
+    mean_stoplist_length = stoplist_length_ensemble.mean()
+
+    system_stoplist_length_ensemble = (
+        event_log.reset_index("vehicle_id", drop=True)
+        .loc[:, "event_type"]
+        .map(dict(submission=2, pickup=-1, dropoff=-1))
+        .fillna(0)
+        .sort_index()
+        .groupby("timestamp")
+        .sum()
+        .cumsum()
+    )
+
+    median_system_stoplist_length = system_stoplist_length_ensemble.median()
+    mean_system_stoplist_length = system_stoplist_length_ensemble.mean()
 
     avg_detour = requests["inferred", "relative_travel_time"].mean()
 
@@ -148,10 +158,10 @@ def get_system_quantities(
             sum(
                 [
                     space.d(space.random_point(), space.random_point())
-                    for _ in range(100000)
+                    for _ in range(100_000)
                 ]
             )
-            / 100000
+            / 100_000
         )
 
         load_requested = d_avg * request_rate / (velocity * n_vehicles)
@@ -183,6 +193,9 @@ def get_system_quantities(
         avg_waiting_time=avg_waiting_time,
         rejection_ratio=rejection_ratio,
         median_stoplist_length=median_stoplist_length,
+        mean_stoplist_length=mean_stoplist_length,
+        median_system_stoplist_length=median_system_stoplist_length,
+        mean_system_stoplist_length=mean_system_stoplist_length,
         avg_detour=avg_detour,
     )
 

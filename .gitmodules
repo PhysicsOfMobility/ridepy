@@ -1,3 +1,3 @@
 [submodule "ridepy/util/spaces_cython/lru-cache"]
-	path = src/ridepy/util/spaces_cython/lru-cache
+	path = src/lru-cache
 	url = https://github.com/goldsborough/lru-cache.git
