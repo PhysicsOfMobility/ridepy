@@ -11,6 +11,8 @@ Finally, we now have a helpful (currently still incomplete) :doc:`glossary <glos
 
 For quick access to the documentation of specific parts of the API, refer to the hierarchically structured :ref:`Python module index <modindex>`. There is also an alphabetical :ref:`documentation index <genindex>`.
 
+To access RidePy's source code, report :doc:`issues <issues>`, or :doc:`contribute <contributing>` to the project, visit our `GitHub repository <https://github.com/PhysicsOfMobility/ridepy>`_.
+
 .. toctree::
     :maxdepth: 2
     :hidden:
