@@ -113,7 +113,16 @@ def test_get_system_quantities(tmp_path):
     )
 
     simulation_set.run()
+
+    with pytest.raises(AttributeError):
+        simulation_set.system_quantities_path
+
+    with pytest.raises(AttributeError):
+        simulation_set.get_system_quantities()
+
     simulation_set.run_analytics()
+
+    assert simulation_set.system_quantities_path.exists()
 
     sqdf = simulation_set.get_system_quantities(
         extra_params={"B": "general.n_vehicles", "n_reqs": "general.n_reqs"}
