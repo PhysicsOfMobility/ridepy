@@ -20,6 +20,7 @@ from typing import (
     Union,
     Sequence,
     Callable,
+    Mapping,
 )
 from pathlib import Path
 
@@ -54,11 +55,13 @@ from ridepy.extras.io import (
 logger = logging.getLogger(__name__)
 
 
-def make_file_path(sim_id: str, directory: Path, suffix: str):
+def make_file_path(sim_id: str, directory: Path, suffix: str) -> Path:
     return directory / f"{sim_id}{suffix}"
 
 
-def get_params(directory: Path, sim_id: str, param_path_suffix: str = "_params.json"):
+def get_params(
+    directory: Path, sim_id: str, param_path_suffix: str = "_params.json"
+) -> dict:
     return read_params_json(make_file_path(sim_id, directory, param_path_suffix))
 
 
@@ -568,9 +571,6 @@ class SimulationSet:
             transportation_request_cls = TransportationRequest
             vehicle_state_cls = VehicleState
 
-        fleet_state_cls = SlowSimpleFleetState
-        request_generator_cls = RandomRequestGenerator
-
         self.default_base_params = dict(
             general=dict(
                 n_reqs=100,
@@ -582,11 +582,12 @@ class SimulationSet:
                 seat_capacity=8,
                 transportation_request_cls=transportation_request_cls,
                 vehicle_state_cls=vehicle_state_cls,
-                fleet_state_cls=fleet_state_cls,
+                fleet_state_cls=SlowSimpleFleetState,
             ),
             dispatcher=dict(dispatcher_cls=dispatcher),
             request_generator=dict(
-                request_generator_cls=request_generator_cls,
+                request_generator_cls=RandomRequestGenerator,
+                rate=1,
             ),
         )
 
@@ -626,7 +627,7 @@ class SimulationSet:
 
         self._simulation_ids = None
 
-        self.system_quantities_path = None
+        self._system_quantities_path = None
 
     @property
     def simulation_ids(self) -> list[str]:
@@ -818,7 +819,7 @@ class SimulationSet:
         system_quantities_filename
             Filename of the parquet file to store the system quantities in.
         """
-        self.system_quantities_path = self.data_dir / system_quantities_filename
+        self._system_quantities_path = self.data_dir / system_quantities_filename
 
         if not self.simulation_ids:
             warnings.warn(
@@ -845,7 +846,7 @@ class SimulationSet:
             else:
                 raise ValueError(f"Got invalid value for {update_existing=}")
 
-            if self.system_quantities_path.exists():
+            if self._system_quantities_path.exists():
                 tasks_if_not_existent -= {"system_quantities"}
                 if check_for_changes:
                     # Currently, we only check for changes in the sense that new
@@ -853,7 +854,7 @@ class SimulationSet:
                     # the system quantities output. For vehicle quantities, stops, and requests,
                     # check_for_changes does not apply, as we compute these in any case, should
                     # they be missing.
-                    sqdf = pd.read_parquet(self.system_quantities_path)
+                    sqdf = pd.read_parquet(self._system_quantities_path)
                     if set(sqdf.index) == set(self.simulation_ids):
                         tasks_if_existent -= {"system_quantities"}
                     del sqdf
@@ -888,4 +889,80 @@ class SimulationSet:
             if "system_quantities" in tasks_if_not_existent | tasks_if_existent:
                 system_quantities_df = pd.DataFrame(system_quantities, index=sim_ids)
                 system_quantities_df.rename_axis("simulation_id", inplace=True)
-                system_quantities_df.to_parquet(self.system_quantities_path)
+                system_quantities_df.to_parquet(self._system_quantities_path)
+
+    @property
+    def param_path_suffix(self) -> str:
+        """
+        Get the parameter file suffix.
+        """
+        return self._param_path_suffix
+
+    @property
+    def event_path_suffix(self) -> str:
+        """
+        Get the event file suffix.
+        """
+        return self._event_path_suffix
+
+    @property
+    def system_quantities_path(self) -> Path:
+        """
+        Get path to the parquet file containing the system quantities.
+
+        Returns
+        -------
+        system_quantities_path
+        """
+        if self._system_quantities_path is not None:
+            return self._system_quantities_path
+        else:
+            raise AttributeError("No system quantities path set.")
+
+    def get_system_quantities(
+        self, extra_params: Optional[Mapping] = None
+    ) -> pd.DataFrame:
+        """
+        Return the system quantities, if computed already using `run_analytics`.
+
+        Optionally, join the system quantities dataframe with additional arbitrary
+        parameters used in the simulation.
+
+        Parameters
+        ----------
+        extra_params:
+            Dictionary specifying the desired parameters. The keys are the resulting column
+            names in the returned dataframe, the values are the (nested) keys in the
+            `SimulationSet` params dictionary, joined by ``.``.
+
+            Example:
+
+            .. code-block:: python
+
+                extra_params = {"n": "general.n_reqs"}
+
+        Returns
+        -------
+        system_quantities
+            DataFrame containing the system quantities and optional extra parameters
+
+        """
+
+        try:
+            sqdf = pd.read_parquet(self.system_quantities_path)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"System properties file {self.system_quantities_path} not found."
+            )
+
+        if extra_params:
+            for sim_id in sqdf.index:
+                params = get_params(
+                    self.data_dir, sim_id, param_path_suffix=self.param_path_suffix
+                )
+                for param_col, param_key in extra_params.items():
+                    sqdf.loc[sim_id, param_col] = ft.reduce(
+                        op.getitem, param_key.split("."), params
+                    )
+
+        return sqdf
