@@ -344,7 +344,7 @@ def publish_release(
         f"v{version}",
         "--generate-notes",
         "-t",
-        f'"ridepy {version}"',
+        f"ridepy {version}",
     ]
     if not dry_run:
         subprocess.run(gh_cmd)
