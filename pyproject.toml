@@ -1,21 +1,28 @@
 [build-system]
-requires = ["setuptools", "wheel", "Cython==3.0a6"]
+requires = [
+    "setuptools",
+    "wheel",
+    "Cython==3.0a6",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ridepy"
-version = "2.3"
+version = "2.4"
 authors = [
     { name = "Felix Jung", email = "felix.jung@tu-dresden.de" },
     { name = "Debsankha Manik", email = "dmanik@debsankha.net" },
 ]
-description = """
-Simulates a dispatching algorithm serving exogenous transportation \
-requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. \
-Batteries are included."""
-keywords = ["simulation", "ridepooling", "mobility", "transport", "physics"]
+description = "Simulates a dispatching algorithm serving exogenous transportation requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. Batteries are included."
+keywords = [
+    "simulation",
+    "ridepooling",
+    "mobility",
+    "transport",
+    "physics",
+]
 readme = "README.rst"
-requires-python=">=3.9"
+requires-python = ">=3.9"
 classifiers = [
     "Intended Audience :: Science/Research",
     "Development Status :: 5 - Production/Stable",
@@ -76,9 +83,9 @@ doc = [
 ]
 
 [project.urls]
-"Homepage" = "https://ridepy.org/"
-"Documentation" = "https://ridepy.org/"
-"Repository" = "https://github.com/PhysicsOfMobility/ridepy/"
+Homepage = "https://ridepy.org/"
+Documentation = "https://ridepy.org/"
+Repository = "https://github.com/PhysicsOfMobility/ridepy/"
 
 [project.scripts]
 ridepy = "ridepy.cli:app"
@@ -89,23 +96,33 @@ include-package-data = false
 py-modules = []
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = [
+    "src",
+]
 
 [tool.setuptools.package-data]
-"*" = ["*.pyx", "*.pxd", "*.cxx", "*.h", "*.hpp"]
+"*" = [
+    "*.pyx",
+    "*.pxd",
+    "*.cxx",
+    "*.h",
+    "*.hpp",
+]
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
-include = '\.pyi?$'
-exclude = '''
+target-version = [
+    "py39",
+]
+include = "\\.pyi?$"
+exclude = """
 /(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
+    \\.eggs
+  | \\.git
+  | \\.hg
+  | \\.mypy_cache
+  | \\.tox
+  | \\.venv
   | _build
   | _deps
   | buck-out
@@ -113,9 +130,4 @@ exclude = '''
   | dist
   | googletest
 )/
-'''
-
-# NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
-# character.
+"""
