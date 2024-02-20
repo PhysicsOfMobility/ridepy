@@ -18,7 +18,11 @@ import pandas as pd
 from copy import deepcopy
 from pathlib import Path
 from typing import Optional, List, Union, Annotated
-from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED
+from pygit2 import (
+    GIT_STATUS_WT_MODIFIED,
+    GIT_STATUS_INDEX_MODIFIED,
+    GIT_MERGE_ANALYSIS_UP_TO_DATE,
+)
 from enum import Enum
 
 from ridepy.extras.io import read_params_json
@@ -221,6 +225,17 @@ def publish_release(
 
     if repo.status():
         raise ValueError("Uncommitted changes, aborting.")
+
+    repo.remotes["upstream"].fetch(
+        callbacks=pygit2.RemoteCallbacks(credentials=pygit2.KeypairFromAgent("git")),
+    )
+    remote_master_id = repo.lookup_reference("refs/remotes/upstream/master").target
+    merge_result, _ = repo.merge_analysis(remote_master_id)
+
+    if not merge_result == GIT_MERGE_ANALYSIS_UP_TO_DATE:
+        raise ValueError(
+            "Local master branch is not up-to-date with upstream, aborting."
+        )
 
     pyproject_path = repository_path / "pyproject.toml"
     print(f"Discovered pyproject.toml at {pyproject_path}")
