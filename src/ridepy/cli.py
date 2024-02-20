@@ -312,12 +312,11 @@ def publish_release(
     }, "pyproject.toml not staged. Aborting."
 
     commit_string = repo.create_commit_string(
-        auhor=repo.default_signature,
-        committer=repo.default_signature,
-        message=f"ridepy {version}",
-        tree=repo.index.write_tree(),
-        parents=[repo.head.target],
-        encoding="utf-8",
+        repo.default_signature,  # author
+        repo.default_signature,  # committer
+        f"ridepy {version}",  # message
+        repo.index.write_tree(),  # tree
+        [repo.head.target],  # parents
     )
 
     gpg = gnupg.GPG()
