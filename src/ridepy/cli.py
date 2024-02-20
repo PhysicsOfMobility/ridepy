@@ -1,4 +1,5 @@
 import typer
+import gnupg
 import os
 import re
 import subprocess
@@ -15,6 +16,7 @@ except ImportError:
 import pandas as pd
 from pathlib import Path
 from typing import Optional, List, Union, Annotated
+from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED
 
 from ridepy.extras.io import read_params_json
 from ridepy.extras.io_utils import (
@@ -229,12 +231,43 @@ def publish_release(
         print("Would update pyproject.toml, instead here comes the printout:\n")
         print(tomli_w.dumps(pyproject, multiline_strings=True))
 
-    assert repo.status() == {"pyproject.toml": 1}
+    assert repo.status() == {
+        "pyproject.toml": GIT_STATUS_WT_MODIFIED
+    }, "pyproject.toml not modified. Aborting."
+
+    repo.index.add("pyproject.toml")
+    repo.index.write()
+
+    assert repo.status() == {
+        "pyproject.toml": GIT_STATUS_INDEX_MODIFIED
+    }, "pyproject.toml not staged. Aborting."
+
+    commit_string = repo.create_commit_string(
+        auhor=repo.default_signature,
+        committer=repo.default_signature,
+        message=f"ridepy {version}",
+        tree=repo.index.write_tree(),
+        parents=[repo.head.target],
+        encoding="utf-8",
+    )
+
+    gpg = gnupg.GPG()
+    signed_commit = gpg.sign(commit_string, detach=True)
+    commit = repo.create_commit_with_signature(
+        commit_string, signed_commit.data.decode("utf-8")
+    )
+    repo.head.set_target(commit)
+
+    print("Created signed commit.")
+
+    assert not repo.status(), "Uncommitted changes after commit. Aborting."
 
     repo.remotes["upstream"].push(
         ["refs/heads/master"],
         callbacks=pygit2.RemoteCallbacks(credentials=pygit2.KeypairFromAgent("git")),
     )
+
+    print("Pushed to upstream/master.")
 
     gh_cmd = [
         "gh",
@@ -250,6 +283,7 @@ def publish_release(
     else:
         print("Would execute: " + " ".join(gh_cmd))
 
+    print("Created release tag and GitHub release.")
     print("Done.")
 
 

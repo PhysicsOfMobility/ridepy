@@ -63,6 +63,7 @@ dev = [
     "tomli",
     "tomli-w",
     "packaging",
+    "python-gnupg",
 ]
 doc = [
     "recommonmark",
