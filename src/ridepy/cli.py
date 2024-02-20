@@ -176,7 +176,7 @@ class VersionChoices(str, Enum):
 
 
 @dev_app.command()
-def release(
+def publish_release(
     version_to_bump: Annotated[
         VersionChoices, typer.Argument(help="The version to bump", case_sensitive=False)
     ],
@@ -205,11 +205,11 @@ def release(
     repository_path = Path(pygit2.discover_repository(working_dir)).parent
     repo = pygit2.Repository(repository_path)
 
-    if not repo.head.shorthand == "master":
-        raise ValueError("Not on master branch, aborting.")
-
-    if repo.status():
-        raise ValueError("Uncommitted changes, aborting.")
+    # if not repo.head.shorthand == "master":
+    #     raise ValueError("Not on master branch, aborting.")
+    #
+    # if repo.status():
+    #     raise ValueError("Uncommitted changes, aborting.")
 
     pyproject_path = repository_path / "pyproject.toml"
     print(f"Discovered pyproject.toml at {pyproject_path}")
@@ -237,7 +237,7 @@ def release(
         if version_to_bump == "major":
             version = f"{current_version_git.major + 1}.0"
         if version_to_bump == "minor":
-            version = f"{current_version_git.major}.{current_version_git.minor + 1}.0"
+            version = f"{current_version_git.major}.{current_version_git.minor + 1}"
         if version_to_bump == "patch":
             version = (
                 f"{current_version_git.major}.{current_version_git.minor}"
@@ -250,6 +250,8 @@ def release(
                 f".post{(current_version_git.post or 0) + 1}"
             )
 
+    version = packaging.version.parse(version)
+
     print(f"New version is {version}")
 
     if current_version_git >= version:
@@ -259,6 +261,8 @@ def release(
         )
     else:
         print(f"Determined current version at {current_version_git}, continuing...")
+
+    version = str(version)
 
     pyproject["project"]["version"] = version
 
