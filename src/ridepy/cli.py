@@ -1,8 +1,25 @@
-import pandas as pd
 import typer
+import gnupg
+import os
+import re
+import subprocess
+import tomli
+import tomli_w
+import packaging.version
 
+try:
+    # only relevant for dev mode
+    import pygit2
+except ImportError:
+    pass
+
+import pandas as pd
+
+from copy import deepcopy
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Annotated
+from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED
+from enum import Enum
 
 from ridepy.extras.io import read_params_json
 from ridepy.extras.io_utils import (
@@ -19,6 +36,9 @@ app = typer.Typer()
 
 hpc_app = typer.Typer()
 app.add_typer(hpc_app, name="hpc")
+
+dev_app = typer.Typer()
+app.add_typer(dev_app, name="dev")
 
 
 @app.command()
@@ -146,6 +166,179 @@ def analyze(
         system_quantities_df = pd.DataFrame(system_quantities, index=simulation_ids)
         system_quantities_df.rename_axis("simulation_id", inplace=True)
         system_quantities_df.to_parquet(output_directory / "system_quantities.pq")
+
+
+class VersionChoices(str, Enum):
+    major = "major"
+    minor = "minor"
+    patch = "patch"
+    post = "post"
+
+
+@dev_app.command()
+def publish_release(
+    version_to_bump: Annotated[
+        VersionChoices, typer.Argument(help="The version to bump", case_sensitive=False)
+    ],
+    version: Annotated[
+        str,
+        typer.Option(
+            "--version",
+            "-v",
+            help="The version number to be published. Example: '1.1.2'",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run",
+            "-d",
+            is_flag=True,
+            help="If set, the release will not be published, only the command to do so will be printed.",
+        ),
+    ] = False,
+):
+    """
+    Publish a new RidePy release on GitHub.
+
+    Requirements
+
+    - The current branch must be `master`.
+    - There must be no uncommitted changes.
+    - The version in `pyproject.toml` must match the latest git tag.
+    - The new version must be greater than the current one.
+    - The `gh` command must be available and authenticated.
+    - Git push access to the upstream ridepy repository must be available using the SSH agent credentials.
+    - A private PGP key must be available to sign the commit.
+
+    """
+    working_dir = os.getcwd()
+    repository_path = Path(pygit2.discover_repository(working_dir)).parent
+    repo = pygit2.Repository(repository_path)
+
+    if not repo.head.shorthand == "master":
+        raise ValueError("Not on master branch, aborting.")
+
+    if repo.status():
+        raise ValueError("Uncommitted changes, aborting.")
+
+    pyproject_path = repository_path / "pyproject.toml"
+    print(f"Discovered pyproject.toml at {pyproject_path}")
+
+    with pyproject_path.open("rb") as fp:
+        pyproject = tomli.load(fp)
+
+    current_version_pyproject = packaging.version.parse(pyproject["project"]["version"])
+    regex = re.compile(r"^refs/tags/v(.+)$")
+    git_versions = []
+    for r in repo.references:
+        match = regex.match(r)
+        if match is not None:
+            git_versions.append(packaging.version.parse(match.groups()[0]))
+
+    current_version_git = sorted(git_versions)[-1]
+
+    if current_version_git != current_version_pyproject:
+        raise ValueError(
+            f"Version mismatch between pyproject.toml and git tags: "
+            f"{current_version_pyproject} != {current_version_git}"
+        )
+
+    if version is None:
+        if version_to_bump == "major":
+            version = f"{current_version_git.major + 1}.0"
+        if version_to_bump == "minor":
+            version = f"{current_version_git.major}.{current_version_git.minor + 1}"
+        if version_to_bump == "patch":
+            version = (
+                f"{current_version_git.major}.{current_version_git.minor}"
+                f".{current_version_git.micro + 1}"
+            )
+        if version_to_bump == "post":
+            version = (
+                f"{current_version_git.major}.{current_version_git.minor}"
+                f".{current_version_git.micro}"
+                f".post{(current_version_git.post or 0) + 1}"
+            )
+
+    version = packaging.version.parse(version)
+
+    print(f"New version is {version}")
+
+    if current_version_git >= version:
+        raise ValueError(
+            f"New version ({version}) must be greater then "
+            f"the current one ({current_version_git})."
+        )
+    else:
+        print(f"Determined current version at {current_version_git}, continuing...")
+
+    version = str(version)
+
+    pyproject["project"]["version"] = version
+
+    if not dry_run:
+        with pyproject_path.open("wb") as fp:
+            tomli_w.dump(pyproject, fp, multiline_strings=True)
+            print("Updated pyproject.toml")
+    else:
+        print("Would update pyproject.toml, instead here comes the printout:\n")
+        print(tomli_w.dumps(pyproject, multiline_strings=True))
+
+    assert repo.status() == {
+        "pyproject.toml": GIT_STATUS_WT_MODIFIED
+    }, "pyproject.toml not modified. Aborting."
+
+    repo.index.add("pyproject.toml")
+    repo.index.write()
+
+    assert repo.status() == {
+        "pyproject.toml": GIT_STATUS_INDEX_MODIFIED
+    }, "pyproject.toml not staged. Aborting."
+
+    commit_string = repo.create_commit_string(
+        auhor=repo.default_signature,
+        committer=repo.default_signature,
+        message=f"ridepy {version}",
+        tree=repo.index.write_tree(),
+        parents=[repo.head.target],
+        encoding="utf-8",
+    )
+
+    gpg = gnupg.GPG()
+    signed_commit = gpg.sign(commit_string, detach=True)
+    commit = repo.create_commit_with_signature(
+        commit_string, signed_commit.data.decode("utf-8")
+    )
+    repo.head.set_target(commit)
+
+    print("Created signed commit.")
+
+    assert not repo.status(), "Uncommitted changes after commit. Aborting."
+
+    repo.remotes["upstream"].push(
+        ["refs/heads/master"],
+        callbacks=pygit2.RemoteCallbacks(credentials=pygit2.KeypairFromAgent("git")),
+    )
+
+    print("Pushed to upstream/master.")
+
+    gh_cmd = [
+        "gh",
+        "release",
+        "create",
+        f"v{version}",
+        "--generate-notes",
+        "-t",
+        f'"ridepy {version}"',
+    ]
+    if not dry_run:
+        subprocess.run(gh_cmd)
+    else:
+        print("Would execute: " + " ".join(gh_cmd))
+
+    print("Created release tag and GitHub release.")
+    print("Done.")
 
 
 @app.callback()
