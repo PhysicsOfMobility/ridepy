@@ -14,9 +14,12 @@ except ImportError:
     pass
 
 import pandas as pd
+
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional, List, Union, Annotated
 from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED
+from enum import Enum
 
 from ridepy.extras.io import read_params_json
 from ridepy.extras.io_utils import (
@@ -165,15 +168,31 @@ def analyze(
         system_quantities_df.to_parquet(output_directory / "system_quantities.pq")
 
 
+class VersionChoices(str, Enum):
+    major = "major"
+    minor = "minor"
+    patch = "patch"
+    post = "post"
+
+
 @dev_app.command()
-def publish_release(
-    version: Annotated[
-        str, typer.Argument(help="The version number to be published. Example: '1.1.2'")
+def release(
+    version_to_bump: Annotated[
+        VersionChoices, typer.Argument(help="The version to bump", case_sensitive=False)
     ],
+    version: Annotated[
+        str,
+        typer.Option(
+            "--version",
+            "-v",
+            help="The version number to be published. Example: '1.1.2'",
+        ),
+    ] = None,
     dry_run: Annotated[
         bool,
         typer.Option(
             "--dry-run",
+            "-d",
             is_flag=True,
             help="If set, the release will not be published, only the command to do so will be printed.",
         ),
@@ -198,22 +217,42 @@ def publish_release(
     with pyproject_path.open("rb") as fp:
         pyproject = tomli.load(fp)
 
-    current_version_pyproject = pyproject["project"]["version"]
+    current_version_pyproject = packaging.version.parse(pyproject["project"]["version"])
     regex = re.compile(r"^refs/tags/v(.+)$")
     git_versions = []
     for r in repo.references:
         match = regex.match(r)
         if match is not None:
-            git_versions.append(match.groups()[0])
+            git_versions.append(packaging.version.parse(match.groups()[0]))
 
-    current_version_git = sorted(git_versions, key=packaging.version.parse)[-1]
+    current_version_git = sorted(git_versions)[-1]
 
     if current_version_git != current_version_pyproject:
         raise ValueError(
             f"Version mismatch between pyproject.toml and git tags: "
             f"{current_version_pyproject} != {current_version_git}"
         )
-    elif current_version_git >= version:
+
+    if version is None:
+        if version_to_bump == "major":
+            version = f"{current_version_git.major + 1}.0"
+        if version_to_bump == "minor":
+            version = f"{current_version_git.major}.{current_version_git.minor + 1}.0"
+        if version_to_bump == "patch":
+            version = (
+                f"{current_version_git.major}.{current_version_git.minor}"
+                f".{current_version_git.micro + 1}"
+            )
+        if version_to_bump == "post":
+            version = (
+                f"{current_version_git.major}.{current_version_git.minor}"
+                f".{current_version_git.micro}"
+                f".post{(current_version_git.post or 0) + 1}"
+            )
+
+    print(f"New version is {version}")
+
+    if current_version_git >= version:
         raise ValueError(
             f"New version ({version}) must be greater then "
             f"the current one ({current_version_git})."
