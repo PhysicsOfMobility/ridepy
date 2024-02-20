@@ -200,16 +200,27 @@ def publish_release(
 ):
     """
     Publish a new RidePy release on GitHub.
+
+    Requirements
+
+    - The current branch must be `master`.
+    - There must be no uncommitted changes.
+    - The version in `pyproject.toml` must match the latest git tag.
+    - The new version must be greater than the current one.
+    - The `gh` command must be available and authenticated.
+    - Git push access to the upstream ridepy repository must be available using the SSH agent credentials.
+    - A private PGP key must be available to sign the commit.
+
     """
     working_dir = os.getcwd()
     repository_path = Path(pygit2.discover_repository(working_dir)).parent
     repo = pygit2.Repository(repository_path)
 
-    # if not repo.head.shorthand == "master":
-    #     raise ValueError("Not on master branch, aborting.")
-    #
-    # if repo.status():
-    #     raise ValueError("Uncommitted changes, aborting.")
+    if not repo.head.shorthand == "master":
+        raise ValueError("Not on master branch, aborting.")
+
+    if repo.status():
+        raise ValueError("Uncommitted changes, aborting.")
 
     pyproject_path = repository_path / "pyproject.toml"
     print(f"Discovered pyproject.toml at {pyproject_path}")
