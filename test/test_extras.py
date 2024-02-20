@@ -104,6 +104,35 @@ def test_io_simulate(tmp_path):
     pd.testing.assert_frame_equal(requests1, requests2)
 
 
+def test_get_system_quantities(tmp_path):
+    simulation_set = SimulationSet(
+        base_params={"general": {"n_reqs": 5}},
+        zip_params={"general": {"n_vehicles": [10, 20, 30]}},
+        data_dir=tmp_path,
+        debug=True,
+    )
+
+    simulation_set.run()
+
+    with pytest.raises(AttributeError):
+        simulation_set.system_quantities_path
+
+    with pytest.raises(AttributeError):
+        simulation_set.get_system_quantities()
+
+    simulation_set.run_analytics()
+
+    assert simulation_set.system_quantities_path.exists()
+
+    sqdf = simulation_set.get_system_quantities(
+        extra_params={"B": "general.n_vehicles", "n_reqs": "general.n_reqs"}
+    )
+
+    assert len(sqdf) == 3
+    assert np.array_equal(sqdf.B, [10, 20, 30])
+    assert np.array_equal(sqdf.n_reqs, [5, 5, 5])
+
+
 @pytest.mark.parametrize("cython", [True, False])
 def test_io_params(cython, tmp_path):
     param_path = tmp_path / f"params.json"

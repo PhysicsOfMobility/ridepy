@@ -1,6 +1,6 @@
-from typing import Optional, Any, Dict, Union
-
 import pandas as pd
+
+from typing import Optional, Any, Union
 
 
 def get_system_quantities(
