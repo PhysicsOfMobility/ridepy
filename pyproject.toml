@@ -59,8 +59,11 @@ dev = [
     "build",
     "auditwheel",
     "blacken-docs",
+    "pygit2",
+    "tomli",
+    "tomli-w",
+    "packaging",
 ]
-
 doc = [
     "recommonmark",
     "sphinx",

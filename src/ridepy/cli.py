@@ -1,8 +1,20 @@
-import pandas as pd
 import typer
+import os
+import re
+import subprocess
+import tomli
+import tomli_w
+import packaging.version
 
+try:
+    # only relevant for dev mode
+    import pygit2
+except ImportError:
+    pass
+
+import pandas as pd
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Annotated
 
 from ridepy.extras.io import read_params_json
 from ridepy.extras.io_utils import (
@@ -19,6 +31,9 @@ app = typer.Typer()
 
 hpc_app = typer.Typer()
 app.add_typer(hpc_app, name="hpc")
+
+dev_app = typer.Typer()
+app.add_typer(dev_app, name="dev")
 
 
 @app.command()
@@ -146,6 +161,96 @@ def analyze(
         system_quantities_df = pd.DataFrame(system_quantities, index=simulation_ids)
         system_quantities_df.rename_axis("simulation_id", inplace=True)
         system_quantities_df.to_parquet(output_directory / "system_quantities.pq")
+
+
+@dev_app.command()
+def publish_release(
+    version: Annotated[
+        str, typer.Argument(help="The version number to be published. Example: '1.1.2'")
+    ],
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run",
+            is_flag=True,
+            help="If set, the release will not be published, only the command to do so will be printed.",
+        ),
+    ] = False,
+):
+    """
+    Publish a new RidePy release on GitHub.
+    """
+    working_dir = os.getcwd()
+    repository_path = Path(pygit2.discover_repository(working_dir)).parent
+    repo = pygit2.Repository(repository_path)
+
+    if not repo.head.shorthand == "master":
+        raise ValueError("Not on master branch, aborting.")
+
+    if repo.status():
+        raise ValueError("Uncommitted changes, aborting.")
+
+    pyproject_path = repository_path / "pyproject.toml"
+    print(f"Discovered pyproject.toml at {pyproject_path}")
+
+    with pyproject_path.open("rb") as fp:
+        pyproject = tomli.load(fp)
+
+    current_version_pyproject = pyproject["project"]["version"]
+    regex = re.compile(r"^refs/tags/v(.+)$")
+    git_versions = []
+    for r in repo.references:
+        match = regex.match(r)
+        if match is not None:
+            git_versions.append(match.groups()[0])
+
+    current_version_git = sorted(git_versions, key=packaging.version.parse)[-1]
+
+    if current_version_git != current_version_pyproject:
+        raise ValueError(
+            f"Version mismatch between pyproject.toml and git tags: "
+            f"{current_version_pyproject} != {current_version_git}"
+        )
+    elif current_version_git >= version:
+        raise ValueError(
+            f"New version ({version}) must be greater then "
+            f"the current one ({current_version_git})."
+        )
+    else:
+        print(f"Determined current version at {current_version_git}, continuing...")
+
+    pyproject["project"]["version"] = version
+
+    if not dry_run:
+        with pyproject_path.open("wb") as fp:
+            tomli_w.dump(pyproject, fp, multiline_strings=True)
+            print("Updated pyproject.toml")
+    else:
+        print("Would update pyproject.toml, instead here comes the printout:\n")
+        print(tomli_w.dumps(pyproject, multiline_strings=True))
+
+    assert repo.status() == {"pyproject.toml": 1}
+
+    repo.remotes["upstream"].push(
+        ["refs/heads/master"],
+        callbacks=pygit2.RemoteCallbacks(credentials=pygit2.KeypairFromAgent("git")),
+    )
+
+    gh_cmd = [
+        "gh",
+        "release",
+        "create",
+        f"v{version}",
+        "--generate-notes",
+        "-t",
+        f'"ridepy {version}"',
+    ]
+    if not dry_run:
+        subprocess.run(gh_cmd)
+    else:
+        print("Would execute: " + " ".join(gh_cmd))
+
+    print("Done.")
 
 
 @app.callback()
