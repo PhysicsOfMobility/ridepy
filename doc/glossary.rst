@@ -35,7 +35,7 @@ General
     dispatcher
         Algorithm that schedules the stops. In essence, the dispatcher is a mapping of an existing stoplist and a transportation request onto a modified stoplist and a cost of insertion/service.
 
-        Note that the dispatcher is responsible for keeping the state of the stoplists valid. This includes recomputing the estimated arrival times and making sure that the order of the stops in the stoplist follows the order of the estimated arrival times. It also means managing the CPE.
+        Note that the dispatcher is responsible for keeping the state of the stoplists valid. This includes recomputing the estimated arrival times and making sure that the order of the stops in the stoplist follows the order of the estimated arrival times. It also means not touching the CPE.
 
     stoplist
         Ordered list of stops that define the route of a vehicle. The first element is the current position element (``CPE``), the other stops represent pick-up or drop-off of requests (passengers).

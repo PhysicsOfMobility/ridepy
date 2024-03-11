@@ -4,7 +4,7 @@ from ridepy.data_structures import (
     TransportationRequest,
     Stoplist,
     TransportSpace,
-    SingleVehicleSolution,
+    DispatcherSolution,
     Stop,
     StopAction,
 )
@@ -17,7 +17,7 @@ def TaxicabDispatcherDriveFirst(
     stoplist: Stoplist,
     space: TransportSpace,
     seat_capacity: int,
-) -> SingleVehicleSolution:
+) -> DispatcherSolution:
     """
     Dispatcher that maps a vehicle's stoplist and a request to a new stoplist
     by simply appending the necessary stops to the existing stoplist.

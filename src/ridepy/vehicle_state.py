@@ -141,9 +141,9 @@ class VehicleState:
         # set the occupancy at CPE
         self.stoplist[0].occupancy_after_servicing = last_stop.occupancy_after_servicing
 
-        # set CPE location to current location as inferred from the time delta to the upcoming stop's CPAT
-        # still mid-jump from last interpolation, no need to interpolate
-        # again
+        # set CPE location to current location as inferred from the time delta to the
+        # upcoming stop's CPAT still mid-jump from last interpolation, no need to
+        # interpolate again
         if self.stoplist[0].estimated_arrival_time <= t:
             if len(self.stoplist) > 1:
                 loc, jump_time = self.space.interp_time(
