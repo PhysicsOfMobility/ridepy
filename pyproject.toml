@@ -48,6 +48,7 @@ dependencies = [
     "loky",
     "typer",
     "pyarrow",
+    "tqdm",
 ]
 
 [project.optional-dependencies]

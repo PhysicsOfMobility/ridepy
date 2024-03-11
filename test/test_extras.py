@@ -150,6 +150,7 @@ def test_io_params(cython, tmp_path):
         debug=True,
         cython=cython,
     )
+
     params = next(iter(simulation_set))
 
     save_params_json(param_path=param_path, params=params)

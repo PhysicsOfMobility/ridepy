@@ -24,7 +24,9 @@ from ridepy.util import spaces as pyspaces
 from ridepy.util.spaces_cython import spaces as cyspaces
 from ridepy.util.request_generators import RandomRequestGenerator
 
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers.ridepooling import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+)
 from ridepy.util.dispatchers_cython import (
     BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
 )

@@ -11,7 +11,9 @@ from typing import Literal, Iterable, Union, Callable, Sequence
 from ridepy import data_structures as pyds, data_structures_cython as cyds
 from ridepy import data_structures_cython as cyds
 from ridepy.util import spaces as pyspaces
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers.ridepooling import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+)
 
 
 def stoplist_from_properties(

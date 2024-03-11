@@ -18,7 +18,9 @@ from ridepy.extras.spaces import make_nx_grid
 from ridepy.fleet_state import SlowSimpleFleetState
 from ridepy.vehicle_state import VehicleState as PyVehicleState
 from ridepy.vehicle_state_cython import VehicleState as CyVehicleState
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers.ridepooling import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+)
 from ridepy.util.dispatchers_cython import (
     BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
 )

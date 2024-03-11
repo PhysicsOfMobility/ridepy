@@ -11,7 +11,7 @@ from ridepy.data_structures import (
     TransportationRequest as PyTransportationRequest,
 )
 from ridepy.util.spaces import Euclidean2D as PyEuclidean2D, Graph as PyGraph
-from ridepy.util.dispatchers import (
+from ridepy.util.dispatchers.ridepooling import (
     BruteForceTotalTravelTimeMinimizingDispatcher as PyBruteForceTotalTravelTimeMinimizingDispatcher,
 )
 
