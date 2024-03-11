@@ -21,7 +21,11 @@ If you're in a hurry, here's the gist. For detailed instructions, see the `insta
 
     sudo apt-get install build-essential libboost-all-dev``
 
-- Install RidePy with ``pip install ridepy``.
+- Install RidePy with
+
+.. code-block::bash
+
+    pip install ridepy
 
 ..
     ---------
