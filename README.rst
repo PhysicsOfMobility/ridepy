@@ -7,7 +7,7 @@ RidePy is a scientific Python library for simulating modern on-demand transit sy
 
 In short: RidePy simulates a dispatching algorithm serving exogenous transportation requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. Batteries are included.
 
-Head over to `ridepy.org <ridepy-doc>`_ to get started.
+Head over to ref:`ridepy.org ridepy-doc`_ to get started.
 
 Quickstart
 ----------
