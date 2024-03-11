@@ -7,7 +7,16 @@ RidePy is a scientific Python library for simulating modern on-demand transit sy
 
 In short: RidePy simulates a dispatching algorithm serving exogenous transportation requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. Batteries are included.
 
-Head over to `ridepy.org <https://ridepy.org/>`__ to get started.
+Head over to `ridepy.org <ridepy-doc>`_ to get started.
+
+Quickstart
+----------
+
+If you're in a hurry, here's the gist. For detailed instructions, see the `installation guide <https://ridepy.org/setup.html>`__ in the documentation.
+
+- RidePy currently works best with Python 3.9
+- If you are on platform that we don't offer wheels for, you will need to first set up a C++ build environment and the Boost C++ libraries. On Debian-like systems, this can be easily done with ``sudo apt-get install build-essential libboost-all-dev``.
+- Install RidePy with ``pip install ridepy``.
 
 ..
     ---------
@@ -28,3 +37,5 @@ Head over to `ridepy.org <https://ridepy.org/>`__ to get started.
 
 .. |sdist| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml/badge.svg
     :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml
+
+.. _ridepy-doc: https://ridepy.org
