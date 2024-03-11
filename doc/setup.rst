@@ -26,6 +26,8 @@ or simply ``venv`` from the Python standard library (assuming you are already on
     python -m venv <venv directory path of choice>
     source <venv directory path of choice>/bin/activate
 
+.. _prerequisites:
+
 Finally, it may be necessary that you build the Cython/C++ part from source. If you are on a supported platform (currently only x86-64 Linux) and install RidePy via ``pip`` from the PyPI repository, this step can be skipped. Otherwise, you will need a C++ build environment and the `Boost C++ libraries <https://www.boost.org/>`__.
 
 On Debian-based Linux distributions such as Debian, Debian, and Linux Mint, both of these can be installed as follows:
@@ -46,7 +48,7 @@ Just run
 
     pip install ridepy
 
-and you're set.
+and you're set. If this step fails, you may have to install the C++ build environment and the Boost libraries beforehand as described in the prerequisites_.
 
 Alternatively, if you prefer, you can also clone the git repository (for which you need ``git``) and install any version from the repository:
 
@@ -56,7 +58,7 @@ Alternatively, if you prefer, you can also clone the git repository (for which y
     cd ridepy
     pip install -e .
 
-*Note: This will only work if you have the C++ build environment and the Boost libraries.*
+*Note: This will strictly only work if you have the C++ build environment and the Boost libraries installed, see the* |prerequisites|_.
 
 Developer Installation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -128,3 +130,6 @@ To update the documentation, additionally execute the following command:
 .. code::
 
     sphinx-build -j3 -b html doc doc/_build/html
+
+
+.. |prerequisites| replace:: *prerequisites*
