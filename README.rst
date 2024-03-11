@@ -14,7 +14,7 @@ Quickstart
 
 For detailed instructions, see the `installation guide <https://ridepy.org/setup.html>`__ in the documentation.
 
-If you're in a hurry, here's the gist.
+If you're in a hurry, here's the gist:
 
 - RidePy currently works best with Python 3.9
 - If you are on platform that we don't offer wheels for, you will need to first set up a C++ build environment and the `Boost C++ libraries <https://www.boost.org/>`_. On Debian-like systems, this can be easily done with
