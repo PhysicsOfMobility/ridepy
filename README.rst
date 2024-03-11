@@ -23,7 +23,7 @@ If you're in a hurry, here's the gist. For detailed instructions, see the `insta
 
 - Install RidePy with
 
-.. code-block::bash
+.. code-block:: bash
 
     pip install ridepy
 
