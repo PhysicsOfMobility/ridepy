@@ -49,4 +49,4 @@ Analytics
    :sorted:
 
    travel time
-      ``travel_time`` is the time spent on the vehicle, i.e. drop-off time minus pick-up time.
+      ``travel_time`` is the time spent on the vehicle, i.e., drop-off time minus pick-up time.
