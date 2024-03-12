@@ -222,8 +222,8 @@ class TransportSpace(ABC):
 Stoplist = List[Stop]
 """A list of `.Stop` objects. Specifies completely the current position and future actions a vehicle will make."""
 
-DispatcherSolution = tuple[float, tuple[float, float, float, float]]
-"""cost, (
+DispatcherSolution = tuple[float, Stoplist, tuple[float, float, float, float]]
+"""cost, updated_stoplist, (
     pickup_timewindow_min,
     pickup_timewindow_max,
     delivery_timewindow_min, 
@@ -253,7 +253,7 @@ Dispatcher = Callable[
         TransportSpace,
         int,
     ],
-    SingleVehicleSolution,
+    DispatcherSolution,
 ]
 """Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""
 

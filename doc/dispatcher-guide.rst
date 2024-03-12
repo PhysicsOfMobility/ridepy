@@ -1,8 +1,8 @@
 Writing a dispatcher
 ====================
 
-General overview
-----------------
+General information
+-------------------
 
 Dispatchers are an essential part of RidePy: They determine the routes that the vehicles are going to take.
 
@@ -16,10 +16,12 @@ The dispatcher is responsible for the following steps:
 
 * Checking whether the pickup and dropoff stops for the new request may be inserted into the stoplist without violating any constraints.
 * These constraints may entail:
+
   * Time window constraints of the request's pick-up and drop-off stops
   * Time window constraints of all other stops already in the stoplist
   * Vehicle seat capacity constraints
   * The trivial ridepooling constraint, i.e., the pick-up location needs to be visited before the drop-off location
+
 * Multiple feasible solutions may exist. In this case, the dispatcher is expected to determine the solution ("insertion") incurring the minimum cost by some chose metric (the value of which is returned).
 * It might happen that no solution can be found. In this case, the dispatcher must return a float :math:`\text{cost} = \infty` to let the caller know that the request can't be serviced by the vehicle in question.
 
@@ -27,10 +29,25 @@ It must be stressed that the dispatcher is solely responsible for checking the a
 
 The dispatcher is called on every vehicle's stoplist to determine the vehicle and route that incurs the least cost. If the minimum cost is infinite, i.e., the dispatcher has failed to return a finite cost of insertion for any of the vehicles, the rejection is *rejected*.
 
-Before starting to write your own dispatcher, it might prove helpful to have a look at the source code of the trivial Python `.TaxicabDispatcherDriveFirst` and possibly that of the  Python `.BruteForceTotalTravelTimeMinimizingDispatcher` to get some hints.
+Before starting to write your own dispatcher, it might prove helpful to have a look at the source code of the fairly trivial Python `.TaxicabDispatcherDriveFirst` dispatcher and possibly that of the Python `.BruteForceTotalTravelTimeMinimizingDispatcher` dispatcher to get some hints.
 
-Signature
----------
+Python vs Cython/C++ dispatchers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RidePy dispatchers may be written either in Python or in Cython/C++. The latter is recommended for performance-critical dispatchers. This guide will focus on Python dispatchers for now.
+
+If you nonetheless want to have a look at the Cython/C++ dispatchers, you can find the currently implemented ones in the `ridepy.util.dispatchers_cython` module. There, the actual dispatching logic is implemented in ``cdispatchers.h``, which is exposed to Cython/Python by ``cdispatchers.pxd`` and ``cdispatchers.pyx``. In ``dispatchers.pyx`` and ``dispatchers.pxd``, an additional layer allows to set the `.LocType` appropriate for the `.TransportSpace` that is used. If this section confused you, please ignore it for now.
+
+.. _dispatcherclass:
+
+Function vs class dispatchers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Strictly speaking, dispatchers in RidePy are not pure functions, but classes. This means, dispatchers can have state, such as the `.TransportSpace`'s `.LocType` for Cython/C++ dispatchers. This does not need to bother you at the moment, though, as there is a convenient wrapper for Python dispatchers that allows you to write them as pure functions. Just wrap your pure function dispatcher with the `.dispatcherclass` decorator from `.ridepy.util.dispatchers.dispatcher_class` like below, and you're good to go.
+
+
+Signature of a Python dispatcher
+--------------------------------
 
 In the most simple case, a RidePy dispatcher is a Python function with the following signature:
 
@@ -46,7 +63,7 @@ In the most simple case, a RidePy dispatcher is a Python function with the follo
 
 Let's disect this:
 
-- ``MyDispatcher`` is a pure function taking a `.TransportationRequest`, a `.Stoplist`, a `.TransportSpace` and an integer seat capacity
+- ``MyDispatcher`` is a pure function decorated with `dispatcherclass`_, taking a `.TransportationRequest`, a `.Stoplist`, a `.TransportSpace` and an integer seat capacity
 - A `.TransportationRequest` is defined like this:
 
 .. code-block:: python
@@ -258,8 +275,8 @@ Let's disect this:
 
 .. code-block:: python
 
-   DispatcherSolution = tuple[float, tuple[float, float, float, float]]
-   """cost, (
+   DispatcherSolution = tuple[float, Stoplist, tuple[float, float, float, float]]
+   """cost, updated_stoplist, (
        pickup_timewindow_min,
        pickup_timewindow_max,
        delivery_timewindow_min,
@@ -268,4 +285,30 @@ Let's disect this:
    """
 
 - Here ``cost`` is the cost of insertion (float infinity if no solution is found), and the pick-up and delivery stop time window min and max values serve as the respective stops' constraints for upcoming insertions.
+
+Logic
+-----
+
+The dispatcher is expected to implement the following logic:
+
+- Check whether the request can be inserted into the given stoplist without violating any constraints, if so, where in the stoplist and at what cost.
+- Create two `.Stop` objects for the pick-up and drop-off locations of the request, respectively, setting their appropriate
+
+  - ``location`` (the location on the of the pick-up or drop-off on the `.TransportSpace`, e.g,. a 2D coordinate tuple or a network node ID. This may or may not be the same as the request's origin or destination)
+  - ``request`` (the request object handled)
+  - ``action`` (`.StopAction.pickup` or `.StopAction.dropoff`)
+  - ``time_window_min`` (0 if not applicable)
+  - ``time_window_max`` (float infinity if not applicable)
+
+- Insert the two stops into the stoplist at the appropriate positions
+- On all stops in the stoplist, including the two newly inserted ones, update the
+
+  - ``estimated_arrival_time`` (by computing the travel times between the stops, starting from the first stop in the list (current position element CPE) and using the `.TransportSpace`'s `.t` method)
+  - ``occupancy_after_servicing`` (the occupancy of the vehicle after the stop has been serviced. Currently, picking up a request takes up exactly one seat on the vehicle, but this may change in the future.)
+
+- Finally, return
+
+  - the cost of insertion (if no solution was found, return a cost of float infinity)
+  - the updated, valid stoplist
+  - the pick-up and delivery stop time window min and max values for the newly inserted stops
 
