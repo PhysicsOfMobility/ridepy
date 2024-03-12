@@ -15,10 +15,10 @@ from ridepy.data_structures import (
     TransportationRequest,
 )
 from ridepy.events import PickupEvent, DeliveryEvent, StopEvent
-from ridepy.util.dispatchers import (
-    TaxicabDispatcherDriveFirst,
+from ridepy.util.dispatchers.ridepooling import (
     BruteForceTotalTravelTimeMinimizingDispatcher,
 )
+from ridepy.util.dispatchers.taxicab import TaxicabDispatcherDriveFirst
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean1D, Euclidean2D
 from ridepy.vehicle_state import VehicleState

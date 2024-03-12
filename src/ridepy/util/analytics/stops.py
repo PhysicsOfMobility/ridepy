@@ -94,7 +94,9 @@ def _create_stoplist_dataframe(*, evs: pd.DataFrame) -> pd.DataFrame:
 
         return df.loc[idx]
 
-    stops = stops.groupby("vehicle_id", as_index=False).apply(fix_start_stop_order)
+    stops = stops.groupby("vehicle_id", as_index=False, group_keys=False).apply(
+        fix_start_stop_order
+    )
 
     # compute the durations of every state and add them as a columns to the dataframe
     stops["state_duration"] = (

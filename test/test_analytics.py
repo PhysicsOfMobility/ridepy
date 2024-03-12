@@ -22,7 +22,9 @@ from ridepy.data_structures_cython import (
 )
 from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 from ridepy.fleet_state import SlowSimpleFleetState
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers.ridepooling import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+)
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean1D, Euclidean2D
 from ridepy.util.analytics import (

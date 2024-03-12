@@ -11,7 +11,9 @@ from ridepy.data_structures import (
     TransportationRequest,
 )
 from ridepy.util.spaces import Euclidean2D
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers.ridepooling import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+)
 from ridepy.util.testing_utils import stoplist_from_properties
 
 import logging

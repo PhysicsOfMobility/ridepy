@@ -6,6 +6,7 @@ from typing import Any, Optional, Union, Tuple, List, Callable
 
 
 ID = Union[str, int]
+"""Generic ID, could be vehicle ID, request ID, ..."""
 
 
 @dataclass
@@ -221,7 +222,19 @@ class TransportSpace(ABC):
 Stoplist = List[Stop]
 """A list of `.Stop` objects. Specifies completely the current position and future actions a vehicle will make."""
 
-SingleVehicleSolution = Tuple[ID, float, Tuple[float, float, float, float]]
+DispatcherSolution = tuple[float, Stoplist, tuple[float, float, float, float]]
+"""cost, updated_stoplist, (
+    pickup_timewindow_min,
+    pickup_timewindow_max,
+    delivery_timewindow_min, 
+    delivery_timewindow_max,
+)
+
+This is what a dispatcher returns. In case no solution is found, the cost is 
+:math:`\infty` and the timewindow variables are ``None``.
+"""
+
+SingleVehicleSolution = tuple[ID, float, tuple[float, float, float, float]]
 """vehicle_id, cost, (
     pickup_timewindow_min,
     pickup_timewindow_max,
@@ -240,7 +253,7 @@ Dispatcher = Callable[
         TransportSpace,
         int,
     ],
-    SingleVehicleSolution,
+    DispatcherSolution,
 ]
 """Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""
 

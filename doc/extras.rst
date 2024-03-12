@@ -29,30 +29,96 @@ parameters, i.e. performing a parameter scan.  The typical workflow is as follow
 Parameter Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-`SimulationSet` takes three main arguments: ``base_params``, ``zip_params`` and ``product_params``. Base parameters are parameters which are kept constant across all simulations defined by the simulation set. Here the values of the inner dict are the actual parameters. For zip and product parameters, lists of values are supplied as the inner dictionary's values. Zip parameters are varied simultaneously across the simulations, i.e. the first simulation will use the first parameter value for all of the parameters in ``zip_params``, the second simulation will use the second parameter values, and so on. For zip paramaters it is important that all lists of parameter values are of equal length. The lists in product parameters on the other hand will be multiplied as a Cartesian product. Here the lengths do not have to match, all possible combinations will be simulated.
+`SimulationSet` takes three main arguments: ``base_params``, ``zip_params`` and ``product_params``. Base parameters are parameters which are kept constant across all simulations defined by the simulation set. Here, the values of the inner dict are the actual parameters. For zip and product parameters, lists of values are supplied as the inner dictionary's values. Zip parameters are varied simultaneously across the simulations, i.e., the first simulation will use the first parameter value for all of the parameters in ``zip_params``, the second simulation will use the second parameter values, and so on. For zip parameters it is important that all lists of parameter values are of equal length. The lists in product parameters on the other hand will be multiplied as a Cartesian product. Here the lengths do not have to match, all possible combinations will be simulated.
 
-The current list of supported parameters is:
+Each of the arguments takes a dictionary of dictionaries. Currently, three top-level keys are supported: ``general``, ``dispatcher`` and ``request_generator``. The inner dictionaries contain the actual parameters to be varied. The structure of the outer dictionary is thus as follows:
 
-* Valid values for ``general``
-    * either ``n_reqs: int`` or ``t_cutoff: float``
-    * ``n_vehicles: int``
-    * ``seat_capacity: int``
-    * ``initial_location: Location``
-    * ``space: TransportSpace``
-    * ``dispatcher: Dispatcher``
-    * ``TransportationRequestCls: Type[TransportationRequest]``
-    * ``VehicleStateCls: Type[VehicleStateCls]``
-    * ``FleetStateCls: Type[FleetStateCls]``
-* Valid values for ``request_generator``
-    * ``request_generator: Type[RequestGenerator]``
-    * Any request generator keyword argument
+.. code-block:: python
+
+      {
+          "general": {...},
+          "dispatcher": {...},
+          "request_generator": {...},
+      }
+
+If any of the top-level keys are missing, the respective parameters are taken from the default base parameters.
+
+Currently, the following parameters are supported:
+
+* Valid keys for ``general``:
+
+   * *Either* ``n_reqs: int`` *or* ``t_cutoff: float``. If setting ``t_cutoff``, ``n_reqs`` must be set to ``None`` and vice versa.
+   * *Either* ``n_vehicles: int`` *and* ``initial_location: Location`` *or* ``initial_locations: dict[ID, Location]``. If setting ``initial_locations``, ``n_vehicles`` and ``initial_location`` must both be set to ``None`` and vice versa.
+   * ``seat_capacity: int`` -- Seat capacity of the vehicles
+   * ``space: TransportSpace`` -- The transport space to use
+   * ``transportation_request_cls: Type[TransportationRequest]`` -- The `.TransportationRequest` class to use (primarily necessary to switch between the Python and Cython implementations)
+   * ``vehicle_state_cls: Type[VehicleState]`` -- The `.VehicleState` class to use (again, primarily necessary to switch between the Python and Cython implementations)
+   * ``fleet_state_cls: Type[FleetState]`` -- The `.FleetState` class to use (again, primarily necessary to switch between the Python and Cython implementations)
+
+* Valid values for ``dispatcher``:
+
+   * ``dispatcher_cls: Type[Dispatcher]`` -- The dispatcher type to use
+   * Any dispatcher keyword argument, will be supplied to the dispatcher upon instantiation
+
+* Valid values for ``request_generator``:
+
+   * ``request_generator: Type[RequestGenerator]`` -- The request generator type to use
+   * Any request generator keyword argument, will be supplied to the request generator upon instantiation
+
+As for the top-level keys, if any of the inner keys are missing, the respective parameters are taken from the default base parameters in `.SimulationSet`, which are currently set as follows:
+
+.. code-block:: python
+
+   {
+       "general": {
+           "n_reqs": 100,
+           "t_cutoff": None,
+           "space": Euclidean2D(coord_range=[(0, 1), (0, 1)], velocity=1),
+           "n_vehicles": 10,
+           "initial_location": (0, 0),
+           "initial_locations": None,
+           "seat_capacity": 8,
+           "transportation_request_cls": ridepy.data_structures.TransportationRequest,
+           "vehicle_state_cls": ridepy.vehicle_state.VehicleState,
+           "fleet_state_cls": ridepy.fleet_state.SlowSimpleFleetState,
+       },
+       "dispatcher": {
+           "dispatcher_cls": ridepy.util.dispatchers.ridepooling.BruteForceTotalTravelTimeMinimizingDispatcher
+       },
+       "request_generator": {
+           "request_generator_cls": ridepy.util.request_generators.RandomRequestGenerator,
+           "rate": 1,
+       },
+   }
 
 
-Note that not every parameter necessarily needs to be supplied. `SimulationSet` contains
-default parameters ``SimulationSet.default_base_params``, which are used for parameters
-not specified through arguments. The order of precedence is, last taking highest:
-``default_base_params``, ``base_params``, ``zip_params``, ``product_params``.
+In Cython mode, the respective Cython/C++ implementations of the `.TransportSpace`, `.Dispatcher`, `.TransportationRequest`, and `.VehicleState` classes are used:
 
+.. code-block:: python
+
+   {
+       "general": {
+           "n_reqs": 100,
+           "t_cutoff": None,
+           "space": Euclidean2D(velocity=1.0),
+           "n_vehicles": 10,
+           "initial_location": (0, 0),
+           "initial_locations": None,
+           "seat_capacity": 8,
+           "transportation_request_cls": ridepy.data_structures_cython.data_structures.TransportationRequest,
+           "vehicle_state_cls": ridepy.vehicle_state_cython.vehicle_state.VehicleState,
+           "fleet_state_cls": ridepy.fleet_state.SlowSimpleFleetState,
+       },
+       "dispatcher": {
+           "dispatcher_cls": ridepy.util.dispatchers_cython.dispatchers.BruteForceTotalTravelTimeMinimizingDispatcher
+       },
+       "request_generator": {
+           "request_generator_cls": ridepy.util.request_generators.RandomRequestGenerator,
+           "rate": 1,
+       },
+   }
+
+The order of precedence is, last taking highest: ``default_base_params``, ``base_params``, ``zip_params``, ``product_params``.
 
 Executing simulations
 ~~~~~~~~~~~~~~~~~~~~~

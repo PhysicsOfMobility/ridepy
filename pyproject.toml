@@ -48,11 +48,12 @@ dependencies = [
     "loky",
     "typer",
     "pyarrow",
+    "tqdm",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black==24.1.1",
+    "black==24.2.0",
     "commitizen",
     "pdbpp",
     "pre-commit",

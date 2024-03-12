@@ -10,7 +10,9 @@ from ridepy.events import (
     PickupEvent,
     DeliveryEvent,
 )
-from ridepy.util.dispatchers import BruteForceTotalTravelTimeMinimizingDispatcher
+from ridepy.util.dispatchers.ridepooling import (
+    BruteForceTotalTravelTimeMinimizingDispatcher,
+)
 from ridepy.extras.spaces import make_nx_grid
 from ridepy.util.request_generators import RandomRequestGenerator
 from ridepy.util.spaces import Euclidean2D, Graph

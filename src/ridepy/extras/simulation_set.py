@@ -295,25 +295,21 @@ def perform_single_simulation(
     if (
         params["general"].get("n_vehicles") is not None
         and params["general"].get("initial_location") is not None
+        and params["general"].get("initial_locations") is None
     ):
         initial_locations = {
             vehicle_id: params["general"]["initial_location"]
             for vehicle_id in range(params["general"]["n_vehicles"])
         }
-
-        if params["general"].get("initial_locations") is not None:
-            warnings.warn(f"disregarding {params['general']['initial_locations']=}")
-
-    elif params["general"].get("initial_locations") is not None:
+    elif (
+        params["general"].get("n_vehicles") is None
+        and params["general"].get("initial_location") is None
+        and params["general"].get("initial_locations") is not None
+    ):
         initial_locations = params["general"]["initial_locations"]
-
-        if params["general"].get("initial_location") is not None:
-            warnings.warn(f"disregarding {params['general']['initial_location']=}")
-        if params["general"].get("n_vehicles") is not None:
-            warnings.warn(f"disregarding {params['general']['n_vehicles']=}")
     else:
         raise ValueError(
-            "must either specify 'n_vehicles' and 'initial_location' or 'initial_locations'"
+            "Must *either* specify `n_vehicles` *and* `initial_location` *or* `initial_locations`"
         )
 
     fs = params["general"]["fleet_state_cls"](
@@ -329,12 +325,18 @@ def perform_single_simulation(
         print(f"Simulating run on process {os.getpid()} @ \n{params!r}\n")
 
     if not dry_run:
-        if params["general"]["n_reqs"] is not None:
+        if (
+            params["general"]["n_reqs"] is not None
+            and params["general"]["t_cutoff"] is None
+        ):
             simulation = fs.simulate(it.islice(rg, params["general"]["n_reqs"]))
-        elif params["general"]["t_cutoff"] is not None:
+        elif (
+            params["general"]["n_reqs"] is None
+            and params["general"]["t_cutoff"] is not None
+        ):
             simulation = fs.simulate(rg, t_cutoff=params["general"]["t_cutoff"])
         else:
-            raise ValueError("must either specify n_reqs or t_cutoff")
+            raise ValueError("Must *either* specify `n_reqs` *or* `t_cutoff`")
 
         while chunk := list(it.islice(simulation, jsonl_chunksize)):
             save_events_json(jsonl_path=event_path, events=chunk)

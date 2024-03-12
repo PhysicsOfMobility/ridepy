@@ -89,10 +89,8 @@ When the simulation is run,
 
 The dispatcher
 --------------
-The dispatcher determines which vehicle should service a certain request, and
-in which order it should service the requests assigned to it. ridepy
-defines a clean interface enabling the users to create their own dispatchers. A
-number of predefined ones are available in `.util.dispatchers`.
+
+The dispatcher determines which vehicle should service a certain request, and in which order it should service the requests assigned to it. ridepy defines a clean interface enabling the users to create :doc:`their own dispatchers <dispatcher-guide>`. A number of predefined ones are available in`.util.dispatchers`.
 
 When a new `TransportationRequest` needs to be processed: 
 
