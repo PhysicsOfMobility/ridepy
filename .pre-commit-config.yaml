@@ -9,4 +9,4 @@ repos:
     hooks:
     - id: blacken-docs
       additional_dependencies:
-        - black==24.1.1
+        - black==24.2.0
