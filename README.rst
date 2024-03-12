@@ -7,7 +7,7 @@ RidePy is a scientific Python library for simulating modern on-demand transit sy
 
 In short: RidePy simulates a dispatching algorithm serving exogenous transportation requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. Batteries are included.
 
-Head over to `ridepy.org <ridepy doc_>`_ to get started.
+Head over to `ridepy.org <ridepy doc_>`__ to get started.
 
 Quickstart
 ----------
@@ -17,7 +17,7 @@ For detailed instructions, see the `installation guide <https://ridepy.org/setup
 If you're in a hurry, here's the gist:
 
 - RidePy currently works best with Python 3.9
-- If you are on platform other than x86-64 Linux, i.e., one that we don't offer wheels for, you will need to first set up a C++ build environment and the `Boost C++ libraries <https://www.boost.org/>`_. On Debian-like systems, this is easily accomplished with
+- If you are on platform other than x86-64 Linux, i.e., one that we don't offer wheels for, you will need to first set up a C++ build environment and the `Boost C++ libraries <https://www.boost.org/>`__. On Debian-like systems, this is easily accomplished with
 
 .. code-block:: bash
 
@@ -32,32 +32,32 @@ If you're in a hurry, here's the gist:
 Contributing
 ------------
 
-We are always happy for contributions from the community. If you run into a problem, please `report an issue <https://ridepy.org/issues.html>`_ or `ask for help <https://ridepy.org/support.html>`_.
+We are always happy for contributions from the community. If you run into a problem, please `report an issue <https://ridepy.org/issues.html>`__ or `ask for help <https://ridepy.org/support.html>`__.
 
-If you are interested in contributing to our codebase, please read our `contributing guide <https://ridepy.org/contributing.html>`_.
+If you are interested in contributing to our codebase, please read our `contributing guide <https://ridepy.org/contributing.html>`__.
 
 Here is a short overview of the most important points:
 
 Resources
 ~~~~~~~~~
 
-- Documentation: `ridepy.org <ridepy doc_>`_
-- Source code: `GitHub <https://github.com/PhysicsOfMobility/ridepy>`_
-- Issue tracker: `GitHub <https://github.com/PhysicsOfMobility/ridepy/issues>`_
+- Documentation: `ridepy.org <ridepy doc_>`__
+- Source code: `GitHub <https://github.com/PhysicsOfMobility/ridepy>`__
+- Issue tracker: `GitHub <https://github.com/PhysicsOfMobility/ridepy/issues>`__
 
 Code style
 ~~~~~~~~~~
 
-- Python: `black <https://github.com/psf/black>`_
-- C++: `LLVM <https://llvm.org/docs/CodingStandards.html>`_
+- Python: `black <https://github.com/psf/black>`__
+- C++: `LLVM <https://llvm.org/docs/CodingStandards.html>`__
 
 Development
 ~~~~~~~~~~~
 
-- Version control: `Git <https://git-scm.com/>`_
-- Testing: `pytest <https://docs.pytest.org/en/stable/>`_
-- Continuous integration: `GitHub Actions <https://github.com/PhysicsOfMobility/ridepy/actions>`_
-- Versioning: `Semantic Versioning <https://semver.org/>`_
+- Version control: `Git <https://git-scm.com/>`__
+- Testing: `pytest <https://docs.pytest.org/en/stable/>`__
+- Continuous integration: `GitHub Actions <https://github.com/PhysicsOfMobility/ridepy/actions>`__
+- Versioning: `Semantic Versioning <https://semver.org/>`__
 
 .. http://mozillascience.github.io/working-open-workshop/contributing/
 
