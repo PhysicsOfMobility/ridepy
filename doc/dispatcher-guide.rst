@@ -312,3 +312,7 @@ The dispatcher is expected to implement the following logic:
   - the updated, valid stoplist
   - the pick-up and delivery stop time window min and max values for the newly inserted stops
 
+Using the dispatcher
+--------------------
+
+To use the dispatcher in simulations, just supply it to the `.FleetState` or `.SimulationSet` as you would with one of the dispatchers included with RidePy. Also, running tests on the dispatcher to ensure that it behaves as expected is highly recommended.
