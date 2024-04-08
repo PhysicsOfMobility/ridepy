@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from numpy import inf
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -217,6 +219,9 @@ class TransportSpace(ABC):
 
     def __eq__(self, other: "TransportSpace"):
         return type(self) == type(other) and self.asdict() == other.asdict()
+
+
+class RequestGenerator(Iterator): ...
 
 
 Stoplist = List[Stop]

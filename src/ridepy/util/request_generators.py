@@ -1,10 +1,26 @@
 import random
+from abc import (
+    ABC,
+    abstractmethod,
+    abstractproperty,
+    abstractclassmethod,
+    abstractstaticmethod,
+)
+from typing import Optional, Union
+
 import numpy as np
 
-from ridepy.data_structures import TransportSpace, TransportationRequest
+from ridepy.data_structures import (
+    TransportSpace,
+    TransportationRequest,
+    RequestGenerator,
+)
+
+from ridepy.util.spaces import Euclidean2D
+from ridepy.util.spaces_cython import Euclidean2D as CyEuclidean2D
 
 
-class RandomRequestGenerator:
+class RandomRequestGenerator(RequestGenerator):
     """
     Generates random requests in the chosen transport space with a certain rate.
     The timewindows for the request are configurable.
@@ -39,16 +55,23 @@ class RandomRequestGenerator:
             the rate of requests per time unit
         seed
             the random seed
-        pickup_timewindow_offset
-            each request's pickup_timewindow_min will be this much from the creation timestamp
         request_class
             the generated requests will be instances of this class. Needed to generate pythonic or cythonic requests at will.
+        pickup_timewindow_offset
+            Each request's pickup_timewindow_min will be this much from the creation
+            timestamp.
         max_pickup_delay
-            see class docstring
+            The maximum delay between the request creation timestamp and the pickup
+            time.
         max_delivery_delay_abs
-            see class docstring
+            The maximum absolute delay between the request creation timestamp and the
+            delivery time.
         max_delivery_delay_rel
-            see class docstring
+            The maximum **delay** between the request creation timestamp and the delivery
+            time relative to the direct actual direct travel time. Example: if the
+            direct travel time is 10 minutes and ``max_delivery_delay_rel`` is 0.5,
+            the delivery time will be at most 15 minutes after request creation.
+            I.e., delta_max = 1 + max_delivery_delay_rel.
         """
         if seed is not None:
             np.random.seed(seed)
