@@ -43,7 +43,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
-    "sphinxcontrib.napoleon",  # for sane autodoc
+    "sphinx.ext.napoleon",  # for sane autodoc
     "alabaster",  # theme
     "myst_nb",  # for jupyter notebook support
     # "autoapi.extension",
