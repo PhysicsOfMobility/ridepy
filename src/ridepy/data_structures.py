@@ -263,3 +263,48 @@ Dispatcher = Callable[
 """Defines the `Dispatcher` interface. Actual dispatchers are implemented in `.util.dispatchers`."""
 
 Location = Union[int, float, tuple[float]]
+
+
+class DistanceDistribution(ABC):
+    """
+    Abstract base class for specifying distance distributions to use, e.g., during
+    request generation.
+    """
+
+    def __init__(self, *args, **kwargs): ...
+
+    @abstractmethod
+    def sample(self) -> float:
+        """
+        Sample a distance from the distribution.
+        """
+        ...
+
+    @property
+    @abstractmethod
+    def mean(self) -> float:
+        """
+        Return the mean of the distribution.
+        """
+        ...
+
+    @property
+    @abstractmethod
+    def std(self) -> float:
+        """
+        Return the standard deviation of the distribution.
+        """
+        ...
+
+    @abstractmethod
+    def __repr__(self): ...
+
+    @abstractmethod
+    def __str__(self): ...
+
+    @abstractmethod
+    def asdict(self) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the distribution.
+        """
+        ...
