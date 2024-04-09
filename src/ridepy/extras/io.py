@@ -10,7 +10,7 @@ import numpy as np
 from typing import Iterable
 from pathlib import Path
 
-from ridepy.data_structures import TransportSpace
+from ridepy.data_structures import TransportSpace, DistanceDistribution
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
 
 
@@ -29,11 +29,11 @@ class ParamsJSONEncoder(json.JSONEncoder):
     """
 
     def default(self, obj):
-        # request generator?
+        # request generator cls?
         if isinstance(obj, type):
             return f"{obj.__module__}.{obj.__qualname__}"
         # TransportSpace?
-        elif isinstance(obj, (TransportSpace, CyTransportSpace)):
+        elif isinstance(obj, (TransportSpace, CyTransportSpace, DistanceDistribution)):
             # TODO in future, large networks might be saved in another file to be reused
             return {
                 f"{obj.__class__.__module__}.{obj.__class__.__name__}": obj.asdict()
@@ -88,19 +88,19 @@ class ParamsJSONDecoder(json.JSONDecoder):
                 "fleet_state_cls",
                 "vehicle_state_cls",
                 "request_generator_cls",
+                "dispatcher_cls",
             ]:
                 if cls_str in dct:
                     module, cls = dct[cls_str].rsplit(".", 1)
                     dct[cls_str] = getattr(importlib.import_module(module), cls)
 
-            if "dispatcher_cls" in dct:
-                module, cls = dct["dispatcher_cls"].rsplit(".", 1)
-                dct["dispatcher_cls"] = getattr(importlib.import_module(module), cls)
-
-            if "space" in dct:
-                path, kwargs = next(iter(dct["space"].items()))
-                module, cls = path.rsplit(".", 1)
-                dct["space"] = getattr(importlib.import_module(module), cls)(**kwargs)
+            for obj_str in ["space", "distance_distribution"]:
+                if obj_str in dct:
+                    path, kwargs = next(iter(dct[obj_str].items()))
+                    module, cls = path.rsplit(".", 1)
+                    dct[obj_str] = getattr(importlib.import_module(module), cls)(
+                        **kwargs
+                    )
 
             if "data_dir" in dct:
                 dct["data_dir"] = Path(dct["data_dir"])
