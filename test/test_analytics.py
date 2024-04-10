@@ -939,3 +939,24 @@ def test_get_stops_and_requests_with_actual_simulation():
 
     assert len(stops) == 2020
     assert len(requests) == 1000
+
+
+def test_get_stops_and_requests_with_actual_simulation_none_accepted():
+    space = Euclidean1D()
+    rg = RandomRequestGenerator(rate=10, space=space)
+    transportation_requests = list(it.islice(rg, 1000))
+
+    fs = SlowSimpleFleetState(
+        initial_locations={k: 0 for k in range(10)},
+        seat_capacities=0,
+        space=space,
+        dispatcher=BruteForceTotalTravelTimeMinimizingDispatcher(),
+        vehicle_state_class=VehicleState,
+    )
+
+    events = list(fs.simulate(transportation_requests))
+
+    stops, requests = get_stops_and_requests(events=events, space=space)
+
+    assert len(stops) == 10 * 2  # only initial and final stops
+    assert len(requests) == 1000
