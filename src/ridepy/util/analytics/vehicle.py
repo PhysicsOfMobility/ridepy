@@ -51,21 +51,21 @@ def get_vehicle_quantities(stops: pd.DataFrame, requests: pd.DataFrame) -> pd.Da
     total_dist_driven = stops.groupby("vehicle_id")["dist_to_next"].sum()
     total_time_driven = stops.groupby("vehicle_id")["time_to_next"].sum()
 
-    avg_direct_dist = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
-        lambda gdf: gdf.submitted.direct_travel_distance.mean()
-    )
+    avg_direct_dist = serviced_requests.groupby(
+        ("serviced", "vehicle_id"), group_keys=False
+    ).apply(lambda gdf: gdf.submitted.direct_travel_distance.mean())
 
-    avg_direct_time = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
-        lambda gdf: gdf.submitted.direct_travel_time.mean()
-    )
+    avg_direct_time = serviced_requests.groupby(
+        ("serviced", "vehicle_id"), group_keys=False
+    ).apply(lambda gdf: gdf.submitted.direct_travel_time.mean())
 
-    total_direct_dist = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
-        lambda gdf: gdf.submitted.direct_travel_distance.sum()
-    )
+    total_direct_dist = serviced_requests.groupby(
+        ("serviced", "vehicle_id"), group_keys=False
+    ).apply(lambda gdf: gdf.submitted.direct_travel_distance.sum())
 
-    total_direct_time = serviced_requests.groupby(("serviced", "vehicle_id")).apply(
-        lambda gdf: gdf.submitted.direct_travel_time.sum()
-    )
+    total_direct_time = serviced_requests.groupby(
+        ("serviced", "vehicle_id"), group_keys=False
+    ).apply(lambda gdf: gdf.submitted.direct_travel_time.sum())
 
     efficiency_dist = total_direct_dist / total_dist_driven
     efficiency_time = total_direct_time / total_time_driven
