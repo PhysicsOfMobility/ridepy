@@ -960,3 +960,5 @@ def test_get_stops_and_requests_with_actual_simulation_none_accepted():
 
     assert len(stops) == 10 * 2  # only initial and final stops
     assert len(requests) == 1000
+
+    vehicle_quantities = get_vehicle_quantities(stops, requests)
