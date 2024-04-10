@@ -161,7 +161,15 @@ def _add_locations_to_stoplist_dataframe(*, reqs, stops, space) -> pd.DataFrame:
 
     # use the requests' locations and reshape them into a DateFrame indexed by
     # `request_id` and `delta_occupancy`
-    locations = reqs.loc[:, ("accepted", ["origin", "destination"])]
+    if "accepted" in reqs.columns:
+        locations = reqs.loc[:, ("accepted", ["origin", "destination"])]
+    else:
+        locations = pd.DataFrame(
+            index=reqs.index,
+            columns=pd.MultiIndex.from_product(
+                [["accepted"], ["origin", "destination"]]
+            ),
+        )
     locations.columns = locations.columns.droplevel(0).rename("delta_occupancy")
     locations = locations.stack().rename("location")
 

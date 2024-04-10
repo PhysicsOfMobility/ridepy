@@ -129,7 +129,7 @@ def _create_transportation_requests_dataframe(
     # If transportation as submitted were submitted, calculate more properties.
     # NOTE that these properties might equally well be computed using the
     # inferred requests, but in case of differences between the requests
-    # the resulting change in behavior might not intended. Therefore so far
+    # the resulting change in behavior might not be intended. Therefore, so far
     # we only compute these quantities if transportation_requests are submitted.
 
     # - direct travel time
