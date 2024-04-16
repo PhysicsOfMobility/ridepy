@@ -22,7 +22,7 @@ bibliography: paper.bib
 
 # Summary
 
-RidePy provides fast computer simulations of on-demand mobility modes such as ridehailing or ridepooling, enabling both theoretical research into on-demand transit systems and the estimation of their operational properties in realistic scenarios. It strongly focuses on modeling the mobility service itself, rather than its customers or the environment, enabling the user to choose any mobility demand modelling tool according to their needs. This makes it possible to use RidePy in a broad range of scenarios. Through a combination of Python, Cython and C++, it offers ease of use at high performance. Its modular design makes customization easy, while the included modules allow for a quick start.
+RidePy provides fast computer simulations of on-demand mobility modes such as ridehailing or ridepooling, enabling both theoretical research into on-demand transit systems and the estimation of their operational properties in realistic scenarios. It strongly focuses on modeling the mobility service itself, rather than its customers or the environment, enabling the user to use any mobility demand model in conjunction with RidePy. This makes it possible to use RidePy in a broad range of scenarios. Through a combination of Python, Cython and C++, it offers ease of use at high performance. Its modular design makes customization easy, while the included modules allow for a quick start.
 
 # Statement of need
 
