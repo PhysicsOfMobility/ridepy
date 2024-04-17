@@ -37,8 +37,6 @@ A number of open-source simulation software projects are already being used to i
 
 FleetPy [@engelhardt2022], a recently released on-demand mobility simulation, is primarily aimed at realistic modeling of the interactions between operators and users, specifically incorporating multiple operators. While its technical approach is similar to ours, integrating Python with fast Cython and C++ extensions, the project is predominantly focused on applied simulations, although its framework architecture promises to allow for adjustment of the model detail level.
 
-Perhaps the most idealized approach is taken by the Julia package `RidePooling.jl` [@muehle2022] which was developed in support of a recent scientific contribution [@muehle2023].
-
 A very different yet interesting route is taken by MaaSSim [@kucharski2022a], which models on-demand mobility in the realm of two-sided mobility platforms such as Uber [@uber] and Lyft [@lyft].
 
 RidePy extends this landscape by providing a universal and fast ridepooling simulation framework that is highly customizable while still being easy to use. It is focused on modeling the behavior of a vehicle fleet while covering a broad scope in terms of system size and degree of realism.
