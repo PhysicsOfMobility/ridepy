@@ -23,7 +23,7 @@ Automatic versioning works like this:
 
    ridepy dev publish-release <version to bump>
 
-Here, ``version to bump`` is the semantiv versions part to bump: ``major``, ``minor``, or ``patch``.
+Here, ``version to bump`` is the semantiv versions part to bump: ``major``, ``minor``, ``patch`` or ``post``.
 
 Alternatively, the new version may be specified manually:
 
