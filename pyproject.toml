@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ridepy"
-version = "2.6.2.post1"
+version = "2.6.2.post2"
 authors = [
     { name = "Felix Jung", email = "felix.jung@tu-dresden.de" },
     { name = "Debsankha Manik", email = "dmanik@debsankha.net" },
