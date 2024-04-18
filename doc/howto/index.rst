@@ -9,3 +9,4 @@ How to...
    Report an issue <report-an-issue>
    Obtain support <obtain-support>
    Write a dispatcher <write-a-dispatcher>
+   Release a new RidePy version <release-ridepy>
