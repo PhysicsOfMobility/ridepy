@@ -18,7 +18,7 @@ To access RidePy's source code, report :doc:`issues <issues>`, or :doc:`contribu
     :hidden:
 
     overview
-    howto
+    howto/index
     notebooks
     glossary
     reference

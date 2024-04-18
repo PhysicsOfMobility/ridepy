@@ -27,7 +27,7 @@ The dispatcher is responsible for the following steps:
 
 It must be stressed that the dispatcher is solely responsible for checking the aforementioned constraints and for ensuring that the stoplists are kept in a valid state. This also means that the dispatcher must update the estimated arrival times of all stops except for the CPE (current position element)  which stores the current or last known location of the vehicle and is updated by `.VehicleState`. The dispatcher must not delete it, though.
 
-The dispatcher is called on every vehicle's stoplist to determine the vehicle and route that incurs the least cost. If the minimum cost is infinite, i.e., the dispatcher has failed to return a finite cost of insertion for any of the vehicles, the rejection is *rejected*.
+The dispatcher is called on every vehicle's stoplist to determine the vehicle and route that incurs the least cost. If the minimum cost is infinite, i.e., the dispatcher has failed to return a finite cost of insertion for any of the vehicles, the request is *rejected*.
 
 Before starting to write your own dispatcher, it might prove helpful to have a look at the source code of the fairly trivial Python `.TaxicabDispatcherDriveFirst` dispatcher and possibly that of the Python `.BruteForceTotalTravelTimeMinimizingDispatcher` dispatcher to get some hints.
 
