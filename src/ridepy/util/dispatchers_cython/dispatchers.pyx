@@ -5,6 +5,7 @@ from ridepy.data_structures_cython.data_structures cimport  LocType, R2loc
 from .cdispatchers cimport (
 AbstractDispatcher as CAbstractDispatcher,
 BruteForceTotalTravelTimeMinimizingDispatcher as CBruteForceTotalTravelTimeMinimizingDispatcher,
+MinimalPassengerTravelTimeDispatcher as CMinimalPassengerTravelTimeDispatcher,
 SimpleEllipseDispatcher as CSimpleEllipseDispatcher,
 )
 
@@ -38,6 +39,18 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher(Dispatcher):
         else:
             raise ValueError("This line should never have been reached")
 
+cdef class MinimalPassengerTravelTimeDispatcher(Dispatcher):
+    def __cinit__(self, loc_type):
+        if loc_type == LocType.R2LOC:
+            self.u_dispatcher.dispatcher_r2loc_ptr = (
+                new CMinimalPassengerTravelTimeDispatcher[R2loc]()
+                )
+        elif loc_type == LocType.INT:
+            self.u_dispatcher.dispatcher_int_ptr = (
+                new CMinimalPassengerTravelTimeDispatcher[int]()
+            )
+        else:
+            raise ValueError("This line should never have been reached")
 
 cdef class SimpleEllipseDispatcher(Dispatcher):
     def __cinit__(self, loc_type, max_relative_detour=0):

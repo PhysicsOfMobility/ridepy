@@ -6,6 +6,7 @@
 #define RIDEPY_CDISPATCHERS_UTILS_H
 
 #include "../../data_structures_cython/cdata_structures.h"
+#include "../spaces_cython/cspaces.h"
 
 namespace ridepy {
 
@@ -219,6 +220,34 @@ bool is_timewindow_violated_dueto_insertion(
   return false;
 }
 
+template <typename Loc>
+std::tuple<bool, double, double, double> is_between(
+    TransportSpace<Loc> &space, const Loc a, Stop<Loc> &stop_before, Stop<Loc> &stop_after) {
+      double dist_to = space.t(stop_before.location, a);
+      double dist_from = space.t(a, stop_after.location);
+      double dist_direct = space.t(stop_before.location, stop_after.location);
+      bool is_inbetween = dist_to + dist_from == dist_direct;
+      if (is_inbetween) {
+          return std::make_tuple(true, dist_to, dist_from, dist_direct);
+      } else {
+          return std::make_tuple(false, dist_to, dist_from, dist_direct);
+      }
+    }
+
+template <typename Loc>
+std::tuple<bool, double, double, double> is_between_2(
+    TransportSpace<Loc> &space, const Loc a, const Loc u, Stop<Loc> &stop_after) {
+      double dist_to = space.t(u, a);
+      double dist_from = space.t(a, stop_after.location);
+      double dist_direct = space.t(u, stop_after.location);
+      bool is_inbetween = dist_to + dist_from == dist_direct;
+      if (is_inbetween) {
+          return std::make_tuple(true, dist_to, dist_from, dist_direct);
+      } else {
+          return std::make_tuple(false, dist_to, dist_from, dist_direct);
+      }
+    }
+    
 } // namespace ridepy
 
 #endif // RIDEPY_CDISPATCHERS_UTILS_H
