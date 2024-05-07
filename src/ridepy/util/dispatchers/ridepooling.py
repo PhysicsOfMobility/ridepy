@@ -424,9 +424,9 @@ def MinimalPassengerTravelTimeDispatcher(
     best_pickup_idx = len(stoplist) - 1
     best_dropoff_idx = len(stoplist) - 1
 
-    for counter, (stop_before_pickup, stop_after_pickup) in enumerate(
-        pairwise(stoplist)
-    ):
+    for counter in range(0, len(stoplist) - 1):
+        stop_before_pickup = stoplist[counter]
+        stop_after_pickup = stoplist[counter + 1]
         listResultInBetweenTest = is_between(
             space,
             request.origin,
@@ -440,6 +440,11 @@ def MinimalPassengerTravelTimeDispatcher(
             CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup)
             EAST_pu = request.pickup_timewindow_min
             if CPAT_pu > request.pickup_timewindow_max:
+                continue
+            CPAT_do = max(EAST_pu, CPAT_pu) + space.t(
+                request.origin, request.destination
+            )
+            if CPAT_do > request.delivery_timewindow_max:
                 continue
 
             best_pickup_idx = counter
@@ -491,6 +496,7 @@ def MinimalPassengerTravelTimeDispatcher(
                     stoplist_request_in_vehicle = stoplist[
                         best_pickup_idx : best_dropoff_idx + 1
                     ]
+
                     # occupancies_ausschnitt = list(map(lambda x: x.occupancy_after_servicing, stoplist_request_in_vehicle))
 
                     occupancies_ausschnitt = []
@@ -553,11 +559,15 @@ def MinimalPassengerTravelTimeDispatcher(
             continue
 
     if boolInsertEnd:
-        time_to_pickup = space.t(stoplist[-1].location, request.origin)
-        CPAT_pu = cpat_of_inserted_stop(stoplist[-1], time_to_pickup)
+        best_pickup_idx = len(stoplist) - 1
+        best_dropoff_idx = len(stoplist) - 1
+        time_to_pickup = space.t(stoplist[best_pickup_idx].location, request.origin)
+        CPAT_pu = cpat_of_inserted_stop(stoplist[best_pickup_idx], time_to_pickup)
         EAST_pu = request.pickup_timewindow_min
         CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request.origin, request.destination)
         if CPAT_pu > request.pickup_timewindow_max:
+            min_cost = np.inf
+        elif CPAT_do > request.delivery_timewindow_max:
             min_cost = np.inf
         else:
             min_cost = CPAT_do

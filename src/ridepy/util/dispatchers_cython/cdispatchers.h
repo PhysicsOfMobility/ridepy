@@ -407,6 +407,11 @@ InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
         if (CPAT_pu > request->pickup_timewindow_max) {
             continue;
         }
+            // dropoff immediately
+        double CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request->origin, request->destination);
+      
+        if (CPAT_do > request->delivery_timewindow_max)
+          continue;
         best_pickup_idx = counter;
         // printf("Best pickup idx: %i\n", best_pickup_idx);
         bool boolDropOffEnroute = false;
@@ -539,7 +544,12 @@ InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
     if (CPAT_pu > request->pickup_timewindow_max) {
       min_cost = INFINITY;
     } else{
-      min_cost = CPAT_do;
+      if (CPAT_do > request->delivery_timewindow_max) {
+        min_cost = INFINITY;
+      }
+      else{
+        min_cost = CPAT_do;
+      }
     }
   }
 
