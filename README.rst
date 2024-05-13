@@ -1,4 +1,4 @@
-|Code style: black| |Tests| |Docs| |wheel| |sdist|
+|Code style: black| |Tests| |Docs| |wheel| |sdist| |joss|
 
 RidePy
 ======
@@ -80,5 +80,8 @@ Development
 
 .. |sdist| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml/badge.svg
    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml
+
+.. |joss| image:: https://joss.theoj.org/papers/10.21105/joss.06241/status.svg
+   :target: https://doi.org/10.21105/joss.06241
 
 .. _ridepy doc: https://ridepy.org
