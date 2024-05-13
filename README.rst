@@ -12,7 +12,7 @@ Head over to `ridepy.org <ridepy doc_>`__ to get started.
 Quickstart
 ----------
 
-For detailed instructions, see the `installation guide <https://ridepy.org/setup.html>`__ in the documentation.
+For detailed instructions, see the `installation guide <https://ridepy.org/howto/install-ridepy>`__ in the documentation.
 
 If you're in a hurry, here's the gist:
 
@@ -32,9 +32,9 @@ If you're in a hurry, here's the gist:
 Contributing
 ------------
 
-We are always happy for contributions from the community. If you run into a problem, please `report an issue <https://ridepy.org/issues.html>`__ or `ask for help <https://ridepy.org/support.html>`__.
+We are always happy for contributions from the community. If you run into a problem, please `report an issue <https://ridepy.org/howto/report-an-issue>`__ or `ask for help <https://ridepy.org/howto/obtain-support>`__.
 
-If you are interested in contributing to our codebase, please read our `contributing guide <https://ridepy.org/contributing.html>`__.
+If you are interested in contributing to our codebase, please read our `contributing guide <https://ridepy.org/howto/contribute>`__.
 
 Here is a short overview of the most important points:
 
