@@ -1,4 +1,4 @@
-|Code style: black| |Tests| |Docs| |wheel| |sdist| |joss|
+|joss| |Code style: black| |Tests| |Docs| |wheel| |sdist|
 
 RidePy
 ======
