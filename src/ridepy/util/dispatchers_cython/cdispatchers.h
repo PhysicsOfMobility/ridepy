@@ -370,11 +370,10 @@ public:
 };
 
 template <typename Loc>
-InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
-  std::shared_ptr<TransportationRequest<Loc>> request,
-  vector<Stop<Loc>> &stoplist,
-  TransportSpace<Loc> &space, int seat_capacity,
-  bool debug = false) {
+InsertionResult<Loc> minimal_passenger_travel_time_dispatcher(
+    std::shared_ptr<TransportationRequest<Loc>> request,
+    vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space, int seat_capacity,
+    bool debug = false) {
 
   double min_cost = INFINITY;
   bool boolInsertEnd = true;
@@ -394,107 +393,71 @@ InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
     // printf("Counter: %i\n", counter);
     Stop stop_before_pickup = stoplist[counter];
     Stop stop_after_pickup = stoplist[counter + 1];
-    auto listResultInBetweenTest = is_between(space, request->origin, stop_before_pickup, stop_after_pickup);
-    if (std::get<0>(listResultInBetweenTest) == true && std::get<2>(listResultInBetweenTest) != 0) {
-        // printf("stop_before_pickup.occupancy_after_servicing %i\n", stop_before_pickup.occupancy_after_servicing);
-        // printf("seat_capacity %i\n", seat_capacity);
-        if (stop_before_pickup.occupancy_after_servicing == seat_capacity) {
-            continue;
-        }
-        double time_to_pickup = space.t(stop_before_pickup.location, request->origin);
-        double CPAT_pu = cpat_of_inserted_stop(stop_before_pickup, time_to_pickup);
-        double EAST_pu = request->pickup_timewindow_min;
-        if (CPAT_pu > request->pickup_timewindow_max) {
-            continue;
-        }
-            // dropoff immediately
-        double CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request->origin, request->destination);
-      
-        if (CPAT_do > request->delivery_timewindow_max)
-          continue;
-        best_pickup_idx = counter;
-        // printf("Best pickup idx: %i\n", best_pickup_idx);
-        bool boolDropOffEnroute = false;
-        bool boolContinuePickUpLoop = false;
-        bool boolBreakPickUpLoop = false;
+    auto listResultInBetweenTest = is_between(
+        space, request->origin, stop_before_pickup, stop_after_pickup);
+    if (std::get<0>(listResultInBetweenTest) == true &&
+        std::get<2>(listResultInBetweenTest) != 0) {
+      // printf("stop_before_pickup.occupancy_after_servicing %i\n",
+      // stop_before_pickup.occupancy_after_servicing); printf("seat_capacity
+      // %i\n", seat_capacity);
+      if (stop_before_pickup.occupancy_after_servicing == seat_capacity) {
+        continue;
+      }
+      double time_to_pickup =
+          space.t(stop_before_pickup.location, request->origin);
+      double CPAT_pu =
+          cpat_of_inserted_stop(stop_before_pickup, time_to_pickup);
+      double EAST_pu = request->pickup_timewindow_min;
+      if (CPAT_pu > request->pickup_timewindow_max) {
+        continue;
+      }
+      // dropoff immediately
+      double CPAT_do = max(EAST_pu, CPAT_pu) +
+                       space.t(request->origin, request->destination);
 
-        auto listResultInBetweenTestFollowingPickUp = is_between_2(space, request->destination, request->origin, stop_after_pickup);
-        if (std::get<0>(listResultInBetweenTestFollowingPickUp) == true && std::get<2>(listResultInBetweenTestFollowingPickUp) != 0) {
-            best_dropoff_idx = counter;
-            min_cost = CPAT_pu;
-            boolDropOffEnroute = true;
-            boolInsertEnd = false;
-            break;
-        }
+      if (CPAT_do > request->delivery_timewindow_max)
+        continue;
+      best_pickup_idx = counter;
+      // printf("Best pickup idx: %i\n", best_pickup_idx);
+      bool boolDropOffEnroute = false;
+      bool boolContinuePickUpLoop = false;
+      bool boolBreakPickUpLoop = false;
 
-        for (int counter_drop_off = best_pickup_idx; counter_drop_off < stoplist.size() - 1; counter_drop_off++) {
-          // printf("Counter drop off: %i\n", counter_drop_off);
-          Stop stop_before_dropoff = stoplist[counter_drop_off];
-          Stop stop_after_dropoff = stoplist[counter_drop_off + 1];
-          if (counter_drop_off == counter) {
-              continue;
-          }
-          auto listResultInBetweenTestDropOff = is_between(space, request->destination, stop_before_dropoff, stop_after_dropoff);
-          //Changed from 2 to 1
-          
-          if (std::get<0>(listResultInBetweenTestDropOff) == true && std::get<2>(listResultInBetweenTestDropOff) != 0) {
-              best_dropoff_idx = counter_drop_off;
-              double time_to_dropoff = space.t(stop_before_dropoff.location, request->destination);
-              double CPAT_do = cpat_of_inserted_stop(stop_before_dropoff, time_to_dropoff);
-              std::vector<Stop<Loc>>stoplist_request_in_vehicle = {stoplist.begin() + best_pickup_idx, stoplist.begin() + best_dropoff_idx + 1};
-              
-              // printf("Stoplist Request In Vehicle: ");
-              // for (auto i: stoplist_request_in_vehicle) {
-              //   std::cout << i.location << ' ';
-              // }
-              // printf("\n");
+      auto listResultInBetweenTestFollowingPickUp = is_between_2(
+          space, request->destination, request->origin, stop_after_pickup);
+      if (std::get<0>(listResultInBetweenTestFollowingPickUp) == true &&
+          std::get<2>(listResultInBetweenTestFollowingPickUp) != 0) {
+        best_dropoff_idx = counter;
+        min_cost = CPAT_pu;
+        boolDropOffEnroute = true;
+        boolInsertEnd = false;
+        break;
+      }
 
-              std::vector<int> occupancies_ausschnitt;
-              std::transform(stoplist_request_in_vehicle.begin(), stoplist_request_in_vehicle.end(), std::back_inserter(occupancies_ausschnitt), [](auto x){return x.occupancy_after_servicing;});
-              
-              // printf("Occupancies: ");
-              // for (auto i: occupancies_ausschnitt) {
-              //   std::cout << i << ' ';
-              // }
-              // printf("\n");
-
-              if (std::count(occupancies_ausschnitt.begin(), occupancies_ausschnitt.end(), seat_capacity)) {
-                // printf("True \n");
-                boolContinuePickUpLoop = true;
-                break;
-              }
-
-              if (CPAT_do > request->delivery_timewindow_max) {
-                  boolContinuePickUpLoop = true;
-                  break;
-              }
-              boolInsertEnd = false;
-              min_cost = CPAT_do;
-              boolDropOffEnroute = true;
-              boolBreakPickUpLoop = true;
-              break;
-          }
-        }
-
-        if (boolBreakPickUpLoop == true){
-          break;
-        }
-
-        if (boolContinuePickUpLoop == true){
-          best_pickup_idx = stoplist.size() - 1;
-          best_dropoff_idx = stoplist.size() - 1;
+      for (int counter_drop_off = best_pickup_idx;
+           counter_drop_off < stoplist.size() - 1; counter_drop_off++) {
+        // printf("Counter drop off: %i\n", counter_drop_off);
+        Stop stop_before_dropoff = stoplist[counter_drop_off];
+        Stop stop_after_dropoff = stoplist[counter_drop_off + 1];
+        if (counter_drop_off == counter) {
           continue;
         }
+        auto listResultInBetweenTestDropOff =
+            is_between(space, request->destination, stop_before_dropoff,
+                       stop_after_dropoff);
+        // Changed from 2 to 1
 
-        if (boolDropOffEnroute == false){
-          // printf("boolDropOffEnroute");
-          // printf("\n");
-          best_dropoff_idx = stoplist.size() - 1;
-          Stop stop_before_dropoff = stoplist[best_dropoff_idx];
-          double time_to_dropoff = space.t(stop_before_dropoff.location, request->destination);
-          double CPAT_do = cpat_of_inserted_stop(stop_before_dropoff, time_to_dropoff);
-          std::vector<Stop<Loc>>stoplist_request_in_vehicle = {stoplist.begin() + best_pickup_idx, stoplist.begin() + best_dropoff_idx + 1};
-          
+        if (std::get<0>(listResultInBetweenTestDropOff) == true &&
+            std::get<2>(listResultInBetweenTestDropOff) != 0) {
+          best_dropoff_idx = counter_drop_off;
+          double time_to_dropoff =
+              space.t(stop_before_dropoff.location, request->destination);
+          double CPAT_do =
+              cpat_of_inserted_stop(stop_before_dropoff, time_to_dropoff);
+          std::vector<Stop<Loc>> stoplist_request_in_vehicle = {
+              stoplist.begin() + best_pickup_idx,
+              stoplist.begin() + best_dropoff_idx + 1};
+
           // printf("Stoplist Request In Vehicle: ");
           // for (auto i: stoplist_request_in_vehicle) {
           //   std::cout << i.location << ' ';
@@ -502,30 +465,94 @@ InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
           // printf("\n");
 
           std::vector<int> occupancies_ausschnitt;
-          std::transform(stoplist_request_in_vehicle.begin(), stoplist_request_in_vehicle.end(), std::back_inserter(occupancies_ausschnitt), [](auto x){return x.occupancy_after_servicing;});
-          
+          std::transform(stoplist_request_in_vehicle.begin(),
+                         stoplist_request_in_vehicle.end(),
+                         std::back_inserter(occupancies_ausschnitt),
+                         [](auto x) { return x.occupancy_after_servicing; });
+
           // printf("Occupancies: ");
           // for (auto i: occupancies_ausschnitt) {
           //   std::cout << i << ' ';
           // }
           // printf("\n");
-          
-          if (std::count(occupancies_ausschnitt.begin(), occupancies_ausschnitt.end(), seat_capacity)) {
+
+          if (std::count(occupancies_ausschnitt.begin(),
+                         occupancies_ausschnitt.end(), seat_capacity)) {
             // printf("True \n");
-            best_pickup_idx = stoplist.size() - 1;
-            best_dropoff_idx = stoplist.size() - 1;
-            continue;
+            boolContinuePickUpLoop = true;
+            break;
           }
 
           if (CPAT_do > request->delivery_timewindow_max) {
-            best_pickup_idx = stoplist.size() - 1;
-            best_dropoff_idx = stoplist.size() - 1;
-            continue;
+            boolContinuePickUpLoop = true;
+            break;
           }
           boolInsertEnd = false;
           min_cost = CPAT_do;
+          boolDropOffEnroute = true;
+          boolBreakPickUpLoop = true;
           break;
         }
+      }
+
+      if (boolBreakPickUpLoop == true) {
+        break;
+      }
+
+      if (boolContinuePickUpLoop == true) {
+        best_pickup_idx = stoplist.size() - 1;
+        best_dropoff_idx = stoplist.size() - 1;
+        continue;
+      }
+
+      if (boolDropOffEnroute == false) {
+        // printf("boolDropOffEnroute");
+        // printf("\n");
+        best_dropoff_idx = stoplist.size() - 1;
+        Stop stop_before_dropoff = stoplist[best_dropoff_idx];
+        double time_to_dropoff =
+            space.t(stop_before_dropoff.location, request->destination);
+        double CPAT_do =
+            cpat_of_inserted_stop(stop_before_dropoff, time_to_dropoff);
+        std::vector<Stop<Loc>> stoplist_request_in_vehicle = {
+            stoplist.begin() + best_pickup_idx,
+            stoplist.begin() + best_dropoff_idx + 1};
+
+        // printf("Stoplist Request In Vehicle: ");
+        // for (auto i: stoplist_request_in_vehicle) {
+        //   std::cout << i.location << ' ';
+        // }
+        // printf("\n");
+
+        std::vector<int> occupancies_ausschnitt;
+        std::transform(stoplist_request_in_vehicle.begin(),
+                       stoplist_request_in_vehicle.end(),
+                       std::back_inserter(occupancies_ausschnitt),
+                       [](auto x) { return x.occupancy_after_servicing; });
+
+        // printf("Occupancies: ");
+        // for (auto i: occupancies_ausschnitt) {
+        //   std::cout << i << ' ';
+        // }
+        // printf("\n");
+
+        if (std::count(occupancies_ausschnitt.begin(),
+                       occupancies_ausschnitt.end(), seat_capacity)) {
+          // printf("True \n");
+          best_pickup_idx = stoplist.size() - 1;
+          best_dropoff_idx = stoplist.size() - 1;
+          continue;
+        }
+
+        if (CPAT_do > request->delivery_timewindow_max) {
+          best_pickup_idx = stoplist.size() - 1;
+          best_dropoff_idx = stoplist.size() - 1;
+          continue;
+        }
+        boolInsertEnd = false;
+        min_cost = CPAT_do;
+        break;
+      }
     } else {
       continue;
     }
@@ -537,17 +564,19 @@ InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
     // printf("\n");
     best_pickup_idx = stoplist.size() - 1;
     best_dropoff_idx = stoplist.size() - 1;
-    double time_to_pickup = space.t(stoplist[best_pickup_idx].location, request->origin);
-    double CPAT_pu = cpat_of_inserted_stop(stoplist[best_pickup_idx], time_to_pickup);
+    double time_to_pickup =
+        space.t(stoplist[best_pickup_idx].location, request->origin);
+    double CPAT_pu =
+        cpat_of_inserted_stop(stoplist[best_pickup_idx], time_to_pickup);
     double EAST_pu = request->pickup_timewindow_min;
-    double CPAT_do = max(EAST_pu, CPAT_pu) + space.t(request->origin, request->destination);
+    double CPAT_do =
+        max(EAST_pu, CPAT_pu) + space.t(request->origin, request->destination);
     if (CPAT_pu > request->pickup_timewindow_max) {
       min_cost = INFINITY;
-    } else{
+    } else {
       if (CPAT_do > request->delivery_timewindow_max) {
         min_cost = INFINITY;
-      }
-      else{
+      } else {
         min_cost = CPAT_do;
       }
     }
@@ -575,7 +604,7 @@ InsertionResult<Loc>minimal_passenger_travel_time_dispatcher(
     auto EAST_do = new_stoplist[best_dropoff_idx + 2].time_window_min;
     auto LAST_do = new_stoplist[best_dropoff_idx + 2].time_window_max;
     return InsertionResult<Loc>{new_stoplist, min_cost, EAST_pu,
-                                LAST_pu, EAST_do,  LAST_do};
+                                LAST_pu,      EAST_do,  LAST_do};
   } else {
     return InsertionResult<Loc>{{}, min_cost, NAN, NAN, NAN, NAN};
   }
@@ -597,15 +626,14 @@ public:
 };
 
 template <typename Loc>
-class MinimalPassengerTravelTimeDispatcher
-    : public AbstractDispatcher<Loc> {
+class MinimalPassengerTravelTimeDispatcher : public AbstractDispatcher<Loc> {
 public:
   InsertionResult<Loc>
   operator()(std::shared_ptr<TransportationRequest<Loc>> request,
              vector<Stop<Loc>> &stoplist, TransportSpace<Loc> &space,
              int seat_capacity, bool debug = false) {
-    return minimal_passenger_travel_time_dispatcher(
-        request, stoplist, space, seat_capacity, debug);
+    return minimal_passenger_travel_time_dispatcher(request, stoplist, space,
+                                                    seat_capacity, debug);
   }
 };
 
