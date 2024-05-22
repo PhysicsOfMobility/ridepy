@@ -599,8 +599,8 @@ class SimulationSet:
 
         if validate:
             # assert no unknown outer keys
-            assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
-                self.default_base_params
+            assert not (set(base_params) | set(zip_params) | set(product_params)) - (
+                set(self.default_base_params) | {"analytics"}
             ), "invalid outer key"
 
             # assert no unknown inner keys

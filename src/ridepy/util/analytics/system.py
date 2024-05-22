@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 
 from typing import Optional, Any, Union
@@ -154,15 +156,22 @@ def get_system_quantities(
         space = params["general"]["space"]
         request_rate = params["request_generator"].get("rate")
         velocity = space.velocity
-        d_avg = (
-            sum(
-                [
-                    space.d(space.random_point(), space.random_point())
-                    for _ in range(100_000)
-                ]
+
+        if "d_avg" in params["analytics"]:
+            d_avg = params["analytics"]["d_avg"]
+        else:
+            warnings.warn(
+                "Computing average direct distance by sampling space (100_000). This may not be what you want."
             )
-            / 100_000
-        )
+            d_avg = (
+                sum(
+                    [
+                        space.d(space.random_point(), space.random_point())
+                        for _ in range(100_000)
+                    ]
+                )
+                / 100_000
+            )
 
         load_requested = d_avg * request_rate / (velocity * n_vehicles)
         load_serviced = (
