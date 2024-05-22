@@ -157,7 +157,7 @@ def get_system_quantities(
         request_rate = params["request_generator"].get("rate")
         velocity = space.velocity
 
-        if "d_avg" in params["analytics"]:
+        if "analytics" in params and "d_avg" in params["analytics"]:
             d_avg = params["analytics"]["d_avg"]
         else:
             warnings.warn(
