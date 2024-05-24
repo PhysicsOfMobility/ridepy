@@ -52,6 +52,7 @@ from ridepy.extras.io import (
     save_events_json,
     read_params_json,
     ParamsJSONEncoder,
+    ParamsJSONDecoder,
 )
 
 logger = logging.getLogger(__name__)
@@ -1020,6 +1021,21 @@ class SimulationSet:
         SimulationSet
         """
         with open(path, "r") as f:
-            config = json.load(f)
+            config = json.load(f, cls=ParamsJSONDecoder)
 
         return cls(**config)
+
+    def __eq__(self, other: "SimulationSet") -> bool:
+        return (
+            self.data_dir == other.data_dir
+            and self._base_params == other._base_params
+            and self._zip_params == other._zip_params
+            and self._product_params == other._product_params
+            and self.debug == other.debug
+            and self.max_workers == other.max_workers
+            and self.process_chunksize == other.process_chunksize
+            and self.jsonl_chunksize == other.jsonl_chunksize
+            and self._event_path_suffix == other._event_path_suffix
+            and self._param_path_suffix == other._param_path_suffix
+            and self.comment == other.comment
+        )

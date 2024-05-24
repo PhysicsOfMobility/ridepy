@@ -401,3 +401,5 @@ def test_simulation_set_json(tmp_path):
 
     ss.to_json(tmp_path / "ss.json")
     ssr = SimulationSet.from_json(tmp_path / "ss.json")
+
+    assert ss == ssr
