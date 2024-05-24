@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+import json
 
 import loky
 from time import time
@@ -968,3 +969,50 @@ class SimulationSet:
                     )
 
         return sqdf
+
+    def to_json(self, path: Union[str, Path]) -> None:
+        """
+        Serialize the simulation set configuration to a JSON file.
+
+        Parameters
+        ----------
+        path
+            Path to the JSON file.
+        """
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "data_dir": str(self.data_dir.resolve()),
+                    "base_params": self._base_params,
+                    "zip_params": self._zip_params,
+                    "product_params": self._product_params,
+                    "cython": True,
+                    "debug": self.debug,
+                    "max_workers": self.max_workers,
+                    "process_chunksize": self.process_chunksize,
+                    "jsonl_chunksize": self.jsonl_chunksize,
+                    "event_path_suffix": self._event_path_suffix,
+                    "param_path_suffix": self._param_path_suffix,
+                },
+                f,
+                indent=4,
+            )
+
+    @classmethod
+    def from_json(cls, path: Union[str, Path]) -> "SimulationSet":
+        """
+        Deserialize the simulation set configuration from a JSON file.
+
+        Parameters
+        ----------
+        path
+            Path to the JSON file.
+
+        Returns
+        -------
+        SimulationSet
+        """
+        with open(path, "r") as f:
+            config = json.load(f)
+
+        return cls(**config)
