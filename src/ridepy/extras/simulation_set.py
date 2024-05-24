@@ -51,6 +51,7 @@ from ridepy.extras.io import (
     create_params_json,
     save_events_json,
     read_params_json,
+    ParamsJSONEncoder,
 )
 
 logger = logging.getLogger(__name__)
@@ -519,6 +520,7 @@ class SimulationSet:
         event_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
         validate: bool = True,
+        comment: Optional[str] = None,
     ) -> None:
         """
 
@@ -552,6 +554,8 @@ class SimulationSet:
             Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
         validate
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
+        comment
+            Optional human-readable comment
         """
 
         self.debug = debug
@@ -559,6 +563,7 @@ class SimulationSet:
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = Path(data_dir)
+        self.comment = comment
 
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
@@ -993,9 +998,11 @@ class SimulationSet:
                     "jsonl_chunksize": self.jsonl_chunksize,
                     "event_path_suffix": self._event_path_suffix,
                     "param_path_suffix": self._param_path_suffix,
+                    "comment": self.comment,
                 },
                 f,
                 indent=4,
+                cls=ParamsJSONEncoder,
             )
 
     @classmethod

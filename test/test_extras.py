@@ -391,3 +391,13 @@ def test_simulation_set_validate(tmp_path):
         data_dir=tmp_path,
         validate=True,
     )
+
+
+def test_simulation_set_json(tmp_path):
+    ss = SimulationSet(
+        base_params={"general": {"n_reqs": 10}},
+        data_dir=tmp_path,
+    )
+
+    ss.to_json(tmp_path / "ss.json")
+    ssr = SimulationSet.from_json(tmp_path / "ss.json")
