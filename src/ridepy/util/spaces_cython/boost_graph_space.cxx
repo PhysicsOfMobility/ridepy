@@ -1,5 +1,8 @@
 #include "boost_graph_space.h"
 
+// Note that the code in this file is just for testing purposes,
+// it's not actually used by ridepy.
+
 int main(int, char *[]) {
   // declare graph type
   const std::vector<int> vertices{101, 102, 103, 104};

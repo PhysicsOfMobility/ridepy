@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+import json
 
 import loky
 from time import time
@@ -50,6 +51,8 @@ from ridepy.extras.io import (
     create_params_json,
     save_events_json,
     read_params_json,
+    ParamsJSONEncoder,
+    ParamsJSONDecoder,
 )
 
 logger = logging.getLogger(__name__)
@@ -518,6 +521,8 @@ class SimulationSet:
         event_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
         validate: bool = True,
+        comment: Optional[str] = None,
+        name: Optional[str] = None,
     ) -> None:
         """
 
@@ -551,6 +556,10 @@ class SimulationSet:
             Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
         validate
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
+        name
+            Optional, filename-safe name.
+        comment
+            Optional human-readable comment.
         """
 
         self.debug = debug
@@ -558,6 +567,8 @@ class SimulationSet:
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = Path(data_dir)
+        self.name = name
+        self.comment = comment
 
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
@@ -968,3 +979,77 @@ class SimulationSet:
                     )
 
         return sqdf
+
+    def to_json(self, path: Union[str, Path]) -> None:
+        """
+        Serialize the simulation set configuration to a JSON file.
+
+        Parameters
+        ----------
+        path
+            Path to the JSON file.
+        """
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "data_dir": str(self.data_dir.resolve()),
+                    "base_params": self._base_params,
+                    "zip_params": self._zip_params,
+                    "product_params": self._product_params,
+                    "cython": True,
+                    "debug": self.debug,
+                    "max_workers": self.max_workers,
+                    "process_chunksize": self.process_chunksize,
+                    "jsonl_chunksize": self.jsonl_chunksize,
+                    "event_path_suffix": self._event_path_suffix,
+                    "param_path_suffix": self._param_path_suffix,
+                    "name": self.name,
+                    "comment": self.comment,
+                    "_simulation_ids": self._simulation_ids,
+                    "_system_quantities_path": self._system_quantities_path,
+                },
+                f,
+                indent=4,
+                cls=ParamsJSONEncoder,
+            )
+
+    @classmethod
+    def from_json(cls, path: Union[str, Path]) -> "SimulationSet":
+        """
+        Deserialize the simulation set configuration from a JSON file.
+
+        Parameters
+        ----------
+        path
+            Path to the JSON file.
+
+        Returns
+        -------
+        SimulationSet
+        """
+        with open(path, "r") as f:
+            config = json.load(f, cls=ParamsJSONDecoder)
+
+        _simulation_ids = config.pop("_simulation_ids")
+        _system_quantities_path = config.pop("_system_quantities_path")
+
+        obj = cls(**config)
+        obj._simulation_ids = _simulation_ids
+        obj._system_quantities_path = _system_quantities_path
+
+        return obj
+
+    def __eq__(self, other: "SimulationSet") -> bool:
+        return (
+            self.data_dir == other.data_dir
+            and self._base_params == other._base_params
+            and self._zip_params == other._zip_params
+            and self._product_params == other._product_params
+            and self.debug == other.debug
+            and self.max_workers == other.max_workers
+            and self.process_chunksize == other.process_chunksize
+            and self.jsonl_chunksize == other.jsonl_chunksize
+            and self._event_path_suffix == other._event_path_suffix
+            and self._param_path_suffix == other._param_path_suffix
+            and self.comment == other.comment
+        )

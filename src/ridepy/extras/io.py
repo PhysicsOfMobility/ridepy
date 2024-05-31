@@ -77,11 +77,24 @@ class ParamsJSONDecoder(json.JSONDecoder):
             if "initial_location" in dct and isinstance(dct["initial_location"], list):
                 dct["initial_location"] = tuple(dct["initial_location"])
 
+            # FIXME the list treatment (necessary for zip/product params) done here
+            #  needs to also be implemented for the other parameters.
             if "initial_locations" in dct and dct["initial_locations"] is not None:
-                dct["initial_locations"] = {
-                    int(vehicle_id): location
-                    for vehicle_id, location in dct["initial_locations"].items()
-                }
+                if isinstance(dct["initial_locations"], collections.abc.Mapping):
+                    dct["initial_locations"] = {
+                        int(vehicle_id): location
+                        for vehicle_id, location in dct["initial_locations"].items()
+                    }
+                elif isinstance(dct["initial_locations"], list):
+                    initial_locations_list = []
+                    for initial_location_map in dct["initial_locations"]:
+                        initial_locations_list.append(
+                            {
+                                int(vehicle_id): location
+                                for vehicle_id, location in initial_location_map.items()
+                            }
+                        )
+                    dct["initial_locations"] = initial_locations_list
 
             for cls_str in [
                 "transportation_request_cls",
