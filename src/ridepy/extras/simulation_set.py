@@ -522,6 +522,7 @@ class SimulationSet:
         param_path_suffix: str = "_params.json",
         validate: bool = True,
         comment: Optional[str] = None,
+        name: Optional[str] = None,
     ) -> None:
         """
 
@@ -555,8 +556,10 @@ class SimulationSet:
             Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
         validate
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
+        name
+            Optional, filename-safe name.
         comment
-            Optional human-readable comment
+            Optional human-readable comment.
         """
 
         self.debug = debug
@@ -564,6 +567,7 @@ class SimulationSet:
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = Path(data_dir)
+        self.name = name
         self.comment = comment
 
         self._event_path_suffix = event_path_suffix
@@ -999,7 +1003,10 @@ class SimulationSet:
                     "jsonl_chunksize": self.jsonl_chunksize,
                     "event_path_suffix": self._event_path_suffix,
                     "param_path_suffix": self._param_path_suffix,
+                    "name": self.name,
                     "comment": self.comment,
+                    "_simulation_ids": self._simulation_ids,
+                    "_system_quantities_path": self._system_quantities_path,
                 },
                 f,
                 indent=4,
@@ -1023,7 +1030,14 @@ class SimulationSet:
         with open(path, "r") as f:
             config = json.load(f, cls=ParamsJSONDecoder)
 
-        return cls(**config)
+        _simulation_ids = config.pop("_simulation_ids")
+        _system_quantities_path = config.pop("_system_quantities_path")
+
+        obj = cls(**config)
+        obj._simulation_ids = _simulation_ids
+        obj._system_quantities_path = _system_quantities_path
+
+        return obj
 
     def __eq__(self, other: "SimulationSet") -> bool:
         return (
