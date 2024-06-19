@@ -1,6 +1,7 @@
 from ridepy.util.dispatchers.taxicab import TaxicabDispatcherDriveFirst
 from ridepy.util.dispatchers.ridepooling import (
     BruteForceTotalTravelTimeMinimizingDispatcher,
+    MinimalPassengerTravelTimeDispatcher,
 )
 
 """
