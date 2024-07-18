@@ -38,7 +38,7 @@ dependencies = [
     "decorator",
     "networkx",
     "numpy",
-    "pandas < 2",
+    "pandas>2.2",
     "scipy",
     "tabulate",
     "notebook",
