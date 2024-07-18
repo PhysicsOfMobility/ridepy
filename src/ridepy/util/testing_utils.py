@@ -4,6 +4,7 @@ from ridepy.data_structures import Location, TransportSpace, Stoplist, Dispatche
 from ridepy.util.spaces_cython import TransportSpace as CyTransportSpace
 from ridepy.util.testing_utils_cython import (
     BruteForceTotalTravelTimeMinimizingDispatcher as CyBruteForceTotalTravelTimeMinimizingDispatcher,
+    MinimalPassengerTravelTimeDispatcher as CyMinimalPassengerTravelTimeDispatcher,
 )
 from ridepy.util.spaces_cython import spaces as cyspaces
 from typing import Literal, Iterable, Union, Callable, Sequence
@@ -13,6 +14,7 @@ from ridepy import data_structures_cython as cyds
 from ridepy.util import spaces as pyspaces
 from ridepy.util.dispatchers.ridepooling import (
     BruteForceTotalTravelTimeMinimizingDispatcher,
+    MinimalPassengerTravelTimeDispatcher,
 )
 
 
@@ -119,6 +121,59 @@ def setup_insertion_data_structures(
         spaces = cyspaces
         ds = cyds
         dispatcher = CyBruteForceTotalTravelTimeMinimizingDispatcher
+    else:
+        raise ValueError(f"Supplied invalid {kind=}, must be 'python' or 'cython'")
+
+    space = getattr(spaces, space_type)()
+
+    # set up the request
+    request = ds.TransportationRequest(**request_properties)
+
+    # set up the stoplist
+    stoplist = stoplist_from_properties(
+        stoplist_properties=stoplist_properties, space=space, kind=kind
+    )
+
+    return space, request, stoplist, dispatcher(loc_type=space.loc_type)
+
+
+def setup_insertion_data_structures_minimal_passenger_travel_time_dispatcher(
+    *,
+    stoplist_properties: Iterable[Sequence[Union[Location, float]]],
+    request_properties,
+    space_type: str,
+    kind: str,
+) -> tuple[
+    Union[TransportSpace, CyTransportSpace],
+    Union[pyds.TransportationRequest, cyds.TransportationRequest],
+    Union[Stoplist, cyds.Stoplist],
+    Dispatcher,
+]:
+    """
+    Function is specified for testing the MinimalPassengerTravelTimeDispatcher
+    #FIXME Merge functions or rename above function
+
+    Parameters
+    ----------
+    stoplist_properties
+    request_properties
+    space_type
+    kind
+        'cython' or 'python'
+
+    Returns
+    -------
+    space, request, stoplist, dispatcher
+    """
+
+    if kind == "python":
+        spaces = pyspaces
+        ds = pyds
+        dispatcher = MinimalPassengerTravelTimeDispatcher
+    elif kind == "cython":
+        spaces = cyspaces
+        ds = cyds
+        dispatcher = CyMinimalPassengerTravelTimeDispatcher
     else:
         raise ValueError(f"Supplied invalid {kind=}, must be 'python' or 'cython'")
 
