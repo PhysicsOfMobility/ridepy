@@ -765,7 +765,7 @@ class SimulationSet:
     def __next__(self):
         return next(self._param_combinations)
 
-    def run(self, dry_run=False):
+    def run(self, dry_run: bool = False, info: bool = False):
         """
         Run the simulations configured through `base_params`, `zip_params` and `product_params` using
         multiprocessing. The parameters and resulting output events are written to disk
@@ -780,6 +780,8 @@ class SimulationSet:
         ----------
         dry_run
             If True, do not actually simulate.
+        info
+            Info/benchmark mode. If true, record the time it took to run each simulation run.
         """
 
         self._simulation_ids = simulate_parameter_combinations(
@@ -792,6 +794,7 @@ class SimulationSet:
             event_path_suffix=self._event_path_suffix,
             param_path_suffix=self._param_path_suffix,
             dry_run=dry_run,
+            info=info,
         )
 
     def __len__(self) -> int:

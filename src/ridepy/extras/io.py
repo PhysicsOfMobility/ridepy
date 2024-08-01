@@ -253,7 +253,7 @@ def read_events_json(jsonl_path: Path) -> list[dict]:
         return list(map(json.loads, f.readlines()))
 
 
-def create_info_json(info: dict, *, sort=True) -> str:
+def create_info_json(info: dict) -> str:
     """
     Convert a dictionary containing simulation info to pretty JSON.
 
@@ -261,9 +261,5 @@ def create_info_json(info: dict, *, sort=True) -> str:
     ----------
     info
         dictionary containing the info to save
-    sort
-        if sort is True, sort the dict recursively to ensure consistent order.
     """
-    if sort:
-        info = sort_params(info)
     return json.dumps(info, indent=4)
