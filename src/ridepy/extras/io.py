@@ -164,7 +164,7 @@ def sort_params(params: dict) -> dict:
 
 def create_params_json(*, params: dict, sort=True) -> str:
     """
-    Create a dictionary containing simulation parameters to pretty JSON.
+    Convert a dictionary containing simulation parameters to pretty JSON.
     Parameter dictionaries may contain anything that is supported
     by `.ParamsJSONEncoder` and `.ParamsJSONDecoder`, e.g. `RequestGenerator`,
     `TransportSpace`s and dispatchers. For additional detail, see :ref:`Executing Simulations`.
@@ -251,3 +251,19 @@ def read_events_json(jsonl_path: Path) -> list[dict]:
     """
     with jsonl_path.open("r", encoding="utf-8") as f:
         return list(map(json.loads, f.readlines()))
+
+
+def create_info_json(info: dict, *, sort=True) -> str:
+    """
+    Convert a dictionary containing simulation info to pretty JSON.
+
+    Parameters
+    ----------
+    info
+        dictionary containing the info to save
+    sort
+        if sort is True, sort the dict recursively to ensure consistent order.
+    """
+    if sort:
+        info = sort_params(info)
+    return json.dumps(info, indent=4)
