@@ -475,21 +475,21 @@ cdef class Graph(TransportSpace):
         self.loc_type = LocType.INT
 
         if weights is None:
-            self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+            self.derived_ptr = new CGraphSpace[uiloc](
                 velocity, <vector[uiloc]>vertices, <vector[pair[uiloc, uiloc]]>edges
             )
-            self.derived_ptr = self.u_space.space_int_ptr
+            self.u_space.space_int_ptr = self.derived_ptr
         else:
             if isinstance(weights, (int, float)):
                 weights = it.repeat(float(weights), len(edges))
 
-            self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+            self.derived_ptr = new CGraphSpace[uiloc](
                 velocity,
                 <vector[uiloc]>vertices,
                 <vector[pair[uiloc, uiloc]]>edges,
                 <vector[double]>weights
             )
-            self.derived_ptr = self.u_space.space_int_ptr
+            self.u_space.space_int_ptr = self.derived_ptr
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
