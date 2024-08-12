@@ -220,6 +220,7 @@ def perform_single_simulation(
     info_path_suffix: str = "_info.json",
     dry_run: bool = False,
     info: bool = False,
+    info_contents: Optional[dict[str, Any]] = None,
 ) -> str:
     """
     Execute a single simulation run based on a parameter dictionary
@@ -257,6 +258,8 @@ def perform_single_simulation(
         If True, do not actually simulate. Just pretend to and return the corresponding ID.
     info
         Info/benchmark mode. If true, record the time it took to run the simulation run in a separate info file.
+    info_contents
+        Additional contents to write to the info file.
 
     Returns
     -------
@@ -357,7 +360,10 @@ def perform_single_simulation(
         if info:
             simulation_duration = simulation_end_time - simulation_start_time
             with info_path.open("w") as f:
-                info = {"simulation_duration": simulation_duration}
+                info = {
+                    "simulation_duration": simulation_duration,
+                    "jsonl_chunksize": jsonl_chunksize,
+                } | (info_contents or {})
                 f.write(create_info_json(info))
 
         with open(str(param_path), "w") as f:
@@ -424,6 +430,10 @@ def simulate_parameter_combinations(
                     event_path_suffix=event_path_suffix,
                     dry_run=dry_run,
                     info=info,
+                    info_contents={
+                        "process_chunksize": process_chunksize,
+                        "max_workers": max_workers,
+                    },
                 ),
                 param_combinations,
                 chunksize=process_chunksize,
