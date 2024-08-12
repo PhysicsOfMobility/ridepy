@@ -61,7 +61,7 @@ cdef class TransportSpace:
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).d(<R2loc>u, <R2loc>v)
         elif self.loc_type == LocType.INT:
-            return dereference(self.u_space.space_int_ptr).d(<int>u, <int>v)
+            return dereference(self.u_space.space_int_ptr).d(<uiloc>u, <uiloc>v)
         else:
             raise ValueError("This line should never have been reached")
 
@@ -70,13 +70,13 @@ cdef class TransportSpace:
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).t(<R2loc>u, <R2loc>v)
         elif self.loc_type == LocType.INT:
-            return dereference(self.u_space.space_int_ptr).t(<int>u, <int>v)
+            return dereference(self.u_space.space_int_ptr).t(<uiloc>u, <uiloc>v)
 
     def interp_dist(self, u, v, double dist_to_dest):
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).interp_dist(<R2loc>u, <R2loc>v, dist_to_dest)
         elif self.loc_type == LocType.INT:
-            return dereference(self.u_space.space_int_ptr).interp_dist(<int>u, <int>v, dist_to_dest)
+            return dereference(self.u_space.space_int_ptr).interp_dist(<uiloc>u, <uiloc>v, dist_to_dest)
         else:
             raise ValueError("This line should never have been reached")
 
@@ -84,7 +84,7 @@ cdef class TransportSpace:
         if self.loc_type == LocType.R2LOC:
             return dereference(self.u_space.space_r2loc_ptr).interp_time(<R2loc>u, <R2loc>v, time_to_dest)
         elif self.loc_type == LocType.INT:
-            return dereference(self.u_space.space_int_ptr).interp_time(<int>u, <int>v, time_to_dest)
+            return dereference(self.u_space.space_int_ptr).interp_time(<uiloc>u, <uiloc>v, time_to_dest)
         else:
             raise ValueError("This line should never have been reached")
 
@@ -475,19 +475,21 @@ cdef class Graph(TransportSpace):
         self.loc_type = LocType.INT
 
         if weights is None:
-            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+            self.u_space.space_int_ptr = new CGraphSpace[uiloc](
                 velocity, <vector[uiloc]>vertices, <vector[pair[uiloc, uiloc]]>edges
             )
+            self.derived_ptr = self.u_space.space_int_ptr
         else:
             if isinstance(weights, (int, float)):
                 weights = it.repeat(float(weights), len(edges))
 
-            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+            self.u_space.space_int_ptr = new CGraphSpace[uiloc](
                 velocity,
                 <vector[uiloc]>vertices,
                 <vector[pair[uiloc, uiloc]]>edges,
                 <vector[double]>weights
             )
+            self.derived_ptr = self.u_space.space_int_ptr
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
