@@ -13,7 +13,7 @@ from ridepy.data_structures_cython.data_structures cimport (
     LocType
 )
 
-from ridepy.data_structures_cython.cdata_structures cimport R2loc, Stop as CStop
+from ridepy.data_structures_cython.cdata_structures cimport R2loc, uiloc, Stop as CStop
 from ridepy.data_structures_cython.cdata_structures cimport SingleVehicleSolution, \
     TransportationRequest as CTransportationRequest, \
     Request as CRequest
@@ -41,7 +41,7 @@ cdef extern from "limits.h":
 
 cdef union _UVehicleState:
     unique_ptr[CVehicleState[R2loc]] _vstate_r2loc
-    unique_ptr[CVehicleState[int]] _vstate_int
+    unique_ptr[CVehicleState[uiloc]] _vstate_int
 
 cdef class VehicleState:
     """
@@ -79,7 +79,7 @@ cdef class VehicleState:
                 dereference(space.u_space.space_r2loc_ptr), dereference(dispatcher.u_dispatcher.dispatcher_r2loc_ptr), seat_capacity)
         elif space.loc_type == LocType.INT:
             self.loc_type = LocType.INT
-            self._uvstate._vstate_int = make_unique[CVehicleState[int]](
+            self._uvstate._vstate_int = make_unique[CVehicleState[uiloc]](
                 vehicle_id, self.initial_stoplist.ustoplist._stoplist_int,
                 dereference(space.u_space.space_int_ptr), dereference(dispatcher.u_dispatcher.dispatcher_int_ptr), seat_capacity)
         else:
@@ -183,11 +183,11 @@ cdef class VehicleState:
         elif self.loc_type == LocType.INT:
             single_vehicle_solution = (
                 dereference(self._uvstate._vstate_int).handle_transportation_request_single_vehicle(
-                    make_shared[CTransportationRequest[int]](
+                    make_shared[CTransportationRequest[uiloc]](
                         <int> request.request_id,
                         <double> request.creation_timestamp,
-                        <int> request.origin,
-                        <int> request.destination,
+                        <uiloc> request.origin,
+                        <uiloc> request.destination,
                         <double> request.pickup_timewindow_min,
                         <double> request.pickup_timewindow_max,
                         <double> request.delivery_timewindow_min,
