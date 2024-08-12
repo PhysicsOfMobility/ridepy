@@ -13,6 +13,8 @@
 using namespace std;
 using namespace boost;
 
+using uiloc = unsigned long long;
+
 namespace ridepy {
 
 template <typename vertex_t>
@@ -22,7 +24,7 @@ class GraphSpace : public TransportSpace<vertex_t> {
                          property<edge_weight_t, double>>
       Graph;
   typedef pair<vertex_t, vertex_t> Edge;
-  typedef LRU::Cache<int, pair<vector<int>, vector<double>>> pred_cache_t;
+  typedef LRU::Cache<uiloc, pair<vector<uiloc>, vector<uiloc>>> pred_cache_t;
 
 private:
   Graph _g;
@@ -35,7 +37,7 @@ private:
   pred_cache_t pred_cache{
       10000}; // the cache size could be set at initialization
 
-  void cached_dijkstra(int u_idx) {
+  void cached_dijkstra(uiloc u_idx) {
     if (pred_cache.contains(u_idx)) {
       auto res = pred_cache.lookup(u_idx);
       this->_predecessors = res.first;
@@ -56,7 +58,7 @@ public:
 
   double d(vertex_t src, vertex_t target) override {
     // call dijkstra
-    int src_idx = this->vertex_label2index[src];
+    uiloc src_idx = this->vertex_label2index[src];
     cached_dijkstra(src_idx);
     return this->_distances[this->vertex_label2index[target]];
   }
@@ -70,8 +72,8 @@ public:
     if (u == v)
       return make_pair(v, 0);
     // call dijkstra
-    int u_idx = this->vertex_label2index[u];
-    const int v_idx = this->vertex_label2index[v];
+    uiloc u_idx = this->vertex_label2index[u];
+    const uiloc v_idx = this->vertex_label2index[v];
     cached_dijkstra(u_idx);
 
     vertex_t predecessor, current_node = v_idx;

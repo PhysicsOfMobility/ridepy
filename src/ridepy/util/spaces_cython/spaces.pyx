@@ -13,6 +13,7 @@ from libcpp.memory cimport dynamic_pointer_cast
 from ridepy.util import smartVectorize
 from .cspaces cimport(
     R2loc,
+    uiloc,
     Euclidean2D as CEuclidean2D,
     Manhattan2D as CManhattan2D,
     GraphSpace as CGraphSpace
@@ -474,15 +475,18 @@ cdef class Graph(TransportSpace):
         self.loc_type = LocType.INT
 
         if weights is None:
-            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
-                velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+                velocity, <vector[uiloc]>vertices, <vector[pair[uiloc, uiloc]]>edges
             )
         else:
             if isinstance(weights, (int, float)):
                 weights = it.repeat(float(weights), len(edges))
 
-            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[int](
-                velocity, <vector[int]>vertices, <vector[pair[int, int]]>edges, <vector[double]>weights
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+                velocity,
+                <vector[uiloc]>vertices,
+                <vector[pair[uiloc, uiloc]]>edges,
+                <vector[double]>weights
             )
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
