@@ -29,6 +29,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Cython",
     "Programming Language :: C++",
     "Operating System :: POSIX :: Linux",
@@ -44,7 +47,7 @@ dependencies = [
     "notebook",
     "jupytext",
     "matplotlib",
-    "cython==3.0a6",
+    "cython>=3",
     "loky",
     "typer",
     "pyarrow",
@@ -53,7 +56,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black==24.3.0",
+    "black==24.8.0",
     "commitizen",
     "pdbpp",
     "pre-commit",
@@ -112,7 +115,7 @@ where = [
 [tool.black]
 line-length = 88
 target-version = [
-    "py39",
+    "py312",
 ]
 include = "\\.pyi?$"
 exclude = """
