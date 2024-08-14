@@ -475,19 +475,19 @@ cdef class Graph(TransportSpace):
         self.loc_type = LocType.INT
 
         if weights is None:
-            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[ulonglong](
                 velocity,
-                <vector[uiloc]>vertices,
-                <vector[pair[uiloc, uiloc]]>edges
+                <vector[ulonglong]>vertices,
+                <vector[pair[ulonglong, ulonglong]]>edges
             )
         else:
             if isinstance(weights, (int, float)):
                 weights = it.repeat(float(weights), len(edges))
 
-            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[uiloc](
+            self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[ulonglong](
                 velocity,
-                <vector[uiloc]>vertices,
-                <vector[pair[uiloc, uiloc]]>edges,
+                <vector[ulonglong]>vertices,
+                <vector[pair[ulonglong, ulonglong]]>edges,
                 <vector[double]>weights
             )
 
