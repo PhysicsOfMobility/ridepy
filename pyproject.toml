@@ -44,7 +44,7 @@ dependencies = [
     "notebook",
     "jupytext",
     "matplotlib",
-    "cython==3.0a6",
+    "cython>=3",
     "loky",
     "typer",
     "pyarrow",

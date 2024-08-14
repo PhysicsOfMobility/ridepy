@@ -35,6 +35,7 @@ setup(
             )
         ],
         compiler_directives={"embedsignature": True},
+        language_level=3,
     ),
     options={
         "build_ext": {
