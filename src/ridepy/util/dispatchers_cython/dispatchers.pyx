@@ -1,6 +1,6 @@
 # distutils: language=c++
 
-from ridepy.data_structures_cython.data_structures cimport  LocType, R2loc
+from ridepy.data_structures_cython.data_structures cimport  LocType, R2loc, uiloc
 
 from .cdispatchers cimport (
 AbstractDispatcher as CAbstractDispatcher,
@@ -33,7 +33,7 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher(Dispatcher):
                 )
         elif loc_type == LocType.INT:
             self.u_dispatcher.dispatcher_int_ptr = (
-                new CBruteForceTotalTravelTimeMinimizingDispatcher[int]()
+                new CBruteForceTotalTravelTimeMinimizingDispatcher[uiloc]()
             )
         else:
             raise ValueError("This line should never have been reached")
@@ -44,6 +44,6 @@ cdef class SimpleEllipseDispatcher(Dispatcher):
         if loc_type == LocType.R2LOC:
             self.u_dispatcher.dispatcher_r2loc_ptr = new CSimpleEllipseDispatcher[R2loc](max_relative_detour)
         elif loc_type == LocType.INT:
-            self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[int](max_relative_detour)
+            self.u_dispatcher.dispatcher_int_ptr = new CSimpleEllipseDispatcher[uiloc](max_relative_detour)
         else:
             raise ValueError("This line should never have been reached")

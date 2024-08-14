@@ -17,6 +17,7 @@ using namespace std;
 namespace ridepy {
 
 typedef pair<double, double> R2loc;
+typedef unsigned long long uiloc;
 
 template <typename Loc> class Request {
 public:

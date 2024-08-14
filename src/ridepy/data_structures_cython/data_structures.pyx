@@ -7,7 +7,7 @@ Run-Time Dispatch approach](https://martinralbrecht.wordpress.com/2017/07/23/adv
 
 In short, an enum LocType (resides in data_structures.pxd) contains all template types Loc we are likely to need.
 The extension dtype for C++ object e.g. CRequest[Loc] then will contain *an union* holding one of the variants (e.g.
-CRequest[int], Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the
+CRequest[unsigned long long], Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the
 method call to the appropriate object inside that union.
 """
 
@@ -26,6 +26,7 @@ from ridepy.data_structures_cython.cdata_structures cimport (
     InternalRequest as CInternalRequest,
     Stop as CStop,
     R2loc,
+    uiloc
 )
 
 
@@ -134,12 +135,12 @@ cdef class TransportationRequest(Request):
         elif isinstance(origin, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self._utranspreq._req_int = shared_ptr[CTransportationRequest[int]](new CTransportationRequest[int](
+            self._utranspreq._req_int = shared_ptr[CTransportationRequest[uiloc]](new CTransportationRequest[uiloc](
                 request_id, creation_timestamp, origin, destination,
                 pickup_timewindow_min, pickup_timewindow_max,
                 delivery_timewindow_min, delivery_timewindow_max
             ))
-            self._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](self._utranspreq._req_int)
+            self._ureq._req_int = dynamic_pointer_cast[CRequest[uiloc], CTransportationRequest[uiloc]](self._utranspreq._req_int)
         else:
             raise TypeError(f"Cannot handle origin of type {type(origin)}")
 
@@ -288,10 +289,10 @@ cdef class TransportationRequest(Request):
         return req
 
     @staticmethod
-    cdef TransportationRequest from_c_int(shared_ptr[CTransportationRequest[int]] creq):
+    cdef TransportationRequest from_c_int(shared_ptr[CTransportationRequest[uiloc]] creq):
         cdef TransportationRequest req = TransportationRequest.__new__(TransportationRequest)
         req._utranspreq._req_int = creq
-        req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CTransportationRequest[int]](creq)
+        req._ureq._req_int = dynamic_pointer_cast[CRequest[uiloc], CTransportationRequest[uiloc]](creq)
         req.loc_type = LocType.INT
         return req
 
@@ -352,10 +353,10 @@ cdef class InternalRequest(Request):
         elif isinstance(location, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self._uinternreq._req_int = shared_ptr[CInternalRequest[int]](new CInternalRequest[int](
+            self._uinternreq._req_int = shared_ptr[CInternalRequest[uiloc]](new CInternalRequest[uiloc](
                 request_id, creation_timestamp, location
             ))
-            self._ureq._req_int = dynamic_pointer_cast[CRequest[int], CInternalRequest[int]](self._uinternreq._req_int)
+            self._ureq._req_int = dynamic_pointer_cast[CRequest[uiloc], CInternalRequest[uiloc]](self._uinternreq._req_int)
 
         else:
             raise TypeError(f"Cannot handle origin of type {type(location)}")
@@ -405,10 +406,10 @@ cdef class InternalRequest(Request):
         return req
 
     @staticmethod
-    cdef InternalRequest from_c_int(shared_ptr[CInternalRequest[int]] creq):
+    cdef InternalRequest from_c_int(shared_ptr[CInternalRequest[uiloc]] creq):
         cdef InternalRequest req = InternalRequest.__new__(InternalRequest)
         req._uinternreq._req_int = creq
-        req._ureq._req_int = dynamic_pointer_cast[CRequest[int], CInternalRequest[int]](creq)
+        req._ureq._req_int = dynamic_pointer_cast[CRequest[uiloc], CInternalRequest[uiloc]](creq)
         req.loc_type = LocType.INT
         return req
 
@@ -473,7 +474,7 @@ cdef class Stop:
         elif isinstance(location, int):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
-            self.ustop._stop_int = new CStop[int](
+            self.ustop._stop_int = new CStop[uiloc](
                 location, request._ureq._req_int, action, estimated_arrival_time, occupancy_after_servicing,
                 time_window_min, time_window_max)
         else:
@@ -559,12 +560,12 @@ cdef class Stop:
             else:
                 raise ValueError("This line should never have been reached")
         elif self.loc_type == LocType.INT:
-            if typeid(dereference(dereference(self.ustop._stop_int).request)) == typeid(CTransportationRequest[int]):
+            if typeid(dereference(dereference(self.ustop._stop_int).request)) == typeid(CTransportationRequest[uiloc]):
                 return TransportationRequest.from_c_int(
-                    dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](dereference(self.ustop._stop_int).request))
-            elif typeid(dereference(dereference(self.ustop._stop_int).request)) == typeid(CInternalRequest[int]):
+                    dynamic_pointer_cast[CTransportationRequest[uiloc], CRequest[uiloc]](dereference(self.ustop._stop_int).request))
+            elif typeid(dereference(dereference(self.ustop._stop_int).request)) == typeid(CInternalRequest[uiloc]):
                 return InternalRequest.from_c_int(
-                    dynamic_pointer_cast[CInternalRequest[int], CRequest[int]](dereference(self.ustop._stop_int).request))
+                    dynamic_pointer_cast[CInternalRequest[uiloc], CRequest[uiloc]](dereference(self.ustop._stop_int).request))
             else:
                 raise ValueError("This line should never have been reached")
         else:
@@ -625,7 +626,7 @@ cdef class Stop:
         return stop
 
     @staticmethod
-    cdef Stop from_c_int(CStop[int] *cstop):
+    cdef Stop from_c_int(CStop[uiloc] *cstop):
         cdef Stop stop = Stop.__new__(Stop)
         stop.ptr_owner = False
         stop.ustop._stop_int = cstop
@@ -692,7 +693,7 @@ cdef class Stoplist:
         if self.loc_type == LocType.R2LOC:
             self.ustoplist._stoplist_r2loc = vector[CStop[R2loc]](0)
         elif self.loc_type == LocType.INT:
-            self.ustoplist._stoplist_int = vector[CStop[int]](0)
+            self.ustoplist._stoplist_int = vector[CStop[uiloc]](0)
         else:
             raise ValueError(f"This line should never have been reached: {type(loc_type)}")
 
@@ -759,7 +760,7 @@ cdef class Stoplist:
         return stoplist
 
     @staticmethod
-    cdef Stoplist from_c_int(vector[CStop[int]] cstoplist):
+    cdef Stoplist from_c_int(vector[CStop[uiloc]] cstoplist):
         cdef Stoplist stoplist = Stoplist.__new__(Stoplist) # Calling __new__ bypasses __init__, see
         # https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
         stoplist.loc_type = LocType.INT

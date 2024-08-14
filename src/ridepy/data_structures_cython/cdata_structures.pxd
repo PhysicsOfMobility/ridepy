@@ -6,7 +6,9 @@ from libcpp.memory cimport shared_ptr
 
 cdef extern from "cdata_structures.h" namespace 'ridepy':
 
-    ctypedef pair[double, double] R2loc
+    ctypedef pair[double, double] R2loc  # Euclidean R2 location (floating point)
+    ctypedef unsigned long long uiloc  # Unsigned integer location
+
     cpdef enum class StopAction(int):
         pickup=1
         dropoff=2

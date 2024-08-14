@@ -10,12 +10,12 @@ from .cspaces cimport (
     GraphSpace as CGraphSpace
 )
 
-from ridepy.data_structures_cython.data_structures cimport LocType, R2loc
+from ridepy.data_structures_cython.data_structures cimport LocType, R2loc, uiloc
 
 
 cdef union USpace:
     CTransportSpace[R2loc] *space_r2loc_ptr
-    CTransportSpace[int] *space_int_ptr
+    CGraphSpace[uiloc] *space_int_ptr
 
 
 cdef class TransportSpace:
@@ -44,4 +44,4 @@ cdef class Grid2D(Manhattan2D):
 #     ...
 
 cdef class Graph(TransportSpace):
-    cdef CGraphSpace[int] *derived_ptr
+    cdef CGraphSpace[uiloc] *derived_ptr
