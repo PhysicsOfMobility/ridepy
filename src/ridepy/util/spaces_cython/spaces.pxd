@@ -15,7 +15,7 @@ from ridepy.data_structures_cython.data_structures cimport LocType, R2loc, uiloc
 
 cdef union USpace:
     CTransportSpace[R2loc] *space_r2loc_ptr
-    CTransportSpace[uiloc] *space_int_ptr
+    CGraphSpace[uiloc] *space_int_ptr
 
 
 cdef class TransportSpace:
