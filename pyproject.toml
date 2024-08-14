@@ -75,6 +75,7 @@ dev = [
     "tomli-w",
     "packaging",
     "python-gnupg",
+    "osmnx",
 ]
 doc = [
     "recommonmark",

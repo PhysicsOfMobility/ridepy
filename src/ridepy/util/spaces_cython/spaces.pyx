@@ -573,6 +573,7 @@ cdef class Graph(TransportSpace):
             velocity=velocity
         )
 
+
     def random_point(self):
         return random.choice(self.vertices)
 
