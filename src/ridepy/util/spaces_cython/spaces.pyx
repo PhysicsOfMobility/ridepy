@@ -558,7 +558,7 @@ cdef class Graph(TransportSpace):
         if make_attribute_distance is None:
             weights = None
         else:
-            weights = [G[u][v][make_attribute_distance] for u, v in G.edges()]
+            weights = [distance for u, v, distance in G.edges.data(data=make_attribute_distance)]
 
         return cls(
             vertices=list(G.nodes()),

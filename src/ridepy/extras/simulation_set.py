@@ -53,6 +53,7 @@ from ridepy.extras.io import (
     read_params_json,
     ParamsJSONEncoder,
     ParamsJSONDecoder,
+    create_info_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -214,9 +215,12 @@ def perform_single_simulation(
     data_dir: Path,
     jsonl_chunksize: int = 1000,
     debug: bool = False,
-    param_path_suffix: str = "_params.json",
     event_path_suffix: str = ".jsonl",
+    param_path_suffix: str = "_params.json",
+    info_path_suffix: str = "_info.json",
     dry_run: bool = False,
+    info: bool = False,
+    info_contents: Optional[dict[str, Any]] = None,
 ) -> str:
     """
     Execute a single simulation run based on a parameter dictionary
@@ -252,6 +256,10 @@ def perform_single_simulation(
         Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
     dry_run
         If True, do not actually simulate. Just pretend to and return the corresponding ID.
+    info
+        Info/benchmark mode. If true, record the time it took to run the simulation run in a separate info file.
+    info_contents
+        Additional contents to write to the info file.
 
     Returns
     -------
@@ -264,6 +272,7 @@ def perform_single_simulation(
     sim_id = make_sim_id(params_json)
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
     param_path = data_dir / f"{sim_id}{param_path_suffix}"
+    info_path = data_dir / f"{sim_id}{info_path_suffix}"
 
     if (
         param_path.exists()
@@ -341,8 +350,21 @@ def perform_single_simulation(
         else:
             raise ValueError("Must *either* specify `n_reqs` *or* `t_cutoff`")
 
+        simulation_start_time = time()
+
         while chunk := list(it.islice(simulation, jsonl_chunksize)):
             save_events_json(jsonl_path=event_path, events=chunk)
+
+        simulation_end_time = time()
+
+        if info:
+            simulation_duration = simulation_end_time - simulation_start_time
+            with info_path.open("w") as f:
+                info = {
+                    "simulation_duration": simulation_duration,
+                    "jsonl_chunksize": jsonl_chunksize,
+                } | (info_contents or {})
+                f.write(create_info_json(info))
 
         with open(str(param_path), "w") as f:
             f.write(params_json)
@@ -363,6 +385,7 @@ def simulate_parameter_combinations(
     event_path_suffix: str = ".jsonl",
     param_path_suffix: str = "_params.json",
     dry_run: bool = False,
+    info: bool = False,
 ):
     """
     Run simulations for different parameter combinations using multiprocessing.
@@ -388,6 +411,8 @@ def simulate_parameter_combinations(
         Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
     dry_run
         If True, do not actually simulate. Just pretend to and return the corresponding IDs.
+    info
+        Info/benchmark mode. If true, record the time it took to run each simulation run.
 
     Returns
     -------
@@ -404,6 +429,11 @@ def simulate_parameter_combinations(
                     param_path_suffix=param_path_suffix,
                     event_path_suffix=event_path_suffix,
                     dry_run=dry_run,
+                    info=info,
+                    info_contents={
+                        "process_chunksize": process_chunksize,
+                        "max_workers": max_workers,
+                    },
                 ),
                 param_combinations,
                 chunksize=process_chunksize,
@@ -745,7 +775,7 @@ class SimulationSet:
     def __next__(self):
         return next(self._param_combinations)
 
-    def run(self, dry_run=False):
+    def run(self, dry_run: bool = False, info: bool = False):
         """
         Run the simulations configured through `base_params`, `zip_params` and `product_params` using
         multiprocessing. The parameters and resulting output events are written to disk
@@ -760,6 +790,8 @@ class SimulationSet:
         ----------
         dry_run
             If True, do not actually simulate.
+        info
+            Info/benchmark mode. If true, record the time it took to run each simulation run.
         """
 
         self._simulation_ids = simulate_parameter_combinations(
@@ -772,6 +804,7 @@ class SimulationSet:
             event_path_suffix=self._event_path_suffix,
             param_path_suffix=self._param_path_suffix,
             dry_run=dry_run,
+            info=info,
         )
 
     def __len__(self) -> int:
