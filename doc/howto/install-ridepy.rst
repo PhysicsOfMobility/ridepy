@@ -8,7 +8,7 @@ This section explains how to set up RidePy on your machine in various ways.
 Prerequisites
 -------------
 
-RidePy needs at least Python 3.9.
+Currently, using Python 3.9 is your best option.
 
 In addition, you should probably use a Python environment for keeping things clean. The following commands should work for Linux and macOS. On Windows, things might have to be done marginally different.
 
@@ -16,10 +16,10 @@ We recommend using either `Anaconda <https://www.anaconda.com/>`__ (which has th
 
 .. code::
 
-    conda create -n ridepy python=3.12
+    conda create -n ridepy python=3.9
     conda activate ridepy
 
-or simply ``venv`` from the Python standard library (assuming you are already using your desired version, alternatively you can additionally use `pyenv <https://github.com/pyenv/pyenv>`__ for managing Python versions):
+or simply ``venv`` from the Python standard library (assuming you are already on Python 3.9, alternatively you can additionally use `pyenv <https://github.com/pyenv/pyenv>`__ for managing Python versions):
 
 .. code::
 
