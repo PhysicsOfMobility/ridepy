@@ -964,6 +964,7 @@ def test_python_cython_osm_graph():
     cy_graph = CyGraph.from_nx(g_proj, make_attribute_distance="length")
     py_graph = Graph.from_nx(g_proj, make_attribute_distance="length")
 
+    # mnemonic: d = distance, cy = cython, py = python, h = high node, o = other node
     dcyho = cy_graph.d(high_node_id, other_node_id)
     dpyho = py_graph.d(high_node_id, other_node_id)
     dcyoh = cy_graph.d(other_node_id, high_node_id)
