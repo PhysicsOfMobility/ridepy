@@ -471,8 +471,23 @@ cdef class Graph(TransportSpace):
     """
     Weighted directed graph with integer node labels.
     """
-    def __cinit__(self, vertices, edges, weights=None, double velocity=1):
-        self.loc_type = LocType.INT
+
+    def __init__(self, vertices, edges, weights=None, double velocity=1):
+        """
+        Parameters
+        ----------
+        vertices : Sequence[int]
+            sequence of vertices
+        edges : Sequence[Tuple[int, int]]
+            sequence of edge tuples
+        weights : Union[None, float, Sequence[float]]
+            Edge weights.
+            - if None is supplied, the resulting graph is unweighted (unit edge length)
+            - if a single float is supplied, every edge length will be equal to this number
+            - if a sequence is supplied, this will be mapped onto the edge sequence
+        velocity
+            constant velocity to compute travel time, optional. default: 1
+        """
 
         if weights is None:
             self.derived_ptr = self.u_space.space_int_ptr = new CGraphSpace[ulonglong](
@@ -491,22 +506,6 @@ cdef class Graph(TransportSpace):
                 <vector[double]>weights
             )
 
-    def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
-        """
-        Parameters
-        ----------
-        vertices : Sequence[int]
-            sequence of vertices
-        edges : Sequence[Tuple[int, int]]
-            sequence of edge tuples
-        weights : Union[None, float, Sequence[float]]
-            Edge weights.
-            - if None is supplied, the resulting graph is unweighted (unit edge length)
-            - if a single float is supplied, every edge length will be equal to this number
-            - if a sequence is supplied, this will be mapped onto the edge sequence
-        velocity
-            constant velocity to compute travel time, optional. default: 1
-        """
         TransportSpace.__init__(self, loc_type=LocType.INT)
 
     def __dealloc__(self):
