@@ -22,7 +22,7 @@ keywords = [
     "physics",
 ]
 readme = "README.rst"
-requires-python = "3.9"
+requires-python = "~=3.9"
 classifiers = [
     "Intended Audience :: Science/Research",
     "Development Status :: 5 - Production/Stable",
@@ -44,7 +44,7 @@ dependencies = [
     "notebook",
     "jupytext",
     "matplotlib",
-    "cython>=3",
+    "Cython>=3",
     "loky",
     "typer",
     "pyarrow",
