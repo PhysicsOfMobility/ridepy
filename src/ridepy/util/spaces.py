@@ -282,6 +282,41 @@ class Graph(TransportSpace):
         self._update_distance_cache()
 
     @staticmethod
+    def _make_attribute_distance(G, attribute_name: Union[str, None]):
+        """
+        Set the distance attribute on the edges of the graph inplace.
+
+        Parameters
+        ----------
+        G
+            The graph to modify
+        attribute_name
+            The name of the attribute to use as distance.
+            If None, the distance will be set to 1 for each edge.
+        """
+        if attribute_name is None:
+            nx.set_edge_attributes(G, 1, name="distance")
+        elif attribute_name != "distance":
+            # if 'distance' already exists, we raise
+            if nx.get_edge_attributes(G, "distance"):
+                raise ValueError(
+                    "'distance' already exists as edge attribute, won't overwrite"
+                )
+            # otherwise rename
+            else:
+                nx.set_edge_attributes(
+                    G,
+                    nx.get_edge_attributes(G, attribute_name),
+                    name="distance",
+                )
+        else:
+            if len(nx.get_edge_attributes(G, "distance")) != G.number_of_edges():
+                raise ValueError(
+                    "Was told to use 'distance' as distance edge attribute. "
+                    "All edges must have the distance weight specified."
+                )
+
+    @staticmethod
     def _prepare_copy_of_nx_graph(*, G, make_attribute_distance, directed=False):
         if not directed:
             graph_class = nx.Graph
@@ -310,28 +345,7 @@ class Graph(TransportSpace):
         elif (directed and not G.is_directed()) or (not directed and G.is_directed()):
             raise TypeError(f"Must supply {'' if directed else 'un'}directed graph")
 
-        # making another attribute the distance
-        if make_attribute_distance is None:
-            nx.set_edge_attributes(G, 1, name="distance")
-        elif make_attribute_distance != "distance":
-            # if 'distance' already exists, we raise
-            if nx.get_edge_attributes(G, "distance"):
-                raise ValueError(
-                    "'distance' already exists as edge attribute, won't overwrite"
-                )
-            # otherwise rename
-            else:
-                nx.set_edge_attributes(
-                    G,
-                    nx.get_edge_attributes(G, make_attribute_distance),
-                    name="distance",
-                )
-        else:
-            if len(nx.get_edge_attributes(G, "distance")) != G.number_of_edges():
-                raise ValueError(
-                    "Was told to use 'distance' as distance edge attribute. "
-                    "All edges must have the distance weight specified."
-                )
+        Graph._make_attribute_distance(G, make_attribute_distance)
 
         return G
 
