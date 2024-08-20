@@ -10,6 +10,7 @@ The extension dtype for C++ object e.g. CRequest[Loc] then will contain *an unio
 CRequest[unsigned long long], Request[tuple(double, double)]) etc. Then each member function will check the Loc type, and dispatch the
 method call to the appropriate object inside that union.
 """
+import numbers
 
 from numpy import inf
 
@@ -132,7 +133,7 @@ cdef class TransportationRequest(Request):
                 delivery_timewindow_min, delivery_timewindow_max
             ))
             self._ureq._req_r2loc = dynamic_pointer_cast[CRequest[R2loc], CTransportationRequest[R2loc]](self._utranspreq._req_r2loc)
-        elif isinstance(origin, int):
+        elif isinstance(origin, numbers.Integral):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
             self._utranspreq._req_int = shared_ptr[CTransportationRequest[uiloc]](new CTransportationRequest[uiloc](
@@ -350,7 +351,7 @@ cdef class InternalRequest(Request):
                 request_id, creation_timestamp, location
             ))
             self._ureq._req_r2loc = dynamic_pointer_cast[CRequest[R2loc], CInternalRequest[R2loc]](self._uinternreq._req_r2loc)
-        elif isinstance(location, int):
+        elif isinstance(location, numbers.Integral):
             # let's assume both origin and destination are int
             self.loc_type = LocType.INT
             self._uinternreq._req_int = shared_ptr[CInternalRequest[uiloc]](new CInternalRequest[uiloc](
