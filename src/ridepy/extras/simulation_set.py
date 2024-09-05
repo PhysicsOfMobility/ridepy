@@ -297,11 +297,11 @@ def perform_single_simulation(
 
     space = params["general"]["space"]
     request_generator_cls = params["request_generator"].pop("request_generator_cls")
-    rg = request_generator_cls(
-        space=space,
-        request_class=params["general"]["transportation_request_cls"],
-        **params["request_generator"],
-    )
+    request_generator_kwargs = {
+        "space": space,
+        "request_cls": params["general"]["transportation_request_cls"],
+    } | params["request_generator"]
+    rg = request_generator_cls(**request_generator_kwargs)
 
     dispatcher = params["dispatcher"].pop("dispatcher_cls")
     if (

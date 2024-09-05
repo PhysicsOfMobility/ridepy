@@ -154,7 +154,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         )
         rg = RandomRequestGenerator(
             space=py_space,
-            request_class=pyds.TransportationRequest,
+            request_cls=pyds.TransportationRequest,
             seed=seed,
             rate=1.5,
         )
@@ -176,7 +176,7 @@ def test_equivalence_simulator_cython_and_python_bruteforce_dispatcher(seed=42):
         )
         rg = RandomRequestGenerator(
             space=cy_space,
-            request_class=cyds.TransportationRequest,
+            request_cls=cyds.TransportationRequest,
             seed=seed,
             rate=1.5,
         )
@@ -214,7 +214,7 @@ def test_sanity_in_graph():
             space=space,
             max_pickup_delay=0,
             max_delivery_delay_abs=0,
-            request_class=cyds.TransportationRequest,
+            request_cls=cyds.TransportationRequest,
         )
 
         transportation_requests = list(it.islice(rg, 1000))
