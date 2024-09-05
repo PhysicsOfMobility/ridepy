@@ -83,7 +83,7 @@ def simulate(
     rg = RandomRequestGenerator(
         space=space,
         rate=rate,
-        request_class=request_class,
+        request_cls=request_class,
         seed=seed,
         **request_kwargs,
     )

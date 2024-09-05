@@ -40,7 +40,7 @@ rg = RandomRequestGenerator(
     max_delivery_delay_rel=1.9,
     space=space,
     seed=42,
-    request_class=CyTransportationRequest
+    request_cls=CyTransportationRequest
 )
 
 n_buses = 50

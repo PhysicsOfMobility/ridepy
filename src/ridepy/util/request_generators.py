@@ -40,7 +40,7 @@ class RandomRequestGenerator(RequestGenerator):
         rate=1,
         seed=42,
         pickup_timewindow_offset=0,
-        request_class=TransportationRequest,
+        request_cls=TransportationRequest,
         max_pickup_delay: float = np.inf,
         max_delivery_delay_abs: float = np.inf,
         max_delivery_delay_rel: float = np.inf,
@@ -55,7 +55,7 @@ class RandomRequestGenerator(RequestGenerator):
             the rate of requests per time unit
         seed
             the random seed
-        request_class
+        request_cls
             the generated requests will be instances of this class. Needed to generate pythonic or cythonic requests at will.
         pickup_timewindow_offset
             Each request's pickup_timewindow_min will be this much from the creation
@@ -79,7 +79,7 @@ class RandomRequestGenerator(RequestGenerator):
 
         self.transport_space = space
         self.rate = rate
-        self.request_class = request_class
+        self.request_class = request_cls
         self.pickup_timewindow_offset = pickup_timewindow_offset
         self.max_pickup_delay = max_pickup_delay
         self.max_delivery_delay_abs = max_delivery_delay_abs

@@ -104,7 +104,7 @@ from ridepy.util.dispatchers_cython import (
 
 Now that's basically it. We will now do the same configuration as above, using the new Cython components. 
 
-There are two little extra changes we have to make: The first is to supply our `RandomRequestGenerator` with the Cython `TransportationRequest` type as `request_class` to make it supply those instead of the Python ones. 
+There are two little extra changes we have to make: The first is to supply our `RandomRequestGenerator` with the Cython `TransportationRequest` type as `request_cls` to make it supply those instead of the Python ones. 
 
 Secondly, the Cython `Dispatcher` needs to know about the type of spatial coordinates it is dealing with and therefore needs to be handed the `TransportSpace`'s `loc_type` attribute.
 
@@ -122,7 +122,7 @@ rg = RandomRequestGenerator(
     max_delivery_delay_rel=1.9,
     space=space,
     seed=42,
-    request_class=CyTransportationRequest
+    request_cls=CyTransportationRequest
 )
 
 n_buses = 50
