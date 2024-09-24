@@ -417,23 +417,26 @@ def MinimalPassengerTravelTimeDispatcher(
     seat_capacity: int,
 ) -> DispatcherSolution:
     """
-    #FIXME Add description
+    The dispatcher optimizes travel time for each passenger. Once a passenger is assigned, their travel time cannot be increased, meaning detours are not permitted.
     """
     min_cost = np.inf
-    boolInsertEnd = True
+    bool_insert_end = True
     best_pickup_idx = len(stoplist) - 1
     best_dropoff_idx = len(stoplist) - 1
 
     for counter in range(0, len(stoplist) - 1):
         stop_before_pickup = stoplist[counter]
         stop_after_pickup = stoplist[counter + 1]
-        listResultInBetweenTest = is_between(
+        list_result_in_between_test = is_between(
             space,
             request.origin,
             stop_before_pickup.location,
             stop_after_pickup.location,
         )
-        if listResultInBetweenTest[0] == True and listResultInBetweenTest[2] != 0:
+        if (
+            list_result_in_between_test[0] == True
+            and list_result_in_between_test[2] != 0
+        ):
             if stop_before_pickup.occupancy_after_servicing == seat_capacity:
                 continue
             time_to_pickup = space.t(stop_before_pickup.location, request.origin)
@@ -448,26 +451,21 @@ def MinimalPassengerTravelTimeDispatcher(
                 continue
 
             best_pickup_idx = counter
-            boolDropOffEnroute = False
-            boolContinuePickUpLoop = False
-            boolBreakPickUpLoop = False
+            bool_drop_off_enroute = False
+            bool_continue_pick_up_loop = False
+            bool_break_pick_up_loop = False
 
-            # Check if drop-off is between pick-up and next stop
-
-            listResultInBetweenTestFollowingPickUp = is_between(
+            list_result_in_between_testFollowingPickUp = is_between(
                 space, request.destination, request.origin, stop_after_pickup.location
             )
             if (
-                listResultInBetweenTestFollowingPickUp[0] == True
-                and listResultInBetweenTestFollowingPickUp[2] != 0
+                list_result_in_between_testFollowingPickUp[0] == True
+                and list_result_in_between_testFollowingPickUp[2] != 0
             ):
-                # Time violation and seat capacity error not possilbe
-                # As long as now drop-off time restriction is used
-                # Ganz grosse Skepsis hier ...
                 best_dropoff_idx = counter
                 min_cost = CPAT_pu
-                boolDropOffEnroute = True
-                boolInsertEnd = False
+                bool_drop_off_enroute = True
+                bool_insert_end = False
                 break
 
             for counter_drop_off, (
@@ -476,15 +474,15 @@ def MinimalPassengerTravelTimeDispatcher(
             ) in enumerate(pairwise(stoplist[best_pickup_idx:])):
                 if counter_drop_off == 0:
                     continue
-                listResultInBetweenTestDropOff = is_between(
+                list_result_in_between_testDropOff = is_between(
                     space,
                     request.destination,
                     stop_before_dropoff.location,
                     stop_after_dropoff.location,
                 )
                 if (
-                    listResultInBetweenTestDropOff[0] == True
-                    and listResultInBetweenTestDropOff[1] != 0
+                    list_result_in_between_testDropOff[0] == True
+                    and list_result_in_between_testDropOff[1] != 0
                 ):
                     best_dropoff_idx = counter + counter_drop_off
                     time_to_dropoff = space.t(
@@ -497,34 +495,33 @@ def MinimalPassengerTravelTimeDispatcher(
                         best_pickup_idx : best_dropoff_idx + 1
                     ]
 
-                    # occupancies_ausschnitt = list(map(lambda x: x.occupancy_after_servicing, stoplist_request_in_vehicle))
-
-                    occupancies_ausschnitt = []
+                    list_occupancies_after_servicing = []
                     for x in stoplist_request_in_vehicle:
-                        occupancies_ausschnitt.append(x.occupancy_after_servicing)
+                        list_occupancies_after_servicing.append(
+                            x.occupancy_after_servicing
+                        )
 
-                    if seat_capacity in occupancies_ausschnitt:
-                        boolContinuePickUpLoop = True
+                    if seat_capacity in list_occupancies_after_servicing:
+                        bool_continue_pick_up_loop = True
                         break
                     if CPAT_do > request.delivery_timewindow_max:
-                        # Pick-Up kann direkt fortgesetzt werden, da in diesem Fall auch der Drop-Off am Ende sicher scheitern wird
-                        boolContinuePickUpLoop = True
+                        bool_continue_pick_up_loop = True
                         break
-                    boolInsertEnd = False
+                    bool_insert_end = False
                     min_cost = CPAT_do
-                    boolDropOffEnroute = True
-                    boolBreakPickUpLoop = True
+                    bool_drop_off_enroute = True
+                    bool_break_pick_up_loop = True
                     break
 
-            if boolBreakPickUpLoop:
+            if bool_break_pick_up_loop:
                 break
 
-            if boolContinuePickUpLoop:
+            if bool_continue_pick_up_loop:
                 best_pickup_idx = len(stoplist) - 1
                 best_dropoff_idx = len(stoplist) - 1
                 continue
 
-            if not boolDropOffEnroute:
+            if not bool_drop_off_enroute:
                 best_dropoff_idx = len(stoplist) - 1
                 stop_before_dropoff = stoplist[-1]
                 time_to_dropoff = space.t(
@@ -533,18 +530,15 @@ def MinimalPassengerTravelTimeDispatcher(
                 CPAT_do = cpat_of_inserted_stop(
                     stop_before_dropoff, time_to_dropoff, delta_cpat=0
                 )
-                # Check time violations?
-                # Hier muss ueberprueft werden, ob druch das einfügen irgendwo die seat capacity verletzt wird
                 stoplist_request_in_vehicle = stoplist[
                     best_pickup_idx : best_dropoff_idx + 1
                 ]
-                # occupancies_ausschnitt = list(map(lambda x: x.occupancy_after_servicing, stoplist_request_in_vehicle))
 
-                occupancies_ausschnitt = []
+                list_occupancies_after_servicing = []
                 for x in stoplist_request_in_vehicle:
-                    occupancies_ausschnitt.append(x.occupancy_after_servicing)
+                    list_occupancies_after_servicing.append(x.occupancy_after_servicing)
 
-                if seat_capacity in occupancies_ausschnitt:
+                if seat_capacity in list_occupancies_after_servicing:
                     best_pickup_idx = len(stoplist) - 1
                     best_dropoff_idx = len(stoplist) - 1
                     continue
@@ -552,13 +546,13 @@ def MinimalPassengerTravelTimeDispatcher(
                     best_pickup_idx = len(stoplist) - 1
                     best_dropoff_idx = len(stoplist) - 1
                     continue
-                boolInsertEnd = False
+                bool_insert_end = False
                 min_cost = CPAT_do
                 break
         else:
             continue
 
-    if boolInsertEnd:
+    if bool_insert_end:
         best_pickup_idx = len(stoplist) - 1
         best_dropoff_idx = len(stoplist) - 1
         time_to_pickup = space.t(stoplist[best_pickup_idx].location, request.origin)
@@ -592,16 +586,6 @@ def MinimalPassengerTravelTimeDispatcher(
         listOccupanciesNewStopList = list(
             map(lambda x: x.occupancy_after_servicing, new_stoplist)
         )
-        for item in listOccupanciesNewStopList:
-            if item > seat_capacity:
-                print("Seat capacity error!!")
-
-        for item in new_stoplist[1:]:
-            request_item = item.request
-            if item.action.name == "pickup":
-                if item.estimated_arrival_time > request_item.pickup_timewindow_max:
-                    print("Time violation!!")
-                    continue
 
         return min_cost, new_stoplist, (EAST_pu, LAST_pu, EAST_do, LAST_do)
     else:
