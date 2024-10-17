@@ -1013,7 +1013,7 @@ class SimulationSet:
 
         return sqdf
 
-    def to_json(self, path: Union[str, Path]) -> None:
+    def to_json(self, path: Optional[Union[str, Path]] = None) -> None:
         """
         Serialize the simulation set configuration to a JSON file.
 
@@ -1021,7 +1021,20 @@ class SimulationSet:
         ----------
         path
             Path to the JSON file.
+
+            If not specified, the data_dir attribute will be
+            used to determine the file name as follows:
+
+            <data_dir parent>/<data_dir stem>.json
+
+            Example: `data_dir = ./simulations/experiment-1` will result in
+            `./simulations/experiment-1.json` for the JSON path.
+
         """
+
+        if path is None:
+            path = self.data_dir.with_suffix(".json")
+
         with open(path, "w") as f:
             json.dump(
                 {

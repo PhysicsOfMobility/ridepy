@@ -137,7 +137,7 @@ class FleetState(ABC):
 
         assert initial_locations, "No initial locations supplied."
         for initial_location in initial_locations.values():
-            # note that NumPy's dimensions start from 0
+            # Note that NumPy's dimensions start from 0
             assert space.n_dim == np.ndim(initial_location) + 1, (
                 f"Dimension mismatch: Initial location {initial_location} of "
                 f"dimensionality {np.ndim(initial_location) + 1} supplied, "
