@@ -7,7 +7,7 @@ import itertools as it
 import operator as op
 
 import numpy as np
-
+import random
 
 from abc import ABC, abstractmethod
 from typing import (
@@ -413,6 +413,7 @@ class FleetState(ABC):
             Modifies the `.VehicleState` of the vehicle with the least cost inplace.
 
         """
+        all_solutions = list(all_solutions)
         (
             best_vehicle,
             min_cost,
@@ -423,6 +424,23 @@ class FleetState(ABC):
                 delivery_timewindow_max,
             ),
         ) = min(all_solutions, key=op.itemgetter(1))
+        all_solutions_equal_min_costs = list(
+            filter(lambda x: x[1] == min_cost, all_solutions)
+        )
+
+        (
+            best_vehicle,
+            min_cost,
+            (
+                pickup_timewindow_min,
+                pickup_timewindow_max,
+                delivery_timewindow_min,
+                delivery_timewindow_max,
+            ),
+        ) = random.choice(all_solutions_equal_min_costs)
+
+        # test = list(self.fleet[0].stoplist)
+        # test1 = list(self.fleet[1].stoplist)
         logger.debug(f"best vehicle: {best_vehicle}, at min_cost={min_cost}")
         if min_cost == np.inf:  # no solution was found
             return {
