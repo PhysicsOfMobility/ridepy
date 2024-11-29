@@ -487,7 +487,7 @@ class SimulationSet:
 
         """
         d = deepcopy(base_dict)
-        # This sorted is needed otherwise detection of pre existing simulation run does not work.
+        # This sorted is needed otherwise detection of pre-existing simulation run does not work.
         for outer_key in sorted(set(base_dict) | set(update_dict)):
             d[outer_key] = base_dict.get(outer_key, {}) | update_dict.get(outer_key, {})
         return d
