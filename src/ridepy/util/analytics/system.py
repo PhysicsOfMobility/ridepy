@@ -1,8 +1,11 @@
 import warnings
 
+import numpy as np
 import pandas as pd
 
 from typing import Optional, Any, Union
+
+from notebooks.full_simulation_overview import avg_stoplist_length
 
 
 def get_system_quantities(
@@ -240,5 +243,109 @@ def get_system_quantities(
         res["avg_stoplist_length_service_time"] = (
             _stops["stoplist_length_service_time"] * _stops["state_duration"]
         ).sum() / _stops["state_duration"].sum()
+
+    return res
+
+
+def compute_transient_controlled_system_quantities(
+    stops: pd.DataFrame,
+    requests: pd.DataFrame,
+) -> dict[str, Union[int, float]]:
+    """
+
+    Controlling for transients, this computes:
+
+    - **avg_occupancy**
+    - **avg_segment_dist**
+    - **avg_segment_time**
+    - **avg_waiting_time**
+    - **avg_detour** -- Relative detour (delta) average over all steady-state requests
+    - **avg_direct_dist**
+    - **avg_direct_time**
+    - **avg_system_stoplist_length** -- The average number of scheduled stops across
+        the system. Computed by splitting the simulation time into 1000 intervals
+        and computing the number of scheduled stops at each interval, referring to time
+        at which the requests corresponding to the stops were *accepted*.
+
+    Parameters
+    ----------
+    stops
+        Stops dataframe
+    requests
+        Requests dataframe
+
+    Returns
+    -------
+    system_quantities
+        dict containing the aforementioned observables
+
+    """
+
+    df = requests.loc[
+        ~requests.accepted.timestamp.isna(),
+        [
+            ("accepted", "timestamp"),
+            ("serviced", "timestamp_pickup"),
+            ("serviced", "timestamp_dropoff"),
+        ],
+    ].copy()
+
+    df.columns = ["accepted", "pickup", "dropoff"]
+    df.sort_values("accepted", inplace=True)
+    trange = np.r_[
+        0 : df.dropoff.max() : 1000j
+    ]  # TODO make this available as a parameter
+
+    # Compute number of scheduled stops (system stoplist length ssll)
+    res = []
+    for t in trange:
+        accepted_df = df[(df.accepted <= t)]
+        res.append(
+            len(accepted_df[accepted_df.pickup > t])
+            + len(accepted_df[accepted_df.dropoff > t])
+        )
+
+    ssll_df = pd.DataFrame({"ssll": res}, index=trange)
+    ssll_df["gradient"] = np.gradient(res, trange)
+
+    # These are the times marking the beginning and end of the steady-state regime
+    t_min = ssll_df.index[np.argmin(ssll_df.gradient >= 0.05)]
+    t_max = ssll_df.index[len(ssll_df) - 1 - np.argmin(ssll_df.gradient[::-1] <= 0.05)]
+
+    assert t_min < t_max, "Transient: t_min >= t_max, this can't be right"
+    assert (t_max - t_min) >= trange[-1] / 10, (
+        "Transient: no substantial steady state reached, "
+        f"detected steady-state regime shorter than 10 % of the simulation time"
+    )
+
+    ss_stops = stops.query(
+        "timestamp >= @t_min and timestamp <= @t_max"
+    )  # steady-state stops
+
+    ss_requests_served = requests.loc[
+        [*set(requests.index) & set(ss_stops.request_id.unique())]
+    ]  # steady-state requests. All of these are served, as they have associated stops.
+
+    avg_occupancy = (
+        ss_stops["occupancy"] * ss_stops["state_duration"]
+    ).sum() / ss_stops["state_duration"].sum()
+    avg_segment_dist = ss_stops["dist_to_next"].mean()
+    avg_segment_time = ss_stops["time_to_next"].mean()
+    avg_waiting_time = ss_requests_served.inferred.waiting_time.mean()
+    avg_detour = ss_requests_served["inferred", "relative_travel_time"].mean()
+    avg_direct_dist = ss_requests_served["submitted", "direct_travel_distance"].mean()
+    avg_direct_time = ss_requests_served["submitted", "direct_travel_time"].mean()
+    avg_system_stoplist_length = ssll_df.loc[t_min:t_max, "ssll"].mean()
+
+    res = dict(
+        avg_occupancy=avg_occupancy,
+        avg_segment_dist=avg_segment_dist,
+        avg_segment_time=avg_segment_time,
+        avg_waiting_time=avg_waiting_time,
+        avg_detour=avg_detour,
+        avg_direct_dist=avg_direct_dist,
+        avg_direct_time=avg_direct_time,
+        avg_system_stoplist_length=avg_system_stoplist_length,
+    )
 
     return res
