@@ -5,8 +5,6 @@ import pandas as pd
 
 from typing import Optional, Any, Union
 
-from notebooks.full_simulation_overview import avg_stoplist_length
-
 
 def get_system_quantities(
     stops: pd.DataFrame,
