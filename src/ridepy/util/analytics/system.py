@@ -248,6 +248,8 @@ def get_system_quantities(
 def compute_transient_controlled_system_quantities(
     stops: pd.DataFrame,
     requests: pd.DataFrame,
+    n_ssll_samples: int = 1000,
+    gradient_threshold: float = 0.05,
 ) -> dict[str, Union[int, float]]:
     """
 
@@ -290,9 +292,7 @@ def compute_transient_controlled_system_quantities(
 
     df.columns = ["accepted", "pickup", "dropoff"]
     df.sort_values("accepted", inplace=True)
-    trange = np.r_[
-        0 : df.dropoff.max() : 1000j
-    ]  # TODO make this available as a parameter
+    trange = np.r_[0 : df.dropoff.max() : n_ssll_samples * 1j]
 
     # Compute number of scheduled stops (system stoplist length ssll)
     res = []
@@ -307,8 +307,10 @@ def compute_transient_controlled_system_quantities(
     ssll_df["gradient"] = np.gradient(res, trange)
 
     # These are the times marking the beginning and end of the steady-state regime
-    t_min = ssll_df.index[np.argmin(ssll_df.gradient >= 0.05)]
-    t_max = ssll_df.index[len(ssll_df) - 1 - np.argmin(ssll_df.gradient[::-1] <= 0.05)]
+    t_min = ssll_df.index[np.argmin(ssll_df.gradient > gradient_threshold)]
+    t_max = ssll_df.index[
+        len(ssll_df) - 1 - np.argmin(ssll_df.gradient[::-1] < gradient_threshold)
+    ]
 
     assert t_min < t_max, "Transient: t_min >= t_max, this can't be right"
     assert (t_max - t_min) >= trange[-1] / 10, (
