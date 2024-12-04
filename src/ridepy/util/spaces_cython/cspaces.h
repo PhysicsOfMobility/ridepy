@@ -48,6 +48,20 @@ public:
   double velocity;
 };
 
+class Euclidean2DPeriodicBoundaries : public Euclidean2D {
+public:
+  Euclidean2DPeriodicBoundaries(double velocity = 1.);
+
+  double d(R2loc u, R2loc v) override;
+  double t(R2loc u, R2loc v) override;
+  pair<R2loc, double> interp_dist(R2loc u, R2loc v,
+                                  double dist_to_dest) override;
+  pair<R2loc, double> interp_time(R2loc u, R2loc v,
+                                  double time_to_dest) override;
+
+  double velocity;
+};
+
 /*!
  * \brief The Euclidean2D class allows vehicles to drive anywhere on the 2D
  * plane.

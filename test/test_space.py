@@ -5,12 +5,14 @@ import itertools as it
 import math as m
 import numpy as np
 import networkx as nx
-from hypothesis import given
 import hypothesis.strategies as st
+
+from hypothesis import given
+from pytest import approx
 from time import time
+import pandas as pd
 
 np.random.seed(0)
-import pandas as pd
 
 from ridepy.util.spaces import (
     Euclidean,
@@ -161,6 +163,53 @@ def test_CyEuclidean2D():
     assert space.d((0, 0), (0, 1)) == 1.0
     assert space.d((0, 0), (0, 0)) == 0.0
     assert space.d((0, 0), (1, 1)) == m.sqrt(2)
+
+
+def test_CyEuclidean2DPeriodicBoundaries():
+    space = CyEuclidean2D(periodic_boundaries=True)
+    assert space.d((0, 0), (0.5, 0.5)) == m.sqrt(2) / 2
+
+    assert space.d((0, 0), (1, 1)) == 0.0
+
+    assert space.d((0, 0), (0, 1)) == 0.0
+    assert space.d((0, 0), (0, 0)) == 0.0
+
+    assert space.d((0, 0), (0, 0.4)) == 0.4
+    assert space.d((0, 0), (0, 0.6)) == 0.4
+
+    assert space.d((0, 0.4), (0, 0)) == 0.4
+    assert space.d((0, 0.6), (0, 0)) == 0.4
+
+    assert space.d((0, 0), (0.4, 0)) == 0.4
+    assert space.d((0, 0), (0.6, 0)) == 0.4
+
+    assert space.d((0.4, 0), (0, 0)) == 0.4
+    assert space.d((0.6, 0), (0, 0)) == 0.4
+
+    def compare_interp_result(u, v, dist_to_dest, r, jump_time, mode="dist"):
+        func = space.interp_dist if mode == "dist" else space.interp_time
+        r, jump_time = func(u, v, dist_to_dest)
+        assert r == approx(r)
+        assert jump_time == approx(jump_time)
+
+    compare_interp_result(
+        u=(0, 0.4), v=(0, 0.6), dist_to_dest=0.1, r=(0, 0.5), jump_time=0.0
+    )
+    compare_interp_result(
+        u=(0, 0.2), v=(0, 0.8), dist_to_dest=0.4, r=(0, 0.2), jump_time=0.0
+    )
+    compare_interp_result(
+        u=(0, 0.2), v=(0, 0.8), dist_to_dest=0.3, r=(0, 0.1), jump_time=0.0
+    )
+    compare_interp_result(
+        u=(0, 0.2), v=(0, 0.8), dist_to_dest=0.2, r=(0, 0), jump_time=0.0
+    )
+    compare_interp_result(
+        u=(0, 0.2), v=(0, 0.8), dist_to_dest=0.1, r=(0, 0.9), jump_time=0.0
+    )
+    compare_interp_result(
+        u=(0, 0.2), v=(0, 0.8), dist_to_dest=0.0, r=(0, 0.8), jump_time=0.0
+    )
 
 
 def test_CyManhattan2D():

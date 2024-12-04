@@ -15,6 +15,7 @@ from .cspaces cimport(
     R2loc,
     uiloc,
     Euclidean2D as CEuclidean2D,
+    Euclidean2DPeriodicBoundaries as CEuclidean2DPeriodicBoundaries,
     Manhattan2D as CManhattan2D,
     GraphSpace as CGraphSpace
 )
@@ -106,9 +107,12 @@ cdef class Euclidean2D(TransportSpace):
     """
     :math:`\mathbb{R}^2` with :math:`L_2`-induced metric (Euclidean).
     """
-    def __cinit__(self, double velocity=1, *args, **kwargs):
+    def __cinit__(self, double velocity=1, periodic_boundaries=False, *args, **kwargs):
         self.loc_type = LocType.R2LOC
-        self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
+        if periodic_boundaries:
+            self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2DPeriodicBoundaries(velocity)
+        else:
+            self.derived_ptr = self.u_space.space_r2loc_ptr = new CEuclidean2D(velocity)
 
     def __init__(self, *args, **kwargs): # remember both __cinit__ and __init__ gets the same arguments passed
         """
