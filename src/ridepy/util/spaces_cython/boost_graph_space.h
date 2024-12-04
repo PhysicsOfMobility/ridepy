@@ -109,13 +109,11 @@ public:
   GraphSpace(double velocity, vector<vertex_t> vertex_vec,
              vector<Edge> edge_vec, vector<double> weight_vec)
       : TransportSpace<vertex_t>(),
-        velocity(velocity),
-        _g{vertex_vec.size()},
-        vertex2label{get(vertex_name, _g)},
+        velocity(velocity), _g{vertex_vec.size()}, vertex2label{get(vertex_name,
+                                                                    _g)},
         _distances(static_cast<int>(vertex_vec.size())),
         _predecessors(static_cast<int>(vertex_vec.size())),
-        _weights{weight_vec},
-        edge2weight{get(edge_weight, _g)} {
+        _weights{weight_vec}, edge2weight{get(edge_weight, _g)} {
     // this->vertex2label = get(vertex_name, this->_g);
     // add vertex properties
     int idx = 0;

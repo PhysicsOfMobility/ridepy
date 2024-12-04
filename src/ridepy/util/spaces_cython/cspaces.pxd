@@ -37,6 +37,11 @@ cdef extern from "cspaces.h" namespace 'ridepy':
         Euclidean2D()
         Euclidean2D(double)
 
+    cdef cppclass Euclidean2DPeriodicBoundaries(Euclidean2D):
+        double velocity
+        Euclidean2DPeriodicBoundaries()
+        Euclidean2DPeriodicBoundaries(double)
+
     cdef cppclass Manhattan2D(TransportSpace[R2loc]):
         double velocity
         Manhattan2D()
