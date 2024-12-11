@@ -8,7 +8,8 @@ from ridepy.data_structures_cython.data_structures cimport (
     TransportationRequest,
     Stoplist,
     LocType,
-    R2loc
+    R2loc,
+    uiloc
 )
 
 from ridepy.data_structures_cython.cdata_structures cimport (
@@ -62,7 +63,7 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher:
             bint debug=False
     ):
         cdef InsertionResult[R2loc] insertion_result_r2loc
-        cdef InsertionResult[int] insertion_result_int
+        cdef InsertionResult[uiloc] insertion_result_int
 
         if self.loc_type == LocType.R2LOC:
             insertion_result_r2loc = c_brute_force_total_traveltime_minimizing_dispatcher[R2loc](
@@ -74,8 +75,8 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher:
                    (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
                     insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
         elif self.loc_type == LocType.INT:
-            insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[int](
-                dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
+            insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[uiloc](
+                dynamic_pointer_cast[CTransportationRequest[uiloc], CRequest[uiloc]](cy_request._ureq._req_int),
                 stoplist.ustoplist._stoplist_int,
                 dereference(space.u_space.space_int_ptr), seat_capacity, debug
             )
@@ -140,7 +141,7 @@ cdef class SimpleEllipseDispatcher:
     ):
 
         cdef InsertionResult[R2loc] insertion_result_r2loc
-        cdef InsertionResult[int] insertion_result_int
+        cdef InsertionResult[uiloc] insertion_result_int
 
         if self.loc_type == LocType.R2LOC:
             insertion_result_r2loc = c_simple_ellipse_dispatcher[R2loc](
@@ -152,8 +153,8 @@ cdef class SimpleEllipseDispatcher:
                    (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
                     insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
         elif self.loc_type == LocType.INT:
-            insertion_result_int = c_simple_ellipse_dispatcher[int](
-                dynamic_pointer_cast[CTransportationRequest[int], CRequest[int]](cy_request._ureq._req_int),
+            insertion_result_int = c_simple_ellipse_dispatcher[uiloc](
+                dynamic_pointer_cast[CTransportationRequest[uiloc], CRequest[uiloc]](cy_request._ureq._req_int),
                 stoplist.ustoplist._stoplist_int,
                 dereference(space.u_space.space_int_ptr), seat_capacity, max_relative_detour, debug
             )

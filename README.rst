@@ -1,4 +1,4 @@
-|Code style: black| |Tests| |Docs| |wheel| |sdist|
+|joss| |Code style: black| |Tests| |Docs| |wheel| |sdist|
 
 RidePy
 ======
@@ -7,12 +7,12 @@ RidePy is a scientific Python library for simulating modern on-demand transit sy
 
 In short: RidePy simulates a dispatching algorithm serving exogenous transportation requests with a fleet of vehicles. Does not simulate the universe, unlike MATSim. Batteries are included.
 
-Head over to `ridepy.org <ridepy doc_>`__ to get started.
+Head over to `ridepy.org <ridepy doc_>`__ to get started. You might also be interested in our `paper <https://doi.org/10.21105/joss.06241>`__ published in the Journal of Open Source Software.
 
 Quickstart
 ----------
 
-For detailed instructions, see the `installation guide <https://ridepy.org/setup.html>`__ in the documentation.
+For detailed instructions, see the `installation guide <https://ridepy.org/howto/install-ridepy>`__ in the documentation.
 
 If you're in a hurry, here's the gist:
 
@@ -32,9 +32,9 @@ If you're in a hurry, here's the gist:
 Contributing
 ------------
 
-We are always happy for contributions from the community. If you run into a problem, please `report an issue <https://ridepy.org/issues.html>`__ or `ask for help <https://ridepy.org/support.html>`__.
+We are always happy for contributions from the community. If you run into a problem, please `report an issue <https://ridepy.org/howto/report-an-issue>`__ or `ask for help <https://ridepy.org/howto/obtain-support>`__.
 
-If you are interested in contributing to our codebase, please read our `contributing guide <https://ridepy.org/contributing.html>`__.
+If you are interested in contributing to our codebase, please read our `contributing guide <https://ridepy.org/howto/contribute>`__.
 
 Here is a short overview of the most important points:
 
@@ -80,5 +80,8 @@ Development
 
 .. |sdist| image:: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml/badge.svg
    :target: https://github.com/PhysicsOfMobility/ridepy/actions/workflows/build-sdist.yml
+
+.. |joss| image:: https://joss.theoj.org/papers/10.21105/joss.06241/status.svg
+   :target: https://doi.org/10.21105/joss.06241
 
 .. _ridepy doc: https://ridepy.org

@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+import json
 
 import loky
 from time import time
@@ -50,6 +51,9 @@ from ridepy.extras.io import (
     create_params_json,
     save_events_json,
     read_params_json,
+    ParamsJSONEncoder,
+    ParamsJSONDecoder,
+    create_info_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -211,9 +215,12 @@ def perform_single_simulation(
     data_dir: Path,
     jsonl_chunksize: int = 1000,
     debug: bool = False,
-    param_path_suffix: str = "_params.json",
     event_path_suffix: str = ".jsonl",
+    param_path_suffix: str = "_params.json",
+    info_path_suffix: str = "_info.json",
     dry_run: bool = False,
+    info: bool = False,
+    info_contents: Optional[dict[str, Any]] = None,
 ) -> str:
     """
     Execute a single simulation run based on a parameter dictionary
@@ -249,6 +256,10 @@ def perform_single_simulation(
         Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
     dry_run
         If True, do not actually simulate. Just pretend to and return the corresponding ID.
+    info
+        Info/benchmark mode. If true, record the time it took to run the simulation run in a separate info file.
+    info_contents
+        Additional contents to write to the info file.
 
     Returns
     -------
@@ -261,6 +272,7 @@ def perform_single_simulation(
     sim_id = make_sim_id(params_json)
     event_path = data_dir / f"{sim_id}{event_path_suffix}"
     param_path = data_dir / f"{sim_id}{param_path_suffix}"
+    info_path = data_dir / f"{sim_id}{info_path_suffix}"
 
     if (
         param_path.exists()
@@ -338,8 +350,21 @@ def perform_single_simulation(
         else:
             raise ValueError("Must *either* specify `n_reqs` *or* `t_cutoff`")
 
+        simulation_start_time = time()
+
         while chunk := list(it.islice(simulation, jsonl_chunksize)):
             save_events_json(jsonl_path=event_path, events=chunk)
+
+        simulation_end_time = time()
+
+        if info:
+            simulation_duration = simulation_end_time - simulation_start_time
+            with info_path.open("w") as f:
+                info = {
+                    "simulation_duration": simulation_duration,
+                    "jsonl_chunksize": jsonl_chunksize,
+                } | (info_contents or {})
+                f.write(create_info_json(info))
 
         with open(str(param_path), "w") as f:
             f.write(params_json)
@@ -360,6 +385,7 @@ def simulate_parameter_combinations(
     event_path_suffix: str = ".jsonl",
     param_path_suffix: str = "_params.json",
     dry_run: bool = False,
+    info: bool = False,
 ):
     """
     Run simulations for different parameter combinations using multiprocessing.
@@ -385,6 +411,8 @@ def simulate_parameter_combinations(
         Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
     dry_run
         If True, do not actually simulate. Just pretend to and return the corresponding IDs.
+    info
+        Info/benchmark mode. If true, record the time it took to run each simulation run.
 
     Returns
     -------
@@ -401,6 +429,11 @@ def simulate_parameter_combinations(
                     param_path_suffix=param_path_suffix,
                     event_path_suffix=event_path_suffix,
                     dry_run=dry_run,
+                    info=info,
+                    info_contents={
+                        "process_chunksize": process_chunksize,
+                        "max_workers": max_workers,
+                    },
                 ),
                 param_combinations,
                 chunksize=process_chunksize,
@@ -518,6 +551,8 @@ class SimulationSet:
         event_path_suffix: str = ".jsonl",
         param_path_suffix: str = "_params.json",
         validate: bool = True,
+        comment: Optional[str] = None,
+        name: Optional[str] = None,
     ) -> None:
         """
 
@@ -551,6 +586,10 @@ class SimulationSet:
             Simulation events will be stored under "data_dir/<simulation_id><event_path_suffix>"
         validate
             Check validity of the supplied dictionary (unknown outer and inner keys, equal length for ``zip_params``)
+        name
+            Optional, filename-safe name.
+        comment
+            Optional human-readable comment.
         """
 
         self.debug = debug
@@ -558,6 +597,8 @@ class SimulationSet:
         self.process_chunksize = process_chunksize
         self.jsonl_chunksize = jsonl_chunksize
         self.data_dir = Path(data_dir)
+        self.name = name
+        self.comment = comment
 
         self._event_path_suffix = event_path_suffix
         self._param_path_suffix = param_path_suffix
@@ -599,8 +640,8 @@ class SimulationSet:
 
         if validate:
             # assert no unknown outer keys
-            assert not (set(base_params) | set(zip_params) | set(product_params)) - set(
-                self.default_base_params
+            assert not (set(base_params) | set(zip_params) | set(product_params)) - (
+                set(self.default_base_params) | {"analytics"}
             ), "invalid outer key"
 
             # assert no unknown inner keys
@@ -734,7 +775,7 @@ class SimulationSet:
     def __next__(self):
         return next(self._param_combinations)
 
-    def run(self, dry_run=False):
+    def run(self, dry_run: bool = False, info: bool = False):
         """
         Run the simulations configured through `base_params`, `zip_params` and `product_params` using
         multiprocessing. The parameters and resulting output events are written to disk
@@ -749,6 +790,8 @@ class SimulationSet:
         ----------
         dry_run
             If True, do not actually simulate.
+        info
+            Info/benchmark mode. If true, record the time it took to run each simulation run.
         """
 
         self._simulation_ids = simulate_parameter_combinations(
@@ -761,6 +804,7 @@ class SimulationSet:
             event_path_suffix=self._event_path_suffix,
             param_path_suffix=self._param_path_suffix,
             dry_run=dry_run,
+            info=info,
         )
 
     def __len__(self) -> int:
@@ -968,3 +1012,77 @@ class SimulationSet:
                     )
 
         return sqdf
+
+    def to_json(self, path: Union[str, Path]) -> None:
+        """
+        Serialize the simulation set configuration to a JSON file.
+
+        Parameters
+        ----------
+        path
+            Path to the JSON file.
+        """
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "data_dir": str(self.data_dir.resolve()),
+                    "base_params": self._base_params,
+                    "zip_params": self._zip_params,
+                    "product_params": self._product_params,
+                    "cython": True,
+                    "debug": self.debug,
+                    "max_workers": self.max_workers,
+                    "process_chunksize": self.process_chunksize,
+                    "jsonl_chunksize": self.jsonl_chunksize,
+                    "event_path_suffix": self._event_path_suffix,
+                    "param_path_suffix": self._param_path_suffix,
+                    "name": self.name,
+                    "comment": self.comment,
+                    "_simulation_ids": self._simulation_ids,
+                    "_system_quantities_path": self._system_quantities_path,
+                },
+                f,
+                indent=4,
+                cls=ParamsJSONEncoder,
+            )
+
+    @classmethod
+    def from_json(cls, path: Union[str, Path]) -> "SimulationSet":
+        """
+        Deserialize the simulation set configuration from a JSON file.
+
+        Parameters
+        ----------
+        path
+            Path to the JSON file.
+
+        Returns
+        -------
+        SimulationSet
+        """
+        with open(path, "r") as f:
+            config = json.load(f, cls=ParamsJSONDecoder)
+
+        _simulation_ids = config.pop("_simulation_ids")
+        _system_quantities_path = config.pop("_system_quantities_path")
+
+        obj = cls(**config)
+        obj._simulation_ids = _simulation_ids
+        obj._system_quantities_path = _system_quantities_path
+
+        return obj
+
+    def __eq__(self, other: "SimulationSet") -> bool:
+        return (
+            self.data_dir == other.data_dir
+            and self._base_params == other._base_params
+            and self._zip_params == other._zip_params
+            and self._product_params == other._product_params
+            and self.debug == other.debug
+            and self.max_workers == other.max_workers
+            and self.process_chunksize == other.process_chunksize
+            and self.jsonl_chunksize == other.jsonl_chunksize
+            and self._event_path_suffix == other._event_path_suffix
+            and self._param_path_suffix == other._param_path_suffix
+            and self.comment == other.comment
+        )

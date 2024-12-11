@@ -31,7 +31,7 @@ Parameter Configuration
 
 `SimulationSet` takes three main arguments: ``base_params``, ``zip_params`` and ``product_params``. Base parameters are parameters which are kept constant across all simulations defined by the simulation set. Here, the values of the inner dict are the actual parameters. For zip and product parameters, lists of values are supplied as the inner dictionary's values. Zip parameters are varied simultaneously across the simulations, i.e., the first simulation will use the first parameter value for all of the parameters in ``zip_params``, the second simulation will use the second parameter values, and so on. For zip parameters it is important that all lists of parameter values are of equal length. The lists in product parameters on the other hand will be multiplied as a Cartesian product. Here the lengths do not have to match, all possible combinations will be simulated.
 
-Each of the arguments takes a dictionary of dictionaries. Currently, three top-level keys are supported: ``general``, ``dispatcher`` and ``request_generator``. The inner dictionaries contain the actual parameters to be varied. The structure of the outer dictionary is thus as follows:
+Each of the arguments takes a dictionary of dictionaries. Currently, four top-level keys are supported: ``general``, ``dispatcher``, ``request_generator``, and ``analytics``. The inner dictionaries contain the actual parameters to be varied. The structure of the outer dictionary is thus as follows:
 
 .. code-block:: python
 
@@ -39,6 +39,7 @@ Each of the arguments takes a dictionary of dictionaries. Currently, three top-l
           "general": {...},
           "dispatcher": {...},
           "request_generator": {...},
+          "analytics": {...},
       }
 
 If any of the top-level keys are missing, the respective parameters are taken from the default base parameters.
@@ -64,6 +65,10 @@ Currently, the following parameters are supported:
 
    * ``request_generator: Type[RequestGenerator]`` -- The request generator type to use
    * Any request generator keyword argument, will be supplied to the request generator upon instantiation
+
+* Valid values for ``analytics``:
+
+   * ``d_avg: float`` -- Average direct request distance.
 
 As for the top-level keys, if any of the inner keys are missing, the respective parameters are taken from the default base parameters in `.SimulationSet`, which are currently set as follows:
 

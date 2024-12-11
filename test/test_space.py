@@ -941,3 +941,36 @@ def test_python_cython_graph_interpolation_equivalence():
 
     assert py_loc == cy_loc
     assert py_jump_time == cy_jump_time
+
+
+def test_python_cython_osm_graph():
+    import osmnx as ox
+
+    g = ox.graph_from_point(
+        center_point=(45.8037597, 10.2711883),
+        dist=1000,
+        dist_type="bbox",
+        network_type="drive",
+        simplify=False,
+        retain_all=False,
+    )
+    g_proj = ox.project_graph(g).to_undirected()
+    high_node_id = 12110534471
+    other_node_id = 1425321707
+    assert high_node_id > 2**31 - 1
+    assert high_node_id in g_proj.nodes
+    assert other_node_id in g_proj.nodes
+
+    cy_graph = CyGraph.from_nx(g_proj, make_attribute_distance="length")
+    py_graph = Graph.from_nx(g_proj, make_attribute_distance="length")
+
+    # mnemonic: d = distance, cy = cython, py = python, h = high node, o = other node
+    dcyho = cy_graph.d(high_node_id, other_node_id)
+    dpyho = py_graph.d(high_node_id, other_node_id)
+    dcyoh = cy_graph.d(other_node_id, high_node_id)
+    dpyoh = py_graph.d(other_node_id, high_node_id)
+
+    assert dcyho == pytest.approx(dpyho)
+    assert dpyho == pytest.approx(dcyoh)
+    assert dcyoh == pytest.approx(dpyoh)
+    assert dpyoh == pytest.approx(dcyho)

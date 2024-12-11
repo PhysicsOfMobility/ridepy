@@ -17,7 +17,10 @@ Doing so will result in an *ambiguous overridden function* error from cython.
 
 cdef extern from "ctransport_space.h" namespace 'ridepy':
 
-    ctypedef pair[double, double] R2loc
+    ctypedef pair[double, double] R2loc  # Euclidean R2 location (floating point)
+    ctypedef unsigned long long uiloc  # Unsigned integer location
+    # TODO: why is this a duplicate of the one in cdata_structures.pxd?
+
     cdef cppclass TransportSpace[Loc]:
         TransportSpace()
         TransportSpace(double)

@@ -21,6 +21,7 @@ class build_ext_w_compiler_check(build_ext):
 
 
 setup(
+    package_dir={"": "src"},  # Necessary for `python setup.py develop` to work
     ext_modules=cythonize(
         [
             Extension(
@@ -35,6 +36,7 @@ setup(
             )
         ],
         compiler_directives={"embedsignature": True},
+        language_level=3,
     ),
     options={
         "build_ext": {
