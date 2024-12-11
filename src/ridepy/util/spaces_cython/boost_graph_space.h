@@ -19,14 +19,18 @@ template <typename vertex_t>
 class GraphSpace : public TransportSpace<vertex_t> {
   // Graph of the adjacency_list type
   typedef adjacency_list<
-    vecS,  // OutEdgeList: std::vector
-    vecS,  // VertexList: std::vector
-    undirectedS,  // Directed: Undirected graph
-    property<vertex_name_t, vertex_t>, // Vertex properties: vertex_t, tagged with vertex_name_t, to store the Python node IDs
-    property<edge_weight_t, double>  // Edge properties: double, tagged with edge_weight_t to store the edge lengths
-   > Graph;
+      vecS,                              // OutEdgeList: std::vector
+      vecS,                              // VertexList: std::vector
+      undirectedS,                       // Directed: Undirected graph
+      property<vertex_name_t, vertex_t>, // Vertex properties: vertex_t, tagged
+                                         // with vertex_name_t, to store the
+                                         // Python node IDs
+      property<edge_weight_t, double>    // Edge properties: double, tagged with
+                                      // edge_weight_t to store the edge lengths
+      >
+      Graph;
 
-   // Python node ID edge
+  // Python node ID edge
   typedef pair<vertex_t, vertex_t> Edge;
 
   // LRU cache for predecessor and distance vectors
@@ -35,8 +39,9 @@ class GraphSpace : public TransportSpace<vertex_t> {
   // Boost graph object
   Graph _g;
 
-  // Vertex labels are the templated-type node IDs as used in the simulation space
-  // Vertex indices are the integer node IDs used by the boost graph object
+  // Vertex labels are the templated-type node IDs as used in the simulation
+  // space Vertex indices are the integer node IDs used by the boost graph
+  // object
   map<vertex_t, int> vertex_label2index;
 
   // Vertex and edge properties are stored in property maps
@@ -54,11 +59,11 @@ class GraphSpace : public TransportSpace<vertex_t> {
       10000}; // the cache size could be set at initialization
 
   /**
-    * Compute the shortest paths from a source node to all other nodes in the
-    * graph and store the results in the predecessor and distance vectors
-    *
-    * @param u_idx index of the source node
-    */
+   * Compute the shortest paths from a source node to all other nodes in the
+   * graph and store the results in the predecessor and distance vectors
+   *
+   * @param u_idx index of the source node
+   */
   void cached_dijkstra(int u_idx) {
     if (pred_cache.contains(u_idx)) {
       auto res = pred_cache.lookup(u_idx);
@@ -67,13 +72,16 @@ class GraphSpace : public TransportSpace<vertex_t> {
     } else {
       // Not in cache, compute
       dijkstra_shortest_paths(
-        this->_g,  // Graph
-        u_idx,  // Source node
-        predecessor_map(&this->_predecessors[0])  // Named parameter: predecessor_map
-          .distance_map(&this->_distances[0])  // Named parameter: distance_map
+          this->_g, // Graph
+          u_idx,    // Source node
+          predecessor_map(
+              &this->_predecessors[0]) // Named parameter: predecessor_map
+              .distance_map(
+                  &this->_distances[0]) // Named parameter: distance_map
       );
       // Insert into cache
-      pred_cache.insert(u_idx, make_pair(this->_predecessors, this->_distances));
+      pred_cache.insert(u_idx,
+                        make_pair(this->_predecessors, this->_distances));
     }
   }
 
@@ -81,8 +89,8 @@ public:
   double velocity;
 
   /**
-   * Constructor taking the velocity and vectors of vertices and unweighted edges
-   * (all edges will have weight 1)
+   * Constructor taking the velocity and vectors of vertices and unweighted
+   * edges (all edges will have weight 1)
    *
    * @param velocity vehicle velocity
    * @param vertex_vec vector of vertex Python node IDs
@@ -105,13 +113,11 @@ public:
   GraphSpace(double velocity, vector<vertex_t> vertex_vec,
              vector<Edge> edge_vec, vector<double> weight_vec)
       : TransportSpace<vertex_t>(),
-        velocity(velocity),
-        _g{vertex_vec.size()},
-        vertex2label{get(vertex_name, _g)},
+        velocity(velocity), _g{vertex_vec.size()}, vertex2label{get(vertex_name,
+                                                                    _g)},
         _distances(static_cast<int>(vertex_vec.size())),
         _predecessors(static_cast<int>(vertex_vec.size())),
-        _weights{weight_vec},
-        edge2weight{get(edge_weight, _g)} {
+        _weights{weight_vec}, edge2weight{get(edge_weight, _g)} {
     // this->vertex2label = get(vertex_name, this->_g);
 
     // Add vertex labels
@@ -126,12 +132,8 @@ public:
     idx = 0;
     for (auto &e : edge_vec) {
       property<edge_weight_t, double> edge_property(weight_vec[idx]);
-      add_edge(
-        this->vertex_label2index[e.first],
-        this->vertex_label2index[e.second],
-        edge_property,
-        this->_g
-      );
+      add_edge(this->vertex_label2index[e.first],
+               this->vertex_label2index[e.second], edge_property, this->_g);
       idx++;
     }
   }
@@ -210,9 +212,9 @@ public:
   }
 
   /**
-    * Return a vector of all vertices in the graph
-    * @return vector of vertex Python node IDs
-    */
+   * Return a vector of all vertices in the graph
+   * @return vector of vertex Python node IDs
+   */
   vector<vertex_t> get_vertices() {
     vector<vertex_t> v;
     for (auto vp = vertices(this->_g); vp.first != vp.second; ++vp.first)
@@ -221,9 +223,9 @@ public:
   }
 
   /**
-    * Return a vector of all edges in the graph
-    * @return vector of Python node ID pairs
-    */
+   * Return a vector of all edges in the graph
+   * @return vector of Python node ID pairs
+   */
   vector<Edge> get_edges() {
     vector<Edge> e;
     for (auto [first, last] = edges(this->_g); first != last; ++first) {
@@ -234,9 +236,9 @@ public:
   }
 
   /**
-    * Return a vector of all edge weights in the graph
-    * @return vector of edge weights
-    */
+   * Return a vector of all edge weights in the graph
+   * @return vector of edge weights
+   */
   vector<double> get_weights() {
     vector<double> w;
     for (auto [first, last] = edges(this->_g); first != last; ++first) {

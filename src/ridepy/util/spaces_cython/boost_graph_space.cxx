@@ -18,16 +18,16 @@ int main(int, char *[]) {
 
   std::vector<double> weights{9, 9, 9, 9, 9};
   GraphSpace<int> g{velocity, vertices, edges, weights};
-//  g.print_vertices_and_edges();
-//  g.print_shortest_paths(102);
-//  g.print_shortest_paths(103);
+  //  g.print_vertices_and_edges();
+  //  g.print_shortest_paths(102);
+  //  g.print_shortest_paths(103);
 
   for (auto &src : vertices) {
     for (auto &target : vertices) {
       g.d(src, target);
     }
-    }
-    }
+  }
+}
 //      std::cout << "d(" << src << "," << target
 //                << "): " << g.d(src, target) << std::endl;
 //    }
