@@ -2,6 +2,7 @@
 
 // Note that the code in this file is just for testing purposes,
 // it's not actually used by ridepy.
+using namespace ridepy;
 
 int main(int, char *[]) {
   // declare graph type
@@ -13,22 +14,27 @@ int main(int, char *[]) {
   const std::vector<Edge> edges{Edge(101, 102), Edge(102, 103), Edge(103, 104),
                                 Edge(104, 101), Edge(101, 103)};
   const int num_edges = edges.size();
+  const double velocity = 1.0;
 
   std::vector<double> weights{9, 9, 9, 9, 9};
-  GraphSpace<int> g{vertices, edges, weights};
-  g.print_vertices_and_edges();
-  g.print_shortest_paths(102);
-  g.print_shortest_paths(103);
+  GraphSpace<int> g{velocity, vertices, edges, weights};
+  //  g.print_vertices_and_edges();
+  //  g.print_shortest_paths(102);
+  //  g.print_shortest_paths(103);
 
   for (auto &src : vertices) {
     for (auto &target : vertices) {
-      std::cout << "d(" << src << "," << target
-                << "): " << g.distance(src, target) << std::endl;
+      g.d(src, target);
     }
   }
-  for (auto dtd = 0; dtd < 18; dtd++) {
-    auto [v, rest] = g.interpolate(102, 104, dtd);
-    std::cout << "interpolate(102, 104, " << dtd << "): " << v << "," << rest
-              << std::endl;
-  }
 }
+//      std::cout << "d(" << src << "," << target
+//                << "): " << g.d(src, target) << std::endl;
+//    }
+//  }
+//  for (auto dtd = 0; dtd < 18; dtd++) {
+//    auto [v, rest] = g.interp_dist(102, 104, dtd);
+//    std::cout << "interpolate(102, 104, " << dtd << "): " << v << "," << rest
+//              << std::endl;
+//  }
+//  }

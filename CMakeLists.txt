@@ -1,9 +1,11 @@
+set(CMAKE_BUILD_TYPE Debug)
 cmake_minimum_required(VERSION 3.19)
 # set the project name
 project(ridepy)
 
 add_subdirectory(src/ridepy)
 add_subdirectory(test)
+target_include_directories(boost_graph_demo PUBLIC ${PROJECT_SOURCE_DIR}/src/lru-cache/include)
 
 # Uncomment the following line to see detailed logs for the compilation process
 set(CMAKE_VERBOSE_MAKEFILE on)

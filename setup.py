@@ -6,7 +6,7 @@ from Cython.Build import cythonize
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-BUILD_ARGS = defaultdict(lambda: ["-std=c++17"], msvc=["/std:c++17"])
+BUILD_ARGS = defaultdict(lambda: ["-std=c++17", "-O3"], msvc=["/std:c++17"])
 
 
 class build_ext_w_compiler_check(build_ext):

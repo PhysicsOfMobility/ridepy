@@ -55,4 +55,8 @@ pair<R2loc, double> Manhattan2D::interp_time(R2loc u, R2loc v,
   return this->interp_dist(u, v, dist_to_dest);
 }
 
+std::ostream &operator<<(std::ostream &stream, R2loc const &x) {
+  return stream << "(" << x.first << "," << x.second << ")" << endl;
+}
+
 } // namespace ridepy

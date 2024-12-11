@@ -26,10 +26,6 @@ namespace ridepy {
  */
 typedef pair<double, double> R2loc;
 
-std::ostream &operator<<(std::ostream &stream, R2loc const &x) {
-  return stream << "(" << x.first << "," << x.second << ")" << endl;
-}
-
 /*!
  * \brief The Euclidean2D class allows vehicles to drive anywhere on the 2D
  * plane.
