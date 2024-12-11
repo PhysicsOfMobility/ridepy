@@ -472,7 +472,9 @@ def MinimalPassengerTravelTimeDispatcher(
                 stop_before_dropoff,
                 stop_after_dropoff,
             ) in enumerate(pairwise(stoplist[best_pickup_idx:])):
-                if counter_drop_off == 0:
+                if counter_drop_off == best_pickup_idx:
+                    continue
+                if counter_drop_off < best_pickup_idx:
                     continue
                 list_result_in_between_testDropOff = is_between(
                     space,
