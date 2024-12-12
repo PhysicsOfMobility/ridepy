@@ -20,6 +20,7 @@ from ridepy.data_structures_cython.cdata_structures cimport (
 
 from ridepy.util.dispatchers_cython.cdispatchers cimport (
     brute_force_total_traveltime_minimizing_dispatcher as c_brute_force_total_traveltime_minimizing_dispatcher,
+    minimal_passenger_travel_time_dispatcher as c_minimal_passenger_travel_time_dispatcher,
     simple_ellipse_dispatcher as c_simple_ellipse_dispatcher
 )
 
@@ -75,6 +76,44 @@ cdef class BruteForceTotalTravelTimeMinimizingDispatcher:
                     insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
         elif self.loc_type == LocType.INT:
             insertion_result_int = c_brute_force_total_traveltime_minimizing_dispatcher[uiloc](
+                dynamic_pointer_cast[CTransportationRequest[uiloc], CRequest[uiloc]](cy_request._ureq._req_int),
+                stoplist.ustoplist._stoplist_int,
+                dereference(space.u_space.space_int_ptr), seat_capacity, debug
+            )
+            return insertion_result_int.min_cost, Stoplist.from_c_int(insertion_result_int.new_stoplist), \
+                   (insertion_result_int.EAST_pu, insertion_result_int.LAST_pu,
+                    insertion_result_int.EAST_do, insertion_result_int.LAST_do)
+        else:
+            raise ValueError("This line should never have been reached")
+
+cdef class MinimalPassengerTravelTimeDispatcher:
+    cdef LocType loc_type
+
+    def __init__(self, loc_type):
+        self.loc_type = loc_type
+
+    def __call__(
+            self,
+            TransportationRequest cy_request,
+            Stoplist stoplist,
+            TransportSpace space,
+            int seat_capacity,
+            bint debug=False
+    ):
+        cdef InsertionResult[R2loc] insertion_result_r2loc
+        cdef InsertionResult[uiloc] insertion_result_int
+
+        if self.loc_type == LocType.R2LOC:
+            insertion_result_r2loc = c_minimal_passenger_travel_time_dispatcher[R2loc](
+                dynamic_pointer_cast[CTransportationRequest[R2loc], CRequest[R2loc]](cy_request._ureq._req_r2loc),
+                stoplist.ustoplist._stoplist_r2loc,
+                dereference(space.u_space.space_r2loc_ptr), seat_capacity, debug
+            )
+            return insertion_result_r2loc.min_cost, Stoplist.from_c_r2loc(insertion_result_r2loc.new_stoplist), \
+                   (insertion_result_r2loc.EAST_pu, insertion_result_r2loc.LAST_pu,
+                    insertion_result_r2loc.EAST_do, insertion_result_r2loc.LAST_do)
+        elif self.loc_type == LocType.INT:
+            insertion_result_int = c_minimal_passenger_travel_time_dispatcher[uiloc](
                 dynamic_pointer_cast[CTransportationRequest[uiloc], CRequest[uiloc]](cy_request._ureq._req_int),
                 stoplist.ustoplist._stoplist_int,
                 dereference(space.u_space.space_int_ptr), seat_capacity, debug
