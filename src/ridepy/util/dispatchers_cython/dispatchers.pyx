@@ -47,7 +47,7 @@ cdef class MinimalPassengerTravelTimeDispatcher(Dispatcher):
                 )
         elif loc_type == LocType.INT:
             self.u_dispatcher.dispatcher_int_ptr = (
-                new CMinimalPassengerTravelTimeDispatcher[int]()
+                new CMinimalPassengerTravelTimeDispatcher[uiloc]()
             )
         else:
             raise ValueError("This line should never have been reached")
