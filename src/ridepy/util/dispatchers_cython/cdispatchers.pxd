@@ -12,6 +12,11 @@ cdef extern from "cdispatchers.h" namespace 'ridepy':
           shared_ptr[TransportationRequest[Loc]] request,
           vector[Stop[Loc]] &stoplist,
           const TransportSpace &space, int seat_capacity, bint debug)
+    
+    InsertionResult[Loc] minimal_passenger_travel_time_dispatcher[Loc](
+          shared_ptr[TransportationRequest[Loc]] request,
+          vector[Stop[Loc]] &stoplist,
+          const TransportSpace &space, int seat_capacity, bint debug)
 
     InsertionResult[Loc] simple_ellipse_dispatcher[Loc](
           shared_ptr[TransportationRequest[Loc]] request,
@@ -27,6 +32,9 @@ cdef extern from "cdispatchers.h" namespace 'ridepy':
 
     cdef cppclass BruteForceTotalTravelTimeMinimizingDispatcher[Loc](AbstractDispatcher[Loc]):
         BruteForceTotalTravelTimeMinimizingDispatcher()
+
+    cdef cppclass MinimalPassengerTravelTimeDispatcher[Loc](AbstractDispatcher[Loc]):
+        MinimalPassengerTravelTimeDispatcher()
 
     cdef cppclass SimpleEllipseDispatcher[Loc](AbstractDispatcher[Loc]):
         SimpleEllipseDispatcher(double)
