@@ -29,6 +29,17 @@ If you're in a hurry, here's the gist:
 
    pip install ridepy
 
+How to cite
+-----------
+
+If you are using RidePy in a scientific context, please consider citing our `paper <https://doi.org/10.21105/joss.06241>`__:
+
+Jung et al., (2024). RidePy: A fast and modular framework for simulating ridepooling systems. Journal of Open Source Software, 9(97), 6241, https://doi.org/10.21105/joss.06241
+
+.. code-block:: bibtex
+
+   @article{Jung2024, doi = {10.21105/joss.06241}, url = {https://doi.org/10.21105/joss.06241}, year = {2024}, publisher = {The Open Journal}, volume = {9}, number = {97}, pages = {6241}, author = {Jung, Felix and Manik, Debsankha}, title = {RidePy: A fast and modular framework for simulating ridepooling systems}, journal = {Journal of Open Source Software} } 
+
 Contributing
 ------------
 
